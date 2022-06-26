@@ -63,7 +63,7 @@ int QuerierC::boostmatch(vector<string> *result)
       //  printf("%s: %s\n",string(*it).c_str(),matches[*it].str().c_str());
       for (int i=1; i<matches.size(); i++){
         //result->push_back(matches[i].str());
-        // printf("Matching &s => %s\n",matches[i].name_, matches[i].second);
+        printf("Matching %s => %s\n",matches[i].first, matches[i].second);
         result->push_back(matches[i]);
       }
     }

@@ -82,3 +82,15 @@ vector<string> split(string str, char delim, char quoter, char escape)
 
   return v;
 }
+
+string trim_one(string str, char c)
+{
+  string newstr = str;
+  if (newstr[0] == c)
+    newstr = newstr.substr(1);
+  if (newstr[newstr.size()-1] == c)
+    newstr = newstr.substr(0,newstr.size()-1);
+  //printf("Old Reg: %s\n",str.c_str());
+  //printf("New Reg: %s\n",newstr.c_str());
+  return newstr;
+}

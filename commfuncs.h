@@ -40,5 +40,6 @@ private:
 };
 
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');
+string trim_one(string str, char c = ' ');
 
 #endif // __COMMFUNCS_H

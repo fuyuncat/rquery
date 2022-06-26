@@ -53,7 +53,7 @@ int QuerierC::searchNext()
   string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
   namesaving_smatch matches(m_regexp);
   int found = 0;
-  if(regex_search(start, end, matches, m_regexp)){
+  if(regex_search(start, end, matches, m_regexp, m_searchflags)){
     m_results.push_back(matches);
     m_rawstr.emplace_back( start, matches[0].first );
     //auto start = distance(m_rawstr.begin(),start);

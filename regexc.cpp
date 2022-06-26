@@ -80,43 +80,6 @@ int RegExC::match( const string regexp, const string str, vector<string> *result
   return regres;
 }
 
-int RegExC::boostmatch(const string regexp, const string str, vector<string> *result)
-{
-  //boost::regex rexp(regexp);
-  sregex rexp = sregex::compile(regexp);
-  namesaving_smatch matches(regexp);
-  //smatch matches;
-  //boost::match_results<std::string::const_iterator>  matches;
-  if ( result != NULL ) {
-    //printf("Matching &s => %s\n",str.c_str(), regexp.c_str());
-    result->clear();
-    //if (boost::regex_match(str, matches, rexp, boost::match_perl|boost::match_extra)) {
-    if (regex_match(str, matches, rexp)) {
-      //printf("Matched %d!", matches.size());
-      //for (std::vector<std::string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
-      //  printf("%s: %s\n",string(*it).c_str(),matches[*it].str().c_str());
-      for (int i=1; i<matches.size(); i++){
-        //result->push_back(matches[i].str());
-        // printf("Matching &s => %s\n",matches[i].name_, matches[i].second);
-        result->push_back(matches[i]);
-      }
-    }
-    //BOOST_THROW_EXCEPTION(
-    //    regex_error(regex_constants::error_badmark, "invalid named back-reference")
-    //);
-  }
-}
-
-int RegExC::boostmatch(const string regexp, const string str, map<string,string> & result)
-{
-  sregex rexp = sregex::compile(regexp);
-  namesaving_smatch matches(regexp);
-  if (regex_match(str, matches, rexp)) {
-    for (std::vector<std::string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
-      result[string(*it)] = matches[*it].str();
-  }
-}
-
 int RegExC::sub( string regexp, string str, string newstr, string *result, char flag )
 {
   vector<string> res;

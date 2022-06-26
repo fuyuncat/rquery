@@ -36,8 +36,6 @@ class RegExC
     // Optional "result" contain matched strings. Index 0 whole match, 1-9 substring from ()
     // return REG_... code from regex.h. REG_NOERROR is 0.
     int match( string regexp, string str, vector<string> *result = NULL, char flag = 0 );
-    int boostmatch( string regexp, string str, vector<string> *result = NULL);
-    int boostmatch(const string regexp, const string str, map<string,string> & result);
 
     // Sed command s///.
     // Shortest help :-)  result=`echo -n "str" | sed 's/regexp/newstr/'`

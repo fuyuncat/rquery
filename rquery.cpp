@@ -132,4 +132,8 @@ int main(int argc, char *argv[])
   map<string,string> matches = parseregmap(argv[2],query["parse"], rst);
   for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
     printf("%s: %s\n", it->first.c_str(), it->second.c_str());
+  
+  vector<string> cmatches = parsereg(argv[2], query["parse"], rst);
+  for (int i=1; i<cmatches.size(); i++)
+    printf("%d: %s\n", i, cmatches[i]);
 }

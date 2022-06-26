@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "commfuncs.h"
 #include "querierc.h"
 
 QuerierC::QuerierC()
@@ -35,7 +34,7 @@ QuerierC::~QuerierC()
 
 void QuerierC::init()
 {
-  //m_searchflags = match_default;
+  m_searchflags = regex_constants::match_default;
 }
 
 void QuerierC::setregexp(string regexp)

@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
     printf("%s: %s\n", it->first.c_str(), it->second.c_str());
   
   vector<string> cmatches;
-  rst = re.boostmatch( cmatches );
+  rst = re.boostmatch( &cmatches );
   for (int i=0; i<cmatches.size(); i++)
     printf("%d: %s\n", i, cmatches[i].c_str());
 }

@@ -30,6 +30,7 @@ class QuerierC
     QuerierC(string regexp);
     ~QuerierC();
 
+    void setregexp(string regexp);
     void setrawstr(string rawstr);
     int boostmatch( vector<string> *result = NULL);
     int boostmatch( map<string,string> & result);

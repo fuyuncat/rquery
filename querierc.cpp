@@ -25,9 +25,7 @@ QuerierC::QuerierC()
 QuerierC::QuerierC(string regexp)
 {
   init();
-
-  m_regexp = regexp;
-  sregex m_rexp = sregex::compile(m_regexp);
+  setregexp(regexp);
 }
 
 QuerierC::~QuerierC()
@@ -35,9 +33,14 @@ QuerierC::~QuerierC()
 
 }
 
-
 void QuerierC::init()
 {
+}
+
+void QuerierC::setregexp(string regexp)
+{
+  m_regexp = regexp;
+  sregex m_rexp = sregex::compile(m_regexp);
 }
 
 void QuerierC::setrawstr(string rawstr)
@@ -73,6 +76,7 @@ int QuerierC::boostmatch(vector<string> *result)
 int QuerierC::boostmatch(map<string,string> & result)
 {
   namesaving_smatch matches(m_regexp);
+  printf("Matching &s => %s\n",m_rawstr.c_str(), regexp.c_str());
   if (regex_match(m_rawstr, matches, m_rexp)) {
     for (std::vector<std::string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
       result[string(*it)] = matches[*it].str();

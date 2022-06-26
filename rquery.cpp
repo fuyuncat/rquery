@@ -93,8 +93,8 @@ map<string,string> parseregmap(string raw, string rex, int & rst )
     newrex = newrex.substr(1);
   if (newrex[newrex.size()-1] == '/')
     newrex = newrex.substr(0,newrex.size()-1);
-  printf("Old Reg: %s\n",rex.c_str());
-  printf("New Reg: %s\n",newrex.c_str());
+  //printf("Old Reg: %s\n",rex.c_str());
+  //printf("New Reg: %s\n",newrex.c_str());
 
   QuerierC re(newrex);
   re.setrawstr(raw);

@@ -24,6 +24,7 @@
 #include <boost/algorithm/string.hpp>
 #include "commfuncs.h"
 #include "regexc.h"
+#include "querierc.h"
 
 string usage()
 {

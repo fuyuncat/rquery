@@ -51,7 +51,7 @@ void QuerierC::setrawstr(string rawstr)
 
 int QuerierC::searchNext()
 {
-  string::const_iterator start = m_rawstr.start(), end = m_rawstr.end();
+  string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
   namesaving_smatch matches(m_regexp);
   int found = 0;
   if(regex_search(start, end, matches, m_regexp)){

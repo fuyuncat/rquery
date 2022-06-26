@@ -40,9 +40,6 @@ vector<string>::const_iterator namesaving_smatch::names_end() const
     return m_names.end();
 }
 
-vector<string> namesaving_smatch::m_names;
-
-
 vector<string> split(string str, char delim, char quoter, char escape) 
 {
   vector<string> v;

@@ -12,7 +12,9 @@
 //
 *******************************************************************************/
 
-vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\') 
+#include "commfuncs.h"
+
+vector<string> split(string str, char delim, char quoter, char escape) 
 {
   vector<string> v;
   size_t i = 0, j = 0, begin = 0;

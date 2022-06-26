@@ -130,19 +130,22 @@ int main(int argc, char *argv[])
   //}
 
   string rex = trim_one(query["parse"], '/');
-  QuerierC re(rex);
-  re.setrawstr(argv[2]);
+  QuerierC rq(rex);
+  rq.setrawstr(argv[2]);
+  
+  rq.searchNext();
+  rq.outputAndClean();
 
-  string lineInput;
+  /*string lineInput;
   //while (cin >> lineInput) {
   while (getline(cin,lineInput)) {
-    re.setrawstr(lineInput);
-    rst = re.boostmatch( matches );
+    rq.setrawstr(lineInput);
+    rst = rq.boostmatch( matches );
     for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
       printf("%s: %s\n", it->first.c_str(), it->second.c_str());
     
-    rst = re.boostmatch( &cmatches );
+    rst = rq.boostmatch( &cmatches );
     for (int i=0; i<cmatches.size(); i++)
       printf("%d: %s\n", i, cmatches[i].c_str());
-  }
+  }*/
 }

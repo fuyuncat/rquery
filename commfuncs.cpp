@@ -14,21 +14,29 @@
 #include <stdio.h>
 #include "commfuncs.h"
 
+namesaving_smatch::namesaving_smatch()
+{
+}
+
 namesaving_smatch::namesaving_smatch(const string pattern)
 {
-    string pattern_str = pattern;
-    sregex capture_pattern = sregex::compile("\\?P?<(\\w+)>");
-    sregex_iterator words_begin = sregex_iterator(pattern_str.begin(), pattern_str.end(), capture_pattern);
-    sregex_iterator words_end = sregex_iterator();
-
-    for (sregex_iterator i = words_begin; i != words_end; i++)
-    {
-        string name = (*i)[1].str();
-        m_names.push_back(name);
-    }
+  init(pattern);
 }
 
 namesaving_smatch::~namesaving_smatch() { }
+
+void namesaving_smatch::init(const string pattern)
+{
+  string pattern_str = pattern;
+  sregex capture_pattern = sregex::compile("\\?P?<(\\w+)>");
+  sregex_iterator words_begin = sregex_iterator(pattern_str.begin(), pattern_str.end(), capture_pattern);
+  sregex_iterator words_end = sregex_iterator();
+
+  for (sregex_iterator i = words_begin; i != words_end; i++){
+    string name = (*i)[1].str();
+    m_names.push_back(name);
+  }
+}
 
 vector<string>::const_iterator namesaving_smatch::names_begin() const
 {

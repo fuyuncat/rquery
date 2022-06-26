@@ -32,6 +32,9 @@ class QuerierC
 
     void setregexp(string regexp);
     void setrawstr(string rawstr);
+    int searchNext();
+    void output();
+    void outputAndClean();
     int boostmatch( vector<string> *result = NULL);
     int boostmatch( map<string,string> & result);
 
@@ -39,6 +42,9 @@ class QuerierC
     string m_regexp;
     sregex m_rexp;
     string m_rawstr;
+    match_flag_type m_searchflags = match_default;
+    
+    vector<namesaving_smatch> m_results;
 
   protected:
     void init();

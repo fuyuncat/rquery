@@ -27,16 +27,20 @@ using namespace boost::xpressive;
 class namesaving_smatch : public smatch
 {
 public:
-    namesaving_smatch(const std::string pattern);
+    namesaving_smatch();
+
+    namesaving_smatch(const string pattern);
 
     ~namesaving_smatch();
+    
+    void init(const string pattern);
 
-    std::vector<std::string>::const_iterator names_begin() const;
+    vector<string>::const_iterator names_begin() const;
 
-    std::vector<std::string>::const_iterator names_end() const;
+    vector<string>::const_iterator names_end() const;
 
 private:
-    std::vector<std::string> m_names;
+    vector<string> m_names;
 };
 
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');

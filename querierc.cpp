@@ -76,6 +76,7 @@ int QuerierC::boostmatch(vector<string> *result)
 int QuerierC::boostmatch(map<string,string> & result)
 {
   namesaving_smatch matches(m_regexp);
+  sregex m_rexp = sregex::compile(m_regexp);
   printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexp.c_str());
   if (regex_match(m_rawstr, matches, m_rexp)) {
     for (std::vector<std::string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)

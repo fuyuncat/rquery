@@ -77,7 +77,7 @@ string convertdate(string raw)
 
 vector<string> parsereg(string raw, string rex, int & rst )
 {
-  RegExC re;
+  QuerierC re;
   vector<string> vs;
   rst = re.boostmatch( rex, raw, &vs );
   return vs;
@@ -85,7 +85,7 @@ vector<string> parsereg(string raw, string rex, int & rst )
 
 map<string,string> parseregmap(string raw, string rex, int & rst )
 {
-  RegExC re;
+  QuerierC re;
   map<string,string> matches;
   string newrex = rex;
   if (newrex[0] == '/')

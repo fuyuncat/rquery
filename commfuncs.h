@@ -12,6 +12,9 @@
 //
 *******************************************************************************/
 
+#ifndef __COMMFUNCS_H
+#define __COMMFUNCS_H
+
 #include <regex.h>
 #include <vector>
 #include <string>
@@ -37,3 +40,5 @@ private:
 };
 
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');
+
+#endif // __COMMFUNCS_H

@@ -30,17 +30,17 @@ namesaving_smatch::namesaving_smatch(const string pattern)
 
 namesaving_smatch::~namesaving_smatch() { }
 
-namesaving_smatch::vector<string>::const_iterator names_begin() const
+vector<string>::const_iterator namesaving_smatch::names_begin() const
 {
     return m_names.begin();
 }
 
-namesaving_smatch::vector<string>::const_iterator names_end() const
+vector<string>::const_iterator namesaving_smatch::names_end() const
 {
     return m_names.end();
 }
 
-namesaving_smatch::vector<string> m_names;
+vector<string> namesaving_smatch::m_names;
 
 
 vector<string> split(string str, char delim, char quoter, char escape) 

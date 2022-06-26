@@ -135,5 +135,5 @@ int main(int argc, char *argv[])
   
   vector<string> cmatches = parsereg(argv[2], query["parse"], rst);
   for (int i=1; i<cmatches.size(); i++)
-    printf("%d: %s\n", i, cmatches[i]);
+    printf("%d: %s\n", i, cmatches[i].c_str());
 }

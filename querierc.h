@@ -18,7 +18,7 @@
 #include <regex.h>
 #include <vector>
 #include <string>
-#include <boost/regex.hpp>
+//#include <boost/regex.hpp>
 
 using namespace std;
 
@@ -42,7 +42,7 @@ class QuerierC
     string m_regexp;
     sregex m_rexp;
     string m_rawstr;
-    boost::match_flag_type m_searchflags = match_default;
+    //boost::match_flag_type m_searchflags = boost::match_default;
     
     vector<namesaving_smatch> m_results;
 

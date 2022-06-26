@@ -35,14 +35,14 @@ string usage()
 map<string,string> parseparam(string parameterstr)
 {
   map<string,string> query;
-  printf("Original string: %s\n", parameterstr.c_str());
+  //printf("Original string: %s\n", parameterstr.c_str());
   vector<string> params = split(parameterstr,'|','/','\\');
   for (int i = 0; i < params.size(); ++i){
     string trimmedstr = boost::algorithm::trim_copy<string>(params[i]);
     size_t found = params[i].find_first_of(" ");
-    printf("Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);
+    //printf("Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);
     if  (found!=string::npos){
-      printf("Operation %s: %s\n", boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))).c_str(), boost::algorithm::trim_copy<string>(params[i].substr(found+1)).c_str());
+      //printf("Operation %s: %s\n", boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))).c_str(), boost::algorithm::trim_copy<string>(params[i].substr(found+1)).c_str());
       query.insert( pair<string,string>(boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))),boost::algorithm::trim_copy<string>(params[i].substr(found+1))) );
     }
   }

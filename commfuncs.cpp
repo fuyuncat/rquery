@@ -47,12 +47,12 @@ vector<string> split(string str, char delim, char quoter, char escape)
   bool quoted = false;
   while(i < str.size()) {
     if (str[i] == delim && i>0 && !quoted) {
-      printf("found delim\n");
+      //printf("found delim\n");
       v.push_back(string(str, begin, i));
       begin = i+1;
     }
     if (str[i] == quoter) {
-      printf("found quoter\n");
+      //printf("found quoter\n");
       if (i>0 && str[i-1]!=escape)
         quoted = !quoted;
     }

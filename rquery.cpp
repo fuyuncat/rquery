@@ -127,13 +127,14 @@ int main(int argc, char *argv[])
 
   string rex = trim_one(query["parse"], '/');
   QuerierC re(rex);
-  re.setrawstr(raw);
+  re.setrawstr(argv[2]);
   
   map<string,string> matches;
   rst = re.boostmatch( matches );
   for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
     printf("%s: %s\n", it->first.c_str(), it->second.c_str());
   
+  vector<string> cmatches;
   rst = re.boostmatch( cmatches );
   for (int i=0; i<cmatches.size(); i++)
     printf("%d: %s\n", i, cmatches[i].c_str());

@@ -11,7 +11,7 @@
 //  18/06/2022: Created
 //
 *******************************************************************************/
-
+#include <stdio.h>
 #include "commfuncs.h"
 
 vector<string> split(string str, char delim, char quoter, char escape) 

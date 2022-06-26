@@ -1,4 +1,4 @@
-/*******************************************************************************
+///////////////////////////////////////////////////////////////////////////////////////////////
 //
 //        File: rquery.cpp
 // Description: Main File. query string/file using regular expression
@@ -12,16 +12,18 @@
 //
 //     examples:
 // ./rquery "parse /\\\"(?P<origip>.*)\\\" (?P<host>\S+) (?P<value>(?i)abc|cba|\/)/|select origip" "\"185.7.214.104\" 10.50.26.20 aBc"
+// ./rquery "parse /\\\"(?P<origip>.*)\\\" (?P<host>\S+) (?P<value>(?i)abc|cba|\/).*/|select origip" "\"185.7.214.104\" 10.50.26.20 cBA asa"
 // ./rquery "parse /\\\"(?P<origip>.*)\\\" (?P<host>\S+) (?P<value>(?i)(abc|cba|\/))/|select origip" "\"185.7.214.104\" 10.50.26.20 aBc"
 // ./rquery "\"(?P<origip>.*)\" (?P<host>\S+)" "\"185.7.214.104\" 10.50.26.20"
 // ./rquery "\"(?P<origip>.*)\" (?P<host>\S+) \S+ (?P<user>\S+) \[(?P<time>.+)\] \"(?P<request>.*)\" (?P<status>[0-9]+) (?P<size>\S+) \"(?P<referrer>.*)\" \"(?P<agent>.*)\"" "\"185.7.214.104\" 10.50.26.20 - - [23/Jun/2022:06:47:41 +0100] \"GET /actuator/gateway/routes HTTP/1.1\" 302 239 \"http://108.128.20.93:80/actuator/gateway/routes\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36\""
 // ./rquery "\"(?P<origip>.*)\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>.+)\] \"(?P<request>.*)\" (?P<status>[0-9]+) (?P<size>\S+) \"(?P<referrer>.*)\" \"(?P<agent>.*)\"" "\"185.7.214.104\" 10.50.26.20 - - [23/Jun/2022:06:47:41 +0100] \"GET /actuator/gateway/routes HTTP/1.1\" 302 239 \"http://108.128.20.93:80/actuator/gateway/routes\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36\""
-*******************************************************************************/
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <map>
 #include <iomanip>
+#include <iostream>
 #include <boost/algorithm/string.hpp>
 #include "commfuncs.h"
 //#include "regexc.h"
@@ -120,6 +122,8 @@ int main(int argc, char *argv[])
   */
 
   int rst;
+  map<string,string> matches;
+  vector<string> cmatches;
   //vector<string> fields = parsereg(argv[2],query["parse"], rst);
   //for (int i = 0; i < fields.size(); ++i){
   //  printf("field %d: %s\n", i+1, fields[i].c_str());
@@ -128,14 +132,17 @@ int main(int argc, char *argv[])
   string rex = trim_one(query["parse"], '/');
   QuerierC re(rex);
   re.setrawstr(argv[2]);
-  
-  map<string,string> matches;
-  rst = re.boostmatch( matches );
-  for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
-    printf("%s: %s\n", it->first.c_str(), it->second.c_str());
-  
-  vector<string> cmatches;
-  rst = re.boostmatch( &cmatches );
-  for (int i=0; i<cmatches.size(); i++)
-    printf("%d: %s\n", i, cmatches[i].c_str());
+
+  string lineInput;
+  //while (cin >> lineInput) {
+  while (getline(cin,lineInput)) {
+    re.setrawstr(lineInput);
+    rst = re.boostmatch( matches );
+    for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
+      printf("%s: %s\n", it->first.c_str(), it->second.c_str());
+    
+    rst = re.boostmatch( &cmatches );
+    for (int i=0; i<cmatches.size(); i++)
+      printf("%d: %s\n", i, cmatches[i].c_str());
+  }
 }

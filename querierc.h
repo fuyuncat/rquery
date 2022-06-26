@@ -42,7 +42,7 @@ class QuerierC
     string m_regexp;
     sregex m_rexp;
     string m_rawstr;
-    match_flag_type m_searchflags = match_default;
+    boost::match_flag_type m_searchflags = match_default;
     
     vector<namesaving_smatch> m_results;
 

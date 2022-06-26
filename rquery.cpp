@@ -23,7 +23,7 @@
 #include <iomanip>
 #include <boost/algorithm/string.hpp>
 #include "commfuncs.h"
-#include "regexc.h"
+//#include "regexc.h"
 #include "querierc.h"
 
 string usage()
@@ -56,7 +56,7 @@ map<string,string> parsequery(string raw)
   return query;
 }
 
-string convertdate(string raw)
+/*string convertdate(string raw)
 {
   string rex( "([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})" );
   RegExC re;
@@ -74,7 +74,7 @@ string convertdate(string raw)
     }
   }else
     return newstr;
-}
+}*/
 
 vector<string> parsereg(string raw, string rex, int & rst )
 {

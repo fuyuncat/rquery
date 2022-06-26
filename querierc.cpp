@@ -25,8 +25,7 @@ QuerierC::QuerierC()
 
 QuerierC::~QuerierC()
 {
-  regfree( &preg );
-  free( regex );
+
 }
 
 

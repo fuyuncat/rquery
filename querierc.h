@@ -27,13 +27,19 @@ class QuerierC
   public:
 
     QuerierC();
+    QuerierC(string regexp);
     ~QuerierC();
 
-    int boostmatch( string regexp, string str, vector<string> *result = NULL);
-    int boostmatch(const string regexp, const string str, map<string,string> & result);
+    void setrawstr(string rawstr)
+    int boostmatch( vector<string> *result = NULL);
+    int boostmatch( map<string,string> & result);
+
+  private:
+    string m_regexp;
+    sregex m_rexp;
+    string m_rawstr;
 
   protected:
-
     void init();
 };
 

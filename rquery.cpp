@@ -78,15 +78,15 @@ map<string,string> parsequery(string raw)
 
 vector<string> parsereg(string raw, string rex, int & rst )
 {
-  QuerierC re;
+  QuerierC re(rex);
   vector<string> vs;
-  rst = re.boostmatch( rex, raw, &vs );
+  re.setrawstr(raw);
+  rst = re.boostmatch( &vs );
   return vs;
 }
 
 map<string,string> parseregmap(string raw, string rex, int & rst )
 {
-  QuerierC re;
   map<string,string> matches;
   string newrex = rex;
   if (newrex[0] == '/')
@@ -96,7 +96,9 @@ map<string,string> parseregmap(string raw, string rex, int & rst )
   printf("Old Reg: %s\n",rex.c_str());
   printf("New Reg: %s\n",newrex.c_str());
 
-  rst = re.boostmatch( newrex, raw, matches );
+  QuerierC re(newrex);
+  re.setrawstr(raw);
+  rst = re.boostmatch( matches );
   return matches;
 }
 

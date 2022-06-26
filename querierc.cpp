@@ -58,12 +58,12 @@ int QuerierC::boostmatch(vector<string> *result)
     result->clear();
     //if (boost::regex_match(m_rawstr, matches, m_rexp, boost::match_perl|boost::match_extra)) {
     if (regex_match(m_rawstr, matches, m_rexp)) {
-      printf("Matched %d!", matches.size());
+      printf("Matched %d!\n", matches.size());
       //for (std::vector<std::string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
       //  printf("%s: %s\n",string(*it).c_str(),matches[*it].str().c_str());
       for (int i=1; i<matches.size(); i++){
         //result->push_back(matches[i].str());
-        printf("Matching %s => %s\n",matches[i].first, matches[i].second);
+        //printf("Matching %s => %s\n",matches[i].first, matches[i].second);
         result->push_back(matches[i]);
       }
     }

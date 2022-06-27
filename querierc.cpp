@@ -101,12 +101,18 @@ int QuerierC::searchAll()
 }
 
 //void QuerierC::formatoutput(namesaving_smatch matches)
-void QuerierC::formatoutput(vector<string> matches)
+//{
+//  //for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
+//  //  printf("%s\t", matches[*it].str().c_str());
+//  for (int i=1; i<matches.size(); i++)
+//    printf("%s\t",matches[i].str().c_str());
+//  printf("\n");
+//}
+
+void QuerierC::formatoutput(vector<string> datas)
 {
-  //for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
-  //  printf("%s\t", matches[*it].str().c_str());
-  for (int i=1; i<matches.size(); i++)
-    printf("%s\t",matches[i].str().c_str());
+  for (int i=1; i<datas.size(); i++)
+    printf("%s\t",datas[i].c_str());
   printf("\n");
 }
 

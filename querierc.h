@@ -52,7 +52,7 @@ class QuerierC
   protected:
     void init();
     //void formatoutput(namesaving_smatch matches);
-    void formatoutput(vector<string> matches);
+    void formatoutput(vector<string> datas);
 };
 
 #endif // __QUERIERC_H

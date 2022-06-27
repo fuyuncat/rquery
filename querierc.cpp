@@ -50,12 +50,15 @@ void QuerierC::setrawstr(string rawstr)
 
 int QuerierC::searchNext()
 {
-  string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
+  //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
   namesaving_smatch matches(m_regexp);
   int found = 0;
-  if(regex_search(start, end, matches, m_regexp, m_searchflags)){
+  if(regex_search(m_rawstr, matches, m_regexp, m_searchflags)){
     m_results.push_back(matches);
-    m_rawstr.emplace_back( start, matches[0].first );
+    printf("orig: %s\n",m_rawstr.c_str());
+    m_rawstr = m_rawstr.substr(m_rawstr.find_first_of(matches[0])+matches[0].length());
+    printf("new: %s\n",m_rawstr.c_str());
+    //m_rawstr.emplace_back( start, matches[0].first );
     //auto start = distance(m_rawstr.begin(),start);
     //auto len   = distance(start, matches[0].first);
     //auto sub_str = m_rawstr.substr(start,len);

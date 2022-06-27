@@ -56,7 +56,9 @@ int QuerierC::searchNext()
   if(regex_search(m_rawstr, matches, m_regexp)){
     if(m_results.size()>0)
       formatoutput(m_results[0]);
-    m_results.push_back(matches);
+    //m_results.push_back(matches);
+    vector::iterator p = m_results.end();
+    m_results.insert(p, matches);
     if(m_results.size()>0)
       formatoutput(m_results[0]);
     //formatoutput(m_results[m_results.size()-1]);

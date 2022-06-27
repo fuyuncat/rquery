@@ -140,7 +140,8 @@ size_t getstr(char * buffer, const size_t len)
     return -1;
   }
   //reads = read(0, &cachebuffer, len);
-  reads = std::cin.read(cachebuffer, len);
+  std::cin.read(cachebuffer, len);
+  reads = std::cin.gcount();
   if (reads < 0){
     perror ("read()");
     return -1;

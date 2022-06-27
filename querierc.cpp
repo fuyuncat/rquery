@@ -70,7 +70,7 @@ int QuerierC::searchNext()
 void QuerierC::output()
 {
   for (int i=1; i<m_results.size(); i++){
-    for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
+    for (vector<string>::const_iterator it = m_results[i].names_begin(); it != m_results[i].names_end(); ++it)
       printf("%s\t",m_results[i][*it].str().c_str());
     printf("\n");
   }

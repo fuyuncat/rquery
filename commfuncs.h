@@ -20,6 +20,8 @@
 #include <string>
 #include <boost/xpressive/xpressive.hpp>
 #include <boost/xpressive/regex_actions.hpp>
+#include <unistd.h>
+#include <termios.h>
 
 using namespace std;
 using namespace boost::xpressive;
@@ -45,5 +47,6 @@ private:
 
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');
 string trim_one(string str, char c = ' ');
+char getch();
 
 #endif // __COMMFUNCS_H

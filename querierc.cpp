@@ -58,7 +58,7 @@ int QuerierC::searchNext()
     //  formatoutput(m_results[0]);
     vector<string> matcheddata;
     for (int i=1; i<matches.size(); i++){
-      matcheddata->push_back(matches[i]);
+      matcheddata.push_back(matches[i]);
     m_results.push_back(matcheddata);
     //m_results.push_back(matches);
     //vector<namesaving_smatch>::iterator p = m_results.end();

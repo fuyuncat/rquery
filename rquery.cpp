@@ -79,10 +79,12 @@ int main(int argc, char *argv[])
 
     const size_t cache_length = 16384;
     char cachebuffer[cache_length];
-    size_t howmany = 0;
+    size_t howmany = 0, reads = 0;
     while(std::cin) {
       //std::cin.read(cachebuffer, cache_length);
-      getstr(cachebuffer, cache_length);
+      reads = getstr(cachebuffer, cache_length);
+      if (reads < 1)
+        break;
       rq.appendrawstr(string(cachebuffer));
       rq.searchAll();
       if (!namePrinted){

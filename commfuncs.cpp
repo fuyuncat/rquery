@@ -139,7 +139,8 @@ size_t getstr(char * buffer, const size_t len)
     perror("tcsetattr ICANON");
     return -1;
   }
-  reads = read(0, &cachebuffer, len);
+  //reads = read(0, &cachebuffer, len);
+  reads = std::cin.read(cachebuffer, len);
   if (reads < 0){
     perror ("read()");
     return -1;

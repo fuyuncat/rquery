@@ -85,6 +85,8 @@ int QuerierC::searchAll()
     found = searchNext();
     totalfound+=found;
   }
+  for (int i=0; i<m_results.size(); i++)
+    formatoutput(m_results[i]);
   return totalfound;
 }
 
@@ -100,9 +102,8 @@ void QuerierC::formatoutput(namesaving_smatch matches)
 void QuerierC::output()
 {
   printf("Result Num: %d\n",m_results.size());
-  for (int i=0; i<m_results.size(); i++){
+  for (int i=0; i<m_results.size(); i++)
     formatoutput(m_results[i]);
-  }
 }
 
 void QuerierC::outputAndClean()

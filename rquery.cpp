@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
       rq.searchAll();
       if (!namePrinted){
         rq.printFieldNames();
-        namePrinted = true
+        namePrinted = true;
       }
       rq.outputAndClean();
 

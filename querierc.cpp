@@ -43,6 +43,11 @@ void QuerierC::setregexp(string regexstr)
   m_regexp = sregex::compile(m_regexstr);
 }
 
+void QuerierC::appendrawstr(string rawstr)
+{
+  m_rawstr.append(rawstr);
+}
+
 void QuerierC::setrawstr(string rawstr)
 {
   m_rawstr = rawstr;

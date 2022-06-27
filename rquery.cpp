@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
     size_t howmany = 0;
     while(std::cin) {
       std::cin.read(cachebuffer, cache_length);
-      rq.setrawstr(string(cachebuffer));
+      rq.appendrawstr(string(cachebuffer));
       rq.searchAll();
       if (!namePrinted){
         rq.printFieldNames();

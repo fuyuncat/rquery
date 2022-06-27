@@ -31,6 +31,7 @@ class QuerierC
 
     void setregexp(string regexstr);
     void setrawstr(string rawstr);
+    void appendrawstr(string rawstr);
     int searchNext();
     int searchAll();
     void output();

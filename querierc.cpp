@@ -54,8 +54,8 @@ int QuerierC::searchNext()
   namesaving_smatch matches(m_regexstr);
   int found = 0;
   if(regex_search(m_rawstr, matches, m_regexp)){
-    if(m_results.size()>0)
-      formatoutput(m_results[0]);
+    //if(m_results.size()>0)
+    //  formatoutput(m_results[0]);
     vector<string> matcheddata;
     for (int i=1; i<matches.size(); i++){
       matcheddata->push_back(matches[i]);
@@ -63,8 +63,8 @@ int QuerierC::searchNext()
     //m_results.push_back(matches);
     //vector<namesaving_smatch>::iterator p = m_results.end();
     //m_results.insert(p, matches);
-    if(m_results.size()>0)
-      formatoutput(m_results[0]);
+    //if(m_results.size()>0)
+    //  formatoutput(m_results[0]);
     //formatoutput(m_results[m_results.size()-1]);
     //printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find(string(matches[0])),string(matches[0]).length());
     //printf("orig: %s\n",m_rawstr.c_str());
@@ -100,7 +100,8 @@ int QuerierC::searchAll()
   return totalfound;
 }
 
-void QuerierC::formatoutput(namesaving_smatch matches)
+//void QuerierC::formatoutput(namesaving_smatch matches)
+void QuerierC::formatoutput(vector<string> matches)
 {
   //for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
   //  printf("%s\t", matches[*it].str().c_str());

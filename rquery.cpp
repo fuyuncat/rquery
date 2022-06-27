@@ -32,7 +32,7 @@
 #include "commfuncs.h"
 //#include "regexc.h"
 #include "querierc.h"
-#include <boost\regex.hpp>
+#include <boost/regex.hpp>
 
 #define BOOST_REGEX_MATCH_EXTRA
 

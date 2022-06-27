@@ -54,11 +54,13 @@ int QuerierC::searchNext()
   namesaving_smatch matches(m_regexstr);
   int found = 0;
   if(regex_search(m_rawstr, matches, m_regexp)){
+    formatoutput(m_results[0]);
     m_results.push_back(matches);
+    formatoutput(m_results[0]);
+    formatoutput(m_results[m_results.size()-1]);
     printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find(string(matches[0])),string(matches[0]).length());
     printf("orig: %s\n",m_rawstr.c_str());
-    formatoutput(matches);
-    output();
+    //formatoutput(matches);
 
     //smatch m;
     //regex_search(m_rawstr, m, m_regexp);

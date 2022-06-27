@@ -56,23 +56,3 @@ map<string,string> ParserC::parsequery(string raw)
   return query;
 }
 
-vector<string> ParserC::parsereg(string raw, string rex, int & rst )
-{
-  string newrex = trim_one(rex, '/');
-  QuerierC re(newrex);
-  vector<string> vs;
-  re.setrawstr(raw);
-  rst = re.boostmatch( &vs );
-  return vs;
-}
-
-map<string,string> ParserC::parseregmap(string raw, string rex, int & rst )
-{
-  map<string,string> matches;
-  string newrex = trim_one(rex, '/');
-
-  QuerierC re(newrex);
-  re.setrawstr(raw);
-  rst = re.boostmatch( matches );
-  return matches;
-}

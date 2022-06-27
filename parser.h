@@ -28,8 +28,6 @@ class ParserC
     ~ParserC();
 
     map<string,string> parseparam(string parameterstr);
-    vector<string> parsereg(string raw, string rex, int & rst );
-    map<string,string> parseregmap(string raw, string rex, int & rst );
   private:
 
   protected:

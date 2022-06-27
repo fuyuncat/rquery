@@ -140,9 +140,10 @@ int main(int argc, char *argv[])
   //rq.outputAndClean();
 
   string lineInput;
+  int ln = 0;
   //while (cin >> lineInput) {
   while (getline(cin,lineInput)) {
-    printf("%s\n",lineInput.c_str());
+    printf("%d:%s\n",ln,lineInput.c_str());
     rq.setrawstr(lineInput);
     rq.searchAll();
     rq.outputAndClean();
@@ -154,5 +155,6 @@ int main(int argc, char *argv[])
     //rst = rq.boostmatch( &cmatches );
     //for (int i=0; i<cmatches.size(); i++)
     //  printf("%d: %s\n", i, cmatches[i].c_str());
+    ln++;
   }
 }

@@ -59,11 +59,11 @@ int QuerierC::searchNext()
     printf("orig: %s\n",m_rawstr.c_str());
     formatoutput(matches);
     
-    smatch m;
-    regex_search(m_rawstr, m, m_regexp);
-    for (int i=1; i<m.size(); i++)
-      printf("%s\t",m[i].str().c_str());
-    printf("\n");
+    //smatch m;
+    //regex_search(m_rawstr, m, m_regexp);
+    //for (int i=1; i<m.size(); i++)
+    //  printf("%s\t",m[i].str().c_str());
+    //printf("\n");
 
     m_rawstr = m_rawstr.substr(m_rawstr.find(matches[0])+matches[0].length());
     printf("new: %s\n",m_rawstr.c_str());

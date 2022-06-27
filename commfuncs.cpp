@@ -123,7 +123,7 @@ char getch() {
   return (buf);
 }
 
-size_t getstr(char [] buffer, const size_t len)
+size_t getstr(char * buffer, const size_t len)
 {
   char cachebuffer[len];
   size_t reads = 0;

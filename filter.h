@@ -27,8 +27,8 @@ class FilterC
 
     FilterC();
     FilterC(FilterC* node);
-    Prediction(int junction, FilterC* leftNode, FilterC* rightNode); // construct a branch
-    Prediction(int comparator, int colId, string data); // construct a leaf
+    FilterC(int junction, FilterC* leftNode, FilterC* rightNode); // construct a branch
+    FilterC(int comparator, int colId, string data); // construct a leaf
 
     ~FilterC();
 

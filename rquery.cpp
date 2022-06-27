@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
   string lineInput;
   //while (cin >> lineInput) {
   while (getline(cin,lineInput)) {
-    printf("%s\n",lineInput);
+    printf("%s\n",lineInput.c_str());
     rq.setrawstr(lineInput);
     rq.searchAll();
     rq.outputAndClean();

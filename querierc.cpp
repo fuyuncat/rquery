@@ -64,8 +64,9 @@ int QuerierC::searchNext()
     printf("orig: %s\n",m_rawstr.c_str());
     //formatoutput(matches);
 
-    //smatch m;
-    //regex_search(m_rawstr, m, m_regexp);
+    smatch m;
+    regex_search(m_rawstr, m, m_regexp);
+    m_dummyresults.push_back(m);
     //for (int i=1; i<m.size(); i++)
     //  printf("%s\t",m[i].str().c_str());
     //printf("\n");
@@ -86,7 +87,6 @@ int QuerierC::searchAll()
   int totalfound = 0;
   int found = searchNext();
   while (found>0){
-    output();
     found = searchNext();
     totalfound+=found;
   }
@@ -107,6 +107,11 @@ void QuerierC::output()
   printf("Result Num: %d\n",m_results.size());
   for (int i=0; i<m_results.size(); i++)
     formatoutput(m_results[i]);
+  for (int j=0; j<m_dummyresults.size(); j++){
+    for (int i=1; i<m_dummyresults[j].size(); i++)
+      printf("%s\t",m_dummyresults[j][i].str().c_str());
+    printf("\n");
+  }
 }
 
 void QuerierC::outputAndClean()

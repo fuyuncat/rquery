@@ -77,7 +77,7 @@ int QuerierC::searchNext()
     //printf("\n");
 
     size_t newlnpos = m_rawstr.find("\n",m_rawstr.find(matches[0])+matches[0].length()-1);
-    m_rawstr = m_rawstr.substr(newlnpos);
+    newlnpos != string::npos?m_rawstr = m_rawstr.substr(newlnpos):m_rawstr = "";
     //printf("new: %s\n",m_rawstr.c_str());
     //m_rawstr.emplace_back( start, matches[0].first );
     //auto start = distance(m_rawstr.begin(),start);

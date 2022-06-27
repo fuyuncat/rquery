@@ -133,8 +133,8 @@ int main(int argc, char *argv[])
 
   string rex = trim_one(query["parse"], '/');
   QuerierC rq(rex);
-  rq.setrawstr(argv[2]);
-  
+
+  //rq.setrawstr(argv[2]);
   //rq.searchNext();
   //rq.searchAll();
   //rq.outputAndClean();

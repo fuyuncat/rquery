@@ -72,9 +72,8 @@ void QuerierC::output()
 {
   printf("Result Num: %d\n",m_results.size());
   for (int i=1; i<m_results.size(); i++){
-    for (map<string,string>::iterator it=m_results[i].begin(); it!=m_results[i].end(); ++it)
-      //printf("%s: %s\n", it->first.c_str(), it->second.c_str());
-      printf("%s\t", it->second.c_str());
+    for (vector<string>::const_iterator it = m_results[i].names_begin(); it != m_results[i].names_end(); ++it)
+      printf("%s\t", m_results[i][*it].str(););
     printf("\n");
   }
 }

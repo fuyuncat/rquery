@@ -134,27 +134,34 @@ int main(int argc, char *argv[])
   string rex = trim_one(query["parse"], '/');
   QuerierC rq(rex);
 
-  //rq.setrawstr(argv[2]);
-  //rq.searchNext();
-  //rq.searchAll();
-  //rq.outputAndClean();
+  if ( argc < 3 ){
+    string lineInput;
+    int ln = 0;
+    //while (cin >> lineInput) {
+    while (getline(cin,lineInput)) {
+      printf("%d:%s\n",ln,lineInput.c_str());
+      rq.setrawstr(lineInput);
+      rq.searchAll();
+      rq.outputAndClean();
 
-  string lineInput;
-  int ln = 0;
-  //while (cin >> lineInput) {
-  while (getline(cin,lineInput)) {
-    printf("%d:%s\n",ln,lineInput.c_str());
-    rq.setrawstr(lineInput);
+      //rst = rq.boostmatch( matches );
+      //for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
+      //  printf("%s: %s\n", it->first.c_str(), it->second.c_str());
+      
+      //rst = rq.boostmatch( &cmatches );
+      //for (int i=0; i<cmatches.size(); i++)
+      //  printf("%d: %s\n", i, cmatches[i].c_str());
+      ln++;
+    }
+    if ( ln < 1 ){
+      printf("%s\n",usage().c_str());
+      return 1;
+    }
+  }else{
+    rq.setrawstr(argv[2]);
+    //rq.searchNext();
     rq.searchAll();
     rq.outputAndClean();
-
-    //rst = rq.boostmatch( matches );
-    //for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
-    //  printf("%s: %s\n", it->first.c_str(), it->second.c_str());
-    
-    //rst = rq.boostmatch( &cmatches );
-    //for (int i=0; i<cmatches.size(); i++)
-    //  printf("%d: %s\n", i, cmatches[i].c_str());
-    ln++;
   }
+
 }

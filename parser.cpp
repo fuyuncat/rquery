@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <boost/algorithm/string.hpp>
 #include "parser.h"
 
 ParserC::ParserC()

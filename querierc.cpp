@@ -58,7 +58,7 @@ int QuerierC::searchNext()
     printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find(string(matches[0])),string(matches[0]).length());
     printf("orig: %s\n",m_rawstr.c_str());
     formatoutput(matches);
-    formatoutput(m_results[m_results.size()-1]);
+    output();
 
     //smatch m;
     //regex_search(m_rawstr, m, m_regexp);
@@ -85,8 +85,6 @@ int QuerierC::searchAll()
     found = searchNext();
     totalfound+=found;
   }
-  for (int i=0; i<m_results.size(); i++)
-    formatoutput(m_results[i]);
   return totalfound;
 }
 

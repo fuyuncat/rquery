@@ -48,6 +48,20 @@ void QuerierC::setrawstr(string rawstr)
   m_rawstr = rawstr;
 }
 
+void QuerierC::pairFiledNames(namesaving_smatch matches)
+{
+  for (int i=1; i<matches.size(); i++){
+    bool foundName = false;
+    for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
+      if (&(matches[i]) == &(matches[*it].str())){
+        m_fieldnames.push_back(string(*it));
+        foundName = true;
+      }
+    if (!foundName)
+      m_fieldnames.push_back("?");
+  }
+}
+
 int QuerierC::searchNext()
 {
   //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
@@ -60,6 +74,8 @@ int QuerierC::searchNext()
     for (int i=1; i<matches.size(); i++)
       matcheddata.push_back(matches[i]);
     m_results.push_back(matcheddata);
+    if (m_fieldnames.size() == 0)
+      pairFiledNames(matches);
     //m_results.push_back(matches);
     //vector<namesaving_smatch>::iterator p = m_results.end();
     //m_results.insert(p, matches);
@@ -107,6 +123,13 @@ int QuerierC::searchAll()
 //    printf("%s\t",matches[i].str().c_str());
 //  printf("\n");
 //}
+
+void QuerierC::printFieldNames()
+{
+  for (int i=1; i<m_fieldnames.size(); i++)
+    printf("%s\t",m_fieldnames[i].c_str());
+  printf("\n");
+}
 
 void QuerierC::formatoutput(vector<string> datas)
 {

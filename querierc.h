@@ -39,6 +39,7 @@ class QuerierC
     void outputAndClean();
     int boostmatch( vector<string> *result = NULL);
     int boostmatch( map<string,string> & result);
+    void printFieldNames();
 
   private:
     string m_regexstr;
@@ -47,12 +48,14 @@ class QuerierC
     regex_constants::match_flag_type m_searchflags;
     
     //vector<namesaving_smatch> m_results;
+    vector<string> m_fieldnames;
     vector< vector<string> > m_results;
 
   protected:
     void init();
     //void formatoutput(namesaving_smatch matches);
     void formatoutput(vector<string> datas);
+    void pairFiledNames(namesaving_smatch matches);
 };
 
 #endif // __QUERIERC_H

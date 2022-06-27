@@ -32,9 +32,9 @@
 #include "commfuncs.h"
 //#include "regexc.h"
 #include "querierc.h"
-#include <boost/regex.hpp>
+//#include <boost/regex.hpp>
 
-#define BOOST_REGEX_MATCH_EXTRA
+//#define BOOST_REGEX_MATCH_EXTRA
 
 string usage()
 {
@@ -140,6 +140,7 @@ int main(int argc, char *argv[])
   QuerierC rq(rex);
 
   if ( argc < 3 ){
+    bool namePrinted = false;
     string lineInput;
     int ln = 0;
     //while (cin >> lineInput) {
@@ -147,6 +148,10 @@ int main(int argc, char *argv[])
       //printf("%d:%s\n",ln,lineInput.c_str());
       rq.setrawstr(lineInput);
       rq.searchAll();
+      if (!namePrinted){
+        rq.printFieldNames();
+        namePrinted = true
+      }
       rq.outputAndClean();
 
       //rst = rq.boostmatch( matches );
@@ -166,14 +171,15 @@ int main(int argc, char *argv[])
     rq.setrawstr(argv[2]);
     //rq.searchNext();
     rq.searchAll();
+    rq.printFieldNames();
     rq.outputAndClean();
   }
 
-  boost::regex reg(rex);
-  boost::smatch match;
-  if (boost::regex_search(string(argv[2]), match, reg, boost::match_extra)){
-    for (int i=1; i<match.size(); i++)
-      printf("%s\t",string(match[i]).c_str());
-    printf("%s\n",string(match["host"]).c_str());
-  }
+  //boost::regex reg(rex);
+  //boost::smatch match;
+  //if (boost::regex_search(string(argv[2]), match, reg, boost::match_extra)){
+  //  for (int i=1; i<match.size(); i++)
+  //    printf("%s\t",string(match[i]).c_str());
+  //  printf("%s\n",string(match["host"]).c_str());
+  //}
 }

@@ -92,8 +92,6 @@ int QuerierC::searchAll()
   int totalfound = 0;
   int found = searchNext();
   while (found>0){
-    if(m_results.size()>0)
-      formatoutput(m_results[0]);
     found = searchNext();
     totalfound+=found;
   }
@@ -118,7 +116,7 @@ void QuerierC::formatoutput(vector<string> datas)
 
 void QuerierC::output()
 {
-  printf("Result Num: %d\n",m_results.size());
+  //printf("Result Num: %d\n",m_results.size());
   for (int i=0; i<m_results.size(); i++)
     formatoutput(m_results[i]);
 }

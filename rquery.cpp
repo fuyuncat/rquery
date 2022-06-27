@@ -137,8 +137,8 @@ int main(int argc, char *argv[])
   if ( argc < 3 ){
     string lineInput;
     int ln = 0;
-    //while (cin >> lineInput) {
-    while (getline(cin,lineInput)) {
+    while (cin >> lineInput) {
+    //while (getline(cin,lineInput)) {
       printf("%d:%s\n",ln,lineInput.c_str());
       rq.setrawstr(lineInput);
       rq.searchAll();

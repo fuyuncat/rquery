@@ -55,9 +55,9 @@ int QuerierC::searchNext()
   int found = 0;
   if(regex_search(m_rawstr, matches, m_regexp)){
     m_results.push_back(matches);
-    printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find_first_of(string(matches[0])),string(matches[0]).length());
+    printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find(string(matches[0])),string(matches[0]).length());
     printf("orig: %s\n",m_rawstr.c_str());
-    m_rawstr = m_rawstr.substr(m_rawstr.find_first_of(matches[0])+matches[0].length());
+    m_rawstr = m_rawstr.substr(m_rawstr.find(matches[0])+matches[0].length());
     printf("new: %s\n",m_rawstr.c_str());
     //m_rawstr.emplace_back( start, matches[0].first );
     //auto start = distance(m_rawstr.begin(),start);

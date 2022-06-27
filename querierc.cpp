@@ -59,6 +59,7 @@ int QuerierC::searchNext()
     printf("orig: %s\n",m_rawstr.c_str());
     m_rawstr = m_rawstr.substr(m_rawstr.find(matches[0])+matches[0].length());
     printf("new: %s\n",m_rawstr.c_str());
+    formatoutput(m_results[i]);
     //m_rawstr.emplace_back( start, matches[0].first );
     //auto start = distance(m_rawstr.begin(),start);
     //auto len   = distance(start, matches[0].first);
@@ -79,13 +80,18 @@ int QuerierC::searchAll()
   return totalfound;
 }
 
+void QuerierC::formatoutput(namesaving_smatch matches)
+{
+  for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
+    printf("%s\t", matches[*it].str().c_str());
+  printf("\n");
+}
+
 void QuerierC::output()
 {
   printf("Result Num: %d\n",m_results.size());
   for (int i=0; i<m_results.size(); i++){
-    for (vector<string>::const_iterator it = m_results[i].names_begin(); it != m_results[i].names_end(); ++it)
-      printf("%s\t", m_results[i][*it].str().c_str());
-    printf("\n");
+    formatoutput(m_results[i]);
   }
 }
 

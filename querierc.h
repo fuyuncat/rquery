@@ -50,6 +50,7 @@ class QuerierC
 
   protected:
     void init();
+    void formatoutput(namesaving_smatch matches);
 };
 
 #endif // __QUERIERC_H

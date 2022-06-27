@@ -57,7 +57,7 @@ int QuerierC::searchNext()
     //if(m_results.size()>0)
     //  formatoutput(m_results[0]);
     vector<string> matcheddata;
-    for (int i=1; i<matches.size(); i++){
+    for (int i=1; i<matches.size(); i++)
       matcheddata.push_back(matches[i]);
     m_results.push_back(matcheddata);
     //m_results.push_back(matches);

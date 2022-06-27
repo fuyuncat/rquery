@@ -133,7 +133,8 @@ int main(int argc, char *argv[])
   QuerierC rq(rex);
   rq.setrawstr(argv[2]);
   
-  rq.searchNext();
+  //rq.searchNext();
+  rq.searchAll();
   rq.outputAndClean();
 
   /*string lineInput;

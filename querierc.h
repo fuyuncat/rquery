@@ -34,6 +34,7 @@ class QuerierC
     void setregexp(string regexstr);
     void setrawstr(string rawstr);
     int searchNext();
+    int searchAll();
     void output();
     void outputAndClean();
     int boostmatch( vector<string> *result = NULL);

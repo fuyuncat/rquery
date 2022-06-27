@@ -68,6 +68,17 @@ int QuerierC::searchNext()
   return found;
 }
 
+int QuerierC::searchNext()
+{
+  int totalfound = 0;
+  int found = searchNext();
+  while (found>0){
+    found = searchNext();
+    totalfound+=found;
+  }
+  return totalfound;
+}
+
 void QuerierC::output()
 {
   printf("Result Num: %d\n",m_results.size());

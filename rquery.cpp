@@ -76,10 +76,27 @@ int main(int argc, char *argv[])
 
   if ( argc < 3 ){
     bool namePrinted = false;
+
+    constexpr size_t cache_length = 16384;
+    char cachebuffer[cache_length];
+    size_t howmany = 0;
+    while(std::cin) {
+      std::cin.read(cachebuffer, cache_length);
+      rq.setrawstr(string(cachebuffer));
+      rq.searchAll();
+      if (!namePrinted){
+        rq.printFieldNames();
+        namePrinted = true;
+      }
+      rq.outputAndClean();
+      howmany += std::cin.gcount();
+    }
+
+    /*
     string lineInput;
     int ln = 0;
-    while (cin >> lineInput) {
-    //while (getline(cin,lineInput)) {
+    //while (cin >> lineInput) {
+    while (getline(cin,lineInput)) {
       //printf("%d:%s\n",ln,lineInput.c_str());
       rq.setrawstr(lineInput);
       rq.searchAll();
@@ -101,7 +118,7 @@ int main(int argc, char *argv[])
     if ( ln < 1 ){
       printf("%s\n",usage().c_str());
       return 1;
-    }
+    }*/
   }else{
     rq.setrawstr(argv[2]);
     //rq.searchNext();

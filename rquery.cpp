@@ -14,6 +14,8 @@
 // ./rquery "parse /\\\"(?P<origip>.*)\\\" (?P<host>\S+) (?P<value>(?i)abc|cba|\/)/|select origip" "\"185.7.214.104\" 10.50.26.20 aBc"
 // ./rquery "parse /\\\"(?P<origip>[^\n]*)\\\" (?P<host>\S+) (?P<value>(?i)abc|cba|\/)/|select origip" "\"185.7.214.104\" 10.50.26.20 cBA asa
 //\"185.7.214.104\" 10.50.26.20 AbC "
+// echo "\"185.7.214.104\" 10.50.26.20 cBA asa
+//\"185.7.214.104\" 10.50.26.20 AbC "|./rquery "parse /\\\"(?P<origip>[^\n]*)\\\" (?P<host>\S+) (?P<value>(?i)abc|cba|\/)/|select origip"
 // ./rquery "parse /\\\"(?P<origip>.*)\\\" (?P<host>\S+) (?P<value>(?i)abc|cba|\/).*/|select origip" "\"185.7.214.104\" 10.50.26.20 cBA asa"
 // ./rquery "parse /\\\"(?P<origip>.*)\\\" (?P<host>\S+) (?P<value>(?i)(abc|cba|\/))/|select origip" "\"185.7.214.104\" 10.50.26.20 aBc"
 // ./rquery "\"(?P<origip>.*)\" (?P<host>\S+)" "\"185.7.214.104\" 10.50.26.20"
@@ -30,6 +32,9 @@
 #include "commfuncs.h"
 //#include "regexc.h"
 #include "querierc.h"
+#include <boost\regex.hpp>
+
+#define BOOST_REGEX_MATCH_EXTRA
 
 string usage()
 {
@@ -164,4 +169,11 @@ int main(int argc, char *argv[])
     rq.outputAndClean();
   }
 
+  boost::regex reg(rex);
+  boost::smatch match;
+  if (boost::regex_search(argv[2], match, reg, boost::match_extra)){
+    for (int i=1; i<match.size(); i++)
+      printf("%s\t",string(match[i]).c_str());
+    printf("%s\n",string(match["host"]).c_str());
+  }
 }

@@ -43,7 +43,7 @@ class QuerierC
     string m_regexp;
     sregex m_rexp;
     string m_rawstr;
-    regex_constants::match_flag_type m_searchflags = regex_constants::match_default;
+    regex_constants::match_flag_type m_searchflags;
     
     vector<namesaving_smatch> m_results;
 

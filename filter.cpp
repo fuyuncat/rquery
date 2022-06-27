@@ -15,6 +15,22 @@
 #include <string.h>
 #include "filter.h"
 
+void FilterC::init()
+{
+  type = UNKNOWN;       // 1: branch; 2: leaf
+  junction = UNKNOWN;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
+  comparator = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
+  leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
+  rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
+  leftExpression = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
+  rightExpression = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
+  leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
+  rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
+  parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
+  
+  metaDataAnzlyzed = false; // analyze column name to column id.
+}
+
 FilterC::FilterC()
 {
   init();
@@ -60,22 +76,6 @@ FilterC::FilterC(int comparator, int colId, string data)
   comparator = comparator;
   leftColId = colId;
   rightExpression = data;
-}
-
-void FilterC::init()
-{
-  type = UNKNOWN;       // 1: branch; 2: leaf
-  junction = UNKNOWN;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
-  comparator = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
-  leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
-  rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
-  leftExpression = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
-  rightExpression = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
-  leftNode = null;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
-  rightNode = null;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
-  parentNode = null;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
-  
-  metaDataAnzlyzed = false; // analyze column name to column id.
 }
 
 // return operation type: -1 error; 0: unused; 1: parse; 2:select; 3: filter; 4: group; 5: sort

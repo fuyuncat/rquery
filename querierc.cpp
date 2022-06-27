@@ -59,7 +59,7 @@ int QuerierC::searchNext()
     printf("orig: %s\n",m_rawstr.c_str());
     m_rawstr = m_rawstr.substr(m_rawstr.find(matches[0])+matches[0].length());
     printf("new: %s\n",m_rawstr.c_str());
-    formatoutput(m_results[i]);
+    formatoutput(matches);
     //m_rawstr.emplace_back( start, matches[0].first );
     //auto start = distance(m_rawstr.begin(),start);
     //auto len   = distance(start, matches[0].first);

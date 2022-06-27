@@ -55,10 +55,10 @@ int QuerierC::searchNext()
   int found = 0;
   if(regex_search(m_rawstr, matches, m_regexp)){
     m_results.push_back(matches);
-    printf("matched: %s\n",string(matches[0]).c_str());
-    printf("orig: %s\n",m_rawstr.c_str());
+    //printf("matched: %s\n",string(matches[0]).c_str());
+    //printf("orig: %s\n",m_rawstr.c_str());
     m_rawstr = m_rawstr.substr(m_rawstr.find_first_of(matches[0])+matches[0].length());
-    printf("new: %s\n",m_rawstr.c_str());
+    //printf("new: %s\n",m_rawstr.c_str());
     //m_rawstr.emplace_back( start, matches[0].first );
     //auto start = distance(m_rawstr.begin(),start);
     //auto len   = distance(start, matches[0].first);
@@ -70,9 +70,11 @@ int QuerierC::searchNext()
 
 void QuerierC::output()
 {
+  printf("Result Num: %d\n",m_results.size());
   for (int i=1; i<m_results.size(); i++){
     for (vector<string>::const_iterator it = m_results[i].names_begin(); it != m_results[i].names_end(); ++it)
-      printf("%s\t",m_results[i][*it].str().c_str());
+      //printf("%s: %s\n", it->first.c_str(), it->second.c_str());
+      printf("%s\t", it->second.c_str());
     printf("\n");
   }
 }

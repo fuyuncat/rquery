@@ -68,7 +68,7 @@ int QuerierC::searchNext()
   return found;
 }
 
-int QuerierC::searchNext()
+int QuerierC::searchAll()
 {
   int totalfound = 0;
   int found = searchNext();

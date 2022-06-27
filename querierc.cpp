@@ -57,8 +57,6 @@ int QuerierC::searchNext()
     m_results.push_back(matches);
     printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find(string(matches[0])),string(matches[0]).length());
     printf("orig: %s\n",m_rawstr.c_str());
-    m_rawstr = m_rawstr.substr(m_rawstr.find(matches[0])+matches[0].length());
-    printf("new: %s\n",m_rawstr.c_str());
     formatoutput(matches);
     
     smatch m;
@@ -66,6 +64,9 @@ int QuerierC::searchNext()
     for (int i=1; i<m.size(); i++)
       printf("%s\t",m[i].str().c_str());
     printf("\n");
+
+    m_rawstr = m_rawstr.substr(m_rawstr.find(matches[0])+matches[0].length());
+    printf("new: %s\n",m_rawstr.c_str());
     //m_rawstr.emplace_back( start, matches[0].first );
     //auto start = distance(m_rawstr.begin(),start);
     //auto len   = distance(start, matches[0].first);

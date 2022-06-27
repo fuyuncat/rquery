@@ -140,8 +140,9 @@ int main(int argc, char *argv[])
   //rq.outputAndClean();
 
   string lineInput;
-  while (cin >> lineInput) {
-  //while (getline(cin,lineInput)) {
+  //while (cin >> lineInput) {
+  while (getline(cin,lineInput)) {
+    printf("%s\n",lineInput);
     rq.setrawstr(lineInput);
     rq.searchAll();
     rq.outputAndClean();

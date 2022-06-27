@@ -53,7 +53,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
   for (int i=1; i<matches.size(); i++){
     bool foundName = false;
     for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
-      if (&(matches[i]) == &(matches[*it].str())){
+      if (&(matches[i]) == &(matches[*it])){
         m_fieldnames.push_back(string(*it));
         foundName = true;
       }

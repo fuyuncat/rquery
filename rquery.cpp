@@ -136,19 +136,22 @@ int main(int argc, char *argv[])
   rq.setrawstr(argv[2]);
   
   //rq.searchNext();
-  rq.searchAll();
-  rq.outputAndClean();
+  //rq.searchAll();
+  //rq.outputAndClean();
 
-  /*string lineInput;
-  //while (cin >> lineInput) {
-  while (getline(cin,lineInput)) {
+  string lineInput;
+  while (cin >> lineInput) {
+  //while (getline(cin,lineInput)) {
     rq.setrawstr(lineInput);
-    rst = rq.boostmatch( matches );
-    for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
-      printf("%s: %s\n", it->first.c_str(), it->second.c_str());
+    rq.searchAll();
+    rq.outputAndClean();
+
+    //rst = rq.boostmatch( matches );
+    //for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
+    //  printf("%s: %s\n", it->first.c_str(), it->second.c_str());
     
-    rst = rq.boostmatch( &cmatches );
-    for (int i=0; i<cmatches.size(); i++)
-      printf("%d: %s\n", i, cmatches[i].c_str());
-  }*/
+    //rst = rq.boostmatch( &cmatches );
+    //for (int i=0; i<cmatches.size(); i++)
+    //  printf("%d: %s\n", i, cmatches[i].c_str());
+  }
 }

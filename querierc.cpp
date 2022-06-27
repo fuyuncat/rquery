@@ -21,10 +21,10 @@ QuerierC::QuerierC()
   init();
 }
 
-QuerierC::QuerierC(string regexp)
+QuerierC::QuerierC(string regexstr)
 {
   init();
-  setregexp(regexp);
+  setregexp(regexstr);
 }
 
 QuerierC::~QuerierC()
@@ -37,10 +37,10 @@ void QuerierC::init()
   m_searchflags = regex_constants::match_default;
 }
 
-void QuerierC::setregexp(string regexp)
+void QuerierC::setregexp(string regexstr)
 {
-  m_regexp = regexp;
-  m_rexp = sregex::compile(m_regexp);
+  m_regexstr = regexstr;
+  m_regexp = sregex::compile(m_regexstr);
 }
 
 void QuerierC::setrawstr(string rawstr)
@@ -51,7 +51,7 @@ void QuerierC::setrawstr(string rawstr)
 int QuerierC::searchNext()
 {
   //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
-  namesaving_smatch matches(m_regexp);
+  namesaving_smatch matches(m_regexstr);
   int found = 0;
   if(regex_search(m_rawstr, matches, m_regexp)){
     m_results.push_back(matches);
@@ -84,14 +84,14 @@ void QuerierC::outputAndClean()
 
 int QuerierC::boostmatch(vector<string> *result)
 {
-  namesaving_smatch matches(m_regexp);
+  namesaving_smatch matches(m_regexstr);
   //smatch matches;
   //boost::match_results<string::const_iterator>  matches;
   if ( result != NULL ) {
-    //printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexp.c_str());
+    //printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexstr.c_str());
     result->clear();
-    //if (boost::regex_match(m_rawstr, matches, m_rexp, boost::match_perl|boost::match_extra)) {
-    if (regex_match(m_rawstr, matches, m_rexp)) {
+    //if (boost::regex_match(m_rawstr, matches, m_regexp, boost::match_perl|boost::match_extra)) {
+    if (regex_match(m_rawstr, matches, m_regexp)) {
       //printf("Matched %d!\n", matches.size());
       //for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
       //  printf("%s: %s\n",string(*it).c_str(),matches[*it].str().c_str());
@@ -109,9 +109,9 @@ int QuerierC::boostmatch(vector<string> *result)
 
 int QuerierC::boostmatch(map<string,string> & result)
 {
-  namesaving_smatch matches(m_regexp);
-  //printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexp.c_str());
-  if (regex_match(m_rawstr, matches, m_rexp)) {
+  namesaving_smatch matches(m_regexstr);
+  //printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexstr.c_str());
+  if (regex_match(m_rawstr, matches, m_regexp)) {
     for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
       result[string(*it)] = matches[*it].str();
   }

@@ -21,8 +21,6 @@
 #include "commfuncs.h"
 //#include <boost/regex.hpp>
 
-using namespace std;
-
 class QuerierC
 {
   public:

@@ -41,72 +41,6 @@ string usage()
   return string("Usage: rquery \"parse <regular expression> | where <filters> | group | select | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
 }
 
-// return operation type: -1 error; 0: unused; 1: parse; 2:select; 3: filter; 4: group; 5: sort
-map<string,string> parseparam(string parameterstr)
-{
-  map<string,string> query;
-  //printf("Original string: %s\n", parameterstr.c_str());
-  vector<string> params = split(parameterstr,'|','/','\\');
-  for (int i = 0; i < params.size(); ++i){
-    string trimmedstr = boost::algorithm::trim_copy<string>(params[i]);
-    size_t found = params[i].find_first_of(" ");
-    //printf("Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);
-    if  (found!=string::npos){
-      //printf("Operation %s: %s\n", boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))).c_str(), boost::algorithm::trim_copy<string>(params[i].substr(found+1)).c_str());
-      query.insert( pair<string,string>(boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))),boost::algorithm::trim_copy<string>(params[i].substr(found+1))) );
-    }
-  }
-  return query;
-}
-
-map<string,string> parsequery(string raw)
-{
-  map<string,string> query;
-  query.insert( pair<string,string>("parse",raw) );
-  return query;
-}
-
-/*string convertdate(string raw)
-{
-  string rex( "([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})" );
-  RegExC re;
-
-  vector<string> vs;
-  string newstr;
-
-  int r = re.sub( rex + ".*", raw, "\\4:\\5 \\2/\\3/\\1", &newstr );
-  if ( r ) {
-    r = re.match( rex, raw, &vs );
-    if ( r ) 
-      return "";
-    else{
-      return vs[ 2 ]+"/"+vs[ 3 ]+"/"+vs[ 1 ];
-    }
-  }else
-    return newstr;
-}*/
-
-vector<string> parsereg(string raw, string rex, int & rst )
-{
-  string newrex = trim_one(rex, '/');
-  QuerierC re(newrex);
-  vector<string> vs;
-  re.setrawstr(raw);
-  rst = re.boostmatch( &vs );
-  return vs;
-}
-
-map<string,string> parseregmap(string raw, string rex, int & rst )
-{
-  map<string,string> matches;
-  string newrex = trim_one(rex, '/');
-
-  QuerierC re(newrex);
-  re.setrawstr(raw);
-  rst = re.boostmatch( matches );
-  return matches;
-}
-
 int main(int argc, char *argv[])
 {
   /*for (int i = 1; i < argc; ++i){
@@ -122,7 +56,8 @@ int main(int argc, char *argv[])
     return 1;
   }
   
-  map<string,string> query = parseparam(argv[1]);
+  ParserC ps;
+  map<string,string> query = ps.parseparam(argv[1]);
   /*
   for (map<string,string>::iterator it=query.begin(); it!=query.end(); ++it)
     printf("%s: %s\n", it->first.c_str(), it->second.c_str());
@@ -131,7 +66,7 @@ int main(int argc, char *argv[])
   int rst;
   map<string,string> matches;
   vector<string> cmatches;
-  //vector<string> fields = parsereg(argv[2],query["parse"], rst);
+  //vector<string> fields = ps.parsereg(argv[2],query["parse"], rst);
   //for (int i = 0; i < fields.size(); ++i){
   //  printf("field %d: %s\n", i+1, fields[i].c_str());
   //}

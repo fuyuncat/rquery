@@ -63,7 +63,9 @@ int QuerierC::searchNext()
     
     smatch m;
     regex_search(m_rawstr, m, m_regexp);
-    formatoutput(m);
+    for (int i=1; i<m.size(); i++)
+      printf("%s\t",m[i].str().c_str());
+    printf("\n");
     //m_rawstr.emplace_back( start, matches[0].first );
     //auto start = distance(m_rawstr.begin(),start);
     //auto len   = distance(start, matches[0].first);

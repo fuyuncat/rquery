@@ -122,3 +122,34 @@ char getch() {
     perror ("tcsetattr ~ICANON");
   return (buf);
 }
+
+size_t getstr(char [] buffer, const size_t len)
+{
+  char cachebuffer[len];
+  size_t reads = 0;
+
+  struct termios old = {0};
+  if (tcgetattr(0, &old) < 0)
+    perror("tcsetattr()");
+  old.c_lflag &= ~ICANON;
+  old.c_lflag &= ~ECHO;
+  old.c_cc[VMIN] = 1;
+  old.c_cc[VTIME] = 0;
+  if (tcsetattr(0, TCSANOW, &old) < 0){
+    perror("tcsetattr ICANON");
+    return -1;
+  }
+  reads = read(0, &cachebuffer, len);
+  if (reads < 0){
+    perror ("read()");
+    return -1;
+  }
+  old.c_lflag |= ICANON;
+  old.c_lflag |= ECHO;
+  if (tcsetattr(0, TCSADRAIN, &old) < 0){
+    perror ("tcsetattr ~ICANON");
+    return -1;
+  }
+  memcpy(cachebuffer, buffer, reads);
+  return (reads);
+}

@@ -81,7 +81,8 @@ int main(int argc, char *argv[])
     char cachebuffer[cache_length];
     size_t howmany = 0;
     while(std::cin) {
-      std::cin.read(cachebuffer, cache_length);
+      //std::cin.read(cachebuffer, cache_length);
+      getstr(cachebuffer, cache_length);
       rq.appendrawstr(string(cachebuffer));
       rq.searchAll();
       if (!namePrinted){

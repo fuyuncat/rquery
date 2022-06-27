@@ -48,5 +48,6 @@ private:
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');
 string trim_one(string str, char c = ' ');
 char getch();
+size_t getstr(char [] buffer, const size_t len);
 
 #endif // __COMMFUNCS_H

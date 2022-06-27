@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
   if ( argc < 3 ){
     bool namePrinted = false;
 
-    constexpr size_t cache_length = 16384;
+    const size_t cache_length = 16384;
     char cachebuffer[cache_length];
     size_t howmany = 0;
     while(std::cin) {

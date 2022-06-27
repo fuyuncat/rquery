@@ -31,6 +31,7 @@
 #include <boost/algorithm/string.hpp>
 #include "commfuncs.h"
 //#include "regexc.h"
+#include "parser.h"
 #include "querierc.h"
 //#include <boost/regex.hpp>
 

@@ -46,7 +46,8 @@ class QuerierC
     string m_rawstr;
     regex_constants::match_flag_type m_searchflags;
     
-    vector<namesaving_smatch> m_results;
+    //vector<namesaving_smatch> m_results;
+    vector< vector<string> > m_results;
 
   protected:
     void init();

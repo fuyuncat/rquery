@@ -12,6 +12,8 @@
 //
 *******************************************************************************/
 #include <stdio.h>
+//#include <unistd.h>
+//#include <termios.h>
 #include "commfuncs.h"
 
 namesaving_smatch::namesaving_smatch()
@@ -103,6 +105,7 @@ string trim_one(string str, char c)
   return newstr;
 }
 
+/*
 char getch() {
   char buf = 0;
   struct termios old = {0};
@@ -155,3 +158,4 @@ size_t getstr(char * buffer, const size_t len)
   memcpy(cachebuffer, buffer, reads);
   return (reads);
 }
+*/

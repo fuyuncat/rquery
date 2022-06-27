@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
     char cachebuffer[cache_length];
     size_t howmany = 0, reads = 0;
     while(std::cin) {
-      //std::cin.read(cachebuffer, cache_length);
-      reads = getstr(cachebuffer, cache_length);
+      std::cin.read(cachebuffer, cache_length);
+      //reads = getstr(cachebuffer, cache_length);
       if (reads < 1)
         break;
       rq.appendrawstr(string(cachebuffer));

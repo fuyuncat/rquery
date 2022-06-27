@@ -20,11 +20,13 @@
 #include <string>
 #include <boost/xpressive/xpressive.hpp>
 #include <boost/xpressive/regex_actions.hpp>
-#include <unistd.h>
-#include <termios.h>
 
 using namespace std;
 using namespace boost::xpressive;
+
+#define UNKNOWN 0
+#define BRANCH 1
+#define LEAF 2
 
 class namesaving_smatch : public smatch
 {
@@ -47,7 +49,7 @@ private:
 
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');
 string trim_one(string str, char c = ' ');
-char getch();
-size_t getstr(char * buffer, const size_t len);
+//char getch();
+//size_t getstr(char * buffer, const size_t len);
 
 #endif // __COMMFUNCS_H

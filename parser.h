@@ -15,7 +15,6 @@
 #ifndef __PARSERC_H
 #define __PARSERC_H
 
-#include <regex.h>
 #include <vector>
 #include <string>
 #include "commfuncs.h"

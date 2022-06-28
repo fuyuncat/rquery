@@ -79,10 +79,10 @@ bool like(string str1, string str2);
 bool reglike(string str, string regstr); 
 //char getch();
 //size_t getstr(char * buffer, const size_t len);
-static string decodeJunction(int junction);
-static string decodeComparator(int comparator);
+string decodeJunction(int junction);
+string decodeComparator(int comparator);
 int findStrArrayId(const vector<string> array, const string member);
-static int anyDataCompare(string str1, string str2, int type);
-static int anyDataCompare(string str1, int comparator, string str2, int type);
+int anyDataCompare(string str1, string str2, int type);
+int anyDataCompare(string str1, int comparator, string str2, int type);
 
 #endif // __COMMFUNCS_H

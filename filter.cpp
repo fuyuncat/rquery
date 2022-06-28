@@ -99,7 +99,7 @@ int FilterC::getRightHeight(){
 // add a NEW preiction into tree
 void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
   // not add any null or UNKNOWN node
-  if (node || node.type ==  UNKNOWN) 
+  if (node || node->type ==  UNKNOWN) 
       return;
   if (type ==  UNKNOWN){ // not assinged
       node->copyTo(this);
@@ -110,8 +110,8 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
       junction = junction;
       comparator = UNKNOWN;   
       leftColId = -1;        
-      leftExpression = null;
-      rightExpression = null;
+      leftExpression = "";
+      rightExpression = "";
       if (leafGrowth){
           rightNode = existingNode;
           rightNode->parentNode = this;
@@ -157,15 +157,15 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
 
 void FilterC::dump(int deep){
   if (type == BRANCH){
-    printf("(%d)%s\n",deep,decodeJunction(junction));
+    printf("(%d)%s\n",deep,decodeJunction(junction).c_str());
     printf("L-");
     leftNode->dump(deep+1);
     printf("R-");
     rightNode->dump(deep+1);
   }else{
-    printf("(%d)%s(%d)",deep,leftExpression,leftColId);
-    printf("%s",decodeComparator(comparator));
-    printf("%s\n",rightExpression);
+    printf("(%d)%s(%d)",deep,leftExpression.c_str(),leftColId);
+    printf("%s",decodeComparator(comparator).c_str());
+    printf("%s\n",rightExpression.c_str());
   }
 }
 

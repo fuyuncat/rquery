@@ -452,7 +452,7 @@ static int anyDataCompare(string str1, int comparator, string str2, int type){
     }else{
       return -101;
     }
-  else if (type == INTEGER){
+  }else if (type == INTEGER){
     if (isInt(str1) && isInt(str2)){
       int d1 = atoi(str1.c_str());
       int d2 = atoi(str2.c_str());

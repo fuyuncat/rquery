@@ -30,9 +30,9 @@ ParserC::~ParserC()
 void ParserC::init()
 {
   analyzedPos = 0;
-  junctionWords = {"AND", "OR"};
-  junctionSplitors = {" AND ", " OR "};
-  comparators = {"=", "!=", ">=", "<=", ">", "<"}; // ">=", "<=" should be before ">", "<"
+  junctionWords.push_back("AND"); junctionWords.push_back("OR");
+  junctionSplitors.push_back(" AND ");junctionSplitors.push_back(" OR ");
+  comparators.push_back("=");comparators.push_back("!=");comparators.push_back(">=");comparators.push_back("<=");comparators.push_back(">");comparators.push_back(("<"); // ">=", "<=" should be before ">", "<"
 }
 
 // return operation type: -1 error; 0: unused; 1: parse; 2:select; 3: filter; 4: group; 5: sort

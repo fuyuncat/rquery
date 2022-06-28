@@ -279,7 +279,7 @@ FilterC* FilterC::cloneMe(){
     node->rightNode->parentNode = node;
   }else{
     node->leftNode = NULL;
-    node->rightNode = NULL
+    node->rightNode = NULL;
   }
   return node;
 }

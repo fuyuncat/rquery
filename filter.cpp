@@ -217,14 +217,14 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
         return metaDataAnzlyzed;
     if (rightNode)
         metaDataAnzlyzed = metaDataAnzlyzed &&  rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
-  }else if (type == Consts.LEAF){
+  }else if (type == LEAF){
     if (m_fieldnames1.size()>0){
       if (leftExpression[0] == '"') {// quoted, treat as expression, otherwise, as columns
         leftExpression = trim_one(leftExpression,'"'); // remove quoters
         leftColId = -1;
       }else {
         if (isInt(leftExpression)){ // check if the name is ID already
-          leftColId = stoi(leftExpression);
+          leftColId = atoi(leftExpression.c_str());
           leftExpression = m_fieldnames1[leftColId];
         }else{
           leftColId = findStrArrayId(m_fieldnames1, leftExpression);
@@ -237,7 +237,7 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
           rightColId = -1;
         }else {
           if (isInt(rightExpression)){ // check if the name is ID already
-            rightColId = stoi(rightExpression);
+            rightColId = atoi(rightExpression.c_str());
             rightExpression = m_fieldnames2[rightColId];
           }catch(Exception e){
             rightColId = findStrArrayId(m_fieldnames2, rightExpression);

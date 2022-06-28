@@ -35,9 +35,9 @@ class ParserC
     FilterC prediction;
     int analyzedPos;
 
-    const static vector<string> junctionWords;
-    const static vector<string> junctionSplitors;
-    const static vector<string> comparators; // ">=", "<=" should be before ">", "<"
+    static vector<string> junctionWords;
+    static vector<string> junctionSplitors;
+    static vector<string> comparators; // ">=", "<=" should be before ">", "<"
 
 
   protected:

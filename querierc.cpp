@@ -34,9 +34,6 @@ QuerierC::~QuerierC()
 
 void QuerierC::init()
 {
-  junctionWords = {"AND", "OR"};
-  junctionSplitors = {" AND ", " OR "};
-  comparators = {"=", "!=", ">=", "<=", ">", "<"}; // ">=", "<=" should be before ">", "<"
   m_searchflags = regex_constants::match_default;
 }
 

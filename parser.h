@@ -33,7 +33,7 @@ class ParserC
     map<string,string> m_queryparts;
     string m_filterString;
     FilterC prediction;
-    int analyzedPos = 0;
+    int analyzedPos;
 
     const static vector<string> junctionWords;
     const static vector<string> junctionSplitors;

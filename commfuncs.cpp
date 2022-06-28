@@ -175,12 +175,12 @@ bool isDouble(const string& str)
 bool isDate(const string& str, string& fmt)
 {
   struct tm tm;
-  for (auto dfmt : {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"}){
+  for (string dfmt : {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"}){
     if (strptime(str.c_str(), dfmt, &tm)){
       fmt = dfmt;
       return true;
     }else{
-      for (auto tfmt : {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"}){
+      for (string tfmt : {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"}){
         if (strptime(str.c_str(), dfmt, &tm)){
           fmt = dfmt;
           return true;

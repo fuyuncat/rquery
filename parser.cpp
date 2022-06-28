@@ -34,9 +34,9 @@ vector<string> ParserC::comparators;
 void ParserC::init()
 {
   analyzedPos = 0;
-  ParserC::junctionWords.push_back("AND"); ParserC::junctionWords.push_back("OR");
-  ParserC::junctionSplitors.push_back(" AND ");ParserC::junctionSplitors.push_back(" OR ");
-  ParserC::comparators.push_back("=");ParserC::comparators.push_back("!=");ParserC::comparators.push_back(">=");ParserC::comparators.push_back("<=");ParserC::comparators.push_back(">");ParserC::comparators.push_back("<"); // ">=", "<=" should be before ">", "<"
+  junctionWords.push_back("AND"); junctionWords.push_back("OR");
+  junctionSplitors.push_back(" AND ");junctionSplitors.push_back(" OR ");
+  comparators.push_back("=");comparators.push_back("!=");comparators.push_back(">=");comparators.push_back("<=");comparators.push_back(">");comparators.push_back("<"); // ">=", "<=" should be before ">", "<"
 }
 
 // return operation type: -1 error; 0: unused; 1: parse; 2:select; 3: filter; 4: group; 5: sort

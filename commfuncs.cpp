@@ -294,7 +294,7 @@ size_t getstr(char * buffer, const size_t len)
 }
 */
 
-static string decodeJunction(int junction){
+string decodeJunction(int junction){
   switch (junction){
   case AND:
     return "AND";
@@ -305,7 +305,7 @@ static string decodeJunction(int junction){
   }
 }
 
-static string decodeComparator(int comparator){
+string decodeComparator(int comparator){
   switch (comparator){
   case EQ:
     return "=";
@@ -341,7 +341,7 @@ int findStrArrayId(const vector<string> array, const string member)
 // compare data according to data type
 // @return int str1 < str2: -1; str1 == str2:0; str1 > str2: 1
 //             error -101~-110 -101:invalid data according to data type; -102: data type not supported
-static int anyDataCompare(string str1, string str2, int type){
+int anyDataCompare(string str1, string str2, int type){
   if (str1.length() == 0 && str2.length() == 0)
     return 0;
   else if (str1.length() == 0)
@@ -428,7 +428,7 @@ static int anyDataCompare(string str1, string str2, int type){
 // compare data according to data type
 // @return int 0: false; 1: true  
 //             error -101~-110 -101:invalid data according to data type; -102: data type not supported
-static int anyDataCompare(string str1, int comparator, string str2, int type){
+int anyDataCompare(string str1, int comparator, string str2, int type){
   if (type == LONG){
     if (isLong(str1) && isLong(str2)){
       long d1 = atol(str1.c_str());

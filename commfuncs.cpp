@@ -376,8 +376,8 @@ static int anyDataCompare(string str1, string str2, int type){
     }
   }else if (type == DOUBLE){
     if (isDouble(str1) && isDouble(str2)){
-      double d1 = atod(str1.c_str());
-      double d2 = atod(str2.c_str());
+      double d1 = atof(str1.c_str());
+      double d2 = atof(str2.c_str());
       if (d1 < d2)
         return -1;
       else if (d1 == d2)
@@ -478,8 +478,8 @@ static int anyDataCompare(string str1, int comparator, string str2, int type){
     }
   }else if (type == DOUBLE){
     if (isDouble(str1) && isDouble(str2)){
-      double d1 = atod(str1.c_str());
-      double d2 = atod(str2.c_str());
+      double d1 = atof(str1.c_str());
+      double d2 = atof(str2.c_str());
       switch (comparator){
       case EQ:
         return d1 == d2?1:0;

@@ -239,7 +239,7 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
           if (isInt(rightExpression)){ // check if the name is ID already
             rightColId = atoi(rightExpression.c_str());
             rightExpression = m_fieldnames2[rightColId];
-          }catch(Exception e){
+          }else{
             rightColId = findStrArrayId(m_fieldnames2, rightExpression);
           }
         }
@@ -273,7 +273,7 @@ FilterC* FilterC::cloneMe(){
   if (type == BRANCH){
     node->leftNode = new FilterC();
     node->leftNode = leftNode->cloneMe();
-    node.rightNode = new FilterC();
+    node->rightNode = new FilterC();
     node->rightNode = rightNode->cloneMe();
     node->leftNode->parentNode = node;
     node->rightNode->parentNode = node;
@@ -299,7 +299,7 @@ void FilterC::copyTo(FilterC* node){
     if (type == BRANCH){
       if (leftNode){
         node->leftNode = new FilterC();
-        leftNode.copyTo(node->leftNode);
+        leftNode->copyTo(node->leftNode);
         node->leftNode->parentNode = node;
       }else
         node->leftNode = NULL;
@@ -316,7 +316,7 @@ void FilterC::copyTo(FilterC* node){
 
 // get all involved colIDs in this prediction
 std::set<int> FilterC::getAllColIDs(int side){
-  std::set<int> colIDs = new HashSet();
+  std::set<int> colIDs;
   if (type == BRANCH){
     if (leftNode){
       std::set<int> foo = leftNode->getAllColIDs(side);
@@ -358,14 +358,14 @@ map<int,string> FilterC::buildMap(){
 bool FilterC::calculateExpression(){
   bool result=true;
   if (type == BRANCH){
-    if (leftNode == null || rightNode == null)
+    if (!leftNode || !rightNode)
       return false;
     if (junction == AND)
       result = leftNode->calculateExpression() && rightNode->calculateExpression();
     else
       result = leftNode->calculateExpression() || rightNode->calculateExpression();
   }else if(type == LEAF){
-    return CommUtility.anyDataCompare(leftExpression, comparator, rightExpression, STRING) == 1;
+    return anyDataCompare(leftExpression, comparator, rightExpression, STRING) == 1;
   }else{ // no predication means alway true
     return true;
   }
@@ -375,11 +375,11 @@ bool FilterC::calculateExpression(){
 // get all involved colIDs in this prediction
 int FilterC::size(){
   int size = 0;
-  if (this.type == BRANCH){
+  if (type == BRANCH){
     if (leftNode)
-      size += leftNode.size();
+      size += leftNode->size();
     if (rightNode)
-      size += rightNode.size();
+      size += rightNode->size();
   }else if (type == LEAF)
     size = 1;
   else 
@@ -420,7 +420,7 @@ bool FilterC::remove(FilterC* node){
       leftNode = NULL;
       return true;
     }else{
-      removed = removed || leftNode.remove(node);
+      removed = removed || leftNode->remove(node);
       if (removed)
         return removed;
     }
@@ -432,7 +432,7 @@ bool FilterC::remove(FilterC* node){
       rightNode = NULL;
       return true;
     }else{
-      removed = removed || rightNode.remove(node);
+      removed = removed || rightNode->remove(node);
       if (removed)
         return removed;
     }
@@ -463,9 +463,9 @@ void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string
     return;
   if (type == BRANCH){
     if (leftNode)
-      leftNode.fillDataForColumns(dataList, columns);
+      leftNode->fillDataForColumns(dataList, columns);
     if (rightNode)
-      rightNode.fillDataForColumns(dataList, columns);
+      rightNode->fillDataForColumns(dataList, columns);
   }else if (type == LEAF && leftColId >= 0)
     dataList.insert( pair<string,string>(columns[leftColId],rightExpression) );
 }

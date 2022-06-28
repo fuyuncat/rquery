@@ -175,8 +175,8 @@ bool isDouble(const string& str)
 bool isDate(const string& str, string& fmt)
 {
   struct tm tm;
-  std::set<string> alldatefmt = {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"};
-  std::set<string> alltimefmt = {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"};
+  std::set<string> alldatefmt{"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"};
+  std::set<string> alltimefmt{"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"};
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
     if (strptime(str.c_str(), *id, &tm)){
       fmt = *id;

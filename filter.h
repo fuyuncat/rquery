@@ -53,7 +53,7 @@ class FilterC
     void copyTo(FilterC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
-    bool calculateExpression(); // calculate an expression prediction
+    bool compareExpression(); // calculate an expression prediction
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin
     bool remove(FilterC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction

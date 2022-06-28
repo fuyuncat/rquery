@@ -355,15 +355,15 @@ map<int,string> FilterC::buildMap(){
 }
 
 // calculate an expression prediction
-bool FilterC::calculateExpression(){
+bool FilterC::compareExpression(){
   bool result=true;
   if (type == BRANCH){
     if (!leftNode || !rightNode)
       return false;
     if (junction == AND)
-      result = leftNode->calculateExpression() && rightNode->calculateExpression();
+      result = leftNode->compareExpression() && rightNode->compareExpression();
     else
-      result = leftNode->calculateExpression() || rightNode->calculateExpression();
+      result = leftNode->compareExpression() || rightNode->compareExpression();
   }else if(type == LEAF){
     return anyDataCompare(leftExpression, comparator, rightExpression, STRING) == 1;
   }else{ // no predication means alway true

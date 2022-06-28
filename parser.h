@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include "commfuncs.h"
+#include "filter.h"
 
 class ParserC
 {
@@ -27,11 +28,21 @@ class ParserC
     ~ParserC();
 
     map<string,string> parseparam(string parameterstr);
+
   private:
+    map<string,string> m_queryparts;
+    string m_filterString;
+    FilterC prediction;
+    int analyzedPos = 0;
+
+    const static vector<string> junctionWords;
+    const static vector<string> junctionSplitors;
+    const static vector<string> comparators; // ">=", "<=" should be before ">", "<"
+
 
   protected:
     void init();
-    map<string,string> parsequery(string raw);
+    // map<string,string> parsequery(string raw);
 };
 
 #endif // __PARSERC_H

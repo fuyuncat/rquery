@@ -14,6 +14,9 @@
 #include <stdio.h>
 //#include <unistd.h>
 //#include <termios.h>
+#include <ctime>
+#include <boost/algorithm/string.hpp>
+#include <stdbool.h>
 #include "commfuncs.h"
 
 namesaving_smatch::namesaving_smatch()
@@ -105,6 +108,132 @@ string trim_one(string str, char c)
   return newstr;
 }
 
+bool isNumber(const string& str)
+{
+    for (char const &c : str) {
+        if (std::isdigit(c) == 0) return false;
+    }
+    return true;
+}
+
+bool isInt(const string& str)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+
+  try{
+    boost::lexical_cast<int>(str);
+  }catch (bad_lexical_cast &){
+    return false;
+  }
+
+  return true;
+}
+
+bool isLong(const string& str)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+
+  try{
+    boost::lexical_cast<long>(str);
+  }catch (bad_lexical_cast &){
+    return false;
+  }
+
+  return true;
+}
+
+bool isFloat(const string& str)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+
+  try{
+    boost::lexical_cast<float>(str);
+  }catch (bad_lexical_cast &){
+    return false;
+  }
+
+  return true;
+}
+
+bool isDouble(const string& str)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+
+  try{
+    boost::lexical_cast<double>(str);
+  }catch (bad_lexical_cast &){
+    return false;
+  }
+
+  return true;
+}
+
+bool isDate(const string& str, string& fmt)
+{
+  struct tm tm;
+  for (auto&& dfmt : {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"}){
+    if (strptime(str.c_str(), dfmt, &tm)){
+      fmt = dfmt;
+      return true;
+    }else{
+      for (auto&& tfmt : {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"}){
+        if (strptime(str.c_str(), dfmt, &tm)){
+          fmt = dfmt;
+          return true;
+        }else if (strptime(str.c_str(), dfmt+":"+tfmt, &tm)){
+          fmt = dfmt+":"+tfmt;
+          return true;
+        }else if (strptime(str.c_str(), tfmt+":"+dfmt, &tm)){
+          fmt = tfmt+":"+dfmt;
+          return true;
+        }else if (strptime(str.c_str(), dfmt+" "+tfmt, &tm)){
+          fmt = dfmt+" "+tfmt;
+          return true;
+        }else if (strptime(str.c_str(), tfmt+" "+dfmt, &tm)){
+          fmt = tfmt+" "+dfmt;
+          return true;
+        }else
+          continue;
+      }
+    }
+  }
+  return false;
+}
+
+bool wildmatch(const char *candidate, const char *pattern, int p, int c, char multiwild='*', char singlewild='?', char escape='\\') {
+  if (pattern[p] == '\0') {
+    return candidate[c] == '\0';
+  }else if (pattern[p] == escape && pattern[p+1] != '\0' && (pattern[p+1] == multiwild || pattern[p+1] == singlewild)) {
+    return wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape);
+  } else if ((pattern[p] == multiwild && p == 0) || (pattern[p] == multiwild && p > 0 && pattern[p] != escape)) {
+    for (; candidate[c] != '\0'; c++) {
+      if (wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape))
+        return true;
+    }
+    return wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape);
+  } else if ((pattern[p] != '?' || (p > 0 && pattern[p-1] == escape)) && pattern[p] != candidate[c]) {
+    return false;
+  }  else {
+    return wildmatch(candidate, pattern, p+1, c+1, multiwild, singlewild, escape);
+  }
+}
+
+bool like(string str1, string str2)
+{
+  return wildmatch(str1.c_str(), str2.c_str(), 0, 0);
+}
+
+bool reglike(string str, string regstr)
+{
+  sregex regexp = sregex::compile(regstr);
+  namesaving_smatch matches(regstr);
+  return regex_search(str, matches, regexp);
+}
+
 /*
 char getch() {
   char buf = 0;
@@ -159,3 +288,287 @@ size_t getstr(char * buffer, const size_t len)
   return (reads);
 }
 */
+
+static string decodeJunction(int junction){
+  switch (junction){
+  case AND:
+    return "AND";
+  case OR:
+    return "OR";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+static string decodeComparator(int comparator){
+  switch (comparator){
+  case EQ:
+    return "=";
+  case LT:
+    return ">";
+  case ST:
+    return "<";
+  case NEQ:
+    return "!=";
+  case LE:
+    return ">=";
+  case SE:
+    return "<=";
+  case LIKE:
+    return "LIKE";
+  case REGLIKE:
+    return "REGLIKE";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+int findStrArrayId(const vector<string> array, const string member)
+{
+  for (int i=0; i<array.size(); i++){
+    //if (array[i].compare(member) == 0)
+    if (boost::iequals(array[i], member))
+      return i;
+  }
+  return -1;
+}
+
+// compare data according to data type
+// @return int str1 < str2: -1; str1 == str2:0; str1 > str2: 1
+//             error -101~-110 -101:invalid data according to data type; -102: data type not supported
+static int anyDataCompare(string str1, string str2, int type){
+  if (str1.length() == 0 && str2.length() == 0)
+    return 0;
+  else if (str1.length() == 0)
+    return -1;
+  else if (str2.length() == 0)
+    return 1;
+  if (type == LONG){
+    if (IsLong(str1) && IsLong(str2)){
+      long d1 = stol(str1);
+      long d2 = stol(str2);
+      if (d1 < d2)
+        return -1;
+      else if (d1 == d2)
+        return 0;
+      else
+        return 1;
+    }else{
+      return -101;
+    }
+  }else if (type == INTEGER){
+    if (isInt(str1) && isInt(str2)){
+      int d1 = stoi(str1);
+      int d2 = stoi(str2);
+      if (d1 < d2)
+        return -1;
+      else if (d1 == d2)
+        return 0;
+      else
+        return 1;
+    }else{
+      return -101;
+    }
+  }else if (type == DOUBLE){
+    if (isDouble(str1) && isDouble(str2)){
+      double d1 = stod(str1);
+      double d2 = stod(str2);
+      if (d1 < d2)
+        return -1;
+      else if (d1 == d2)
+        return 0;
+      else
+        return 1;
+    }else{
+      return -101;
+    }
+  }else if (type == DATE || type == TIMESTAMP){
+    string fmt1, fmt2;
+    if (isDate(str1,fmt1) && isDate(str2,fmt2)){
+      struct tm tm1, tm2;
+      if (strptime(str1.c_str(), fmt1, &tm1) && strptime(str2.c_str(), fmt2, &tm2)){
+        time_t t1 = mktime(tm1);
+        time_t t2 = mktime(tm2);
+        double diffs = difftime(t1, t2);
+        if (diffs < 0)
+          return -1;
+        else if (diffs > 0)
+          return 1;
+        else return 0;
+      }
+    }else{
+      return -101;
+    }
+  }else if (type == BOOLEAN){
+    if (isInt(str1) && isInt(str2)){
+      // convert boolean to int to compare. false => 0; true => 1
+      int d1 = stoi(str1);
+      int d2 = stoi(str2);
+      if (d1 < d2)
+        return -1;
+      else if (d1 == d2)
+        return 0;
+      else
+        return 1;
+    }catch (Exception e){
+      e.printStackTrace();
+      return -101;
+    }
+  }else if (type == STRING){
+    return str1.compare(str2);
+  }else {
+    return -102;
+  }
+}
+
+// compare data according to data type
+// @return int 0: false; 1: true  
+//             error -101~-110 -101:invalid data according to data type; -102: data type not supported
+static int anyDataCompare(string str1, int comparator, string str2, int type){
+  if (type == LONG){
+    if (IsLong(str1) && IsLong(str2)){
+      long d1 = stol(str1);
+      long d2 = stol(str2);
+      switch (comparator){
+      case EQ:
+        return d1 == d2?1:0;
+      case LT:
+        return d1 > d2?1:0;
+      case ST:
+        return d1 < d2?1:0;
+      case NEQ:
+        return d1 != d2?1:0;
+      case LE:
+        return d1 >= d2?1:0;
+      case SE:
+        return d1 <= d2?1:0;
+      default:
+        return -101;
+      }
+    }else{
+      return -101;
+    }
+  else if (type == INTEGER){
+    if (IsInt(str1) && IsInt(str2)){
+      int d1 = stoi(str1);
+      int d2 = stoi(str2);
+      switch (comparator){
+      case EQ:
+        return d1 == d2?1:0;
+      case LT:
+        return d1 > d2?1:0;
+      case ST:
+        return d1 < d2?1:0;
+      case NEQ:
+        return d1 != d2?1:0;
+      case LE:
+        return d1 >= d2?1:0;
+      case SE:
+        return d1 <= d2?1:0;
+      default:
+        return -101;
+      }
+    }else{
+      return -101;
+    }
+  }else if (type == DOUBLE){
+    if (isDouble(str1) && isDouble(str2)){
+      double d1 = stod(str1);
+      double d2 = stod(str2);
+      switch (comparator){
+      case EQ:
+        return d1 == d2?1:0;
+      case LT:
+        return d1 > d2?1:0;
+      case ST:
+        return d1 < d2?1:0;
+      case NEQ:
+        return d1 != d2?1:0;
+      case LE:
+        return d1 >= d2?1:0;
+      case SE:
+        return d1 <= d2?1:0;
+      default:
+        return -101;
+      }
+    }else{
+      return -101;
+    }
+  }else if (type == DATE || type == TIMESTAMP){
+    string fmt1, fmt2;
+    if (isDate(str1,fmt1) && isDate(str2,fmt2)){
+      struct tm tm1, tm2;
+      if (strptime(str1.c_str(), fmt1, &tm1) && strptime(str2.c_str(), fmt2, &tm2)){
+        time_t t1 = mktime(tm1);
+        time_t t2 = mktime(tm2);
+        double diffs = difftime(t1, t2);
+        switch (comparator){
+        case EQ:
+          return diffs==0?1:0;
+        case LT:
+          return diffs>0?1:0;
+        case ST:
+          return diffs<0?1:0;
+        case NEQ:
+          return diffs!=0?1:0;
+        case LE:
+          return diffs>=0?1:0;
+        case SE:
+          return diffs<=0?1:0;
+        default:
+          return -101;
+        }
+      }
+    }else{
+      return -101;
+    }
+  }else if (type == BOOLEAN){
+    if (isInt(str1) && isInt(str2)){
+      // convert boolean to int to compare. false => 0; true => 1
+      int d1 = stoi(str1);
+      int d2 = stoi(str2);
+      switch (comparator){
+      case EQ:
+        return d1 == d2?1:0;
+      case LT:
+        return d1 > d2?1:0;
+      case ST:
+        return d1 < d2?1:0;
+      case NEQ:
+        return d1 != d2?1:0;
+      case LE:
+        return d1 >= d2?1:0;
+      case SE:
+        return d1 <= d2?1:0;
+      default:
+        return -101;
+      }
+    }else{
+      return -101;
+    }
+  }else if (type == STRING){
+    switch (comparator){
+    case EQ:
+      return str1.compare(str2)==0?1:0;
+    case LT:
+      return str1.compare(str2)>0?1:0;
+    case ST:
+      return str1.compare(str2)<0?1:0;
+    case NEQ:
+      return str1.compare(str2)!=0?1:0;
+    case LE:
+      return str1.compare(str2)>=0?1:0;
+    case SE:
+      return str1.compare(str2)<=0?1:0;
+    case LIKE:
+      return like(str1, str2);
+    case REGLIKE:
+      return reglike(str1, str2);
+    default:
+      return -101;
+    }
+  }else {
+      return -102;
+  }
+  return -102;
+}

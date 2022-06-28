@@ -177,8 +177,8 @@ void FilterC::dump(){
 bool FilterC::containsColId(int colId){
   bool contain = false;
   if (type == BRANCH){
-    contain = contain || leftNode.containsColId(colId);
-    contain = contain || rightNode.containsColId(colId);
+    contain = contain || leftNode->containsColId(colId);
+    contain = contain || rightNode->containsColId(colId);
   }else
     contain = (leftColId == colId);
 
@@ -187,7 +187,7 @@ bool FilterC::containsColId(int colId){
 
 // detect if predication contains special colId    
 FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
-    Prediction node = null;
+    FilterC* node;
     if (type == BRANCH){
       if (leftFirst){
         if (leftNode)
@@ -211,11 +211,11 @@ FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
 bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fieldnames2){
   if (type == BRANCH){
     metaDataAnzlyzed = true;
-    if (leftNode != null)
+    if (leftNode)
         metaDataAnzlyzed = metaDataAnzlyzed && leftNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
     if (!metaDataAnzlyzed)
         return metaDataAnzlyzed;
-    if (rightNode != null)
+    if (rightNode)
         metaDataAnzlyzed = metaDataAnzlyzed &&  rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
   }else if (type == Consts.LEAF){
     if (m_fieldnames1.size()>0){

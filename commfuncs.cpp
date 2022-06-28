@@ -176,8 +176,10 @@ bool isDate(const string& str, string& fmt)
 {
   struct tm tm;
   std::set<string> alldatefmt, alltimefmt;
-  alldatefmt = {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"};
-  alltimefmt = {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"};
+  alldatefmt.insert("%Y-%m-%d");alldatefmt.insert("%Y/%m/%d");alldatefmt.insert("%d/%m/%Y");alldatefmt.insert("%d-%m-%Y");
+  alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%h:%M:%S");alltimefmt.insert("%H/%M/%S");alltimefmt.insert("%h/%M/%S");
+  //alldatefmt = {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"};
+  //alltimefmt = {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"};
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
     if (strptime(str.c_str(), *id, &tm)){
       fmt = *id;

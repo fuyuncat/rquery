@@ -27,6 +27,8 @@ ParserC::~ParserC()
 
 }
 
+vector<string> ParserC::junctionWords;
+
 void ParserC::init()
 {
   analyzedPos = 0;

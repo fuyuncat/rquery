@@ -181,24 +181,24 @@ bool isDate(const string& str, string& fmt)
   //alldatefmt = {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"};
   //alltimefmt = {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"};
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
-    if (strptime(str.c_str(), *id, &tm)){
-      fmt = *id;
+    if (strptime(str.c_str(), (*id).c_str(), &tm)){
+      fmt = (*id);
       return true;
     }else{
       for (std::set<string>::iterator it = alldatefmt.begin(); it != alldatefmt.end(); ++it) {
-        if (strptime(str.c_str(), *it, &tm)){
+        if (strptime(str.c_str(), (*it).c_str(), &tm)){
           fmt = (*it);
           return true;
-        }else if (strptime(str.c_str(), (*id)+":"+(*it), &tm)){
+        }else if (strptime(str.c_str(), ((*id)+":"+(*it)).c_str(), &tm)){
           fmt = (*id)+":"+(*it);
           return true;
-        }else if (strptime(str.c_str(), (*it)+":"+(*id), &tm)){
+        }else if (strptime(str.c_str(), ((*it)+":"+(*id)).c_str(), &tm)){
           fmt = (*it)+":"+*id;
           return true;
-        }else if (strptime(str.c_str(), (*id)+" "+(*it), &tm)){
+        }else if (strptime(str.c_str(), ((*id)+" "+(*it)).c_str(), &tm)){
           fmt = (*id)+" "+(*it);
           return true;
-        }else if (strptime(str.c_str(), (*it)+" "+(*id), &tm)){
+        }else if (strptime(str.c_str(), ((*it)+" "+(*id)).c_str(), &tm)){
           fmt = (*it)+" "+(*id);
           return true;
         }else
@@ -391,7 +391,7 @@ static int anyDataCompare(string str1, string str2, int type){
     string fmt1, fmt2;
     if (isDate(str1,fmt1) && isDate(str2,fmt2)){
       struct tm tm1, tm2;
-      if (strptime(str1.c_str(), fmt1, &tm1) && strptime(str2.c_str(), fmt2, &tm2)){
+      if (strptime(str1.c_str(), fmt1.c_str(), &tm1) && strptime(str2.c_str(), fmt2.c_str(), &tm2)){
         time_t t1 = mktime(tm1);
         time_t t2 = mktime(tm2);
         double diffs = difftime(t1, t2);
@@ -503,7 +503,7 @@ static int anyDataCompare(string str1, int comparator, string str2, int type){
     string fmt1, fmt2;
     if (isDate(str1,fmt1) && isDate(str2,fmt2)){
       struct tm tm1, tm2;
-      if (strptime(str1.c_str(), fmt1, &tm1) && strptime(str2.c_str(), fmt2, &tm2)){
+      if (strptime(str1.c_str(), fmt1.c_str(), &tm1) && strptime(str2.c_str(), fmt2.c_str(), &tm2)){
         time_t t1 = mktime(tm1);
         time_t t2 = mktime(tm2);
         double diffs = difftime(t1, t2);

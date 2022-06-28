@@ -349,9 +349,9 @@ static int anyDataCompare(string str1, string str2, int type){
   else if (str2.length() == 0)
     return 1;
   if (type == LONG){
-    if (IsLong(str1) && IsLong(str2)){
-      long d1 = stol(str1);
-      long d2 = stol(str2);
+    if (isLong(str1) && isLong(str2)){
+      long d1 = atol(str1);
+      long d2 = atol(str2);
       if (d1 < d2)
         return -1;
       else if (d1 == d2)
@@ -363,8 +363,8 @@ static int anyDataCompare(string str1, string str2, int type){
     }
   }else if (type == INTEGER){
     if (isInt(str1) && isInt(str2)){
-      int d1 = stoi(str1);
-      int d2 = stoi(str2);
+      int d1 = atoi(str1);
+      int d2 = atoi(str2);
       if (d1 < d2)
         return -1;
       else if (d1 == d2)
@@ -376,8 +376,8 @@ static int anyDataCompare(string str1, string str2, int type){
     }
   }else if (type == DOUBLE){
     if (isDouble(str1) && isDouble(str2)){
-      double d1 = stod(str1);
-      double d2 = stod(str2);
+      double d1 = atod(str1);
+      double d2 = atod(str2);
       if (d1 < d2)
         return -1;
       else if (d1 == d2)
@@ -407,8 +407,8 @@ static int anyDataCompare(string str1, string str2, int type){
   }else if (type == BOOLEAN){
     if (isInt(str1) && isInt(str2)){
       // convert boolean to int to compare. false => 0; true => 1
-      int d1 = stoi(str1);
-      int d2 = stoi(str2);
+      int d1 = atoi(str1);
+      int d2 = atoi(str2);
       if (d1 < d2)
         return -1;
       else if (d1 == d2)
@@ -431,9 +431,9 @@ static int anyDataCompare(string str1, string str2, int type){
 //             error -101~-110 -101:invalid data according to data type; -102: data type not supported
 static int anyDataCompare(string str1, int comparator, string str2, int type){
   if (type == LONG){
-    if (IsLong(str1) && IsLong(str2)){
-      long d1 = stol(str1);
-      long d2 = stol(str2);
+    if (isLong(str1) && isLong(str2)){
+      long d1 = atol(str1);
+      long d2 = atol(str2);
       switch (comparator){
       case EQ:
         return d1 == d2?1:0;
@@ -455,8 +455,8 @@ static int anyDataCompare(string str1, int comparator, string str2, int type){
     }
   else if (type == INTEGER){
     if (IsInt(str1) && IsInt(str2)){
-      int d1 = stoi(str1);
-      int d2 = stoi(str2);
+      int d1 = atoi(str1);
+      int d2 = atoi(str2);
       switch (comparator){
       case EQ:
         return d1 == d2?1:0;
@@ -478,8 +478,8 @@ static int anyDataCompare(string str1, int comparator, string str2, int type){
     }
   }else if (type == DOUBLE){
     if (isDouble(str1) && isDouble(str2)){
-      double d1 = stod(str1);
-      double d2 = stod(str2);
+      double d1 = atod(str1);
+      double d2 = atod(str2);
       switch (comparator){
       case EQ:
         return d1 == d2?1:0;
@@ -530,8 +530,8 @@ static int anyDataCompare(string str1, int comparator, string str2, int type){
   }else if (type == BOOLEAN){
     if (isInt(str1) && isInt(str2)){
       // convert boolean to int to compare. false => 0; true => 1
-      int d1 = stoi(str1);
-      int d2 = stoi(str2);
+      int d1 = atoi(str1);
+      int d2 = atoi(str2);
       switch (comparator){
       case EQ:
         return d1 == d2?1:0;

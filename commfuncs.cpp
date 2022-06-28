@@ -392,8 +392,8 @@ static int anyDataCompare(string str1, string str2, int type){
     if (isDate(str1,fmt1) && isDate(str2,fmt2)){
       struct tm tm1, tm2;
       if (strptime(str1.c_str(), fmt1.c_str(), &tm1) && strptime(str2.c_str(), fmt2.c_str(), &tm2)){
-        time_t t1 = mktime(tm1);
-        time_t t2 = mktime(tm2);
+        time_t t1 = mktime(&tm1);
+        time_t t2 = mktime(&tm2);
         double diffs = difftime(t1, t2);
         if (diffs < 0)
           return -1;
@@ -415,8 +415,7 @@ static int anyDataCompare(string str1, string str2, int type){
         return 0;
       else
         return 1;
-    }catch (Exception e){
-      e.printStackTrace();
+    }else{
       return -101;
     }
   }else if (type == STRING){
@@ -454,7 +453,7 @@ static int anyDataCompare(string str1, int comparator, string str2, int type){
       return -101;
     }
   else if (type == INTEGER){
-    if (IsInt(str1) && IsInt(str2)){
+    if (isInt(str1) && isInt(str2)){
       int d1 = atoi(str1.c_str());
       int d2 = atoi(str2.c_str());
       switch (comparator){
@@ -504,8 +503,8 @@ static int anyDataCompare(string str1, int comparator, string str2, int type){
     if (isDate(str1,fmt1) && isDate(str2,fmt2)){
       struct tm tm1, tm2;
       if (strptime(str1.c_str(), fmt1.c_str(), &tm1) && strptime(str2.c_str(), fmt2.c_str(), &tm2)){
-        time_t t1 = mktime(tm1);
-        time_t t2 = mktime(tm2);
+        time_t t1 = mktime(&tm1);
+        time_t t2 = mktime(&tm2);
         double diffs = difftime(t1, t2);
         switch (comparator){
         case EQ:

@@ -315,15 +315,15 @@ void FilterC::copyTo(FilterC* node){
 }
 
 // get all involved colIDs in this prediction
-set<int> FilterC::getAllColIDs(int side){
-  set<int> colIDs = new HashSet();
+std::set<int> FilterC::getAllColIDs(int side){
+  std::set<int> colIDs = new HashSet();
   if (type == BRANCH){
     if (leftNode){
-      set<int> foo = leftNode->getAllColIDs(side);
+      std::set<int> foo = leftNode->getAllColIDs(side);
       colIDs.insert(foo.begin(), foo.end());
     }
     if (rightNode){
-      set<int> foo = rightNode->getAllColIDs(side);
+      std::set<int> foo = rightNode->getAllColIDs(side);
       colIDs.insert(foo.begin(), foo.end());
     }
   }else if(type == LEAF){

@@ -15,8 +15,6 @@
 #ifndef __FILTERC_H
 #define __FILTERC_H
 
-#include <vector>
-#include <string>
 #include "commfuncs.h"
 
 class FilterC;
@@ -53,7 +51,7 @@ class FilterC
     bool columnsAnalyzed();
     FilterC* cloneMe();
     void copyTo(FilterC* node);
-    set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
+    std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
     bool calculateExpression(); // calculate an expression prediction
     int size(); // get all involved colIDs in this prediction

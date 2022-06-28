@@ -110,8 +110,8 @@ string trim_one(string str, char c)
 
 bool isNumber(const string& str)
 {
-    for (char const &c : str) {
-        if (std::isdigit(c) == 0) return false;
+    for (int i=0; i<str.length(); i++) {
+        if (std::isdigit(str[i]) == 0) return false;
     }
     return true;
 }
@@ -175,12 +175,12 @@ bool isDouble(const string& str)
 bool isDate(const string& str, string& fmt)
 {
   struct tm tm;
-  for (auto&& dfmt : {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"}){
+  for (auto dfmt : {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"}){
     if (strptime(str.c_str(), dfmt, &tm)){
       fmt = dfmt;
       return true;
     }else{
-      for (auto&& tfmt : {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"}){
+      for (auto tfmt : {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"}){
         if (strptime(str.c_str(), dfmt, &tm)){
           fmt = dfmt;
           return true;

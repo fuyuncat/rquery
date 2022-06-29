@@ -69,7 +69,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
         foundName = true;
       }
     if (!foundName)
-      m_fieldnames.push_back("?");
+      m_fieldnames.push_back("@field"+to_string(i));
   }
 }
 
@@ -111,8 +111,11 @@ int QuerierC::searchNext()
     vector<string> matcheddata;
     for (int i=0; i<matches.size(); i++)
       matcheddata.push_back(matches[i]);
-    if (m_fieldnames.size() == 0)
+    if (m_fieldnames.size() == 0){
       pairFiledNames(matches);
+      if (m_filter)
+        m_filter->analyzeColumns(m_fieldnames, m_fieldnames);
+    }
     if (matchFilter(matcheddata, m_filter))
       m_results.push_back(matcheddata);
     //m_results.push_back(matches);

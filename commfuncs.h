@@ -69,9 +69,9 @@ private:
     vector<string> m_names;
 };
 
-template<typename ... Args>
+//template<typename ... Args>
 
-string string_format( const string& format, Args ... args );
+//string string_format( const string& format, Args ... args );
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');
 string trim_one(string str, char c = ' ');
 string trim(string str, char c = ' ');

@@ -87,6 +87,9 @@ int main(int argc, char *argv[])
   if ( argc < 3 ){
     bool namePrinted = false;
 
+GlobalVars gv0;
+gv0.setVars(16384*2);
+
     GlobalVars gv;
     printf("g_inputbuffer:%d\n",gv.g_inputbuffer);
     const size_t cache_length = gv.g_inputbuffer;

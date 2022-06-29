@@ -65,9 +65,6 @@ void GlobalVars::setVars(size_t inputbuffer){
   g_inputbuffer = inputbuffer;
 }
 
-GlobalVars gv;
-gv.setVars(16384*2);
-
 vector<string>::const_iterator namesaving_smatch::names_begin() const
 {
     return m_names.begin();

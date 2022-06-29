@@ -35,6 +35,7 @@ QuerierC::~QuerierC()
 void QuerierC::init()
 {
   m_filter = NULL;
+  m_rawstr = "";
   m_searchflags = regex_constants::match_default;
 }
 
@@ -52,6 +53,7 @@ void QuerierC::assignFilter(FilterC* filter)
 void QuerierC::appendrawstr(string rawstr)
 {
   m_rawstr.append(rawstr);
+  printf("Appended %s\n", m_rawstr.c_str());
 }
 
 void QuerierC::setrawstr(string rawstr)
@@ -111,7 +113,6 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
 int QuerierC::searchNext()
 {
   //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
-  printf("searching %s\n", m_rawstr.c_str());
   namesaving_smatch matches(m_regexstr);
   //smatch matches;
   int found = 0;

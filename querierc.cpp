@@ -111,6 +111,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
 int QuerierC::searchNext()
 {
   //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
+  printf("searching %s\n", m_rawstr.c_str());
   namesaving_smatch matches(m_regexstr);
   //smatch matches;
   int found = 0;

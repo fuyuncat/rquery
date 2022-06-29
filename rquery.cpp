@@ -18,11 +18,7 @@
 //\"185.7.214.104\" 10.50.26.20 AbC "
 // echo "\"185.7.214.104\" 10.50.26.20 cBA asa
 //\"185.7.214.104\" 10.50.26.20 AbC "|./rquery "parse /\\\"(?P<origip>[^\n]*)\\\" (?P<host>\S+) (?P<value>(?i)abc|cba|\/)/|select origip"
-// ./rquery "parse /\\\"(?P<origip>.*)\\\" (?P<host>\S+) (?P<value>(?i)abc|cba|\/).*/|select origip" "\"185.7.214.104\" 10.50.26.20 cBA asa"
-// ./rquery "parse /\\\"(?P<origip>.*)\\\" (?P<host>\S+) (?P<value>(?i)(abc|cba|\/))/|select origip" "\"185.7.214.104\" 10.50.26.20 aBc"
-// ./rquery "\"(?P<origip>.*)\" (?P<host>\S+)" "\"185.7.214.104\" 10.50.26.20"
-// ./rquery "\"(?P<origip>.*)\" (?P<host>\S+) \S+ (?P<user>\S+) \[(?P<time>.+)\] \"(?P<request>.*)\" (?P<status>[0-9]+) (?P<size>\S+) \"(?P<referrer>.*)\" \"(?P<agent>.*)\"" "\"185.7.214.104\" 10.50.26.20 - - [23/Jun/2022:06:47:41 +0100] \"GET /actuator/gateway/routes HTTP/1.1\" 302 239 \"http://108.128.20.93:80/actuator/gateway/routes\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36\""
-// ./rquery "\"(?P<origip>.*)\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>.+)\] \"(?P<request>.*)\" (?P<status>[0-9]+) (?P<size>\S+) \"(?P<referrer>.*)\" \"(?P<agent>.*)\"" "\"185.7.214.104\" 10.50.26.20 - - [23/Jun/2022:06:47:41 +0100] \"GET /actuator/gateway/routes HTTP/1.1\" 302 239 \"http://108.128.20.93:80/actuator/gateway/routes\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36\""
+// ./rquery "parse /\\\"(?P<origip>[^\n]*)\\\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>.+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>.*)\\\" \\\"(?P<agent>.*)\\\"/|filter origip like '185.7.214.104*'" "\"185.7.214.104\" 10.50.26.20 - - [23/Jun/2022:06:47:41 +0100] \"GET /actuator/gateway/routes HTTP/1.1\" 302 239 \"http://108.128.20.93:80/actuator/gateway/routes\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36\""
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>

@@ -17,6 +17,7 @@
 #include <ctime>
 #include <boost/algorithm/string.hpp>
 #include <stdbool.h>
+#include <stdexcept.h>
 #include "commfuncs.h"
 
 namesaving_smatch::namesaving_smatch()
@@ -51,6 +52,16 @@ vector<string>::const_iterator namesaving_smatch::names_begin() const
 vector<string>::const_iterator namesaving_smatch::names_end() const
 {
     return m_names.end();
+}
+
+string string_format( const string& format, Args ... args )
+{
+  int size_s = snprintf( nullptr, 0, format.c_str(), args ... ) + 1; // Extra space for '\0'
+  if( size_s <= 0 ){ throw sruntime_error( "Error during formatting." ); }
+  size_t size = static_cast<size_t>( size_s );
+  unique_ptr<char[]> buf( new char[ size ] );
+  snprintf( buf.get(), size, format.c_str(), args ... );
+  return string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
 }
 
 vector<string> split(string str, char delim, char quoter, char escape) 

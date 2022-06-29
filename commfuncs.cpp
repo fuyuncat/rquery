@@ -358,26 +358,30 @@ string decodeComparator(int comparator){
 
 int encodeComparator(string str)
 {
-  if ("=".compare(str) == 0)
+  if (str.compare("=") == 0)
     return EQ;
-  else if (">".compare(str) == 0)
+  else if (str.compare(">") == 0)
     return LT;
-  else if ("<".compare(str) == 0)
+  else if (str.compare("<") == 0)
     return ST;
-  else if ("!=".compare(str) == 0)
+  else if (str.compare("!=") == 0)
     return NEQ;
-  else if (">=".compare(str) == 0)
+  else if (str.compare(">=") == 0)
     return LE;
-  else if ("<=".compare(str) == 0)
+  else if (str.compare("<=") == 0)
     return SE;
+  else if (boost::to_upper_copy<string>(str).compare("LIKE") == 0)
+    return LIKE;
+  else if (boost::to_upper_copy<string>(str).compare("REGLIKE") == 0)
+    return REGLIKE;
   else
     return UNKNOWN;
 }
 
 int encodeJunction(string str){
-  if ("AND".compare(str) == 0)
+  if (boost::to_upper_copy<string>(str).compare("AND") == 0)
     return AND;
-  else if ("OR".compare(str) == 0)
+  else if (boost::to_upper_copy<string>(str).compare("OR") == 0)
     return OR;
   else
     return UNKNOWN;

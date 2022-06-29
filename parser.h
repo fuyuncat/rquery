@@ -32,6 +32,7 @@ class ParserC
     FilterC* buildFilter(string initialString);
 
     map<string,string> parseparam(string parameterstr);
+    void dumpQueryparts();
 
   private:
     map<string,string> m_queryparts;

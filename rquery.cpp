@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
   
   ParserC ps;
   map<string,string> query = ps.parseparam(argv[1]);
+  ps.dumpQueryparts();
   /*
   for (map<string,string>::iterator it=query.begin(); it!=query.end(); ++it)
     printf("%s: %s\n", it->first.c_str(), it->second.c_str());

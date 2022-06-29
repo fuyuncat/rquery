@@ -480,9 +480,11 @@ int anyDataCompare(string str1, string str2, int type){
     }
   }else if (type == DATE || type == TIMESTAMP){
     string fmt1, fmt2;
-    if (isDate(str1,fmt1) && isDate(str2,fmt2)){
+    string newstr1=trim_one(str1,'{'),newstr2=trim_one(str2,'{');
+    newstr1=trim_one(newstr1,'}');newstr2=trim_one(newstr2,'}');
+    if (isDate(newstr1,fmt1) && isDate(newstr2,fmt2)){
       struct tm tm1, tm2;
-      if (strptime(str1.c_str(), fmt1.c_str(), &tm1) && strptime(str2.c_str(), fmt2.c_str(), &tm2)){
+      if (strptime(newstr1.c_str(), fmt1.c_str(), &tm1) && strptime(newstr2.c_str(), fmt2.c_str(), &tm2)){
         time_t t1 = mktime(&tm1);
         time_t t2 = mktime(&tm2);
         double diffs = difftime(t1, t2);
@@ -510,7 +512,9 @@ int anyDataCompare(string str1, string str2, int type){
       return -101;
     }
   }else if (type == STRING){
-    return str1.compare(str2);
+    string newstr1=trim_one(str1,'\''),newstr2=trim_one(str2,'\'');
+    newstr1=trim_one(newstr1,'/');newstr2=trim_one(newstr2,'/');
+    return newstr1.compare(newstr2);
   }else {
     return -102;
   }
@@ -591,9 +595,11 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
     }
   }else if (type == DATE || type == TIMESTAMP){
     string fmt1, fmt2;
-    if (isDate(str1,fmt1) && isDate(str2,fmt2)){
+    string newstr1=trim_one(str1,'{'),newstr2=trim_one(str2,'{');
+    newstr1=trim_one(newstr1,'}');newstr2=trim_one(newstr2,'}');
+    if (isDate(newstr1,fmt1) && isDate(newstr2,fmt2)){
       struct tm tm1, tm2;
-      if (strptime(str1.c_str(), fmt1.c_str(), &tm1) && strptime(str2.c_str(), fmt2.c_str(), &tm2)){
+      if (strptime(newstr1.c_str(), fmt1.c_str(), &tm1) && strptime(newstr2.c_str(), fmt2.c_str(), &tm2)){
         time_t t1 = mktime(&tm1);
         time_t t2 = mktime(&tm2);
         double diffs = difftime(t1, t2);
@@ -642,23 +648,25 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
       return -101;
     }
   }else if (type == STRING){
+    string newstr1=trim_one(str1,'\''),newstr2=trim_one(str2,'\'');
+    newstr1=trim_one(newstr1,'/');newstr2=trim_one(newstr2,'/');
     switch (comparator){
     case EQ:
-      return str1.compare(str2)==0?1:0;
+      return newstr1.compare(newstr2)==0?1:0;
     case LT:
-      return str1.compare(str2)>0?1:0;
+      return newstr1.compare(newstr2)>0?1:0;
     case ST:
-      return str1.compare(str2)<0?1:0;
+      return newstr1.compare(newstr2)<0?1:0;
     case NEQ:
-      return str1.compare(str2)!=0?1:0;
+      return newstr1.compare(newstr2)!=0?1:0;
     case LE:
-      return str1.compare(str2)>=0?1:0;
+      return newstr1.compare(newstr2)>=0?1:0;
     case SE:
-      return str1.compare(str2)<=0?1:0;
+      return newstr1.compare(newstr2)<=0?1:0;
     case LIKE:
-      return like(str1, str2);
+      return like(newstr1, newstr2);
     case REGLIKE:
-      return reglike(str1, str2);
+      return reglike(newstr1, newstr2);
     default:
       return -101;
     }

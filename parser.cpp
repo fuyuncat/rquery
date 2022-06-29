@@ -96,7 +96,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
   char stringQuoter = '"';
   if (quoters.empty() || quoters.length() != 2)
       quoters = "()";
-  printf("Building: %s; splitor: %s; quoters: %s\n", initialString.c_str(), splitor.c_str(), quoters.c_str());
+  //printf("Building: %s; splitor: %s; quoters: %s\n", initialString.c_str(), splitor.c_str(), quoters.c_str());
   int quoteDeep = 0;
   int quoteStart = -1;  // top quoter start position
   int quoteEnd = -1;;   // top quoter end position
@@ -131,14 +131,14 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
         node->junction = encodeJunction(boost::algorithm::trim_copy<string>(splitor));
         node->leftNode = new FilterC();
         node->leftNode->parentNode = node;
-        printf("Building leftNode\n");
+        //printf("Building leftNode\n");
         if (!buildFilter(node->leftNode, initialString.substr(0, i)," OR ",quoters)) { // OR priority higher than AND
           delete node->leftNode;
           return false;
         }
         node->rightNode = new FilterC();
         node->rightNode->parentNode = node;
-        printf("Building rightNode\n");
+        //printf("Building rightNode\n");
         if (!buildFilter(node->rightNode, initialString.substr(i+splitor.length())," OR ",quoters)){
           delete node->rightNode;
           return false;

@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <format.h>
 #include "querierc.h"
 
 QuerierC::QuerierC()
@@ -62,6 +61,9 @@ void QuerierC::setrawstr(string rawstr)
 
 void QuerierC::pairFiledNames(namesaving_smatch matches)
 {
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+
   for (int i=0; i<matches.size(); i++){
     bool foundName = false;
     for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
@@ -69,8 +71,14 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
         m_fieldnames.push_back(string(*it));
         foundName = true;
       }
-    if (!foundName)
-      m_fieldnames.push_back(format("@field{}",i));
+    if (!foundName){
+      try{
+        m_fieldnames.push_back("@field"+boost::lexical_cast<std::string>(i));
+      }catch (bad_lexical_cast &){
+        m_fieldnames.push_back("?");
+        return false;
+      }
+    }
   }
 }
 

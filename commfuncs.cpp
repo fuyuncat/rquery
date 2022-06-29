@@ -56,6 +56,7 @@ GlobalVars::~GlobalVars()
 }
 
 size_t GlobalVars::g_inputbuffer;
+short GlobalVars::g_tracelevel;
 
 void GlobalVars::initVars(){
   g_inputbuffer = 16384;

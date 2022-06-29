@@ -100,6 +100,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
       return !filter->leftExpression.empty()?!filter->rightExpression.empty():filter->leftExpression.compare(filter->rightExpression)==0;
     if (rowValue.size() == 0 || filter->leftColId > rowValue.size()-1)
       return false;
+    printf("left:%s %s right:%s (%s)\n",rowValue[filter->leftColId].c_str(),decodeComparator(filter->comparator).c_str(),filter->rightExpression.c_str(),decodeDatatype(filter->datatype).c_str());
     return anyDataCompare(rowValue[filter->leftColId], filter->comparator, filter->rightExpression, filter->datatype) == 1;
   }else{ // no predication means alway true
     return true;

@@ -367,6 +367,27 @@ string decodeComparator(int comparator){
   }
 }
 
+string decodeDatatype(int datatype){
+  switch (datatype){
+  case STRING:
+    return "STRING";
+  case LONG:
+    return "LONG";
+  case INTEGER:
+    return "INTEGER";
+  case DOUBLE:
+    return "DOUBLE";
+  case DATE:
+    return "DATE";
+  case TIMESTAMP:
+    return "TIMESTAMP";
+  case BOOLEAN:
+    return "BOOLEAN";
+  default:
+    return "UNKNOWN";
+  }
+}
+
 int encodeComparator(string str)
 {
   if (str.compare("=") == 0)

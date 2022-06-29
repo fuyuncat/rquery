@@ -185,7 +185,7 @@ void QuerierC::formatoutput(vector<string> datas, bool rawstronly)
   m_outputrow++;
   //printf("%d: ", m_outputrow);
   if (rawstronly)
-    printf("%s\n", datas[0]);
+    printf("%s\n", datas[0].c_str());
   else{
     for (int i=1; i<datas.size(); i++)
       printf("%s\t", datas[i].c_str());

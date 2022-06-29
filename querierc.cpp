@@ -37,6 +37,8 @@ void QuerierC::init()
   m_filter = NULL;
   m_rawstr = "";
   m_searchflags = regex_constants::match_default;
+  m_matchcount = 0;
+  m_outputrow = 0;
 }
 
 void QuerierC::setregexp(string regexstr)
@@ -126,8 +128,10 @@ int QuerierC::searchNext()
       if (m_filter)
         m_filter->analyzeColumns(m_fieldnames, m_fieldnames);
     }
-    if (matchFilter(matcheddata, m_filter))
+    if (matchFilter(matcheddata, m_filter)){
       m_results.push_back(matcheddata);
+      m_matchcount++;
+    }
     //m_results.push_back(matches);
     //vector<namesaving_smatch>::iterator p = m_results.end();
     //m_results.insert(p, matches);
@@ -178,8 +182,9 @@ int QuerierC::searchAll()
 
 void QuerierC::formatoutput(vector<string> datas)
 {
+  m_outputrow++;
   for (int i=1; i<datas.size(); i++)
-    printf("%s\t",datas[i].c_str());
+    printf("%d: %s\t",m_outputrow,datas[i].c_str());
   printf("\n");
 }
 

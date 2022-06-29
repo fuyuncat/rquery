@@ -47,6 +47,8 @@ class QuerierC
     sregex m_regexp;
     string m_rawstr;
     regex_constants::match_flag_type m_searchflags;
+    long m_matchcount;
+    long m_outputrow;
     
     //vector<namesaving_smatch> m_results;
     vector<string> m_fieldnames;

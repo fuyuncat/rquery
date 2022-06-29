@@ -89,7 +89,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
       matched = matchFilter(rowValue, filter->leftNode) || matchFilter(rowValue, filter->rightNode);
   }else if (filter->type == LEAF){
     if (filter->leftColId < 0) // filter is expression
-      return !filter->leftExpression?!filter->rightExpression:filter->leftExpression.compare(filter->rightExpression)==0;
+      return !filter->leftExpression.empty()?!filter->rightExpression.empty():filter->leftExpression.compare(filter->rightExpression)==0;
     if (rowValue.size() == 0 || filter->leftColId > rowValue.size()-1)
       return false;
     return anyDataCompare(rowValue[filter->leftColId], filter->comparator, filter->rightExpression, filter->datatype) == 1;

@@ -132,13 +132,13 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
         node->leftNode->parentNode = node;
         if (!buildFilter(node->leftNode, initialString.substr(0, i)," OR ",quoters)) { // OR priority higher than AND
           delete node->leftNode;
-          retrun false;
+          return false;
         }
         node->rightNode = new FilterC();
         node->rightNode->parentNode = node;
         if (!buildFilter(node->rightNode, initialString.substr(i+splitor.length())," OR ",quoters)){
           delete node->rightNode;
-          retrun false;
+          return false;
         }
         return true;
       }
@@ -165,7 +165,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
 FilterC* ParserC::buildFilter(string initialString)
 {
   FilterC* node = new FilterC();
-  if (!buildPrediction(node, initialString, " OR ", "()")){
+  if (!buildFilter(node, initialString, " OR ", "()")){
     delete node;
     return NULL;
   }

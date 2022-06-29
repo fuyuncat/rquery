@@ -156,7 +156,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
   }
 
   if (quoteStart == 0 && quoteEnd == initialString.length()-1){ // sub expression quoted 
-    initialString = initialString.substr(1,initialString.length()-1);  // trim the quoters
+    initialString = initialString.substr(1,initialString.length()-2);  // trim the quoters
     return buildFilter(node, initialString," OR ",quoters);
   }else if (boost::to_upper_copy<string>(splitor).compare(" OR ") == 0){
     return buildFilter(node, initialString," AND ",quoters);

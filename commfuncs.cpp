@@ -44,8 +44,29 @@ void namesaving_smatch::init(const string pattern)
   }
 }
 
-size_t GlobalVars::g_inputbuffer = 16384;
 
+GlobalVars::GlobalVars()
+{
+  initVars();
+}
+
+GlobalVars::~GlobalVars()
+{
+  
+}
+
+size_t GlobalVars::g_inputbuffer;
+
+void GlobalVars::initVars(){
+  g_inputbuffer = 16384;
+}
+
+void GlobalVars::setVars(size_t inputbuffer){
+  g_inputbuffer = inputbuffer;
+}
+
+GlobalVars gv;
+gv.setVars(16384*2);
 
 vector<string>::const_iterator namesaving_smatch::names_begin() const
 {

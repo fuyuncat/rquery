@@ -58,25 +58,31 @@ using namespace boost::xpressive;
 class namesaving_smatch : public smatch
 {
 public:
-    namesaving_smatch();
+  namesaving_smatch();
 
-    namesaving_smatch(const string pattern);
+  namesaving_smatch(const string pattern);
 
-    ~namesaving_smatch();
-    
-    void init(const string pattern);
+  ~namesaving_smatch();
+  
+  void init(const string pattern);
 
-    vector<string>::const_iterator names_begin() const;
+  vector<string>::const_iterator names_begin() const;
 
-    vector<string>::const_iterator names_end() const;
+  vector<string>::const_iterator names_end() const;
 
 private:
-    vector<string> m_names;
+  vector<string> m_names;
 };
 
 //template<typename ... Args>
 
-struct GlobalVars{
+class GlobalVars{
+public:
+  GlobalVars();
+  ~GlobalVars();
+  
+  void initVars();
+  void setVars(size_tinputbuffer = 16384);
   static size_t g_inputbuffer;
 };
 

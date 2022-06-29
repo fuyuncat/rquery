@@ -164,12 +164,15 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
 
 FilterC* ParserC::buildFilter(string initialString)
 {
+  printf("building filter: %s", initialString);
   FilterC* node = new FilterC();
   if (!buildFilter(node, initialString, " OR ", "()")){
     delete node;
+    printf(" failed!\n");
     return NULL;
   }
   //node.dump();
+  printf(" completed!\n");
   return node;
 }
 

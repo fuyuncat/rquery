@@ -82,10 +82,13 @@ public:
   ~GlobalVars();
   
   void initVars();
-  void setVars(size_t inputbuffer = 16384);
+  void setVars(size_t inputbuffer = 16384, short tracelevel=FATAL);
+
   static size_t g_inputbuffer;
+  static short g_tracelevel;
 };
 
+void trace(short level, const char *fmt, ...);
 //string string_format( const string& format, Args ... args );
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');
 string trim_one(string str, char c = ' ');

@@ -59,10 +59,20 @@ size_t GlobalVars::g_inputbuffer;
 
 void GlobalVars::initVars(){
   g_inputbuffer = 16384;
+  g_tracelevel = FATAL;
 }
 
-void GlobalVars::setVars(size_t inputbuffer){
+void GlobalVars::setVars(size_t inputbuffer, short tracelevel){
   g_inputbuffer = inputbuffer;
+  g_tracelevel = tracelevel;
+}
+
+void trace(short level, const char *fmt, ...)
+{
+  GlobalVars gv;
+  va_list args;
+  if (gv::g_tracelevel>=level)
+    printf(fmt, args);
 }
 
 vector<string>::const_iterator namesaving_smatch::names_begin() const

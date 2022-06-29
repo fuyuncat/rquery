@@ -92,7 +92,7 @@ int startsWithWords(string str, vector<string> words); // detect if string start
 string removeSpace(string originalStr, string keepPattern); //remove space
 int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
 string getFirstToken(string str, string token); //get the first matched regelar token from a string
-vector <tring> getAllTokens(string str, string token); //get all matched regelar token from a string
+vector <string> getAllTokens(string str, string token); //get all matched regelar token from a string
 bool matchToken(string str, string token); // check if matched regelar token
 int detectDataType(string str); // detect the data type of an expression string
 

@@ -76,7 +76,6 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
         m_fieldnames.push_back("@field"+boost::lexical_cast<std::string>(i));
       }catch (bad_lexical_cast &){
         m_fieldnames.push_back("?");
-        return false;
       }
     }
   }

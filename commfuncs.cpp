@@ -44,7 +44,7 @@ void namesaving_smatch::init(const string pattern)
   }
 }
 
-
+size_t g_inputbuffer;
 g_inputbuffer = 16384;
 
 

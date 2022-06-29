@@ -89,8 +89,8 @@ int main(int argc, char *argv[])
     while(std::cin) {
       std::cin.read(cachebuffer, cache_length);
       //reads = getstr(cachebuffer, cache_length);
-      if (reads < 1)
-        break;
+      //if (reads < 1)
+      //  break;
       rq.appendrawstr(string(cachebuffer));
       rq.searchAll();
       if (!namePrinted){

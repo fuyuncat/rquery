@@ -53,7 +53,6 @@ void QuerierC::assignFilter(FilterC* filter)
 void QuerierC::appendrawstr(string rawstr)
 {
   m_rawstr.append(rawstr);
-  printf("Appended %s\n", m_rawstr.c_str());
 }
 
 void QuerierC::setrawstr(string rawstr)

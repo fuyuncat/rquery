@@ -696,8 +696,9 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
 // detect if string start with special words
 int startsWithWords(string str, vector<string> words, int offset)
 {
+  string upperstr = boost::to_upper_copy<string>(str);
   for (int i=0;i<words.size();i++){
-    if (str.find(words[i], offset) == 0)
+    if (upperstr.find(words[i], offset) == 0)
       return i;
   }
   return -1;

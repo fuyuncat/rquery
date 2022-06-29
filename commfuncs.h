@@ -76,7 +76,7 @@ private:
 
 //template<typename ... Args>
 
-extern size_t g_inputbuffer;
+inline size_t g_inputbuffer;
 
 //string string_format( const string& format, Args ... args );
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');

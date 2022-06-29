@@ -179,7 +179,6 @@ int QuerierC::searchAll()
 //    printf("%s\t",matches[i].str().c_str());
 //  printf("\n");
 //}
-size_t g_inputbuffer;
 
 void QuerierC::formatoutput(vector<string> datas, bool rawstronly)
 {

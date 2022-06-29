@@ -183,8 +183,9 @@ int QuerierC::searchAll()
 void QuerierC::formatoutput(vector<string> datas)
 {
   m_outputrow++;
+  printf("%d: ", m_outputrow);
   for (int i=1; i<datas.size(); i++)
-    printf("%d: %s\t",m_outputrow,datas[i].c_str());
+    printf("%s\t", datas[i].c_str());
   printf("\n");
 }
 

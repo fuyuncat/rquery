@@ -36,7 +36,8 @@
 
 //#define BOOST_REGEX_MATCH_EXTRA
 
-size_t g_inputbuffer;
+//size_t g_inputbuffer;
+size_t GlobalVars::g_inputbuffer;
 
 string usage()
 {
@@ -87,8 +88,8 @@ int main(int argc, char *argv[])
   if ( argc < 3 ){
     bool namePrinted = false;
 
-    printf("g_inputbuffer:%d\n",g_inputbuffer);
-    const size_t cache_length = g_inputbuffer;
+    printf("g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);
+    const size_t cache_length = GlobalVars::g_inputbuffer;
     char cachebuffer[cache_length];
     size_t howmany = 0, reads = 0;
     while(std::cin) {

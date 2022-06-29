@@ -11,7 +11,7 @@
 //  18/06/2022: Created
 //
 *******************************************************************************/
-#pragma once
+//#pragma once
 #ifndef __COMMFUNCS_H
 #define __COMMFUNCS_H
 
@@ -76,7 +76,9 @@ private:
 
 //template<typename ... Args>
 
-extern size_t g_inputbuffer;
+struct GlobalVars{
+  static size_t g_inputbuffer;
+}
 
 //string string_format( const string& format, Args ... args );
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');

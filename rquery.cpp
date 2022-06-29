@@ -36,7 +36,7 @@
 
 //#define BOOST_REGEX_MATCH_EXTRA
 
-//size_t g_inputbuffer;
+size_t g_inputbuffer;
 
 string usage()
 {

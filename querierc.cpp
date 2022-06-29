@@ -34,6 +34,7 @@ QuerierC::~QuerierC()
 
 void QuerierC::init()
 {
+  m_filter = NULL;
   m_searchflags = regex_constants::match_default;
 }
 
@@ -41,6 +42,11 @@ void QuerierC::setregexp(string regexstr)
 {
   m_regexstr = regexstr;
   m_regexp = sregex::compile(m_regexstr);
+}
+
+void QuerierC::assignFilter(FilterC* filter)
+{
+  m_filter = filter;
 }
 
 void QuerierC::appendrawstr(string rawstr)
@@ -67,10 +73,37 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
   }
 }
 
+// filt a row data by filter
+bool matchFilter(vector<string> rowValue)
+{
+  if (!m_filter)
+    return true;
+  bool matched = false; 
+  if (m_filter->type == BRANCH){
+    if (m_filter->leftNode == null || m_filter->rightNode == null){
+      return false;
+    }
+    if (m_filter->junction == AND)  // and
+      matched = matchFilter(rowValue, m_filter->leftNode) && matchFilter(rowValue, m_filter->rightNode);
+    else // or
+      matched = matchFilter(rowValue, m_filter->leftNode) || matchFilter(rowValue, m_filter->rightNode);
+  }else if (m_filter->type == LEAF){
+    if (m_filter->leftColId < 0) // filter is expression
+      return !m_filter->leftExpression?!m_filter->rightExpression:m_filter->leftExpression.compare(m_filter->rightExpression)==0;
+    if (rowValue.size() == 0 || m_filter->leftColId > rowValue.size()-1)
+      return false;
+    return anyDataCompare(rowValue[m_filter->leftColId], m_filter->comparator, m_filter->rightExpression, m_filter->datatype) == 1;
+  }else{ // no predication means alway true
+    return true;
+  }
+  return matched;
+}
+
 int QuerierC::searchNext()
 {
   //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
-  namesaving_smatch matches(m_regexstr);
+  //namesaving_smatch matches(m_regexstr);
+  smatch matches;
   int found = 0;
   if(regex_search(m_rawstr, matches, m_regexp)){
     //if(m_results.size()>0)
@@ -78,9 +111,10 @@ int QuerierC::searchNext()
     vector<string> matcheddata;
     for (int i=0; i<matches.size(); i++)
       matcheddata.push_back(matches[i]);
-    m_results.push_back(matcheddata);
     if (m_fieldnames.size() == 0)
       pairFiledNames(matches);
+    if (matchFilter(matcheddata))
+      m_results.push_back(matcheddata);
     //m_results.push_back(matches);
     //vector<namesaving_smatch>::iterator p = m_results.end();
     //m_results.insert(p, matches);
@@ -158,8 +192,8 @@ void QuerierC::outputAndClean()
 
 int QuerierC::boostmatch(vector<string> *result)
 {
-  namesaving_smatch matches(m_regexstr);
-  //smatch matches;
+  //namesaving_smatch matches(m_regexstr);
+  smatch matches;
   //boost::match_results<string::const_iterator>  matches;
   if ( result != NULL ) {
     //printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexstr.c_str());

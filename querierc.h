@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include "commfuncs.h"
+#include "filter.h"
 //#include <boost/regex.hpp>
 
 class QuerierC
@@ -32,6 +33,7 @@ class QuerierC
     void setregexp(string regexstr);
     void setrawstr(string rawstr);
     void appendrawstr(string rawstr);
+    void assignFilter(FilterC* filter);
     int searchNext();
     int searchAll();
     void output();
@@ -49,6 +51,9 @@ class QuerierC
     //vector<namesaving_smatch> m_results;
     vector<string> m_fieldnames;
     vector< vector<string> > m_results;
+    FilterC* m_filter;
+    
+    bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter
 
   protected:
     void init();

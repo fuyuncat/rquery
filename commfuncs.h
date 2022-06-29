@@ -71,6 +71,7 @@ private:
 
 vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');
 string trim_one(string str, char c = ' ');
+string trim(string str, char c = ' ');
 bool isNumber(const string& str);
 bool isInt(const string& str);
 bool isLong(const string& str);
@@ -86,5 +87,13 @@ string decodeComparator(int comparator);
 int findStrArrayId(const vector<string> array, const string member);
 int anyDataCompare(string str1, string str2, int type);
 int anyDataCompare(string str1, int comparator, string str2, int type);
+int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
+int startsWithWords(string str, vector<string> words); // detect if string start with special words
+string removeSpace(string originalStr, string keepPattern); //remove space
+int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
+string getFirstToken(string str, string token); //get the first matched regelar token from a string
+vector <tring> getAllTokens(string str, string token); //get all matched regelar token from a string
+bool matchToken(string str, string token); // check if matched regelar token
+int detectDataType(string str); // detect the data type of an expression string
 
 #endif // __COMMFUNCS_H

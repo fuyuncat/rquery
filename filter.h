@@ -33,6 +33,7 @@ class FilterC
     int type;       // 1: branch; 2: leaf
     int junction;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
     int comparator; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=; 7: LIKE; 8: REGLIKE. Otherwise, it's meaningless
+    int datatype;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
     int leftColId;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
     int rightColId;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
     string leftExpression;    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless

@@ -96,6 +96,14 @@ vector<string> split(string str, char delim, char quoter, char escape)
   return v;
 }
 
+string trim(string str, char c)
+{
+  string newstr = trim_one(str, c);
+  while (newstr.length() != str.length())
+    newstr = trim_one(str, c);
+  return newstr;
+}
+
 string trim_one(string str, char c)
 {
   string newstr = str;
@@ -209,6 +217,26 @@ bool isDate(const string& str, string& fmt)
   return false;
 }
 
+// detect the data type of an expression string
+// STRING: quoted by '', or regular expression: //
+// DATE/TIMESTAMP: quoted by {}
+// INTEGER/LONG: all digits
+// Double: digits + .
+int detectDataType(string str)
+{
+  string trimmedStr = boost::algorithm::trim_copy<string>(str);
+  if (matchQuoters(trimmedStr, 0, "''") || matchQuoters(trimmedStr, 0, "//"))
+    return STRING;
+  else if (matchQuoters(trimmedStr, 0, "{}"))
+    return DATE;
+  else if (isLong(trimmedStr))
+    return LONG;
+  else if (isDouble(trimmedStr))
+    return DOUBLE;
+  else
+    return UNKNOWN;
+}
+
 bool wildmatch(const char *candidate, const char *pattern, int p, int c, char multiwild='*', char singlewild='?', char escape='\\') {
   if (pattern[p] == '\0') {
     return candidate[c] == '\0';
@@ -235,7 +263,7 @@ bool like(string str1, string str2)
 bool reglike(string str, string regstr)
 {
   sregex regexp = sregex::compile(regstr);
-  namesaving_smatch matches(regstr);
+  smatch matches;
   return regex_search(str, matches, regexp);
 }
 
@@ -575,4 +603,93 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
       return -102;
   }
   return -102;
+}
+
+// detect if string start with special words
+int startsWithWords(string str, vector<string> words, int offset)
+{
+  for (int i=0;i<words.size();i++){
+    if (str.find(words[i], offset) == 0)
+      return i;
+  }
+  return -1;
+}
+
+// detect if string start with special words
+int startsWithWords(string str, vector<string> words)
+{
+  return startsWithWords(str,words,0);
+}
+
+// remove space
+string removeSpace(string originalStr, string keepPattern)
+{
+  //if (keepPattern == null)
+  //    keepPattern =  "(\\s+OR\\s+|\\s+AND\\s+)"; //default pattern
+      // keepPattern =  "\\s+NOT\\s+|\\s+OR\\s+|\\s+AND\\s+|\\s+IN\\s+|\\s+LIKE\\s+"; //default pattern
+  vector<string> words keepWords;
+  keepWords.push_back(" OR ");keepWords.push_back(" AND ");
+
+  string cleanedStr = "";
+  int i = 0;
+
+  //Pattern keeper = Pattern.compile(keepPattern);
+  //Matcher matcher = keeper.matcher(originalStr.substring(i).toUpperCase());
+  while (i < originalStr.length()) {
+    int matchedWordId = startsWithWords(boost::to_upper_copy<string>(originalStr.substr(i)), keepWords);
+    if (originalStr[i] != ' ') {// ' ' to be removed
+      cleanedStr = cleanedStr+originalStr[i];
+      i++;
+    }else if (matchedWordId >= 0) {
+        cleanedStr = cleanedStr+keepWords[matchedWordId];
+        i+=keepWords[matchedWordId].length();
+    }else
+    i++;
+  }
+  return cleanedStr;
+}
+
+// detect if quoters matched. 
+// listStr string to be detected;
+// offset, off set to begin test;
+// quoters,  eg. {'(',')'}
+// 0 means all matched
+int matchQuoters(string listStr, int offset, string quoters){
+  if (quoters == null || quoters.length != 2 || offset < 0)
+    return -1;
+  int deep = 0;
+  for (int i=offset;i<listStr.length();i++) {
+    if (listStr[i] == quoters[0])
+      deep++;
+    else if (listStr[i] == quoters[1])
+      deep--;
+  }
+  return deep;
+}
+
+//get the first matched regelar token from a string
+string getFirstToken(string str, string token){
+  sregex regexp = sregex::compile(token);
+  smatch matches;
+  if (regex_search(str, matches, regexp))
+    return matches[0];
+}
+
+//get all matched regelar token from a string
+vector <tring> getAllTokens(string str, string token){
+  vector <tring> findings;
+  sregex regexp = sregex::compile(token);
+  smatch matches;
+  string::const_iterator searchStart( str.cbegin() );
+  while ( regex_search( searchStart, str.cend(), matches, regexp ) )
+  {
+      findings.push_back(matches[0]);  
+      searchStart = matches.suffix().first;
+  }
+  return findings;
+}    
+
+// check if matched regelar token
+bool matchToken(string str, string token){
+  return !getFirstToken(str, token).empty();
 }

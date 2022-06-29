@@ -20,6 +20,7 @@ void FilterC::init()
   type = UNKNOWN;       // 1: branch; 2: leaf
   junction = UNKNOWN;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
   comparator = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
+  datatype = UNKNOWN;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
   leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
   rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
   leftExpression = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
@@ -187,24 +188,24 @@ bool FilterC::containsColId(int colId){
 
 // detect if predication contains special colId    
 FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
-    FilterC* node;
-    if (type == BRANCH){
-      if (leftFirst){
-        if (leftNode)
-          node = leftNode->getFirstPredByColId(colId, leftFirst);
-        if (!node)
-          node = rightNode->getFirstPredByColId(colId, leftFirst);
-      }else{
-        if (rightNode)
-          node = rightNode->getFirstPredByColId(colId, leftFirst);
-        if (!node)
-          node = leftNode->getFirstPredByColId(colId, leftFirst);
-      }
-    }else if (type == LEAF)
-      if (leftColId == colId)
-        node = this;
+  FilterC* node;
+  if (type == BRANCH){
+    if (leftFirst){
+      if (leftNode)
+        node = leftNode->getFirstPredByColId(colId, leftFirst);
+      if (!node)
+        node = rightNode->getFirstPredByColId(colId, leftFirst);
+    }else{
+      if (rightNode)
+        node = rightNode->getFirstPredByColId(colId, leftFirst);
+      if (!node)
+        node = leftNode->getFirstPredByColId(colId, leftFirst);
+    }
+  }else if (type == LEAF)
+    if (leftColId == colId)
+      node = this;
 
-    return node;
+  return node;
 }
 
 // analyze column ID & name from metadata
@@ -218,6 +219,10 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
     if (rightNode)
         metaDataAnzlyzed = metaDataAnzlyzed &&  rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
   }else if (type == LEAF){
+    datatype = detectDataType(rightExpression);
+    if (datatype == UNKNOWN)
+      datatype = detectDataType(leftExpression);
+
     if (m_fieldnames1.size()>0){
       if (leftExpression[0] == '"') {// quoted, treat as expression, otherwise, as columns
         leftExpression = trim_one(leftExpression,'"'); // remove quoters
@@ -232,17 +237,17 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
       }
     }
     if (m_fieldnames2.size()>0){
-        if (rightExpression[0] == '"') {// quoted, treat as expression, otherwise, as columns
-          rightExpression = trim_one(rightExpression,'"'); // remove quoters
-          rightColId = -1;
-        }else {
-          if (isInt(rightExpression)){ // check if the name is ID already
-            rightColId = atoi(rightExpression.c_str());
-            rightExpression = m_fieldnames2[rightColId];
-          }else{
-            rightColId = findStrArrayId(m_fieldnames2, rightExpression);
-          }
+      if (rightExpression[0] == '"') {// quoted, treat as expression, otherwise, as columns
+        rightExpression = trim_one(rightExpression,'"'); // remove quoters
+        rightColId = -1;
+      }else {
+        if (isInt(rightExpression)){ // check if the name is ID already
+          rightColId = atoi(rightExpression.c_str());
+          rightExpression = m_fieldnames2[rightColId];
+        }else{
+          rightColId = findStrArrayId(m_fieldnames2, rightExpression);
         }
+      }
     }
     if(leftColId != -1 && rightColId != -1){
       //if (metaData1.getColumnType(leftColId) != metaData2.getColumnType(rightColId)){

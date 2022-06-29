@@ -2,7 +2,7 @@
 //
 //        File: rquery.cpp
 // Description: Main File. query string/file using regular expression
-//       Usage: rquery "parse <Named Captures regular expression> | where <filters> | group | select | sort " "file or string to be queried"
+//       Usage: rquery "parse <Named Captures regular expression> | filter <filters> | group | select | sort " "file or string to be queried"
 //     Created: 18/06/2022
 //      Author: Wei Huang
 //       Email: fuyuncat@gmail.com
@@ -71,8 +71,17 @@ int main(int argc, char *argv[])
   //  printf("field %d: %s\n", i+1, fields[i].c_str());
   //}
 
-  string rex = trim_one(query["parse"], '/');
+  string patternStr = "";
+  if (query.find("parse") != query.end())
+    patternStr = query["parse"];
+
+  string filterStr = "";
+  if (query.find("filter") != query.end())
+    filterStr = query["filter"];
+
+  string rex = trim_one(patternStr, '/');
   QuerierC rq(rex);
+  rq.assignFilter(ps.buildFilter(filterStr));
 
   if ( argc < 3 ){
     bool namePrinted = false;

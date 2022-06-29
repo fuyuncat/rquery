@@ -69,9 +69,8 @@ void GlobalVars::setVars(size_t inputbuffer, short tracelevel){
 
 void trace(short level, const char *fmt, ...)
 {
-  GlobalVars gv;
   va_list args;
-  if (gv::g_tracelevel>=level)
+  if (GlobalVars::g_tracelevel>=level)
     printf(fmt, args);
 }
 

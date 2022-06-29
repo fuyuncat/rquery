@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
   if ( argc < 3 ){
     bool namePrinted = false;
 
+    g_inputbuffer = 16384;
     const size_t cache_length = g_inputbuffer;
     char cachebuffer[cache_length];
     size_t howmany = 0, reads = 0;

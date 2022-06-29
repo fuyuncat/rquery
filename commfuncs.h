@@ -50,6 +50,10 @@ using namespace boost::xpressive;
 #define DATE 5
 #define TIMESTAMP 6
 #define BOOLEAN 7
+#define FATAL 1
+#define ERROR 2
+#define WARNING 3
+#define INFO 9
 
 class namesaving_smatch : public smatch
 {

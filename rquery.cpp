@@ -36,6 +36,8 @@
 
 //#define BOOST_REGEX_MATCH_EXTRA
 
+size_t g_inputbuffer;
+
 string usage()
 {
   return string("Usage: rquery \"parse <regular expression> | where <filters> | group | select | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");

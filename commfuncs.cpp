@@ -44,6 +44,10 @@ void namesaving_smatch::init(const string pattern)
   }
 }
 
+
+size_t g_inputbuffer = 16384;
+
+
 vector<string>::const_iterator namesaving_smatch::names_begin() const
 {
     return m_names.begin();

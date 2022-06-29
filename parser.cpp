@@ -96,6 +96,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
   char stringQuoter = '"';
   if (quoters.empty() || quoters.length() != 2)
       quoters = "()";
+  printf("Building: %s; splitor: %s; quoters: %s\n", initialString.c_str(), splitor.c_str(), quoters.c_str());
   int quoteDeep = 0;
   int quoteStart = -1;  // top quoter start position
   int quoteEnd = -1;;   // top quoter end position
@@ -164,15 +165,15 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
 
 FilterC* ParserC::buildFilter(string initialString)
 {
-  printf("building filter: %s", initialString.c_str());
+  //printf("building filter: %s", initialString.c_str());
   FilterC* node = new FilterC();
   if (!buildFilter(node, initialString, " OR ", "()")){
     delete node;
-    printf(" failed!\n");
+    //printf(" failed!\n");
     return NULL;
   }
   //node.dump();
-  printf(" completed!\n");
+  //printf(" completed!\n");
   return node;
 }
 

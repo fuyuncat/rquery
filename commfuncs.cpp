@@ -396,7 +396,7 @@ string decodeDatatype(int datatype){
 
 int encodeComparator(string str)
 {
-  printf("encode comparator: %s\n",str.c_str());
+  //printf("encode comparator: %s\n",str.c_str());
   if (str.compare("=") == 0)
     return EQ;
   else if (str.compare(">") == 0)

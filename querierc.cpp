@@ -69,7 +69,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
         foundName = true;
       }
     if (!foundName)
-      m_fieldnames.push_back("@field"+to_string(i));
+      m_fieldnames.push_back("@field"+std::to_string(i));
   }
 }
 

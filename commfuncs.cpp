@@ -356,6 +356,33 @@ string decodeComparator(int comparator){
   }
 }
 
+int encodeComparator(string str)
+{
+  if ("=".compare(str) == 0)
+    return EQ;
+  else if (">".compare(str) == 0)
+    return LT;
+  else if ("<".compare(str) == 0)
+    return ST;
+  else if ("!=".compare(str) == 0)
+    return NEQ;
+  else if (">=".compare(str) == 0)
+    return LE;
+  else if ("<=".compare(str) == 0)
+    return SE;
+  else
+    return UNKNOWN;
+}
+
+int encodeJunction(string str){
+  if ("AND".compare(str) == 0)
+    return AND;
+  else if ("OR".compare(str) == 0)
+    return OR;
+  else
+    return UNKNOWN;
+}
+
 int findStrArrayId(const vector<string> array, const string member)
 {
   for (int i=0; i<array.size(); i++){
@@ -627,7 +654,7 @@ string removeSpace(string originalStr, string keepPattern)
   //if (keepPattern == null)
   //    keepPattern =  "(\\s+OR\\s+|\\s+AND\\s+)"; //default pattern
       // keepPattern =  "\\s+NOT\\s+|\\s+OR\\s+|\\s+AND\\s+|\\s+IN\\s+|\\s+LIKE\\s+"; //default pattern
-  vector<string> words keepWords;
+  vector<string> keepWords;
   keepWords.push_back(" OR ");keepWords.push_back(" AND ");
 
   string cleanedStr = "";
@@ -655,7 +682,7 @@ string removeSpace(string originalStr, string keepPattern)
 // quoters,  eg. {'(',')'}
 // 0 means all matched
 int matchQuoters(string listStr, int offset, string quoters){
-  if (quoters == null || quoters.length != 2 || offset < 0)
+  if (quoters.empty() || quoters.length() != 2 || offset < 0)
     return -1;
   int deep = 0;
   for (int i=offset;i<listStr.length();i++) {
@@ -676,8 +703,9 @@ string getFirstToken(string str, string token){
 }
 
 //get all matched regelar token from a string
-vector <tring> getAllTokens(string str, string token){
-  vector <tring> findings;
+vector <string> getAllTokens(string str, string token)
+{
+  vector <string> findings;
   sregex regexp = sregex::compile(token);
   smatch matches;
   string::const_iterator searchStart( str.cbegin() );

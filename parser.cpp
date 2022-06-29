@@ -68,7 +68,7 @@ void ParserC::buildLeafNodeFromStr(FilterC* node, string str)
       str = str.substr(0, i-1)+str.substr(i);
     }else if(!quoteStarted && startsWithWords(str.substr(i), comparators) >= 0){ // splitor that not between quato are the real splitor
       string compStr = comparators[startsWithWords(str.substr(i), comparators)];
-      node->comparator = decodeComparator(compStr);
+      node->comparator = encodeComparator(compStr);
       node->type = LEAF;
       node->leftExpression =  boost::algorithm::trim_copy<string>(str.substr(0,i));
       node->rightExpression = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');

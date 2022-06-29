@@ -74,7 +74,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
 }
 
 // filt a row data by filter
-bool matchFilter(vector<string> rowValue)
+bool QuerierC::matchFilter(vector<string> rowValue)
 {
   if (!m_filter)
     return true;
@@ -102,8 +102,8 @@ bool matchFilter(vector<string> rowValue)
 int QuerierC::searchNext()
 {
   //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
-  //namesaving_smatch matches(m_regexstr);
-  smatch matches;
+  namesaving_smatch matches(m_regexstr);
+  //smatch matches;
   int found = 0;
   if(regex_search(m_rawstr, matches, m_regexp)){
     //if(m_results.size()>0)

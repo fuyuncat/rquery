@@ -84,6 +84,8 @@ bool reglike(string str, string regstr);
 //size_t getstr(char * buffer, const size_t len);
 string decodeJunction(int junction);
 string decodeComparator(int comparator);
+int encodeComparator(string str);
+int encodeJunction(string str);
 int findStrArrayId(const vector<string> array, const string member);
 int anyDataCompare(string str1, string str2, int type);
 int anyDataCompare(string str1, int comparator, string str2, int type);

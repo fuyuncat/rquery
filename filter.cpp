@@ -105,60 +105,60 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
   if (type ==  UNKNOWN){ // not assinged
       node->copyTo(this);
   }else if (type == LEAF){
+    FilterC* existingNode = new FilterC();
+    copyTo(existingNode);
+    type = BRANCH;
+    junction = junction;
+    comparator = UNKNOWN;   
+    leftColId = -1;        
+    leftExpression = "";
+    rightExpression = "";
+    if (leafGrowth){
+      rightNode = existingNode;
+      rightNode->parentNode = this;
+      leftNode = node;
+      leftNode->parentNode = this;
+    }else{
+      leftNode = existingNode;
+      leftNode->parentNode = this;
+      rightNode = node;
+      rightNode->parentNode = this;
+    }
+  }else{
+    if (addOnTop){
       FilterC* existingNode = new FilterC();
       copyTo(existingNode);
-      type = BRANCH;
       junction = junction;
-      comparator = UNKNOWN;   
-      leftColId = -1;        
-      leftExpression = "";
-      rightExpression = "";
       if (leafGrowth){
-          rightNode = existingNode;
-          rightNode->parentNode = this;
-          leftNode = node;
-          leftNode->parentNode = this;
+        leftNode = node;
+        leftNode->parentNode = this;
+        rightNode = existingNode;
+        rightNode->parentNode = this;
       }else{
-          leftNode = existingNode;
-          leftNode->parentNode = this;
-          rightNode = node;
-          rightNode->parentNode = this;
+        leftNode = existingNode;
+        leftNode->parentNode = this;
+        rightNode = node;
+        rightNode->parentNode = this;
       }
-  }else{
-      if (addOnTop){
-          FilterC* existingNode = new FilterC();
-          copyTo(existingNode);
-          junction = junction;
-          if (leafGrowth){
-              leftNode = node;
-              leftNode->parentNode = this;
-              rightNode = existingNode;
-              rightNode->parentNode = this;
-          }else{
-              leftNode = existingNode;
-              leftNode->parentNode = this;
-              rightNode = node;
-              rightNode->parentNode = this;
-          }
+    }else{
+      if (leafGrowth){
+        if (leftNode)
+          leftNode->add(node, junction, leafGrowth, addOnTop);
+        else 
+          rightNode->add(node, junction, leafGrowth, addOnTop);
       }else{
-          if (leafGrowth){
-              if (leftNode)
-                  leftNode->add(node, junction, leafGrowth, addOnTop);
-              else 
-                  rightNode->add(node, junction, leafGrowth, addOnTop);
-          }else{
-              if (rightNode)
-                  rightNode->add(node, junction, leafGrowth, addOnTop);
-              else 
-                  leftNode->add(node, junction, leafGrowth, addOnTop);
-          }
+        if (rightNode)
+          rightNode->add(node, junction, leafGrowth, addOnTop);
+        else 
+          leftNode->add(node, junction, leafGrowth, addOnTop);
       }
+    }
   }
 }
 
 void FilterC::dump(int deep){
   if (type == BRANCH){
-    printf("(%d)%s\n",deep,decodeJunction(junction).c_str());
+    printf("(%d)%s\n",deep,encodeJunction(junction).c_str());
     printf("L-");
     leftNode->dump(deep+1);
     printf("R-");

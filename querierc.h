@@ -53,7 +53,7 @@ class QuerierC
     vector< vector<string> > m_results;
     FilterC* m_filter;
     
-    bool matchFilter(vector<string> rowValue); // filt a row data by filter
+    bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter
 
   protected:
     void init();

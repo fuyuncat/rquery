@@ -158,7 +158,7 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
 
 void FilterC::dump(int deep){
   if (type == BRANCH){
-    printf("(%d)%s\n",deep,encodeJunction(junction).c_str());
+    printf("(%d)%s\n",deep,decodeJunction(junction).c_str());
     printf("L-");
     leftNode->dump(deep+1);
     printf("R-");

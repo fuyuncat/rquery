@@ -712,8 +712,8 @@ vector <string> getAllTokens(string str, string token)
   vector <string> findings;
   sregex regexp = sregex::compile(token);
   smatch matches;
-  string::const_iterator searchStart( str.cbegin() );
-  while ( regex_search( searchStart, str.cend(), matches, regexp ) )
+  string::const_iterator searchStart( str.begin() );
+  while ( regex_search( searchStart, str.end(), matches, regexp ) )
   {
       findings.push_back(matches[0]);  
       searchStart = matches.suffix().first;

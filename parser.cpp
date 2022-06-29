@@ -127,15 +127,15 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
     }else if(quoteDeep == 0 && initialString[i] == ' '){ // splitor that not between quato are the real splitor
       if ( boost::to_upper_copy<string>(initialString.substr(i)).find(splitor) == 0){
         node->type = BRANCH;
-        node->junction = decodeJunction(boost::algorithm::trim_copy<string>(splitor));
+        node->junction = encodeJunction(boost::algorithm::trim_copy<string>(splitor));
         node->leftNode = new FilterC();
-        node->leftNode.parentNode = node;
-        if (!buildFilter(node->leftNode, initialString.substring(0, i)," OR ",quoters)) { // OR priority higher than AND
+        node->leftNode->parentNode = node;
+        if (!buildFilter(node->leftNode, initialString.substr(0, i)," OR ",quoters)) { // OR priority higher than AND
           delete node->leftNode;
           retrun false;
         }
         node->rightNode = new FilterC();
-        node->rightNode.parentNode = node;
+        node->rightNode->parentNode = node;
         if (!buildFilter(node->rightNode, initialString.substr(i+splitor.length())," OR ",quoters)){
           delete node->rightNode;
           retrun false;
@@ -155,7 +155,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
   if (quoteStart == 0 && quoteEnd == initialString.length()-1){ // sub expression quoted 
     initialString = initialString.substr(1,initialString.length()-1);  // trim the quoters
     return buildFilter(node, initialString," OR ",quoters);
-  }else if (" OR ".equals(splitor)){
+  }else if (boost::to_upper_copy<string>(splitor).compare(" OR ") == 0){
     return buildFilter(node, initialString," AND ",quoters);
   }else
     buildLeafNodeFromStr(node, initialString);

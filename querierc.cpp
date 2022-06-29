@@ -74,25 +74,25 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
 }
 
 // filt a row data by filter
-bool QuerierC::matchFilter(vector<string> rowValue)
+bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
 {
-  if (!m_filter)
+  if (!filter)
     return true;
   bool matched = false; 
-  if (m_filter->type == BRANCH){
-    if (m_filter->leftNode == null || m_filter->rightNode == null){
+  if (filter->type == BRANCH){
+    if (!filter->leftNode || !filter->rightNode){
       return false;
     }
-    if (m_filter->junction == AND)  // and
-      matched = matchFilter(rowValue, m_filter->leftNode) && matchFilter(rowValue, m_filter->rightNode);
+    if (filter->junction == AND)  // and
+      matched = matchFilter(rowValue, filter->leftNode) && matchFilter(rowValue, filter->rightNode);
     else // or
-      matched = matchFilter(rowValue, m_filter->leftNode) || matchFilter(rowValue, m_filter->rightNode);
-  }else if (m_filter->type == LEAF){
-    if (m_filter->leftColId < 0) // filter is expression
-      return !m_filter->leftExpression?!m_filter->rightExpression:m_filter->leftExpression.compare(m_filter->rightExpression)==0;
-    if (rowValue.size() == 0 || m_filter->leftColId > rowValue.size()-1)
+      matched = matchFilter(rowValue, filter->leftNode) || matchFilter(rowValue, filter->rightNode);
+  }else if (filter->type == LEAF){
+    if (filter->leftColId < 0) // filter is expression
+      return !filter->leftExpression?!filter->rightExpression:filter->leftExpression.compare(filter->rightExpression)==0;
+    if (rowValue.size() == 0 || filter->leftColId > rowValue.size()-1)
       return false;
-    return anyDataCompare(rowValue[m_filter->leftColId], m_filter->comparator, m_filter->rightExpression, m_filter->datatype) == 1;
+    return anyDataCompare(rowValue[filter->leftColId], filter->comparator, filter->rightExpression, filter->datatype) == 1;
   }else{ // no predication means alway true
     return true;
   }
@@ -113,7 +113,7 @@ int QuerierC::searchNext()
       matcheddata.push_back(matches[i]);
     if (m_fieldnames.size() == 0)
       pairFiledNames(matches);
-    if (matchFilter(matcheddata))
+    if (matchFilter(matcheddata, m_filter))
       m_results.push_back(matcheddata);
     //m_results.push_back(matches);
     //vector<namesaving_smatch>::iterator p = m_results.end();

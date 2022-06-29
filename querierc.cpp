@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <format>
 #include "querierc.h"
 
 QuerierC::QuerierC()

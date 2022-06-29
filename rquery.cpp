@@ -75,13 +75,11 @@ int main(int argc, char *argv[])
   if (query.find("parse") != query.end())
     patternStr = query["parse"];
 
-  string filterStr = "";
-  if (query.find("filter") != query.end())
-    filterStr = query["filter"];
-
   string rex = trim_one(patternStr, '/');
   QuerierC rq(rex);
-  rq.assignFilter(ps.buildFilter(filterStr));
+
+  if (query.find("filter") != query.end())
+    rq.assignFilter(ps.buildFilter(query["filter"]));
 
   if ( argc < 3 ){
     bool namePrinted = false;

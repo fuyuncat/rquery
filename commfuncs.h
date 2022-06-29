@@ -82,7 +82,7 @@ public:
   ~GlobalVars();
   
   void initVars();
-  void setVars(size_tinputbuffer = 16384);
+  void setVars(size_t inputbuffer = 16384);
   static size_t g_inputbuffer;
 };
 

@@ -362,6 +362,12 @@ string decodeComparator(int comparator){
     return "LIKE";
   case REGLIKE:
     return "REGLIKE";
+  case NOLIKE:
+    return "NOLIKE";
+  case NOREGLIKE:
+    return "NOREGLIKE";
+  case IN:
+    return "IN";
   default:
     return "UNKNOWN";
   }
@@ -407,6 +413,12 @@ int encodeComparator(string str)
     return LIKE;
   else if (boost::to_upper_copy<string>(str).compare("REGLIKE") == 0)
     return REGLIKE;
+  else if (boost::to_upper_copy<string>(str).compare("NOLIKE") == 0)
+    return NOLIKE;
+  else if (boost::to_upper_copy<string>(str).compare("NOREGLIKE") == 0)
+    return NOREGLIKE;
+  else if (boost::to_upper_copy<string>(str).compare("IN") == 0)
+    return IN;
   else
     return UNKNOWN;
 }
@@ -668,6 +680,10 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
       return like(newstr1, newstr2);
     case REGLIKE:
       return reglike(newstr1, newstr2);
+    case NOLIKE:
+      return !like(newstr1, newstr2);
+    case NOREGLIKE:
+      return !reglike(newstr1, newstr2);
     default:
       return -101;
     }

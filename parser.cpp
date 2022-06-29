@@ -36,7 +36,7 @@ void ParserC::init()
   analyzedPos = 0;
   junctionWords.push_back("AND"); junctionWords.push_back("OR");
   junctionSplitors.push_back(" AND ");junctionSplitors.push_back(" OR ");
-  comparators.push_back("=");comparators.push_back("!=");comparators.push_back(">=");comparators.push_back("<=");comparators.push_back(">");comparators.push_back("<"); // ">=", "<=" should be before ">", "<"
+  comparators.push_back("=");comparators.push_back("!=");comparators.push_back(">=");comparators.push_back("<=");comparators.push_back(">");comparators.push_back("<");comparators.push_back("LIKE");comparators.push_back("REGLIKE");comparators.push_back("NOLIKE");comparators.push_back("NOREGLIKE");comparators.push_back("IN"); // ">=", "<=" should be before ">", "<"
 }
 
 //map<string,string> ParserC::parsequery(string raw)

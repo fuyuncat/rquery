@@ -38,8 +38,9 @@ using namespace boost::xpressive;
 #define SE 6
 #define LIKE 7
 #define REGLIKE 8
-#define NOT 8
-#define IN 9
+#define NOLIKE 9
+#define NOREGLIKE 10
+#define IN 11
 #define LEFT 1
 #define RIGHT 2
 #define STRING 1

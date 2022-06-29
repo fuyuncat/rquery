@@ -60,7 +60,7 @@ class QuerierC
   protected:
     void init();
     //void formatoutput(namesaving_smatch matches);
-    void formatoutput(vector<string> datas);
+    void formatoutput(vector<string> datas, bool rawstronly = false);
     void pairFiledNames(namesaving_smatch matches);
 };
 

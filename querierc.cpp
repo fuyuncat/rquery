@@ -180,13 +180,17 @@ int QuerierC::searchAll()
 //  printf("\n");
 //}
 
-void QuerierC::formatoutput(vector<string> datas)
+void QuerierC::formatoutput(vector<string> datas, bool rawstronly)
 {
   m_outputrow++;
-  printf("%d: ", m_outputrow);
-  for (int i=1; i<datas.size(); i++)
-    printf("%s\t", datas[i].c_str());
-  printf("\n");
+  //printf("%d: ", m_outputrow);
+  if (rawstronly)
+    printf("%s\n", datas[0]);
+  else{
+    for (int i=1; i<datas.size(); i++)
+      printf("%s\t", datas[i].c_str());
+    printf("\n");
+  }
 }
 
 void QuerierC::printFieldNames()
@@ -200,7 +204,7 @@ void QuerierC::output()
 {
   //printf("Result Num: %d\n",m_results.size());
   for (int i=0; i<m_results.size(); i++)
-    formatoutput(m_results[i]);
+    formatoutput(m_results[i], true);
 }
 
 void QuerierC::outputAndClean()

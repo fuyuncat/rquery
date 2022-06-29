@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
 GlobalVars gv0;
 gv0.setVars(16384*2);
 
+    printf("g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);
     GlobalVars gv;
-    printf("g_inputbuffer:%d\n",gv.g_inputbuffer);
     const size_t cache_length = gv.g_inputbuffer;
     char cachebuffer[cache_length];
     size_t howmany = 0, reads = 0;

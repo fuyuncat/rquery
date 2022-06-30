@@ -813,12 +813,12 @@ string evalString(string str1, int operate, string str2)
   case PLUS:
     return str1 + str2;
   default:
-    trace(ERROR, "Operation %s is not supported for STRING data type!\n", decodeOperator(operate));
+    trace(ERROR, "Operation %s is not supported for STRING data type!\n", decodeOperator(operate).c_str());
     return "";
   }
 }
 
-long evalLong(string str1, int operate, string str2);
+long evalLong(string str1, int operate, string str2)
 {
   switch(operate){
   case PLUS:
@@ -832,7 +832,7 @@ long evalLong(string str1, int operate, string str2);
   case POWER:
     return pow(atol(str1.c_str()), atol(str2.c_str()));
   default:
-    trace(ERROR, "Operation %s is not supported for LONG data type!\n", decodeOperator(operate));
+    trace(ERROR, "Operation %s is not supported for LONG data type!\n", decodeOperator(operate).c_str());
     return 0;
   }
 }
@@ -851,7 +851,7 @@ int evalInteger(string str1, int operate, string str2)
   case POWER:
     return pow(atoi(str1.c_str()), atoi(str2.c_str()));
   default:
-    trace(ERROR, "Operation %s is not supported for INETEGER data type!\n", decodeOperator(operate));
+    trace(ERROR, "Operation %s is not supported for INETEGER data type!\n", decodeOperator(operate).c_str());
     return 0;
   }
 }
@@ -870,7 +870,7 @@ double evalDouble(string str1, int operate, string str2)
   case POWER:
     return pow(atod(str1.c_str()), atod(str2.c_str()));
   default:
-    trace(ERROR, "Operation %s is not supported for DOUBLE data type!\n", decodeOperator(operate));
+    trace(ERROR, "Operation %s is not supported for DOUBLE data type!\n", decodeOperator(operate).c_str());
     return 0;
   }
 }
@@ -889,7 +889,7 @@ struct tm evalDate(string str1, int operate, string str2);
     localtime_s(&dt,&t1);
     return dt;
   default:
-    trace(ERROR, "Operation %s is not supported for DATE data type!\n", decodeOperator(operate));
+    trace(ERROR, "Operation %s is not supported for DATE data type!\n", decodeOperator(operate).c_str());
     return dt;
   }
 }

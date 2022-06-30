@@ -210,6 +210,20 @@ bool isFloat(const string& str)
   return true;
 }
 
+bool isDouble(const string& str)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+
+  try{
+    boost::lexical_cast<double>(str);
+  }catch (bad_lexical_cast &){
+    return false;
+  }
+
+  return true;
+}
+
 string intToStr(const int val)
 {
   using boost::lexical_cast;

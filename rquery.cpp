@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
   QuerierC rq(rex);
 
   if (query.find("filter") != query.end()){
-    trace(INFO,"Assigning filter: %s \n", query["filter"]);
+    trace(INFO,"Assigning filter: %s \n", query["filter"].c_str());
     rq.assignFilter(ps.buildFilter(query["filter"]));
   }
 

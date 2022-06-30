@@ -72,8 +72,8 @@ void ParserC::buildLeafNodeFromStr(FilterC* node, string str)
       node->type = LEAF;
       node->leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
       node->rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
-      node->leftExpression = new Expression(node->leftExpStr);
-      node->rightExpression = new Expression(node->rightExpStr);
+      node->leftExpression = new ExpressionC(node->leftExpStr);
+      node->rightExpression = new ExpressionC(node->rightExpStr);
       return;
     }
   }

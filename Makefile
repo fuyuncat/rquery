@@ -15,7 +15,7 @@ querierc.o: querierc.cpp querierc.h filter.o
 rquery.o: rquery.cpp commfuncs.h querierc.h parser.h filter.h
 	g++ -c rquery.cpp
 rquery: rquery.o commfuncs.o querierc.o parser.o filter.o
-	g++ -I /usr/lib/boost/include -L /usr/lib/boost/lib rquery.o commfuncs.o filter.o parser.o querierc.o -lboost_regex-mt -o $@
+	g++ -I /usr/lib/boost/include -L /usr/lib/boost/lib rquery.o commfuncs.o filter.o parser.o querierc.o -o $@
 check: all
 	./rquery
 clean:

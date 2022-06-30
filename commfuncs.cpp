@@ -908,10 +908,10 @@ string anyDataOperate(string str1, int operate, string str2, int type)
   case DOUBLE:
     return doubleToStr(evalDouble(str1, operate, str2));
   case DATE:
-  case TIMESTAMPE:{
+  case TIMESTAMP:{
     struct tm dt = evalDate(str1, operate, str2);
     char buffer [80];
-    strftime (buffer,80,DATEFMT,timeinfo);
+    strftime (buffer,80,DATEFMT,dt);
     return(string(buffer));
   }
   case STRING:

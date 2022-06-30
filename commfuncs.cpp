@@ -911,7 +911,7 @@ string anyDataOperate(string str1, int operate, string str2, int type)
   case TIMESTAMP:{
     struct tm dt = evalDate(str1, operate, str2);
     char buffer [80];
-    strftime (buffer,80,DATEFMT,dt);
+    strftime (buffer,80,DATEFMT,&dt);
     return(string(buffer));
   }
   case STRING:

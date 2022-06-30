@@ -762,9 +762,9 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
   return -102;
 }
 
-auto anyDataOperate(string str1, int operate, string str2, int type)
+string anyDataOperate(string str1, int operate, string str2, int type)
 {
-  return 0;
+  return "";
 }
 
 // detect if string start with special words

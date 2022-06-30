@@ -361,16 +361,16 @@ map<int,string> ExpressionC::buildMap(){
 }
 
 // calculate an expression 
-auto ExpressionC::evalExpression(){
-  auto result=0;
+string ExpressionC::evalExpression(){
+  string result="";
   if (type == BRANCH){
     if (!leftNode || !rightNode)
-      return 0;
+      return result;
     result = anyDataOperate(leftNode->compareExpression(), operate, rightNode->compareExpression(), datatype);
   }else if(type == LEAF){
     return anyDataOperate(leftExpStr, operate, rightExpStr, datatype);
-  }else{ // no predication means alway true
-    return 0;
+  }else{ // no expression
+    return result;
   }
   return result;
 }

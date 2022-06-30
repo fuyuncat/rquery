@@ -55,7 +55,7 @@ class ExpressionC
     void copyTo(ExpressionC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
-    auto evalExpression(); // calculate an expression prediction
+    string evalExpression(); // calculate an expression prediction
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin
     bool remove(ExpressionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction

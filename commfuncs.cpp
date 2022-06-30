@@ -517,7 +517,7 @@ string decodeOperator(int op)
   switch (op){
   case PLUS:
     return "=";
-  case SUBTRACT:
+  case MINUS:
     return "-";
   case TIMES:
     return "*";
@@ -535,7 +535,7 @@ int encodeOperator(string str)
   if (str.compare("+") == 0)
     return PLUS;
   else if (str.compare("-") == 0)
-    return SUBTRACT;
+    return MINUS;
   else if (str.compare("*") == 0)
     return TIMES;
   else if (str.compare("/") == 0)
@@ -823,7 +823,7 @@ long evalLong(string str1, int operate, string str2)
   switch(operate){
   case PLUS:
     return atol(str1.c_str()) + atol(str2.c_str());
-  case SUBTRACT:
+  case MINUS:
     return atol(str1.c_str()) - atol(str2.c_str());
   case TIMES:
     return atol(str1.c_str()) * atol(str2.c_str());
@@ -842,7 +842,7 @@ int evalInteger(string str1, int operate, string str2)
   switch(operate){
   case PLUS:
     return atoi(str1.c_str()) + atoi(str2.c_str());
-  case SUBTRACT:
+  case MINUS:
     return atoi(str1.c_str()) - atoi(str2.c_str());
   case TIMES:
     return atoi(str1.c_str()) * atoi(str2.c_str());
@@ -861,7 +861,7 @@ double evalDouble(string str1, int operate, string str2)
   switch(operate){
   case PLUS:
     return atof(str1.c_str()) + atof(str2.c_str());
-  case SUBTRACT:
+  case MINUS:
     return atof(str1.c_str()) - atof(str2.c_str());
   case TIMES:
     return atof(str1.c_str()) * atof(str2.c_str());
@@ -886,7 +886,7 @@ struct tm evalDate(string str1, int operate, string str2)
     //localtime_s(&dt,&t1);
     dt = *(localtime(&t1));
     return dt;
-  case SUBTRACT:
+  case MINUS:
     time_t t1 = mktime(&dt);
     t1-=atoi(str2.c_str());
     dt = *(localtime(&t1));

@@ -45,7 +45,7 @@ using namespace boost::xpressive;
 #define LEFT 1
 #define RIGHT 2
 #define PLUS 1
-#define SUBTRACT 2
+#define MINUS 2
 #define TIMES 3
 #define DIVIDE 4
 #define POWER 5

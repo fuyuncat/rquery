@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     GlobalVars gv;
     gv.setVars(16384*2, FATAL);
 
-    trace(FATAL, "g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);
+    trace(INFO, "g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);
     //printf("g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);
     const size_t cache_length = GlobalVars::g_inputbuffer;
     char cachebuffer[cache_length];

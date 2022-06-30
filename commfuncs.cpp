@@ -879,7 +879,7 @@ struct tm evalDate(string str1, int operate, string str2)
 {
   struct tm dt;
   strptime(str1.c_str(), DATEFMT, &dt);
-  time_t t1
+  time_t t1;
   switch(operate){
   case PLUS:
     t1 = mktime(&dt);

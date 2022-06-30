@@ -878,7 +878,7 @@ double evalDouble(string str1, int operate, string str2)
 struct tm evalDate(string str1, int operate, string str2)
 {
   struct tm dt;
-  strptime(str1.c_str(), DATEFMT, &dt));
+  strptime(str1.c_str(), DATEFMT, &dt);
   switch(operate){
   case PLUS:
     time_t t1 = mktime(&dt)+atoi(str2.c_str());

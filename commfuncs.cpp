@@ -878,7 +878,7 @@ double evalDouble(string str1, int operate, string str2)
 struct tm evalDate(string str1, int operate, string str2)
 {
   struct tm dt;
-  strptime(str1.c_str(), DATEFMT.c_str(), &dt))
+  strptime(str1.c_str(), DATEFMT, &dt));
   switch(operate){
   case PLUS:
     time_t t1 = mktime(&dt)+atoi(str2.c_str());
@@ -910,7 +910,7 @@ string anyDataOperate(string str1, int operate, string str2, int type)
   case TIMESTAMPE:
     struct tm dt = evalDate(str1, operate, str2);
     char buffer [80];
-    strftime (buffer,80,DATEFMT.c_str(),timeinfo);
+    strftime (buffer,80,DATEFMT,timeinfo);
     return(string(buffer));
   case STRING:
   default: 

@@ -165,7 +165,7 @@ void ExpressionC::dump(int deep){
     rightNode->dump(deep+1);
   }else{
     trace(INFO,"(%d)%s(%d)",deep,leftExpression.c_str(),leftColId);
-    trace(INFO,"%s",decodeComparator(comparator).c_str());
+    trace(INFO,"%s",decodeOperator(operate).c_str());
     trace(INFO,"%s\n",rightExpression.c_str());
   }
 }

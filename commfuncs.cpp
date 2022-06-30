@@ -466,6 +466,39 @@ int encodeJunction(string str){
     return UNKNOWN;
 }
 
+string decodeOperator(int op)
+{
+  switch (op){
+  case PLUS:
+    return "=";
+  case SUBTRACT:
+    return "-";
+  case TIMES:
+    return "*";
+  case DIVIDE:
+    return "/";
+  case POWER:
+    return "^";
+  default:
+    return "UNKNOWN";
+}
+
+int encodeOperator(string str)
+{
+  if (str.compare("+") == 0)
+    return PLUS;
+  else if (str.compare("-") == 0)
+    return SUBTRACT;
+  else if (str.compare("*") == 0)
+    return TIMES;
+  else if (str.compare("/") == 0)
+    return DIVIDE;
+  else if (str.compare("^") == 0)
+    return POWER;
+  else
+    return UNKNOWN;
+}
+
 int findStrArrayId(const vector<string> array, const string member)
 {
   for (int i=0; i<array.size(); i++){

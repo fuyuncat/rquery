@@ -50,6 +50,7 @@ void QuerierC::setregexp(string regexstr)
 void QuerierC::assignFilter(FilterC* filter)
 {
   m_filter = filter;
+  m_filter->dump();
 }
 
 void QuerierC::appendrawstr(string rawstr)

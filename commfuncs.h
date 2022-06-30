@@ -43,6 +43,11 @@ using namespace boost::xpressive;
 #define IN 11
 #define LEFT 1
 #define RIGHT 2
+#define PLUS 1
+#define SUBTRACT 2
+#define TIMES 3
+#define DIVIDE 4
+#define POWER 5
 #define STRING 1
 #define LONG 2
 #define INTEGER 3
@@ -106,8 +111,10 @@ bool reglike(string str, string regstr);
 string decodeJunction(int junction);
 string decodeComparator(int comparator);
 string decodeDatatype(int datatype);
+string decodeOperator(int op);
 int encodeComparator(string str);
 int encodeJunction(string str);
+int encodeOperator(string str);
 int findStrArrayId(const vector<string> array, const string member);
 int anyDataCompare(string str1, string str2, int type);
 int anyDataCompare(string str1, int comparator, string str2, int type);

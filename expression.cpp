@@ -1,8 +1,8 @@
 /*******************************************************************************
 //
-//        File: filter.cpp
-// Description: Filter class defination
-//       Usage: filter.cpp
+//        File: expression.cpp
+// Description: Expression class defination
+//       Usage: expression.cpp
 //     Created: 18/06/2022
 //      Author: Wei Huang
 //       Email: fuyuncat@gmail.com
@@ -13,13 +13,13 @@
 *******************************************************************************/
 #include <stdio.h>
 #include <string.h>
-#include "filter.h"
+#include "expression.h"
 
-void FilterC::init()
+void ExpressionC::init()
 {
   type = UNKNOWN;       // 1: branch; 2: leaf
   junction = UNKNOWN;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
-  comparator = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
+  operate = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
   datatype = UNKNOWN;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
   leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
   rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
@@ -32,23 +32,23 @@ void FilterC::init()
   metaDataAnzlyzed = false; // analyze column name to column id.
 }
 
-FilterC::FilterC()
+ExpressionC::ExpressionC()
 {
   init();
 }
 
-FilterC::~FilterC()
+ExpressionC::~ExpressionC()
 {
 
 }
 
-FilterC::FilterC(FilterC* node)
+ExpressionC::ExpressionC(ExpressionC* node)
 {
   init();
 
   type = node->type;
   junction = node->junction;
-  comparator = node->comparator;
+  operate = node->operate;
   leftColId = node->leftColId;
   rightExpression = node->rightExpression;
   leftExpression = node->leftExpression;
@@ -59,7 +59,7 @@ FilterC::FilterC(FilterC* node)
   //predStr = node.predStr;
 }
 
-FilterC::FilterC(int junction, FilterC* leftNode, FilterC* rightNode)
+ExpressionC::ExpressionC(int junction, ExpressionC* leftNode, ExpressionC* rightNode)
 {
   init();
   type = BRANCH;
@@ -70,17 +70,17 @@ FilterC::FilterC(int junction, FilterC* leftNode, FilterC* rightNode)
   //rightNode = rightNode==NULL?NULL:new Prediction(rightNode);;
 }
 
-FilterC::FilterC(int comparator, int colId, string data)
+ExpressionC::ExpressionC(int operate, int colId, string data)
 {
   init();
   type = LEAF;
-  comparator = comparator;
+  operate = operate;
   leftColId = colId;
   rightExpression = data;
 }
 
 // get left tree Height
-int FilterC::getLeftHeight(){
+int ExpressionC::getLeftHeight(){
   int height = 1;
   if (type == BRANCH && leftNode)
     height += leftNode->getLeftHeight();
@@ -89,7 +89,7 @@ int FilterC::getLeftHeight(){
 }
 
 // get left tree Height
-int FilterC::getRightHeight(){
+int ExpressionC::getRightHeight(){
   int height = 1;
   if (type == BRANCH && rightNode)
     height += rightNode->getRightHeight();
@@ -98,18 +98,18 @@ int FilterC::getRightHeight(){
 }
 
 // add a NEW preiction into tree
-void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
+void ExpressionC::add(ExpressionC* node, int junction, bool leafGrowth, bool addOnTop){
   // not add any null or UNKNOWN node
   if (node || node->type ==  UNKNOWN) 
       return;
   if (type ==  UNKNOWN){ // not assinged
       node->copyTo(this);
   }else if (type == LEAF){
-    FilterC* existingNode = new FilterC();
+    ExpressionC* existingNode = new ExpressionC();
     copyTo(existingNode);
     type = BRANCH;
     junction = junction;
-    comparator = UNKNOWN;   
+    operate = UNKNOWN;   
     leftColId = -1;        
     leftExpression = "";
     rightExpression = "";
@@ -126,7 +126,7 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
     }
   }else{
     if (addOnTop){
-      FilterC* existingNode = new FilterC();
+      ExpressionC* existingNode = new ExpressionC();
       copyTo(existingNode);
       junction = junction;
       if (leafGrowth){
@@ -156,7 +156,7 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
   }
 }
 
-void FilterC::dump(int deep){
+void ExpressionC::dump(int deep){
   if (type == BRANCH){
     trace(INFO,"(%d)%s\n",deep,decodeJunction(junction).c_str());
     trace(INFO,"L-");
@@ -170,12 +170,12 @@ void FilterC::dump(int deep){
   }
 }
 
-void FilterC::dump(){
+void ExpressionC::dump(){
   dump(0);
 }
 
 // detect if predication contains special colId    
-bool FilterC::containsColId(int colId){
+bool ExpressionC::containsColId(int colId){
   bool contain = false;
   if (type == BRANCH){
     contain = contain || leftNode->containsColId(colId);
@@ -187,8 +187,8 @@ bool FilterC::containsColId(int colId){
 }
 
 // detect if predication contains special colId    
-FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
-  FilterC* node;
+ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
+  ExpressionC* node;
   if (type == BRANCH){
     if (leftFirst){
       if (leftNode)
@@ -209,7 +209,7 @@ FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
 }
 
 // analyze column ID & name from metadata
-bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fieldnames2){
+bool ExpressionC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fieldnames2){
   if (type == BRANCH){
     metaDataAnzlyzed = true;
     if (leftNode)
@@ -261,24 +261,24 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
   return metaDataAnzlyzed;
 }
 
-bool FilterC::columnsAnalyzed(){
+bool ExpressionC::columnsAnalyzed(){
     return metaDataAnzlyzed;
 }
 
-FilterC* FilterC::cloneMe(){
-  FilterC* node = new FilterC();
+ExpressionC* ExpressionC::cloneMe(){
+  ExpressionC* node = new ExpressionC();
   node->metaDataAnzlyzed = metaDataAnzlyzed;
   //node->predStr = predStr;
   node->type = type;
   node->junction = junction;
-  node->comparator = comparator;
+  node->operate = operate;
   node->leftColId = leftColId;
   node->rightExpression = rightExpression;
   node->leftExpression = leftExpression;
   if (type == BRANCH){
-    node->leftNode = new FilterC();
+    node->leftNode = new ExpressionC();
     node->leftNode = leftNode->cloneMe();
-    node->rightNode = new FilterC();
+    node->rightNode = new ExpressionC();
     node->rightNode = rightNode->cloneMe();
     node->leftNode->parentNode = node;
     node->rightNode->parentNode = node;
@@ -289,7 +289,7 @@ FilterC* FilterC::cloneMe(){
   return node;
 }
 
-void FilterC::copyTo(FilterC* node){
+void ExpressionC::copyTo(ExpressionC* node){
   if (!node)
     return;
   else{
@@ -297,20 +297,20 @@ void FilterC::copyTo(FilterC* node){
     //node->predStr = predStr;
     node->type = type;
     node->junction = junction;
-    node->comparator = comparator;
+    node->operate = operate;
     node->leftColId = leftColId;
     node->rightExpression = rightExpression;
     node->leftExpression = leftExpression;
     if (type == BRANCH){
       if (leftNode){
-        node->leftNode = new FilterC();
+        node->leftNode = new ExpressionC();
         leftNode->copyTo(node->leftNode);
         node->leftNode->parentNode = node;
       }else
         node->leftNode = NULL;
       
       if (rightNode){
-        node->rightNode = new FilterC();
+        node->rightNode = new ExpressionC();
         rightNode->copyTo(node->rightNode);
         node->rightNode->parentNode = node;
       }else
@@ -320,7 +320,7 @@ void FilterC::copyTo(FilterC* node){
 }
 
 // get all involved colIDs in this prediction
-std::set<int> FilterC::getAllColIDs(int side){
+std::set<int> ExpressionC::getAllColIDs(int side){
   std::set<int> colIDs;
   if (type == BRANCH){
     if (leftNode){
@@ -341,7 +341,7 @@ std::set<int> FilterC::getAllColIDs(int side){
 }
 
 // build the prediction as a HashMap
-map<int,string> FilterC::buildMap(){
+map<int,string> ExpressionC::buildMap(){
   map<int,string> datas;
   if (type == BRANCH){
     if (leftNode){
@@ -360,7 +360,7 @@ map<int,string> FilterC::buildMap(){
 }
 
 // calculate an expression prediction
-bool FilterC::compareExpression(){
+bool ExpressionC::compareExpression(){
   bool result=true;
   if (type == BRANCH){
     if (!leftNode || !rightNode)
@@ -370,7 +370,7 @@ bool FilterC::compareExpression(){
     else
       result = leftNode->compareExpression() || rightNode->compareExpression();
   }else if(type == LEAF){
-    return anyDataCompare(leftExpression, comparator, rightExpression, STRING) == 1;
+    return anyDataCompare(leftExpression, operate, rightExpression, STRING) == 1;
   }else{ // no predication means alway true
     return true;
   }
@@ -378,7 +378,7 @@ bool FilterC::compareExpression(){
 }
 
 // get all involved colIDs in this prediction
-int FilterC::size(){
+int ExpressionC::size(){
   int size = 0;
   if (type == BRANCH){
     if (leftNode)
@@ -393,7 +393,7 @@ int FilterC::size(){
 }
 
 // clear predictin
-void FilterC::clear(){
+void ExpressionC::clear(){
   if (leftNode){
     leftNode->clear();
     delete leftNode;
@@ -406,7 +406,7 @@ void FilterC::clear(){
   }
   type = UNKNOWN;
   junction = UNKNOWN;
-  comparator = UNKNOWN;
+  operate = UNKNOWN;
   leftColId = -1;
   rightExpression = "";
   leftExpression = "";
@@ -416,7 +416,7 @@ void FilterC::clear(){
 //   0                      0                  2                 1
 //  1  2  (remove 3) =>   4   2 (remove 1) =>      (remove 2)  3   4
 //3  4
-bool FilterC::remove(FilterC* node){
+bool ExpressionC::remove(ExpressionC* node){
   bool removed = false;
   if (leftNode){
     if (leftNode == node){
@@ -463,7 +463,7 @@ bool FilterC::remove(FilterC* node){
 }
 
 // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
-void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string> columns){
+void ExpressionC::fillDataForColumns(map <string, string> & dataList, vector <string> columns){
   if (columns.size() == 0)
     return;
   if (type == BRANCH){

@@ -75,6 +75,7 @@ void trace(short level, const char *fmt, ...)
   va_start(args, fmt);
   if (GlobalVars::g_tracelevel>=level)
     printf(fmt, args);
+  va_end(args);
 }
 
 vector<string>::const_iterator namesaving_smatch::names_begin() const

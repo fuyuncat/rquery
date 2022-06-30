@@ -332,11 +332,11 @@ void FilterC::copyTo(FilterC* node){
     }else{
       if (leftExpression){
         node->leftExpression = new ExpressionC(leftExpStr);
-        node->leftExpression = leftExpression->copyTo(node->leftExpression);
+        leftExpression->copyTo(node->leftExpression);
       }
       if (rightExpression){
         node->rightExpression = new ExpressionC(rightExpStr);
-        node->rightExpression = rightExpression->copyTo(node->rightExpression);
+        rightExpression->copyTo(node->rightExpression);
       }
     }
   }

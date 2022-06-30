@@ -517,7 +517,7 @@ string decodeOperator(int op)
   switch (op){
   case PLUS:
     return "=";
-  case MINUS:
+  case SUBTRACT:
     return "-";
   case TIMES:
     return "*";
@@ -535,7 +535,7 @@ int encodeOperator(string str)
   if (str.compare("+") == 0)
     return PLUS;
   else if (str.compare("-") == 0)
-    return MINUS;
+    return SUBTRACT;
   else if (str.compare("*") == 0)
     return TIMES;
   else if (str.compare("/") == 0)
@@ -823,7 +823,7 @@ long evalLong(string str1, int operate, string str2)
   switch(operate){
   case PLUS:
     return atol(str1.c_str()) + atol(str2.c_str());
-  case MINUS:
+  case SUBTRACT:
     return atol(str1.c_str()) - atol(str2.c_str());
   case TIMES:
     return atol(str1.c_str()) * atol(str2.c_str());
@@ -842,7 +842,7 @@ int evalInteger(string str1, int operate, string str2)
   switch(operate){
   case PLUS:
     return atoi(str1.c_str()) + atoi(str2.c_str());
-  case MINUS:
+  case SUBTRACT:
     return atoi(str1.c_str()) - atoi(str2.c_str());
   case TIMES:
     return atoi(str1.c_str()) * atoi(str2.c_str());
@@ -861,7 +861,7 @@ double evalDouble(string str1, int operate, string str2)
   switch(operate){
   case PLUS:
     return atof(str1.c_str()) + atof(str2.c_str());
-  case MINUS:
+  case SUBTRACT:
     return atof(str1.c_str()) - atof(str2.c_str());
   case TIMES:
     return atof(str1.c_str()) * atof(str2.c_str());
@@ -879,15 +879,16 @@ struct tm evalDate(string str1, int operate, string str2)
 {
   struct tm dt;
   strptime(str1.c_str(), DATEFMT, &dt);
+  time_t t1
   switch(operate){
   case PLUS:
-    time_t t1 = mktime(&dt);
+    t1 = mktime(&dt);
     t1+=atoi(str2.c_str());
     //localtime_s(&dt,&t1);
     dt = *(localtime(&t1));
     return dt;
-  case MINUS:
-    time_t t1 = mktime(&dt);
+  case SUBTRACT:
+    t1 = mktime(&dt);
     t1-=atoi(str2.c_str());
     dt = *(localtime(&t1));
     return dt;
@@ -901,20 +902,18 @@ string anyDataOperate(string str1, int operate, string str2, int type)
 {
   switch (type){
   case LONG:
-    long l = evalLong(str1, operate, str2);
-    return longToStr(l);
+    return longToStr(evalLong(str1, operate, str2));
   case INTEGER:
-    int i = evalInteger(str1, operate, str2);
-    return intToStr(i);
+    return intToStr(evalInteger(str1, operate, str2));
   case DOUBLE:
-    double d = evalDouble(str1, operate, str2);
-    return doubleToStr(d);
+    return doubleToStr(evalDouble(str1, operate, str2));
   case DATE:
-  case TIMESTAMPE:
+  case TIMESTAMPE:{
     struct tm dt = evalDate(str1, operate, str2);
     char buffer [80];
     strftime (buffer,80,DATEFMT,timeinfo);
     return(string(buffer));
+  }
   case STRING:
   default: 
     return evalString(str1, operate, str2);

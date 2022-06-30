@@ -14,7 +14,6 @@
 #include <stdio.h>
 //#include <unistd.h>
 //#include <termios.h>
-#include <ctime>
 #include <boost/algorithm/string.hpp>
 #include <stdbool.h>
 #include <stdarg.h>
@@ -211,18 +210,64 @@ bool isFloat(const string& str)
   return true;
 }
 
-bool isDouble(const string& str)
+string intToStr(const int val)
 {
   using boost::lexical_cast;
   using boost::bad_lexical_cast; 
+  string str;
 
   try{
-    boost::lexical_cast<double>(str);
+    str = boost::lexical_cast<string>(val);
   }catch (bad_lexical_cast &){
-    return false;
+    return "";
   }
 
-  return true;
+  return str;
+}
+
+string longToStr(const long val)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+  string str;
+
+  try{
+    str = boost::lexical_cast<string>(val);
+  }catch (bad_lexical_cast &){
+    return "";
+  }
+
+  return str;
+}
+
+string floatToStr(const float val)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+  string str;
+
+  try{
+    str = boost::lexical_cast<string>(val);
+  }catch (bad_lexical_cast &){
+    return "";
+  }
+
+  return str;
+}
+
+string doubleToStr(const double val)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+  string str;
+
+  try{
+    str = boost::lexical_cast<string>(val);
+  }catch (bad_lexical_cast &){
+    return "";
+  }
+
+  return str;
 }
 
 bool isDate(const string& str, string& fmt)
@@ -762,9 +807,115 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
   return -102;
 }
 
+string evalString(string str1, int operate, string str2)
+{
+  switch(operate){
+  case PLUS:
+    return str1 + str2;
+  default:
+    trace(ERROR, "Operation %s is not supported for STRING data type!\n", decodeOperator(operate))
+    return "";
+  }
+}
+
+long evalLong(string str1, int operate, string str2);
+{
+  switch(operate){
+  case PLUS:
+    return atol(str1.c_str()) + atol(str2.c_str());
+  case SUBTRACT:
+    return atol(str1.c_str()) - atol(str2.c_str());
+  case TIMES:
+    return atol(str1.c_str()) * atol(str2.c_str());
+  case DIVIDE:
+    return atol(str1.c_str()) / atol(str2.c_str());
+  case POWER:
+    return pow(atol(str1.c_str()), atol(str2.c_str()));
+  default:
+    trace(ERROR, "Operation %s is not supported for LONG data type!\n", decodeOperator(operate))
+    return 0;
+  }
+}
+
+int evalInteger(string str1, int operate, string str2)
+{
+  switch(operate){
+  case PLUS:
+    return atoi(str1.c_str()) + atoi(str2.c_str());
+  case SUBTRACT:
+    return atoi(str1.c_str()) - atoi(str2.c_str());
+  case TIMES:
+    return atoi(str1.c_str()) * atoi(str2.c_str());
+  case DIVIDE:
+    return atoi(str1.c_str()) / atoi(str2.c_str());
+  case POWER:
+    return pow(atoi(str1.c_str()), atoi(str2.c_str()));
+  default:
+    trace(ERROR, "Operation %s is not supported for INETEGER data type!\n", decodeOperator(operate))
+    return 0;
+  }
+}
+
+double evalDouble(string str1, int operate, string str2)
+{
+  switch(operate){
+  case PLUS:
+    return atod(str1.c_str()) + atod(str2.c_str());
+  case SUBTRACT:
+    return atod(str1.c_str()) - atod(str2.c_str());
+  case TIMES:
+    return atod(str1.c_str()) * atod(str2.c_str());
+  case DIVIDE:
+    return atod(str1.c_str()) / atod(str2.c_str());
+  case POWER:
+    return pow(atod(str1.c_str()), atod(str2.c_str()));
+  default:
+    trace(ERROR, "Operation %s is not supported for DOUBLE data type!\n", decodeOperator(operate))
+    return 0;
+  }
+}
+
+struct tm evalDate(string str1, int operate, string str2);
+{
+  struct tm dt;
+  strptime(str1.c_str(), DATEFMT.c_str(), &dt))
+  switch(operate){
+  case PLUS:
+    time_t t1 = mktime(&dt)+atoi(str2.c_str());
+    localtime_s(&dt,&t1);
+    return dt;
+  case SUBTRACT:
+    time_t t1 = mktime(&dt)-atoi(str2.c_str());
+    localtime_s(&dt,&t1);
+    return dt;
+  default:
+    trace(ERROR, "Operation %s is not supported for DATE data type!\n", decodeOperator(operate))
+    return dt;
+  }
+}
+
 string anyDataOperate(string str1, int operate, string str2, int type)
 {
-  return "";
+  switch (type){
+  case LONG:
+    long l = evalLong(str1, operate, str2);
+    return longToStr(l);
+  case INTEGER:
+    int i = evalInteger(str1, operate, str2);
+    return intToStr(i);
+  case DOUBLE:
+    double d = evalDouble(str1, operate, str2);
+    return doubleToStr(d);
+  case DATE:
+  case TIMESTAMPE:
+    struct tm dt = evalDate(str1, operate, str2);
+    char buffer [80];
+    strftime (buffer,80,DATEFMT.c_str(),timeinfo);
+    return(string(buffer));
+  case STRING:
+  default: 
+    return evalString(str1, operate, str2);
+  }
 }
 
 // detect if string start with special words

@@ -2,7 +2,7 @@
 //
 //        File: rquery.cpp
 // Description: Main File. query string/file using regular expression
-//       Usage: rquery "parse <Named Captures regular expression> | filter <filters> | group | select | sort " "file or string to be queried"
+//       Usage: rquery "parse <Named Captures regular expression> | set <col type,..> | filter <filters> | group <col1,..> | select <col1,..> | sort <col1 [asc|desc],..> " "file or string to be queried"
 //     Created: 18/06/2022
 //      Author: Wei Huang
 //       Email: fuyuncat@gmail.com

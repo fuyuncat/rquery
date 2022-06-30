@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <set>
+#include <ctime>
 #include <boost/xpressive/xpressive.hpp>
 #include <boost/xpressive/regex_actions.hpp>
 
@@ -59,6 +60,7 @@ using namespace boost::xpressive;
 #define ERROR 2
 #define WARNING 3
 #define INFO 9
+#define DATEFMT "%Y-%m-%d %H:%M:%S"
 
 class namesaving_smatch : public smatch
 {
@@ -104,6 +106,10 @@ bool isLong(const string& str);
 bool isFloat(const string& str);
 bool isDouble(const string& str);
 bool isDate(const string& str, string& fmt);
+string intToStr(const int val);
+string longToStr(const long val);
+string floatToStr(const float val);
+string doubleToStr(const double val);
 bool like(string str1, string str2); 
 bool reglike(string str, string regstr); 
 //char getch();
@@ -118,6 +124,11 @@ int encodeOperator(string str);
 int findStrArrayId(const vector<string> array, const string member);
 int anyDataCompare(string str1, string str2, int type);
 int anyDataCompare(string str1, int comparator, string str2, int type);
+string evalString(string str1, int operate, string str2);
+long evalLong(string str1, int operate, string str2);
+int evalInteger(string str1, int operate, string str2);
+double evalDouble(string str1, int operate, string str2);
+struct tm evalDate(string str1, int operate, string str2);
 string anyDataOperate(string str1, int operate, string str2, int type);
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
 int startsWithWords(string str, vector<string> words); // detect if string start with special words

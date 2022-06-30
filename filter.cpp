@@ -282,9 +282,9 @@ FilterC* FilterC::cloneMe(){
   node->rightExpStr = rightExpStr;
   node->leftExpStr = leftExpStr;
   if (type == BRANCH){
-    node->leftExpression = new Expression(node->leftExpStr);
+    node->leftExpression = new ExpressionC(node->leftExpStr);
     node->leftExpression = leftExpression->cloneMe();
-    node->rightExpression = new Expression(node->rightExpStr);
+    node->rightExpression = new ExpressionC(node->rightExpStr);
     node->rightExpression = rightExpression->cloneMe();
     node->leftNode = new FilterC();
     node->leftNode = leftNode->cloneMe();
@@ -331,11 +331,11 @@ void FilterC::copyTo(FilterC* node){
       node->rightExpression = NULL;
     }else{
       if (leftExpression){
-        node->leftExpression = new Expression(leftExpStr);
+        node->leftExpression = new ExpressionC(leftExpStr);
         node->leftExpression = leftExpression->copyTo(node->leftExpression);
       }
       if (rightExpression){
-        node->rightExpression = new Expression(rightExpStr);
+        node->rightExpression = new ExpressionC(rightExpStr);
         node->rightExpression = rightExpression->copyTo(node->rightExpression);
       }
     }

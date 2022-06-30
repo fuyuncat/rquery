@@ -81,8 +81,10 @@ int main(int argc, char *argv[])
   string rex = trim_one(patternStr, '/');
   QuerierC rq(rex);
 
-  if (query.find("filter") != query.end())
+  if (query.find("filter") != query.end()){
+    trace(INFO,"Assigning filter: %s \n", query["filter"]);
     rq.assignFilter(ps.buildFilter(query["filter"]));
+  }
 
   if ( argc < 3 ){
     bool namePrinted = false;

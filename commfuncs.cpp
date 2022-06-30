@@ -860,22 +860,22 @@ double evalDouble(string str1, int operate, string str2)
 {
   switch(operate){
   case PLUS:
-    return atod(str1.c_str()) + atod(str2.c_str());
+    return atof(str1.c_str()) + atof(str2.c_str());
   case SUBTRACT:
-    return atod(str1.c_str()) - atod(str2.c_str());
+    return atof(str1.c_str()) - atof(str2.c_str());
   case TIMES:
-    return atod(str1.c_str()) * atod(str2.c_str());
+    return atof(str1.c_str()) * atof(str2.c_str());
   case DIVIDE:
-    return atod(str1.c_str()) / atod(str2.c_str());
+    return atof(str1.c_str()) / atof(str2.c_str());
   case POWER:
-    return pow(atod(str1.c_str()), atod(str2.c_str()));
+    return pow(atof(str1.c_str()), atof(str2.c_str()));
   default:
     trace(ERROR, "Operation %s is not supported for DOUBLE data type!\n", decodeOperator(operate).c_str());
     return 0;
   }
 }
 
-struct tm evalDate(string str1, int operate, string str2);
+struct tm evalDate(string str1, int operate, string str2)
 {
   struct tm dt;
   strptime(str1.c_str(), DATEFMT.c_str(), &dt))

@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     bool namePrinted = false;
 
     GlobalVars gv;
-    gv.setVars(16384*2, FATAL);
+    gv.setVars(16384*2, INFO);
 
     trace(INFO, "g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);
     //printf("g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);

@@ -882,11 +882,12 @@ struct tm evalDate(string str1, int operate, string str2)
   switch(operate){
   case PLUS:
     time_t t1 = mktime(&dt)+atoi(str2.c_str());
-    localtime_s(&dt,&t1);
+    //localtime_s(&dt,&t1);
+    dt = *(localtime(&t1));
     return dt;
   case SUBTRACT:
     time_t t1 = mktime(&dt)-atoi(str2.c_str());
-    localtime_s(&dt,&t1);
+    dt = *(localtime(&t1));
     return dt;
   default:
     trace(ERROR, "Operation %s is not supported for DATE data type!\n", decodeOperator(operate).c_str());

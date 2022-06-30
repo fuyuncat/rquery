@@ -881,13 +881,13 @@ struct tm evalDate(string str1, int operate, string str2)
   strptime(str1.c_str(), DATEFMT, &dt);
   switch(operate){
   case PLUS:
-    time_t t1 = mktime(&dt)
+    time_t t1 = mktime(&dt);
     t1+=atoi(str2.c_str());
     //localtime_s(&dt,&t1);
     dt = *(localtime(&t1));
     return dt;
   case SUBTRACT:
-    time_t t1 = mktime(&dt)
+    time_t t1 = mktime(&dt);
     t1-=atoi(str2.c_str());
     dt = *(localtime(&t1));
     return dt;

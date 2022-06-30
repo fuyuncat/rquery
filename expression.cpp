@@ -366,7 +366,7 @@ string ExpressionC::evalExpression(){
   if (type == BRANCH){
     if (!leftNode || !rightNode)
       return result;
-    result = anyDataOperate(leftNode->compareExpression(), operate, rightNode->compareExpression(), datatype);
+    result = anyDataOperate(leftNode->evalExpression(), operate, rightNode->evalExpression(), datatype);
   }else if(type == LEAF){
     return anyDataOperate(leftExpStr, operate, rightExpStr, datatype);
   }else{ // no expression

@@ -457,7 +457,8 @@ int encodeComparator(string str)
     return UNKNOWN;
 }
 
-int encodeJunction(string str){
+int encodeJunction(string str)
+{
   if (boost::to_upper_copy<string>(str).compare("AND") == 0)
     return AND;
   else if (boost::to_upper_copy<string>(str).compare("OR") == 0)
@@ -481,6 +482,7 @@ string decodeOperator(int op)
     return "^";
   default:
     return "UNKNOWN";
+  }
 }
 
 int encodeOperator(string str)

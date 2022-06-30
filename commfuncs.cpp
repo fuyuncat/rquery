@@ -74,7 +74,7 @@ void trace(short level, const char *fmt, ...)
   va_list args;
   va_start(args, fmt);
   if (GlobalVars::g_tracelevel>=level)
-    printf(fmt, args);
+    vprintf(fmt, args);
   va_end(args);
 }
 

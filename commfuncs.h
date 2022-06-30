@@ -118,6 +118,7 @@ int encodeOperator(string str);
 int findStrArrayId(const vector<string> array, const string member);
 int anyDataCompare(string str1, string str2, int type);
 int anyDataCompare(string str1, int comparator, string str2, int type);
+auto anyDataOperate(string str1, int operate, string str2, int type);
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
 int startsWithWords(string str, vector<string> words); // detect if string start with special words
 string removeSpace(string originalStr, string keepPattern); //remove space

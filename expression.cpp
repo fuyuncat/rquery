@@ -18,23 +18,29 @@
 void ExpressionC::init()
 {
   type = UNKNOWN;       // 1: branch; 2: leaf
-  junction = UNKNOWN;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
   operate = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
   datatype = UNKNOWN;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
   leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
   rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
-  leftExpression = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
-  rightExpression = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
+  leftExpStr = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
+  rightExpStr = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
   leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
   rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
   parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
-  
+
+  m_expressionStr = "";
   metaDataAnzlyzed = false; // analyze column name to column id.
 }
 
 ExpressionC::ExpressionC()
 {
   init();
+}
+
+ExpressionC::ExpressionC(string expStr)
+{
+  init();
+  m_expressionStr = expStr;
 }
 
 ExpressionC::~ExpressionC()
@@ -47,23 +53,22 @@ ExpressionC::ExpressionC(ExpressionC* node)
   init();
 
   type = node->type;
-  junction = node->junction;
   operate = node->operate;
   leftColId = node->leftColId;
-  rightExpression = node->rightExpression;
-  leftExpression = node->leftExpression;
+  rightExpStr = node->rightExpStr;
+  leftExpStr = node->leftExpStr;
   leftNode = node->leftNode;
   rightNode = node->rightNode;
   parentNode = node->parentNode;
+  m_expressionStr = node->m_expressionStr;
   metaDataAnzlyzed = node->metaDataAnzlyzed;
   //predStr = node.predStr;
 }
 
-ExpressionC::ExpressionC(int junction, ExpressionC* leftNode, ExpressionC* rightNode)
+ExpressionC::ExpressionC(ExpressionC* leftNode, ExpressionC* rightNode)
 {
   init();
   type = BRANCH;
-  junction = junction;
   leftNode = leftNode;
   rightNode = rightNode;
   //leftNode = leftNode==NULL?NULL:new Prediction(leftNode);
@@ -76,7 +81,7 @@ ExpressionC::ExpressionC(int operate, int colId, string data)
   type = LEAF;
   operate = operate;
   leftColId = colId;
-  rightExpression = data;
+  rightExpStr = data;
 }
 
 // get left tree Height
@@ -98,7 +103,7 @@ int ExpressionC::getRightHeight(){
 }
 
 // add a NEW preiction into tree
-void ExpressionC::add(ExpressionC* node, int junction, bool leafGrowth, bool addOnTop){
+void ExpressionC::add(ExpressionC* node, bool leafGrowth, bool addOnTop){
   // not add any null or UNKNOWN node
   if (node || node->type ==  UNKNOWN) 
       return;
@@ -108,11 +113,10 @@ void ExpressionC::add(ExpressionC* node, int junction, bool leafGrowth, bool add
     ExpressionC* existingNode = new ExpressionC();
     copyTo(existingNode);
     type = BRANCH;
-    junction = junction;
     operate = UNKNOWN;   
     leftColId = -1;        
-    leftExpression = "";
-    rightExpression = "";
+    leftExpStr = "";
+    rightExpStr = "";
     if (leafGrowth){
       rightNode = existingNode;
       rightNode->parentNode = this;
@@ -128,7 +132,6 @@ void ExpressionC::add(ExpressionC* node, int junction, bool leafGrowth, bool add
     if (addOnTop){
       ExpressionC* existingNode = new ExpressionC();
       copyTo(existingNode);
-      junction = junction;
       if (leafGrowth){
         leftNode = node;
         leftNode->parentNode = this;
@@ -143,14 +146,14 @@ void ExpressionC::add(ExpressionC* node, int junction, bool leafGrowth, bool add
     }else{
       if (leafGrowth){
         if (leftNode)
-          leftNode->add(node, junction, leafGrowth, addOnTop);
+          leftNode->add(node, leafGrowth, addOnTop);
         else 
-          rightNode->add(node, junction, leafGrowth, addOnTop);
+          rightNode->add(node, leafGrowth, addOnTop);
       }else{
         if (rightNode)
-          rightNode->add(node, junction, leafGrowth, addOnTop);
+          rightNode->add(node, leafGrowth, addOnTop);
         else 
-          leftNode->add(node, junction, leafGrowth, addOnTop);
+          leftNode->add(node, leafGrowth, addOnTop);
       }
     }
   }
@@ -158,15 +161,15 @@ void ExpressionC::add(ExpressionC* node, int junction, bool leafGrowth, bool add
 
 void ExpressionC::dump(int deep){
   if (type == BRANCH){
-    trace(INFO,"(%d)%s\n",deep,decodeJunction(junction).c_str());
+    trace(INFO,"(%d)\n",deep);
     trace(INFO,"L-");
     leftNode->dump(deep+1);
     trace(INFO,"R-");
     rightNode->dump(deep+1);
   }else{
-    trace(INFO,"(%d)%s(%d)",deep,leftExpression.c_str(),leftColId);
+    trace(INFO,"(%d)%s(%d)",deep,leftExpStr.c_str(),leftColId);
     trace(INFO,"%s",decodeOperator(operate).c_str());
-    trace(INFO,"%s\n",rightExpression.c_str());
+    trace(INFO,"%s\n",rightExpStr.c_str());
   }
 }
 
@@ -219,33 +222,33 @@ bool ExpressionC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_
     if (rightNode)
         metaDataAnzlyzed = metaDataAnzlyzed &&  rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
   }else if (type == LEAF){
-    datatype = detectDataType(rightExpression);
+    datatype = detectDataType(rightExpStr);
     if (datatype == UNKNOWN)
-      datatype = detectDataType(leftExpression);
+      datatype = detectDataType(leftExpStr);
 
     if (m_fieldnames1.size()>0){
-      if (leftExpression[0] == '"') {// quoted, treat as expression, otherwise, as columns
-        leftExpression = trim_one(leftExpression,'"'); // remove quoters
+      if (leftExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
+        leftExpStr = trim_one(leftExpStr,'"'); // remove quoters
         leftColId = -1;
       }else {
-        if (isInt(leftExpression)){ // check if the name is ID already
-          leftColId = atoi(leftExpression.c_str());
-          leftExpression = m_fieldnames1[leftColId];
+        if (isInt(leftExpStr)){ // check if the name is ID already
+          leftColId = atoi(leftExpStr.c_str());
+          leftExpStr = m_fieldnames1[leftColId];
         }else{
-          leftColId = findStrArrayId(m_fieldnames1, leftExpression);
+          leftColId = findStrArrayId(m_fieldnames1, leftExpStr);
         }
       }
     }
     if (m_fieldnames2.size()>0){
-      if (rightExpression[0] == '"') {// quoted, treat as expression, otherwise, as columns
-        rightExpression = trim_one(rightExpression,'"'); // remove quoters
+      if (rightExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
+        rightExpStr = trim_one(rightExpStr,'"'); // remove quoters
         rightColId = -1;
       }else {
-        if (isInt(rightExpression)){ // check if the name is ID already
-          rightColId = atoi(rightExpression.c_str());
-          rightExpression = m_fieldnames2[rightColId];
+        if (isInt(rightExpStr)){ // check if the name is ID already
+          rightColId = atoi(rightExpStr.c_str());
+          rightExpStr = m_fieldnames2[rightColId];
         }else{
-          rightColId = findStrArrayId(m_fieldnames2, rightExpression);
+          rightColId = findStrArrayId(m_fieldnames2, rightExpStr);
         }
       }
     }
@@ -270,11 +273,10 @@ ExpressionC* ExpressionC::cloneMe(){
   node->metaDataAnzlyzed = metaDataAnzlyzed;
   //node->predStr = predStr;
   node->type = type;
-  node->junction = junction;
   node->operate = operate;
   node->leftColId = leftColId;
-  node->rightExpression = rightExpression;
-  node->leftExpression = leftExpression;
+  node->rightExpStr = rightExpStr;
+  node->leftExpStr = leftExpStr;
   if (type == BRANCH){
     node->leftNode = new ExpressionC();
     node->leftNode = leftNode->cloneMe();
@@ -296,11 +298,10 @@ void ExpressionC::copyTo(ExpressionC* node){
     node->metaDataAnzlyzed = metaDataAnzlyzed;
     //node->predStr = predStr;
     node->type = type;
-    node->junction = junction;
     node->operate = operate;
     node->leftColId = leftColId;
-    node->rightExpression = rightExpression;
-    node->leftExpression = leftExpression;
+    node->rightExpStr = rightExpStr;
+    node->leftExpStr = leftExpStr;
     if (type == BRANCH){
       if (leftNode){
         node->leftNode = new ExpressionC();
@@ -319,7 +320,7 @@ void ExpressionC::copyTo(ExpressionC* node){
   }
 }
 
-// get all involved colIDs in this prediction
+// get all involved colIDs in this expression
 std::set<int> ExpressionC::getAllColIDs(int side){
   std::set<int> colIDs;
   if (type == BRANCH){
@@ -340,7 +341,7 @@ std::set<int> ExpressionC::getAllColIDs(int side){
   return colIDs;
 }
 
-// build the prediction as a HashMap
+// build the expression as a HashMap
 map<int,string> ExpressionC::buildMap(){
   map<int,string> datas;
   if (type == BRANCH){
@@ -354,25 +355,22 @@ map<int,string> ExpressionC::buildMap(){
     }
   }else if(type == LEAF){
     if (leftColId>=0)
-      datas.insert( pair<int,string>(leftColId,rightExpression) );
+      datas.insert( pair<int,string>(leftColId,rightExpStr) );
   }
   return datas;
 }
 
-// calculate an expression prediction
-bool ExpressionC::compareExpression(){
-  bool result=true;
+// calculate an expression 
+auto ExpressionC::evalExpression(){
+  auto result=0;
   if (type == BRANCH){
     if (!leftNode || !rightNode)
-      return false;
-    if (junction == AND)
-      result = leftNode->compareExpression() && rightNode->compareExpression();
-    else
-      result = leftNode->compareExpression() || rightNode->compareExpression();
+      return 0;
+    result = anyDataOperate(leftNode->compareExpression(), operate, rightNode->compareExpression(), datatype);
   }else if(type == LEAF){
-    return anyDataCompare(leftExpression, operate, rightExpression, STRING) == 1;
+    return anyDataOperate(leftExpStr, operate, rightExpStr, datatype);
   }else{ // no predication means alway true
-    return true;
+    return 0;
   }
   return result;
 }
@@ -392,7 +390,7 @@ int ExpressionC::size(){
   return size;
 }
 
-// clear predictin
+// clear expression
 void ExpressionC::clear(){
   if (leftNode){
     leftNode->clear();
@@ -405,11 +403,10 @@ void ExpressionC::clear(){
     rightNode = NULL;
   }
   type = UNKNOWN;
-  junction = UNKNOWN;
   operate = UNKNOWN;
   leftColId = -1;
-  rightExpression = "";
-  leftExpression = "";
+  rightExpStr = "";
+  leftExpStr = "";
 }
 
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
@@ -472,5 +469,5 @@ void ExpressionC::fillDataForColumns(map <string, string> & dataList, vector <st
     if (rightNode)
       rightNode->fillDataForColumns(dataList, columns);
   }else if (type == LEAF && leftColId >= 0)
-    dataList.insert( pair<string,string>(columns[leftColId],rightExpression) );
+    dataList.insert( pair<string,string>(columns[leftColId],rightExpStr) );
 }

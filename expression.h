@@ -25,27 +25,27 @@ class ExpressionC
   public:
 
     ExpressionC();
+    ExpressionC(string expStr);
     ExpressionC(ExpressionC* node);
-    ExpressionC(int junction, ExpressionC* leftNode, ExpressionC* rightNode); // construct a branch
+    ExpressionC(ExpressionC* leftNode, ExpressionC* rightNode); // construct a branch
     ExpressionC(int operate, int colId, string data); // construct a leaf
 
     ~ExpressionC();
 
     int type;       // 1: branch; 2: leaf
-    int junction;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
     int operate; // 1: +; 2: -; 3: *; 4: /; 5: ^; . Otherwise, it's meaningless
     int datatype;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
     int leftColId;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
     int rightColId;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
-    string leftExpression;    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
-    string rightExpression;   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
+    string leftExpStr;    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
+    string rightExpStr;   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
     ExpressionC* leftNode;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
     ExpressionC* rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
     ExpressionC* parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
 
     int getLeftHeight(); // get left tree Height
     int getRightHeight(); // get left tree Height
-    void add(ExpressionC* node, int junction, bool leafGrowth, bool addOnTop); // add a NEW preiction into tree
+    void add(ExpressionC* node, bool leafGrowth, bool addOnTop); // add a NEW preiction into tree
     void dump();
     bool containsColId(int colId); // detect if predication contains special colId
     ExpressionC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
@@ -55,7 +55,7 @@ class ExpressionC
     void copyTo(ExpressionC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
-    bool compareExpression(); // calculate an expression prediction
+    auto evalExpression(); // calculate an expression prediction
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin
     bool remove(ExpressionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
@@ -63,6 +63,7 @@ class ExpressionC
 
   private:
     bool metaDataAnzlyzed; // analyze column name to column id.
+    string m_expressionStr;
     
     void dump(int deep);
 

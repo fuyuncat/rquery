@@ -70,8 +70,10 @@ void ParserC::buildLeafNodeFromStr(FilterC* node, string str)
       string compStr = comparators[startsWithWords(str.substr(i), comparators)];
       node->comparator = encodeComparator(compStr);
       node->type = LEAF;
-      node->leftExpression =  boost::algorithm::trim_copy<string>(str.substr(0,i));
-      node->rightExpression = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
+      node->leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
+      node->rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
+      node->leftExpression = new Expression(node->leftExpStr);
+      node->rightExpression = new Expression(node->rightExpStr);
       return;
     }
   }

@@ -102,11 +102,11 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
       matched = matchFilter(rowValue, filter->leftNode) || matchFilter(rowValue, filter->rightNode);
   }else if (filter->type == LEAF){
     if (filter->leftColId < 0) // filter is expression
-      return !filter->leftExpression.empty()?!filter->rightExpression.empty():filter->leftExpression.compare(filter->rightExpression)==0;
+      return !filter->leftExpStr.empty()?!filter->rightExpStr.empty():filter->leftExpStr.compare(filter->rightExpStr)==0;
     if (rowValue.size() == 0 || filter->leftColId > rowValue.size()-1)
       return false;
-    //printf("left:%s %s right:%s (%s)\n",rowValue[filter->leftColId].c_str(),decodeComparator(filter->comparator).c_str(),filter->rightExpression.c_str(),decodeDatatype(filter->datatype).c_str());
-    return anyDataCompare(rowValue[filter->leftColId], filter->comparator, filter->rightExpression, filter->datatype) == 1;
+    //printf("left:%s %s right:%s (%s)\n",rowValue[filter->leftColId].c_str(),decodeComparator(filter->comparator).c_str(),filter->rightExpStr.c_str(),decodeDatatype(filter->datatype).c_str());
+    return anyDataCompare(rowValue[filter->leftColId], filter->comparator, filter->rightExpStr, filter->datatype) == 1;
   }else{ // no predication means alway true
     return true;
   }

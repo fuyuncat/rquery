@@ -23,8 +23,10 @@ void FilterC::init()
   datatype = UNKNOWN;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
   leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
   rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
-  leftExpression = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
-  rightExpression = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
+  leftExpStr = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
+  rightExpStr = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
+  leftExpression = NULL; // meaningful only if type is LEAF
+  rightExpression = NULL; // meaningful only if type is LEAF
   leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
   rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
   parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
@@ -50,8 +52,10 @@ FilterC::FilterC(FilterC* node)
   junction = node->junction;
   comparator = node->comparator;
   leftColId = node->leftColId;
-  rightExpression = node->rightExpression;
+  leftExpStr = node->leftExpStr;
+  rightExpStr = node->rightExpStr;
   leftExpression = node->leftExpression;
+  rightExpression = node->rightExpression;
   leftNode = node->leftNode;
   rightNode = node->rightNode;
   parentNode = node->parentNode;
@@ -76,7 +80,7 @@ FilterC::FilterC(int comparator, int colId, string data)
   type = LEAF;
   comparator = comparator;
   leftColId = colId;
-  rightExpression = data;
+  rightExpStr = data;
 }
 
 // get left tree Height
@@ -97,7 +101,7 @@ int FilterC::getRightHeight(){
   return height;
 }
 
-// add a NEW preiction into tree
+// add a NEW filter into tree
 void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
   // not add any null or UNKNOWN node
   if (node || node->type ==  UNKNOWN) 
@@ -111,8 +115,10 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
     junction = junction;
     comparator = UNKNOWN;   
     leftColId = -1;        
-    leftExpression = "";
-    rightExpression = "";
+    leftExpStr = "";
+    rightExpStr = "";
+    leftExpression = NULL;
+    rightExpression = NULL;
     if (leafGrowth){
       rightNode = existingNode;
       rightNode->parentNode = this;
@@ -164,9 +170,9 @@ void FilterC::dump(int deep){
     trace(INFO,"R-");
     rightNode->dump(deep+1);
   }else{
-    trace(INFO,"(%d)%s(%d)",deep,leftExpression.c_str(),leftColId);
+    trace(INFO,"(%d)%s(%d)",deep,leftExpStr.c_str(),leftColId);
     trace(INFO,"%s",decodeComparator(comparator).c_str());
-    trace(INFO,"%s\n",rightExpression.c_str());
+    trace(INFO,"%s\n",rightExpStr.c_str());
   }
 }
 
@@ -219,33 +225,33 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
     if (rightNode)
         metaDataAnzlyzed = metaDataAnzlyzed &&  rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
   }else if (type == LEAF){
-    datatype = detectDataType(rightExpression);
+    datatype = detectDataType(rightExpStr);
     if (datatype == UNKNOWN)
-      datatype = detectDataType(leftExpression);
+      datatype = detectDataType(leftExpStr);
 
     if (m_fieldnames1.size()>0){
-      if (leftExpression[0] == '"') {// quoted, treat as expression, otherwise, as columns
-        leftExpression = trim_one(leftExpression,'"'); // remove quoters
+      if (leftExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
+        leftExpStr = trim_one(leftExpStr,'"'); // remove quoters
         leftColId = -1;
       }else {
-        if (isInt(leftExpression)){ // check if the name is ID already
-          leftColId = atoi(leftExpression.c_str());
-          leftExpression = m_fieldnames1[leftColId];
+        if (isInt(leftExpStr)){ // check if the name is ID already
+          leftColId = atoi(leftExpStr.c_str());
+          leftExpStr = m_fieldnames1[leftColId];
         }else{
-          leftColId = findStrArrayId(m_fieldnames1, leftExpression);
+          leftColId = findStrArrayId(m_fieldnames1, leftExpStr);
         }
       }
     }
     if (m_fieldnames2.size()>0){
-      if (rightExpression[0] == '"') {// quoted, treat as expression, otherwise, as columns
-        rightExpression = trim_one(rightExpression,'"'); // remove quoters
+      if (rightExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
+        rightExpStr = trim_one(rightExpStr,'"'); // remove quoters
         rightColId = -1;
       }else {
-        if (isInt(rightExpression)){ // check if the name is ID already
-          rightColId = atoi(rightExpression.c_str());
-          rightExpression = m_fieldnames2[rightColId];
+        if (isInt(rightExpStr)){ // check if the name is ID already
+          rightColId = atoi(rightExpStr.c_str());
+          rightExpStr = m_fieldnames2[rightColId];
         }else{
-          rightColId = findStrArrayId(m_fieldnames2, rightExpression);
+          rightColId = findStrArrayId(m_fieldnames2, rightExpStr);
         }
       }
     }
@@ -273,9 +279,13 @@ FilterC* FilterC::cloneMe(){
   node->junction = junction;
   node->comparator = comparator;
   node->leftColId = leftColId;
-  node->rightExpression = rightExpression;
-  node->leftExpression = leftExpression;
+  node->rightExpStr = rightExpStr;
+  node->leftExpStr = leftExpStr;
   if (type == BRANCH){
+    node->leftExpression = new Expression(node->leftExpStr);
+    node->leftExpression = leftExpression->cloneMe();
+    node->rightExpression = new Expression(node->rightExpStr);
+    node->rightExpression = rightExpression->cloneMe();
     node->leftNode = new FilterC();
     node->leftNode = leftNode->cloneMe();
     node->rightNode = new FilterC();
@@ -283,6 +293,8 @@ FilterC* FilterC::cloneMe(){
     node->leftNode->parentNode = node;
     node->rightNode->parentNode = node;
   }else{
+    node->leftExpression = NULL;
+    node->rightExpression = NULL;
     node->leftNode = NULL;
     node->rightNode = NULL;
   }
@@ -299,8 +311,8 @@ void FilterC::copyTo(FilterC* node){
     node->junction = junction;
     node->comparator = comparator;
     node->leftColId = leftColId;
-    node->rightExpression = rightExpression;
-    node->leftExpression = leftExpression;
+    node->rightExpStr = rightExpStr;
+    node->leftExpStr = leftExpStr;
     if (type == BRANCH){
       if (leftNode){
         node->leftNode = new FilterC();
@@ -308,13 +320,24 @@ void FilterC::copyTo(FilterC* node){
         node->leftNode->parentNode = node;
       }else
         node->leftNode = NULL;
-      
+
       if (rightNode){
         node->rightNode = new FilterC();
         rightNode->copyTo(node->rightNode);
         node->rightNode->parentNode = node;
       }else
         node->rightNode = NULL;
+      node->leftExpression = NULL;
+      node->rightExpression = NULL;
+    }else{
+      if (leftExpression){
+        node->leftExpression = new Expression(leftExpStr);
+        node->leftExpression = leftExpression->copyTo(node->leftExpression);
+      }
+      if (rightExpression){
+        node->rightExpression = new Expression(rightExpStr);
+        node->rightExpression = rightExpression->copyTo(node->rightExpression);
+      }
     }
   }
 }
@@ -354,7 +377,7 @@ map<int,string> FilterC::buildMap(){
     }
   }else if(type == LEAF){
     if (leftColId>=0)
-      datas.insert( pair<int,string>(leftColId,rightExpression) );
+      datas.insert( pair<int,string>(leftColId,rightExpStr) );
   }
   return datas;
 }
@@ -370,7 +393,7 @@ bool FilterC::compareExpression(){
     else
       result = leftNode->compareExpression() || rightNode->compareExpression();
   }else if(type == LEAF){
-    return anyDataCompare(leftExpression, comparator, rightExpression, STRING) == 1;
+    return anyDataCompare(leftExpStr, comparator, rightExpStr, STRING) == 1;
   }else{ // no predication means alway true
     return true;
   }
@@ -408,8 +431,8 @@ void FilterC::clear(){
   junction = UNKNOWN;
   comparator = UNKNOWN;
   leftColId = -1;
-  rightExpression = "";
-  leftExpression = "";
+  rightExpStr = "";
+  leftExpStr = "";
 }
 
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
@@ -472,5 +495,5 @@ void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string
     if (rightNode)
       rightNode->fillDataForColumns(dataList, columns);
   }else if (type == LEAF && leftColId >= 0)
-    dataList.insert( pair<string,string>(columns[leftColId],rightExpression) );
+    dataList.insert( pair<string,string>(columns[leftColId],rightExpStr) );
 }

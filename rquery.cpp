@@ -58,6 +58,9 @@ int main(int argc, char *argv[])
     return 1;
   }
   
+  GlobalVars gv;
+  gv.setVars(16384*2, INFO);
+
   ParserC ps;
   map<string,string> query = ps.parseparam(argv[1]);
   //ps.dumpQueryparts();
@@ -88,9 +91,6 @@ int main(int argc, char *argv[])
 
   if ( argc < 3 ){
     bool namePrinted = false;
-
-    GlobalVars gv;
-    gv.setVars(16384*2, INFO);
 
     trace(INFO, "g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);
     //printf("g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);

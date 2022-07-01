@@ -515,12 +515,14 @@ void ExpressionC::fillDataForColumns(map <string, string> & dataList, vector <st
     dataList.insert( pair<string,string>(columns[m_colId],m_expStr) );
 }
 
+// align children datatype with current datatype
 void ExpressionC::setChildrenDataType()
 {
   
 }
 
+// merge const expression, reduce calculation during matching
 void ExpressionC::mergeConstNodes()
 {
-  
+  string leftRst = "", rightRst = "";
 }

@@ -34,7 +34,7 @@ void FilterC::init()
   m_rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
   m_parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
   
-  metaDataAnzlyzed = false; // analyze column name to column id.
+  m_metaDataAnzlyzed = false; // analyze column name to column id.
 }
 
 FilterC::FilterC()
@@ -64,7 +64,7 @@ FilterC::FilterC(FilterC* node)
   m_leftNode = node->m_leftNode;
   m_rightNode = node->m_rightNode;
   m_parentNode = node->m_parentNode;
-  metaDataAnzlyzed = node->metaDataAnzlyzed;
+  m_metaDataAnzlyzed = node->m_metaDataAnzlyzed;
   //predStr = node.predStr;
 
   //m_operators = {'^','*','/','+','-'};
@@ -478,14 +478,21 @@ FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
 // analyze column ID & name from metadata
 bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fieldnames2){
   if (m_type == BRANCH){
-    metaDataAnzlyzed = true;
+    m_metaDataAnzlyzed = true;
     if (m_leftNode)
-        metaDataAnzlyzed = metaDataAnzlyzed && m_leftNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
-    if (!metaDataAnzlyzed)
-        return metaDataAnzlyzed;
+        m_metaDataAnzlyzed = m_metaDataAnzlyzed && m_leftNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
+    if (!m_metaDataAnzlyzed)
+        return m_metaDataAnzlyzed;
     if (m_rightNode)
-        metaDataAnzlyzed = metaDataAnzlyzed &&  m_rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
+        m_metaDataAnzlyzed = m_metaDataAnzlyzed &&  m_rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
   }else if (m_type == LEAF){
+    m_leftExpression = buildExpression(m_leftExpStr);
+    if (!m_leftExpression)
+      return false;
+    m_rightExpression = buildExpression(m_rightExpStr);
+    if (!m_rightExpression)
+      return false;
+
     m_datatype = detectDataType(m_rightExpStr);
     if (m_datatype == UNKNOWN)
       m_datatype = detectDataType(m_leftExpStr);
@@ -525,16 +532,16 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
     }else
       return true;
   }
-  return metaDataAnzlyzed;
+  return m_metaDataAnzlyzed;
 }
 
 bool FilterC::columnsAnalyzed(){
-    return metaDataAnzlyzed;
+    return m_metaDataAnzlyzed;
 }
 
 FilterC* FilterC::cloneMe(){
   FilterC* node = new FilterC();
-  node->metaDataAnzlyzed = metaDataAnzlyzed;
+  node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
   //node->predStr = predStr;
   node->m_type = m_type;
   node->m_datatype = m_datatype;
@@ -568,7 +575,7 @@ void FilterC::copyTo(FilterC* node){
   if (!node)
     return;
   else{
-    node->metaDataAnzlyzed = metaDataAnzlyzed;
+    node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
     //node->predStr = predStr;
     node->m_type = m_type;
     node->m_datatype = m_datatype;
@@ -700,7 +707,7 @@ void FilterC::clear(){
   m_rightColId = -1;
   m_rightExpStr = "";
   m_leftExpStr = "";
-  metaDataAnzlyzed = false;
+  m_metaDataAnzlyzed = false;
 }
 
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction

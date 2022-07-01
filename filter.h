@@ -67,7 +67,7 @@ class FilterC
     static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
 
   private:
-    bool metaDataAnzlyzed; // analyze column name to column id.
+    bool m_metaDataAnzlyzed; // analyze column name to column id.
     
     void dump(int deep);
     bool buildExpression(ExpressionC* node, string initialString); // split input command line into pieces; \ is escape char, " and splitor could be escaped.

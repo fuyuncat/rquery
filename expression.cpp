@@ -13,6 +13,7 @@
 *******************************************************************************/
 #include <stdio.h>
 #include <string.h>
+#include <boost/algorithm/string.hpp>
 #include "expression.h"
 
 void ExpressionC::init()
@@ -218,37 +219,37 @@ int ExpressionC::analyzeColumns(vector<string> m_fieldnames, vector<int> m_field
     int ldatatype = m_leftNode?m_leftNode->analyzeColumns(m_fieldnames, m_fieldtypes):UNKNOWN;
     if (ldatatype == STRING || rdatatype == STRING)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING), decodeDatatype(ldatatype==STRING?rdatatype:ldatatype));
+        trace(ERROR, "Datatype %s is incompatible to %s. ", analyzeColumns(STRING), analyzeColumns(ldatatype==STRING?rdatatype:ldatatype));
         return UNKNOWN;
       }else
         return STRING;
     else if (ldatatype == DOUBLE || rdatatype == DOUBLE)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DOUBLE), decodeDatatype(ldatatype==DOUBLE?rdatatype:ldatatype));
+        trace(ERROR, "Datatype %s is incompatible to %s. ", analyzeColumns(DOUBLE), analyzeColumns(ldatatype==DOUBLE?rdatatype:ldatatype));
         return UNKNOWN;
       }else
         return DOUBLE;
     else if (ldatatype == LONG || rdatatype == LONG)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(LONG), decodeDatatype(ldatatype==LONG?rdatatype:ldatatype));
+        trace(ERROR, "Datatype %s is incompatible to %s. ", analyzeColumns(LONG), analyzeColumns(ldatatype==LONG?rdatatype:ldatatype));
         return UNKNOWN;
       }else
         return LONG;
     else if (ldatatype == INTEGER || rdatatype == INTEGER)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(INTEGER), decodeDatatype(ldatatype==INTEGER?rdatatype:ldatatype));
+        trace(ERROR, "Datatype %s is incompatible to %s. ", analyzeColumns(INTEGER), analyzeColumns(ldatatype==INTEGER?rdatatype:ldatatype));
         return UNKNOWN;
       }else
         return INTEGER;
     else if (ldatatype == BOOLEAN || rdatatype == BOOLEAN)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(BOOLEAN), decodeDatatype(ldatatype==BOOLEAN?rdatatype:ldatatype));
+        trace(ERROR, "Datatype %s is incompatible to %s. ", analyzeColumns(BOOLEAN), analyzeColumns(ldatatype==BOOLEAN?rdatatype:ldatatype));
         return UNKNOWN;
       }else
         return BOOLEAN;
     else if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP)
       if (ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER || ldatatype == BOOLEAN || rdatatype == BOOLEAN){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DATE), decodeDatatype((ldatatype==DATE||ldatatype==TIMESTAMP)?rdatatype:ldatatype));
+        trace(ERROR, "Datatype %s is incompatible to %s. ", analyzeColumns(DATE), analyzeColumns((ldatatype==DATE||ldatatype==TIMESTAMP)?rdatatype:ldatatype));
         return UNKNOWN;
       }else
         return DATE;

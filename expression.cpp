@@ -145,14 +145,14 @@ void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop)
     }else{
       if (leafGrowth){
         if (m_leftNode)
-          m_leftNode->add(node, leafGrowth, addOnTop);
+          m_leftNode->add(node, op, leafGrowth, addOnTop);
         else 
-          m_rightNode->add(node, leafGrowth, addOnTop);
+          m_rightNode->add(node, op, leafGrowth, addOnTop);
       }else{
         if (m_rightNode)
-          m_rightNode->add(node, leafGrowth, addOnTop);
+          m_rightNode->add(node, op, leafGrowth, addOnTop);
         else 
-          m_leftNode->add(node, leafGrowth, addOnTop);
+          m_leftNode->add(node, op, leafGrowth, addOnTop);
       }
     }
   }
@@ -214,43 +214,43 @@ int ExpressionC::analyzeColumns(vector<string> m_fieldnames, vector<int> m_field
 {
   m_metaDataAnzlyzed = true;
   if (m_type == BRANCH){
-    int rdatatype = m_rightNode?m_rightNode->decideDatatype(m_fieldnames, m_fieldtypes):UNKNOWN;
-    int ldatatype = m_leftNode?m_leftNode->decideDatatype(m_fieldnames, m_fieldtypes):UNKNOWN;
+    int rdatatype = m_rightNode?m_rightNode->analyzeColumns(m_fieldnames, m_fieldtypes):UNKNOWN;
+    int ldatatype = m_leftNode?m_leftNode->analyzeColumns(m_fieldnames, m_fieldtypes):UNKNOWN;
     if (ldatatype == STRING || rdatatype == STRING)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP) // incompatible types
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING), decodeDatatype(ldatatype==STRING?rdatatype:ldatatype));
         return UNKNOWN;
-      else
+      }else
         return STRING;
     else if (ldatatype == DOUBLE || rdatatype == DOUBLE)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING) // incompatible types
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DOUBLE), decodeDatatype(ldatatype==DOUBLE?rdatatype:ldatatype));
         return UNKNOWN;
-      else
+      }else
         return DOUBLE;
     else if (ldatatype == LONG || rdatatype == LONG)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE) // incompatible types
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(LONG), decodeDatatype(ldatatype==LONG?rdatatype:ldatatype));
         return UNKNOWN;
-      else
+      }else
         return LONG;
     else if (ldatatype == INTEGER || rdatatype == INTEGER)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG) // incompatible types
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(INTEGER), decodeDatatype(ldatatype==INTEGER?rdatatype:ldatatype));
         return UNKNOWN;
-      else
+      }else
         return INTEGER;
     else if (ldatatype == BOOLEAN || rdatatype == BOOLEAN)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER) // incompatible types
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(BOOLEAN), decodeDatatype(ldatatype==BOOLEAN?rdatatype:ldatatype));
         return UNKNOWN;
-      else
+      }else
         return BOOLEAN;
     else if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP)
-      if (ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER || ldatatype == BOOLEAN || rdatatype == BOOLEAN) // incompatible types
+      if (ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER || ldatatype == BOOLEAN || rdatatype == BOOLEAN){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DATE), decodeDatatype((ldatatype==DATE||ldatatype==TIMESTAMP)?rdatatype:ldatatype));
         return UNKNOWN;
-      else
+      }else
         return DATE;
     else
       return UNKNOWN;
@@ -512,4 +512,14 @@ void ExpressionC::fillDataForColumns(map <string, string> & dataList, vector <st
       m_rightNode->fillDataForColumns(dataList, columns);
   }else if (m_type == LEAF && m_colId >= 0)
     dataList.insert( pair<string,string>(columns[m_colId],m_expStr) );
+}
+
+void ExpressionC::setChildrenDataType()
+{
+  
+}
+
+void ExpressionC::mergeConstNodes()
+{
+  
 }

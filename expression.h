@@ -62,8 +62,10 @@ class ExpressionC
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.
-    
+
     void dump(int deep);
+    void setChildrenDataType();
+    void mergeConstNodes();
 
   protected:
     void init();

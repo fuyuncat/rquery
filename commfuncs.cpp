@@ -98,8 +98,10 @@ vector<string>::const_iterator namesaving_smatch::names_end() const
 //}
 
 // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
-string readQuotedStr(string str, int& pos, char* quoters, char escape)
+string readQuotedStr(string str, int& pos, string quoters, char escape)
 {
+  if (quoters.size()<2)
+    return "";
   int quoteStart = -1, i = pos, quoteDeep=0;
   bool quoted = false;
   while(i < str.size()) {
@@ -179,9 +181,9 @@ vector<string> split(string str, char delim, string quoters, char escape)
   return v;
 }
 
-string trim_pair(string str, char* pair)
+string trim_pair(string str, string pair)
 {
-  if(str.size() > 1 && str[0] == pair[0] && str[str.size()-1] == pair[1])
+  if(str.size() > 1 pair.size() == 2 && str[0] == pair[0] && str[str.size()-1] == pair[1])
     return str.substr(1,str.size()-2);
   else
     return str;

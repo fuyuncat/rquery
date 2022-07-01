@@ -125,7 +125,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
     }
   }else if (initialString[0] == '('){ // checking quoted expression
     string sStr = readQuotedStr(initialString, nextPos, "()", '\0');
-    if (dateStr.size() > 1){
+    if (sStr.size() > 1){
       if (nextPos == initialString.size()) { // whole string is a quoted string
         return buildExpression(node, initialString.substr(1,initialString.size()-2));
       }else{

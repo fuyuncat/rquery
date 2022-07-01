@@ -92,21 +92,21 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   if (!filter)
     return true;
   bool matched = false; 
-  if (filter->type == BRANCH){
-    if (!filter->leftNode || !filter->rightNode){
+  if (filter->m_type == BRANCH){
+    if (!filter->m_leftNode || !filter->m_rightNode){
       return false;
     }
-    if (filter->junction == AND)  // and
-      matched = matchFilter(rowValue, filter->leftNode) && matchFilter(rowValue, filter->rightNode);
+    if (filter->m_junction == AND)  // and
+      matched = matchFilter(rowValue, filter->m_leftNode) && matchFilter(rowValue, filter->m_rightNode);
     else // or
-      matched = matchFilter(rowValue, filter->leftNode) || matchFilter(rowValue, filter->rightNode);
-  }else if (filter->type == LEAF){
-    if (filter->leftColId < 0) // filter is expression
-      return !filter->leftExpStr.empty()?!filter->rightExpStr.empty():filter->leftExpStr.compare(filter->rightExpStr)==0;
-    if (rowValue.size() == 0 || filter->leftColId > rowValue.size()-1)
+      matched = matchFilter(rowValue, filter->m_leftNode) || matchFilter(rowValue, filter->m_rightNode);
+  }else if (filter->m_type == LEAF){
+    if (filter->m_leftColId < 0) // filter is expression
+      return !filter->m_leftExpStr.empty()?!filter->m_rightExpStr.empty():filter->m_leftExpStr.compare(filter->m_rightExpStr)==0;
+    if (rowValue.size() == 0 || filter->m_leftColId > rowValue.size()-1)
       return false;
-    //printf("left:%s %s right:%s (%s)\n",rowValue[filter->leftColId].c_str(),decodeComparator(filter->comparator).c_str(),filter->rightExpStr.c_str(),decodeDatatype(filter->datatype).c_str());
-    return anyDataCompare(rowValue[filter->leftColId], filter->comparator, filter->rightExpStr, filter->datatype) == 1;
+    //printf("left:%s %s right:%s (%s)\n",rowValue[filter->m_leftColId].c_str(),decodeComparator(filter->m_comparator).c_str(),filter->m_rightExpStr.c_str(),decodeDatatype(filter->m_datatype).c_str());
+    return anyDataCompare(rowValue[filter->m_leftColId], filter->m_comparator, filter->m_rightExpStr, filter->m_datatype) == 1;
   }else{ // no predication means alway true
     return true;
   }

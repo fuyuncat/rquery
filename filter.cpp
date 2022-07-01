@@ -335,7 +335,7 @@ ExpressionC* FilterC::buildExpression(string initialString)
   ExpressionC* node = new ExpressionC(initialString);
   if (!buildExpression(node, initialString)){
     delete node;
-    trace(ERROR, "Building expression from %s failed!\n", initialString);
+    trace(ERROR, "Building expression from %s failed!\n", initialString.c_str());
     return NULL;
   }
   //node.dump();
@@ -541,7 +541,7 @@ FilterC* FilterC::cloneMe(){
   node->junction = junction;
   node->comparator = comparator;
   node->leftColId = leftColId;
-  node->rightColId = rightolId;
+  node->rightColId = rightColId;
   node->rightExpStr = rightExpStr;
   node->leftExpStr = leftExpStr;
   if (type == BRANCH){
@@ -575,7 +575,7 @@ void FilterC::copyTo(FilterC* node){
     node->junction = junction;
     node->comparator = comparator;
     node->leftColId = leftColId;
-    node->rightColId = rightolId;
+    node->rightColId = rightColId;
     node->rightExpStr = rightExpStr;
     node->leftExpStr = leftExpStr;
     if (type == BRANCH){

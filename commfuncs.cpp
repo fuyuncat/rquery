@@ -183,7 +183,7 @@ vector<string> split(string str, char delim, string quoters, char escape)
 
 string trim_pair(string str, string pair)
 {
-  if(str.size() > 1 pair.size() == 2 && str[0] == pair[0] && str[str.size()-1] == pair[1])
+  if(str.size() > 1 && pair.size() == 2 && str[0] == pair[0] && str[str.size()-1] == pair[1])
     return str.substr(1,str.size()-2);
   else
     return str;

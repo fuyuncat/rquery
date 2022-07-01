@@ -91,32 +91,6 @@ FilterC::FilterC(int comparator, int colId, string data)
   rightExpStr = data;
 }
 
-void FilterC::buildLeafNodeFromStr(ExpressionC* node, string str)
-{
-  bool quoteStarted = false;
-  int lastPos = 0;
-  for (int i=0;i<str.length();i++){
-    if (str[i] == '"'){
-      quoteStarted = !quoteStarted;
-      str = str.substr(0, i)+(i<str.length()-1?str.substr(i+1):"");
-      i--;
-    }else if(str[i] == '\\' && i<str.length()-1 && str[i+1] == '"'){
-      i++; // skip escaped " :\"
-      str = str.substr(0, i-1)+str.substr(i);
-    }else if(!quoteStarted && startsWithWords(str.substr(i), operators) >= 0){ // splitor that not between quato are the real splitor
-      string opStr = operators[startsWithWords(str.substr(i), operators)];
-      node->m_operate = encodeOperator(opStr);
-      node->m_type = LEAF;
-      node->m_datatype = UNKNOWN;
-      node->m_expType = UNKNOWN;
-      node->m_expStr = trim_one( boost::algorithm::trim_copy<string>(str),'"');
-      node->m_leftNode = NULL;
-      node->m_rightNode = NULL;
-      return;
-    }
-  }
-}
-
 // split input command line into pieces; \ is escape char, " could be escaped.
 // \" is character '"'
 // splitString({ad cas asdfa}, ' ', {'{','}'}, true)  => {ad,cas,asdfa}

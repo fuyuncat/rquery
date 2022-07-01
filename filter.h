@@ -70,7 +70,6 @@ class FilterC
     bool metaDataAnzlyzed; // analyze column name to column id.
     
     void dump(int deep);
-    void buildLeafNodeFromStr(ExpressionC* node, string str);
     bool buildExpression(ExpressionC* node, string initialString); // split input command line into pieces; \ is escape char, " and splitor could be escaped.
 
   protected:

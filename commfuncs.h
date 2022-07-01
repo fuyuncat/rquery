@@ -42,7 +42,7 @@ using namespace boost::xpressive;
 #define NOLIKE 9
 #define NOREGLIKE 10
 #define IN 11
-#define NOIN 11
+#define NOIN 12
 #define LEFT 1
 #define RIGHT 2
 #define PLUS 1

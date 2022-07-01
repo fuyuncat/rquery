@@ -275,13 +275,13 @@ int ExpressionC::analyzeColumns(vector<string> m_fieldnames, vector<int> m_field
           m_expType = COLUMN;
           m_datatype = m_fieldtypes[atoi(sColId.c_str())];
         }else{
-          trace(ERROR, "Unrecognized variable %s .\n", m_expStr);
+          trace(ERROR, "Unrecognized variable %s .\n", m_expStr.c_str());
           m_expType = UNKNOWN;
           m_datatype = UNKNOWN;
         }
       }
       else{
-        trace(ERROR, "Unrecognized variable %s .\n", m_expStr);
+        trace(ERROR, "Unrecognized variable %s .\n", m_expStr.c_str());
         m_expType = UNKNOWN;
         m_datatype = UNKNOWN;
       }

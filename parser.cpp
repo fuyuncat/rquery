@@ -132,7 +132,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
         node->m_type = BRANCH;
         node->m_junction = encodeJunction(boost::algorithm::trim_copy<string>(splitor));
         node->m_leftNode = new FilterC();
-        node->m_leftNode->parentNode = node;
+        node->m_leftNode->m_parentNode = node;
         //printf("Building leftNode\n");
         if (!buildFilter(node->m_leftNode, initialString.substr(0, i)," OR ",quoters)) { // OR priority higher than AND
           delete node->m_leftNode;
@@ -141,8 +141,8 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
         node->m_rightNode = new FilterC();
         node->m_rightNode->m_parentNode = node;
         //printf("Building rightNode\n");
-        if (!buildFilter(node->rightNode, initialString.substr(i+splitor.length())," OR ",quoters)){
-          delete node->rightNode;
+        if (!buildFilter(node->m_rightNode, initialString.substr(i+splitor.length())," OR ",quoters)){
+          delete node->m_rightNode;
           return false;
         }
         return true;

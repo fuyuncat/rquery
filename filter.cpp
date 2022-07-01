@@ -203,7 +203,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
             node->m_colId = -1;
             node->m_parentNode = NULL;
             node->m_leftNode = leafNode;
-            node->rightNode = rightNode;
+            node->m_rightNode = rightNode;
             
             rightNode->m_parentNode = node;
             return true;
@@ -259,7 +259,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
             node->m_colId = -1;
             node->m_parentNode = NULL;
             node->m_leftNode = leafNode;
-            node->rightNode = rightNode;
+            node->m_rightNode = rightNode;
             
             rightNode->m_parentNode = node;
             return true;
@@ -313,7 +313,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
         node->m_colId = -1;
         node->m_parentNode = NULL;
         node->m_leftNode = leafNode;
-        node->rightNode = rightNode;
+        node->m_rightNode = rightNode;
         
         rightNode->m_parentNode = node;
         return true;

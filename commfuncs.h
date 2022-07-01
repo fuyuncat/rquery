@@ -102,7 +102,7 @@ public:
 
 void trace(short level, const char *fmt, ...);
 //string string_format( const string& format, Args ... args );
-string readQuotedStr(string str, int& pos, char* quoters = "''", char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
+string readQuotedStr(string str, int& pos, char* quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 vector<string> split(string str, char delim = ' ', string quoters = "''", char escape = '\\'); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 string trim_pair(string str, char[2] pair = "  ");
 string trim_one(string str, char c = ' ');

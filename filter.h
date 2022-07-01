@@ -62,11 +62,16 @@ class FilterC
     void clear(); // clear predictin
     bool remove(FilterC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
+    ExpressionC* buildExpression(string initialString);
+
+    static set<char> m_operators; // "^", "*", "/" should be before "+", "-"
 
   private:
     bool metaDataAnzlyzed; // analyze column name to column id.
     
     void dump(int deep);
+    void buildLeafNodeFromStr(ExpressionC* node, string str);
+    bool buildExpression(ExpressionC* node, string initialString); // split input command line into pieces; \ is escape char, " and splitor could be escaped.
 
   protected:
     void init();

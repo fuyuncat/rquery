@@ -97,21 +97,60 @@ vector<string>::const_iterator namesaving_smatch::names_end() const
 //  return string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
 //}
 
-vector<string> split(string str, char delim, char quoter, char escape) 
+// return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
+string readQuotedStr(string str, int& pos, char[2] quoters, char escape)
+{
+  int quoteStart = -1, i = pos, quoteDeep=0;
+  bool quoted = false;
+  while(i < str.size()) {
+    if (quoteDeep > 0){ // checking right quoter only when the string is quoted.
+      if (str[i] == quoters[1])
+        if (i>0 && str[i-1]!=escape){
+          quoteDeep--;
+          if (quoteDeep == 0){
+            pos = i+1;
+            return str.substr(quoteStart,pos-quoteStart);
+          }
+        }
+    }
+    if (str[i] == quoters[0])
+      if (i==0 || (i>0 && str[i-1]!=escape)){
+        quoteDeep++;
+        if (quoteDeep == 1)
+          quoteStart = i;
+      }
+    i++;
+  }
+  return "";
+}
+
+// split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+vector<string> split(string str, char delim, string quoters, char escape) 
 {
   vector<string> v;
   size_t i = 0, j = 0, begin = 0;
   bool quoted = false;
+  int quoterId = -1;
   while(i < str.size()) {
     if (str[i] == delim && i>0 && !quoted) {
       //printf("found delim\n");
       v.push_back(string(str, begin, i));
       begin = i+1;
     }
-    if (str[i] == quoter) {
-      //printf("found quoter\n");
-      if (i>0 && str[i-1]!=escape)
-        quoted = !quoted;
+    if (!quoted){
+      for (int k=0; k<(int)(quoters.size()/2); k++){
+        if (str[i] == quoters[k*2])
+          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+            quoted = !quoted;
+            quoterId=k*2;
+          }
+      }
+    }else{
+      if (str[i] == quoters[quoterId+1])
+        if (i>0 && str[i-1]!=escape){
+          quoted = !quoted;
+          quoterId = -1;
+        }
     }
     ++i;
   }
@@ -138,6 +177,14 @@ vector<string> split(string str, char delim, char quoter, char escape)
   }*/
 
   return v;
+}
+
+string trim_pair(string str, char[2] pair)
+{
+  if(str.size() > 1 && str[0] = pair[0] && str[str.size()-1] = pair[1])
+    return str.substr(1,str.size()-2);
+  else
+    return str;
 }
 
 string trim(string str, char c)
@@ -461,6 +508,8 @@ string decodeComparator(int comparator){
     return "NOREGLIKE";
   case IN:
     return "IN";
+  case NOIN:
+    return "NOIN";
   default:
     return "UNKNOWN";
   }
@@ -512,6 +561,8 @@ int encodeComparator(string str)
     return NOREGLIKE;
   else if (boost::to_upper_copy<string>(str).compare("IN") == 0)
     return IN;
+  else if (boost::to_upper_copy<string>(str).compare("NOIN") == 0)
+    return NOIN;
   else
     return UNKNOWN;
 }
@@ -1023,4 +1074,10 @@ vector <string> getAllTokens(string str, string token)
 // check if matched regelar token
 bool matchToken(string str, string token){
   return !getFirstToken(str, token).empty();
+}
+
+// get function return type
+int funcReturnType(string funcName)
+{
+  return STRING;
 }

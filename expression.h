@@ -25,31 +25,30 @@ class ExpressionC
   public:
 
     ExpressionC();
-    ExpressionC(string expStr);
+    ExpressionC(string expString);
     ExpressionC(ExpressionC* node);
     ExpressionC(ExpressionC* leftNode, ExpressionC* rightNode); // construct a branch
     ExpressionC(int operate, int colId, string data); // construct a leaf
 
     ~ExpressionC();
 
-    int type;       // 1: branch; 2: leaf
-    int operate; // 1: +; 2: -; 3: *; 4: /; 5: ^; . Otherwise, it's meaningless
-    int datatype;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
-    int leftColId;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
-    int rightColId;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
-    string leftExpStr;    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
-    string rightExpStr;   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
-    ExpressionC* leftNode;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
-    ExpressionC* rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
-    ExpressionC* parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
+    int m_type;       // 1: BRANCH; 2: LEAF
+    int m_operate;    // if type is BRANCH, 1: +; 2: -; 3: *; 4: /; 5: ^; . Otherwise, it's meaningless
+    int m_datatype;   // 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
+    int m_expType;    // if type is LEAF, the expression string type. 1: CONST, 2: COLUMN, 3: FUNCTION
+    string m_expStr;  // if type is LEAF, the expression string, either be a CONST, COLUMN or FUNCTION; if type is BRANCH, it's the full expression string
+    int m_colId;      // if type is LEAF, and the expression string type is COLUMN. it's id of column. Otherwise, it's meaningless
+    ExpressionC* m_leftNode;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
+    ExpressionC* m_rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
+    ExpressionC* m_parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
 
     int getLeftHeight(); // get left tree Height
     int getRightHeight(); // get left tree Height
-    void add(ExpressionC* node, bool leafGrowth, bool addOnTop); // add a NEW preiction into tree
+    void add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop); // add a NEW expression into tree
     void dump();
     bool containsColId(int colId); // detect if predication contains special colId
     ExpressionC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
-    bool analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fieldnames2); // analyze column ID & name from metadata
+    int analyzeColumns(vector<string> m_fieldnames, vector<int> m_fieldtypes); // analyze column ID & name from metadata, return data type of current node
     bool columnsAnalyzed();
     ExpressionC* cloneMe();
     void copyTo(ExpressionC* node);
@@ -62,8 +61,7 @@ class ExpressionC
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
 
   private:
-    bool metaDataAnzlyzed; // analyze column name to column id.
-    string m_expressionStr;
+    bool m_metaDataAnzlyzed; // analyze column name to column id.
     
     void dump(int deep);
 

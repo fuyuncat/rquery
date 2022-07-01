@@ -17,19 +17,17 @@
 
 void ExpressionC::init()
 {
-  type = UNKNOWN;       // 1: branch; 2: leaf
-  operate = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
-  datatype = UNKNOWN;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
-  leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
-  rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
-  leftExpStr = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
-  rightExpStr = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
-  leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
-  rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
-  parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
+  m_type = UNKNOWN;       // 1: branch; 2: leaf
+  m_operate = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
+  m_datatype = UNKNOWN;   // 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
+  m_expType = UNKNOWN;    // if type is LEAF, the expression string type. 1: CONST, 2: COLUMN, 3: FUNCTION
+  m_colId = -1;      // if type is LEAF, and the expression string type is COLUMN. it's id of column. Otherwise, it's meaningless
+  m_expStr = "";    // if type is LEAF, the expression string, either be a CONST, COLUMN or FUNCTION
+  m_leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
+  m_rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
+  m_parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
 
-  m_expressionStr = "";
-  metaDataAnzlyzed = false; // analyze column name to column id.
+  m_metaDataAnzlyzed = false; // analyze column name to column id.
 }
 
 ExpressionC::ExpressionC()
@@ -37,10 +35,10 @@ ExpressionC::ExpressionC()
   init();
 }
 
-ExpressionC::ExpressionC(string expStr)
+ExpressionC::ExpressionC(string expString)
 {
   init();
-  m_expressionStr = expStr;
+  m_expStr = expString;
 }
 
 ExpressionC::~ExpressionC()
@@ -52,43 +50,43 @@ ExpressionC::ExpressionC(ExpressionC* node)
 {
   init();
 
-  type = node->type;
-  operate = node->operate;
-  leftColId = node->leftColId;
-  rightExpStr = node->rightExpStr;
-  leftExpStr = node->leftExpStr;
-  leftNode = node->leftNode;
-  rightNode = node->rightNode;
-  parentNode = node->parentNode;
-  m_expressionStr = node->m_expressionStr;
-  metaDataAnzlyzed = node->metaDataAnzlyzed;
+  m_type = node->m_type;
+  m_operate = node->m_operate;
+  m_colId = node->m_colId;
+  m_datatype = node->m_datatype;
+  m_expType = node->m_expType;
+  m_expStr = node->m_expStr;
+  m_leftNode = node->m_leftNode;
+  m_rightNode = node->m_rightNode;
+  m_parentNode = node->m_parentNode;
+  m_metaDataAnzlyzed = node->m_metaDataAnzlyzed;
   //predStr = node.predStr;
 }
 
-ExpressionC::ExpressionC(ExpressionC* leftNode, ExpressionC* rightNode)
+ExpressionC::ExpressionC(ExpressionC* m_leftNode, ExpressionC* m_rightNode)
 {
   init();
-  type = BRANCH;
-  leftNode = leftNode;
-  rightNode = rightNode;
-  //leftNode = leftNode==NULL?NULL:new Prediction(leftNode);
-  //rightNode = rightNode==NULL?NULL:new Prediction(rightNode);;
+  m_type = BRANCH;
+  m_leftNode = m_leftNode;
+  m_rightNode = m_rightNode;
+  //m_leftNode = m_leftNode==NULL?NULL:new Prediction(m_leftNode);
+  //m_rightNode = m_rightNode==NULL?NULL:new Prediction(m_rightNode);;
 }
 
 ExpressionC::ExpressionC(int operate, int colId, string data)
 {
   init();
-  type = LEAF;
-  operate = operate;
-  leftColId = colId;
-  rightExpStr = data;
+  m_type = LEAF;
+  m_operate = operate;
+  m_colId = colId;
+  m_expStr = data;
 }
 
 // get left tree Height
 int ExpressionC::getLeftHeight(){
   int height = 1;
-  if (type == BRANCH && leftNode)
-    height += leftNode->getLeftHeight();
+  if (m_type == BRANCH && m_leftNode)
+    height += m_leftNode->getLeftHeight();
 
   return height;
 }
@@ -96,80 +94,79 @@ int ExpressionC::getLeftHeight(){
 // get left tree Height
 int ExpressionC::getRightHeight(){
   int height = 1;
-  if (type == BRANCH && rightNode)
-    height += rightNode->getRightHeight();
+  if (m_type == BRANCH && m_rightNode)
+    height += m_rightNode->getRightHeight();
   
   return height;
 }
 
-// add a NEW preiction into tree
-void ExpressionC::add(ExpressionC* node, bool leafGrowth, bool addOnTop){
+// add a NEW expression into tree
+void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop){
   // not add any null or UNKNOWN node
-  if (node || node->type ==  UNKNOWN) 
+  if (node || node->m_type ==  UNKNOWN) 
       return;
-  if (type ==  UNKNOWN){ // not assinged
+  if (m_type ==  UNKNOWN){ // not assinged
       node->copyTo(this);
-  }else if (type == LEAF){
+  }else if (m_type == LEAF){
     ExpressionC* existingNode = new ExpressionC();
     copyTo(existingNode);
-    type = BRANCH;
-    operate = UNKNOWN;   
-    leftColId = -1;        
-    leftExpStr = "";
-    rightExpStr = "";
+    m_type = BRANCH;
+    m_operate = op;   
+    m_colId = -1;
+    m_expStr = "";
     if (leafGrowth){
-      rightNode = existingNode;
-      rightNode->parentNode = this;
-      leftNode = node;
-      leftNode->parentNode = this;
+      m_rightNode = existingNode;
+      m_rightNode->m_parentNode = this;
+      m_leftNode = node;
+      m_leftNode->m_parentNode = this;
     }else{
-      leftNode = existingNode;
-      leftNode->parentNode = this;
-      rightNode = node;
-      rightNode->parentNode = this;
+      m_leftNode = existingNode;
+      m_leftNode->m_parentNode = this;
+      m_rightNode = node;
+      m_rightNode->m_parentNode = this;
     }
   }else{
     if (addOnTop){
       ExpressionC* existingNode = new ExpressionC();
       copyTo(existingNode);
+      m_type = BRANCH;
+      m_operate = op;   
       if (leafGrowth){
-        leftNode = node;
-        leftNode->parentNode = this;
-        rightNode = existingNode;
-        rightNode->parentNode = this;
+        m_leftNode = node;
+        m_leftNode->m_parentNode = this;
+        m_rightNode = existingNode;
+        m_rightNode->m_parentNode = this;
       }else{
-        leftNode = existingNode;
-        leftNode->parentNode = this;
-        rightNode = node;
-        rightNode->parentNode = this;
+        m_leftNode = existingNode;
+        m_leftNode->m_parentNode = this;
+        m_rightNode = node;
+        m_rightNode->m_parentNode = this;
       }
     }else{
       if (leafGrowth){
-        if (leftNode)
-          leftNode->add(node, leafGrowth, addOnTop);
+        if (m_leftNode)
+          m_leftNode->add(node, leafGrowth, addOnTop);
         else 
-          rightNode->add(node, leafGrowth, addOnTop);
+          m_rightNode->add(node, leafGrowth, addOnTop);
       }else{
-        if (rightNode)
-          rightNode->add(node, leafGrowth, addOnTop);
+        if (m_rightNode)
+          m_rightNode->add(node, leafGrowth, addOnTop);
         else 
-          leftNode->add(node, leafGrowth, addOnTop);
+          m_leftNode->add(node, leafGrowth, addOnTop);
       }
     }
   }
 }
 
 void ExpressionC::dump(int deep){
-  if (type == BRANCH){
-    trace(INFO,"(%d)\n",deep);
+  if (m_type == BRANCH){
+    trace(INFO,"%s(%d)\n",decodeOperator(m_operate).c_str(),deep);
     trace(INFO,"L-");
-    leftNode->dump(deep+1);
+    m_leftNode->dump(deep+1);
     trace(INFO,"R-");
-    rightNode->dump(deep+1);
+    m_rightNode->dump(deep+1);
   }else{
-    trace(INFO,"(%d)%s(%d)",deep,leftExpStr.c_str(),leftColId);
-    trace(INFO,"%s",decodeOperator(operate).c_str());
-    trace(INFO,"%s\n",rightExpStr.c_str());
+    trace(INFO,"(%d)%s(%d)\n",deep,m_expStr.c_str(),m_colId);
   }
 }
 
@@ -180,11 +177,11 @@ void ExpressionC::dump(){
 // detect if predication contains special colId    
 bool ExpressionC::containsColId(int colId){
   bool contain = false;
-  if (type == BRANCH){
-    contain = contain || leftNode->containsColId(colId);
-    contain = contain || rightNode->containsColId(colId);
+  if (m_type == BRANCH){
+    contain = contain || m_leftNode->containsColId(colId);
+    contain = contain || m_rightNode->containsColId(colId);
   }else
-    contain = (leftColId == colId);
+    contain = (m_colId == colId);
 
   return contain;
 }
@@ -192,101 +189,148 @@ bool ExpressionC::containsColId(int colId){
 // detect if predication contains special colId    
 ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
   ExpressionC* node;
-  if (type == BRANCH){
+  if (m_type == BRANCH){
     if (leftFirst){
-      if (leftNode)
-        node = leftNode->getFirstPredByColId(colId, leftFirst);
+      if (m_leftNode)
+        node = m_leftNode->getFirstPredByColId(colId, leftFirst);
       if (!node)
-        node = rightNode->getFirstPredByColId(colId, leftFirst);
+        node = m_rightNode->getFirstPredByColId(colId, leftFirst);
     }else{
-      if (rightNode)
-        node = rightNode->getFirstPredByColId(colId, leftFirst);
+      if (m_rightNode)
+        node = m_rightNode->getFirstPredByColId(colId, leftFirst);
       if (!node)
-        node = leftNode->getFirstPredByColId(colId, leftFirst);
+        node = m_leftNode->getFirstPredByColId(colId, leftFirst);
     }
-  }else if (type == LEAF)
-    if (leftColId == colId)
+  }else if (m_type == LEAF)
+    if (m_colId == colId)
       node = this;
 
   return node;
 }
 
-// analyze column ID & name from metadata
-bool ExpressionC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fieldnames2){
-  if (type == BRANCH){
-    metaDataAnzlyzed = true;
-    if (leftNode)
-        metaDataAnzlyzed = metaDataAnzlyzed && leftNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
-    if (!metaDataAnzlyzed)
-        return metaDataAnzlyzed;
-    if (rightNode)
-        metaDataAnzlyzed = metaDataAnzlyzed &&  rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
-  }else if (type == LEAF){
-    datatype = detectDataType(rightExpStr);
-    if (datatype == UNKNOWN)
-      datatype = detectDataType(leftExpStr);
-
-    if (m_fieldnames1.size()>0){
-      if (leftExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
-        leftExpStr = trim_one(leftExpStr,'"'); // remove quoters
-        leftColId = -1;
-      }else {
-        if (isInt(leftExpStr)){ // check if the name is ID already
-          leftColId = atoi(leftExpStr.c_str());
-          leftExpStr = m_fieldnames1[leftColId];
+// analyze column ID & name from metadata, return data type of current node
+// decide current node data type by checking children's data type
+int ExpressionC::analyzeColumns(vector<string> m_fieldnames, vector<int> m_fieldtypes)
+{
+  m_metaDataAnzlyzed = true;
+  if (m_type == BRANCH){
+    int rdatatype = m_rightNode?m_rightNode->decideDatatype(m_fieldnames, m_fieldtypes):UNKNOWN;
+    int ldatatype = m_leftNode?m_leftNode->decideDatatype(m_fieldnames, m_fieldtypes):UNKNOWN;
+    if (ldatatype == STRING || rdatatype == STRING)
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP) // incompatible types
+        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING), decodeDatatype(ldatatype==STRING?rdatatype:ldatatype));
+        return UNKNOWN;
+      else
+        return STRING;
+    else if (ldatatype == DOUBLE || rdatatype == DOUBLE)
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING) // incompatible types
+        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DOUBLE), decodeDatatype(ldatatype==DOUBLE?rdatatype:ldatatype));
+        return UNKNOWN;
+      else
+        return DOUBLE;
+    else if (ldatatype == LONG || rdatatype == LONG)
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE) // incompatible types
+        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(LONG), decodeDatatype(ldatatype==LONG?rdatatype:ldatatype));
+        return UNKNOWN;
+      else
+        return LONG;
+    else if (ldatatype == INTEGER || rdatatype == INTEGER)
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG) // incompatible types
+        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(INTEGER), decodeDatatype(ldatatype==INTEGER?rdatatype:ldatatype));
+        return UNKNOWN;
+      else
+        return INTEGER;
+    else if (ldatatype == BOOLEAN || rdatatype == BOOLEAN)
+      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER) // incompatible types
+        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(BOOLEAN), decodeDatatype(ldatatype==BOOLEAN?rdatatype:ldatatype));
+        return UNKNOWN;
+      else
+        return BOOLEAN;
+    else if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP)
+      if (ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER || ldatatype == BOOLEAN || rdatatype == BOOLEAN) // incompatible types
+        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DATE), decodeDatatype((ldatatype==DATE||ldatatype==TIMESTAMP)?rdatatype:ldatatype));
+        return UNKNOWN;
+      else
+        return DATE;
+    else
+      return UNKNOWN;
+  }else{
+    if (m_fieldnames.size() != m_fieldtypes.size()){
+      trace(ERROR,"Field name number %d does not match field type number %d.\n", m_fieldnames.size(), m_fieldtypes.size());
+      return UNKNOWN;
+    }
+    m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
+    // check if it is a variable
+    if (m_expStr.size()>0 && m_expStr[0]=='@'){
+      m_expType = VARIABLE;
+      string strLowName = boost::to_lower_copy<string>(m_expStr);
+      if (strLowName.compare("@raw") == 0 || strLowName.compare("@file") == 0)
+        m_datatype = STRING;
+      else if (strLowName.compare("@line") == 0 || strLowName.compare("@row") == 0 || strLowName.compare("@rowsorted") == 0)
+        m_datatype = LONG;
+      else if (strLowName.find("@field") == 0){
+        string sColId = strLowName.substr(string("@field").size());
+        if (isInt(sColId) && atoi(sColId.c_str()) < m_fieldtypes.size()){
+          m_expType = COLUMN;
+          m_datatype = m_fieldtypes[atoi(sColId.c_str())];
         }else{
-          leftColId = findStrArrayId(m_fieldnames1, leftExpStr);
+          trace(ERROR, "Unrecognized variable %s .\n", m_expStr);
+          m_expType = UNKNOWN;
+          m_datatype = UNKNOWN;
         }
       }
+      else{
+        trace(ERROR, "Unrecognized variable %s .\n", m_expStr);
+        m_expType = UNKNOWN;
+        m_datatype = UNKNOWN;
+      }
+      return m_datatype;
     }
-    if (m_fieldnames2.size()>0){
-      if (rightExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
-        rightExpStr = trim_one(rightExpStr,'"'); // remove quoters
-        rightColId = -1;
-      }else {
-        if (isInt(rightExpStr)){ // check if the name is ID already
-          rightColId = atoi(rightExpStr.c_str());
-          rightExpStr = m_fieldnames2[rightColId];
-        }else{
-          rightColId = findStrArrayId(m_fieldnames2, rightExpStr);
-        }
+    // check if it is a function FUNCNAME(...)
+    int lefParPos = m_expStr.find("(");
+    if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
+      m_expType = FUNCTION;
+      m_datatype = funcReturnType(m_expStr.substr(0,lefParPos));
+      return m_datatype;
+    }
+    // check if it is a column
+    for (int i=0; i<m_fieldnames.size(); i++){
+      if (boost::to_upper_copy<string>(m_expStr).compare(m_fieldnames[i]) == 0){
+        m_expType = COLUMN;
+        m_datatype = m_fieldtypes[i];
+        return m_datatype;
       }
     }
-    if(leftColId != -1 && rightColId != -1){
-      //if (metaData1.getColumnType(leftColId) != metaData2.getColumnType(rightColId)){
-      //  //dtrace.trace(254);
-      //  return false;
-      //}else
-        return true;
-    }else
-      return true;
+    m_expType = CONST;
+    m_datatype = detectDataType(m_expStr);
+    return m_datatype;
   }
-  return metaDataAnzlyzed;
 }
 
 bool ExpressionC::columnsAnalyzed(){
-    return metaDataAnzlyzed;
+    return m_metaDataAnzlyzed;
 }
 
 ExpressionC* ExpressionC::cloneMe(){
   ExpressionC* node = new ExpressionC();
-  node->metaDataAnzlyzed = metaDataAnzlyzed;
+  node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
   //node->predStr = predStr;
-  node->type = type;
-  node->operate = operate;
-  node->leftColId = leftColId;
-  node->rightExpStr = rightExpStr;
-  node->leftExpStr = leftExpStr;
-  if (type == BRANCH){
-    node->leftNode = new ExpressionC();
-    node->leftNode = leftNode->cloneMe();
-    node->rightNode = new ExpressionC();
-    node->rightNode = rightNode->cloneMe();
-    node->leftNode->parentNode = node;
-    node->rightNode->parentNode = node;
+  node->m_type = m_type;
+  node->m_operate = m_operate;
+  node->m_colId = m_colId;
+  node->m_datatype = m_datatype;
+  node->m_expType = m_expType;
+  node->m_expStr = m_expStr;
+  if (m_type == BRANCH){
+    node->m_leftNode = new ExpressionC();
+    node->m_leftNode = m_leftNode->cloneMe();
+    node->m_rightNode = new ExpressionC();
+    node->m_rightNode = m_rightNode->cloneMe();
+    node->m_leftNode->m_parentNode = node;
+    node->m_rightNode->m_parentNode = node;
   }else{
-    node->leftNode = NULL;
-    node->rightNode = NULL;
+    node->m_leftNode = NULL;
+    node->m_rightNode = NULL;
   }
   return node;
 }
@@ -295,27 +339,28 @@ void ExpressionC::copyTo(ExpressionC* node){
   if (!node)
     return;
   else{
-    node->metaDataAnzlyzed = metaDataAnzlyzed;
+    node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
     //node->predStr = predStr;
-    node->type = type;
-    node->operate = operate;
-    node->leftColId = leftColId;
-    node->rightExpStr = rightExpStr;
-    node->leftExpStr = leftExpStr;
-    if (type == BRANCH){
-      if (leftNode){
-        node->leftNode = new ExpressionC();
-        leftNode->copyTo(node->leftNode);
-        node->leftNode->parentNode = node;
+    node->m_type = m_type;
+    node->m_operate = m_operate;
+    node->m_colId = m_colId;
+    node->m_datatype = m_datatype;
+    node->m_expType = m_expType;
+    node->m_expStr = m_expStr;
+    if (m_type == BRANCH){
+      if (m_leftNode){
+        node->m_leftNode = new ExpressionC();
+        m_leftNode->copyTo(node->m_leftNode);
+        node->m_leftNode->m_parentNode = node;
       }else
-        node->leftNode = NULL;
+        node->m_leftNode = NULL;
       
-      if (rightNode){
-        node->rightNode = new ExpressionC();
-        rightNode->copyTo(node->rightNode);
-        node->rightNode->parentNode = node;
+      if (m_rightNode){
+        node->m_rightNode = new ExpressionC();
+        m_rightNode->copyTo(node->m_rightNode);
+        node->m_rightNode->m_parentNode = node;
       }else
-        node->rightNode = NULL;
+        node->m_rightNode = NULL;
     }
   }
 }
@@ -323,20 +368,18 @@ void ExpressionC::copyTo(ExpressionC* node){
 // get all involved colIDs in this expression
 std::set<int> ExpressionC::getAllColIDs(int side){
   std::set<int> colIDs;
-  if (type == BRANCH){
-    if (leftNode){
-      std::set<int> foo = leftNode->getAllColIDs(side);
+  if (m_type == BRANCH){
+    if (m_leftNode){
+      std::set<int> foo = m_leftNode->getAllColIDs(side);
       colIDs.insert(foo.begin(), foo.end());
     }
-    if (rightNode){
-      std::set<int> foo = rightNode->getAllColIDs(side);
+    if (m_rightNode){
+      std::set<int> foo = m_rightNode->getAllColIDs(side);
       colIDs.insert(foo.begin(), foo.end());
     }
-  }else if(type == LEAF){
-    if (side == LEFT && leftColId>=0)
-      colIDs.insert(leftColId);
-    else if (side == RIGHT && rightColId>=0)
-      colIDs.insert(rightColId);
+  }else if(m_type == LEAF){
+    if (m_colId>=0)
+      colIDs.insert(m_colId);
   }
   return colIDs;
 }
@@ -344,18 +387,18 @@ std::set<int> ExpressionC::getAllColIDs(int side){
 // build the expression as a HashMap
 map<int,string> ExpressionC::buildMap(){
   map<int,string> datas;
-  if (type == BRANCH){
-    if (leftNode){
-      map<int,string> foo = leftNode->buildMap();
+  if (m_type == BRANCH){
+    if (m_leftNode){
+      map<int,string> foo = m_leftNode->buildMap();
       datas.insert(foo.begin(), foo.end());
     }
-    if (rightNode){
-      map<int,string> foo = rightNode->buildMap();
+    if (m_rightNode){
+      map<int,string> foo = m_rightNode->buildMap();
       datas.insert(foo.begin(), foo.end());
     }
-  }else if(type == LEAF){
-    if (leftColId>=0)
-      datas.insert( pair<int,string>(leftColId,rightExpStr) );
+  }else if(m_type == LEAF){
+    if (m_colId>=0)
+      datas.insert( pair<int,string>(m_colId,m_expStr) );
   }
   return datas;
 }
@@ -363,12 +406,12 @@ map<int,string> ExpressionC::buildMap(){
 // calculate an expression 
 string ExpressionC::evalExpression(){
   string result="";
-  if (type == BRANCH){
-    if (!leftNode || !rightNode)
+  if (m_type == BRANCH){
+    if (!m_leftNode || !m_rightNode)
       return result;
-    result = anyDataOperate(leftNode->evalExpression(), operate, rightNode->evalExpression(), datatype);
-  }else if(type == LEAF){
-    return anyDataOperate(leftExpStr, operate, rightExpStr, datatype);
+    result = anyDataOperate(m_leftNode->evalExpression(), m_operate, m_rightNode->evalExpression(), m_datatype);
+  }else if(m_type == LEAF){
+    return m_expStr;
   }else{ // no expression
     return result;
   }
@@ -378,12 +421,12 @@ string ExpressionC::evalExpression(){
 // get all involved colIDs in this prediction
 int ExpressionC::size(){
   int size = 0;
-  if (type == BRANCH){
-    if (leftNode)
-      size += leftNode->size();
-    if (rightNode)
-      size += rightNode->size();
-  }else if (type == LEAF)
+  if (m_type == BRANCH){
+    if (m_leftNode)
+      size += m_leftNode->size();
+    if (m_rightNode)
+      size += m_rightNode->size();
+  }else if (m_type == LEAF)
     size = 1;
   else 
     size = 0;
@@ -392,21 +435,20 @@ int ExpressionC::size(){
 
 // clear expression
 void ExpressionC::clear(){
-  if (leftNode){
-    leftNode->clear();
-    delete leftNode;
-    leftNode = NULL;
+  if (m_leftNode){
+    m_leftNode->clear();
+    delete m_leftNode;
+    m_leftNode = NULL;
   }
-  if (rightNode){
-    rightNode->clear();
-    delete rightNode;
-    rightNode = NULL;
+  if (m_rightNode){
+    m_rightNode->clear();
+    delete m_rightNode;
+    m_rightNode = NULL;
   }
-  type = UNKNOWN;
-  operate = UNKNOWN;
-  leftColId = -1;
-  rightExpStr = "";
-  leftExpStr = "";
+  m_type = UNKNOWN;
+  m_operate = UNKNOWN;
+  m_colId = -1;
+  m_expStr = "";
 }
 
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
@@ -415,26 +457,26 @@ void ExpressionC::clear(){
 //3  4
 bool ExpressionC::remove(ExpressionC* node){
   bool removed = false;
-  if (leftNode){
-    if (leftNode == node){
-      leftNode->clear();
-      delete leftNode;
-      leftNode = NULL;
+  if (m_leftNode){
+    if (m_leftNode == node){
+      m_leftNode->clear();
+      delete m_leftNode;
+      m_leftNode = NULL;
       return true;
     }else{
-      removed = removed || leftNode->remove(node);
+      removed = removed || m_leftNode->remove(node);
       if (removed)
         return removed;
     }
   }
-  if (rightNode){
-    if (rightNode == node){
-      rightNode->clear();
-      delete rightNode;
-      rightNode = NULL;
+  if (m_rightNode){
+    if (m_rightNode == node){
+      m_rightNode->clear();
+      delete m_rightNode;
+      m_rightNode = NULL;
       return true;
     }else{
-      removed = removed || rightNode->remove(node);
+      removed = removed || m_rightNode->remove(node);
       if (removed)
         return removed;
     }
@@ -446,15 +488,15 @@ bool ExpressionC::remove(ExpressionC* node){
     return removed;
 
   /*if (this == node){
-      if (this.parentNode != null){
-          if (this.parentNode.leftNode == this ) // this is leftnode
-              this.parentNode.rightNode.copyTo(this); // assign right brother as parent
-          else if (this.parentNode.rightNode == this ) // this is rihtnode
-               this.parentNode.leftNode.copyTo(this); // assign left brother as parent
+      if (this.m_parentNode != null){
+          if (this.m_parentNode.m_leftNode == this ) // this is m_leftNode
+              this.m_parentNode.m_rightNode.copyTo(this); // assign right brother as parent
+          else if (this.m_parentNode.m_rightNode == this ) // this is rihtnode
+               this.m_parentNode.m_leftNode.copyTo(this); // assign left brother as parent
       }
       return true;
-  }else if (type == Consts.BRANCH){
-      return (leftNode != null && leftNode.remove(node)) || (rightNode != null && rightNode.remove(node));
+  }else if (m_type == Consts.BRANCH){
+      return (m_leftNode != null && m_leftNode.remove(node)) || (m_rightNode != null && m_rightNode.remove(node));
   }
   return false;//*/
 }
@@ -463,11 +505,11 @@ bool ExpressionC::remove(ExpressionC* node){
 void ExpressionC::fillDataForColumns(map <string, string> & dataList, vector <string> columns){
   if (columns.size() == 0)
     return;
-  if (type == BRANCH){
-    if (leftNode)
-      leftNode->fillDataForColumns(dataList, columns);
-    if (rightNode)
-      rightNode->fillDataForColumns(dataList, columns);
-  }else if (type == LEAF && leftColId >= 0)
-    dataList.insert( pair<string,string>(columns[leftColId],rightExpStr) );
+  if (m_type == BRANCH){
+    if (m_leftNode)
+      m_leftNode->fillDataForColumns(dataList, columns);
+    if (m_rightNode)
+      m_rightNode->fillDataForColumns(dataList, columns);
+  }else if (m_type == LEAF && m_colId >= 0)
+    dataList.insert( pair<string,string>(columns[m_colId],m_expStr) );
 }

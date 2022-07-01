@@ -42,6 +42,7 @@ using namespace boost::xpressive;
 #define NOLIKE 9
 #define NOREGLIKE 10
 #define IN 11
+#define NOIN 11
 #define LEFT 1
 #define RIGHT 2
 #define PLUS 1
@@ -61,6 +62,10 @@ using namespace boost::xpressive;
 #define WARNING 3
 #define INFO 9
 #define DATEFMT "%Y-%m-%d %H:%M:%S"
+#define CONST 1
+#define COLUMN 2
+#define VARIABLE 3
+#define FUNCTION 3
 
 class namesaving_smatch : public smatch
 {
@@ -97,7 +102,9 @@ public:
 
 void trace(short level, const char *fmt, ...);
 //string string_format( const string& format, Args ... args );
-vector<string> split(string str, char delim = ' ', char quoter = '\"', char escape = '\\');
+string readQuotedStr(string str, int& pos, char[2] quoters = "''", char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
+vector<string> split(string str, char delim = ' ', string quoters = "''", char escape = '\\'); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+string trim_pair(string str, char[2] pair = "  ");
 string trim_one(string str, char c = ' ');
 string trim(string str, char c = ' ');
 bool isNumber(const string& str);
@@ -138,5 +145,6 @@ string getFirstToken(string str, string token); //get the first matched regelar 
 vector <string> getAllTokens(string str, string token); //get all matched regelar token from a string
 bool matchToken(string str, string token); // check if matched regelar token
 int detectDataType(string str); // detect the data type of an expression string
+int funcReturnType(string funcName); // get function return type
 
 #endif // __COMMFUNCS_H

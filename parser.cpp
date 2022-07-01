@@ -185,7 +185,7 @@ FilterC* ParserC::buildFilter(string initialString)
 map<string,string> ParserC::parseparam(string parameterstr)
 {
   //printf("Original string: %s\n", parameterstr.c_str());
-  vector<string> params = split(parameterstr,'|','/','\\');
+  vector<string> params = split(parameterstr,'|',"//''{}",'\\');
   for (int i = 0; i < params.size(); ++i){
     string trimmedstr = boost::algorithm::trim_copy<string>(params[i]);
     size_t found = params[i].find_first_of(" ");

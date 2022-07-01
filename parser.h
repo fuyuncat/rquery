@@ -28,7 +28,6 @@ class ParserC
     ~ParserC();
 
     bool isJunctionWord(string word);
-    void buildLeafNodeFromStr(FilterC* node, string str);
     FilterC* buildFilter(string initialString);
 
     map<string,string> parseparam(string parameterstr);
@@ -43,6 +42,7 @@ class ParserC
     static vector<string> junctionSplitors;
     static vector<string> comparators; // ">=", "<=" should be before ">", "<"
 
+    void buildLeafNodeFromStr(FilterC* node, string str);
     bool buildFilter(FilterC* node, string initialString, string splitor, string quoters = "()"); // split input command line into pieces; \ is escape char, " and splitor could be escaped.
 
   protected:

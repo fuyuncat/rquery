@@ -425,7 +425,7 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
 
 void FilterC::dump(int deep){
   if (m_type == BRANCH){
-    trace(INFO,"(%d)%s\n",deep,decodeJunction(junction).c_str());
+    trace(INFO,"(%d)%s\n",deep,decodeJunction(m_junction).c_str());
     trace(INFO,"L-");
     m_leftNode->dump(deep+1);
     trace(INFO,"R-");

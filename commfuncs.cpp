@@ -179,7 +179,7 @@ vector<string> split(string str, char delim, string quoters, char escape)
   return v;
 }
 
-string trim_pair(string str, char[2] pair)
+string trim_pair(string str, char* pair)
 {
   if(str.size() > 1 && str[0] = pair[0] && str[str.size()-1] = pair[1])
     return str.substr(1,str.size()-2);

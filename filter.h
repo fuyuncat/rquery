@@ -64,7 +64,7 @@ class FilterC
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     ExpressionC* buildExpression(string initialString);
 
-    static set<char> m_operators; // "^", "*", "/" should be before "+", "-"
+    static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
 
   private:
     bool metaDataAnzlyzed; // analyze column name to column id.

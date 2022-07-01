@@ -137,7 +137,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
             ExpressionC* leftNode = new ExpressionC();
             if (buildExpression(leftNode, sStr)){
               node->m_type = BRANCH;
-              node->m_operate = encodeOperator(string(initialString[nextPos]));
+              node->m_operate = encodeOperator(initialString.substr(nextPos,1));
               node->m_datatype = DATE;
               node->m_expType = UNKNOWN;
               node->m_expStr = string(initialString[nextPos]);
@@ -147,7 +147,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
               node->m_rightNode = rightNode;
               rightNode->m_parentNode = node;
               return true;
-            }else
+            }else{
               delete rightNode;
               return false;
             }
@@ -196,7 +196,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
             leafNode->m_parentNode = node;
 
             node->m_type = BRANCH;
-            node->m_operate = encodeOperator(string(initialString[nextPos]));
+            node->m_operate = encodeOperator(initialString.substr(nextPos,1));
             node->m_datatype = DATE;
             node->m_expType = UNKNOWN;
             node->m_expStr = string(initialString[nextPos]);
@@ -252,7 +252,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
             leafNode->m_parentNode = node;
 
             node->m_type = BRANCH;
-            node->m_operate = encodeOperator(string(initialString[nextPos]));
+            node->m_operate = encodeOperator(initialString.substr(nextPos,1));
             node->m_datatype = STRING;
             node->m_expType = UNKNOWN;
             node->m_expStr = string(initialString[nextPos]);
@@ -306,7 +306,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
         leafNode->m_parentNode = node;
 
         node->m_type = BRANCH;
-        node->m_operate = encodeOperator(string(initialString[nextPos]));
+        node->m_operate = encodeOperator(initialString.substr(nextPos,1));
         node->m_datatype = UNKNOWN;
         node->m_expType = UNKNOWN;
         node->m_expStr = string(initialString[nextPos]);

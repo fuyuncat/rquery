@@ -15,7 +15,7 @@
 #include <string.h>
 #include "filter.h"
 
-vector<string> FilterC::m_operators;
+vector<char> FilterC::m_operators;
 
 void FilterC::init()
 {

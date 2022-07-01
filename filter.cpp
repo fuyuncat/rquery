@@ -140,7 +140,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
               node->m_operate = encodeOperator(initialString.substr(nextPos,1));
               node->m_datatype = DATE;
               node->m_expType = UNKNOWN;
-              node->m_expStr = string(initialString[nextPos]);
+              node->m_expStr = initialString.substr(nextPos,1);
               node->m_colId = -1;
               node->m_parentNode = NULL;
               node->m_leftNode = leftNode;
@@ -199,7 +199,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
             node->m_operate = encodeOperator(initialString.substr(nextPos,1));
             node->m_datatype = DATE;
             node->m_expType = UNKNOWN;
-            node->m_expStr = string(initialString[nextPos]);
+            node->m_expStr = initialString.substr(nextPos,1);
             node->m_colId = -1;
             node->m_parentNode = NULL;
             node->m_leftNode = leafNode;
@@ -255,7 +255,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
             node->m_operate = encodeOperator(initialString.substr(nextPos,1));
             node->m_datatype = STRING;
             node->m_expType = UNKNOWN;
-            node->m_expStr = string(initialString[nextPos]);
+            node->m_expStr = initialString.substr(nextPos,1);
             node->m_colId = -1;
             node->m_parentNode = NULL;
             node->m_leftNode = leafNode;
@@ -309,7 +309,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
         node->m_operate = encodeOperator(initialString.substr(nextPos,1));
         node->m_datatype = UNKNOWN;
         node->m_expType = UNKNOWN;
-        node->m_expStr = string(initialString[nextPos]);
+        node->m_expStr = initialString.substr(nextPos,1);
         node->m_colId = -1;
         node->m_parentNode = NULL;
         node->m_leftNode = leafNode;

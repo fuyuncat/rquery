@@ -68,12 +68,12 @@ void ParserC::buildLeafNodeFromStr(FilterC* node, string str)
       str = str.substr(0, i-1)+str.substr(i);
     }else if(!quoteStarted && startsWithWords(str.substr(i), comparators) >= 0){ // splitor that not between quato are the real splitor
       string compStr = comparators[startsWithWords(str.substr(i), comparators)];
-      node->comparator = encodeComparator(compStr);
-      node->type = LEAF;
-      node->leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
-      node->rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
-      node->leftExpression = new ExpressionC(node->leftExpStr);
-      node->rightExpression = new ExpressionC(node->rightExpStr);
+      node->m_comparator = encodeComparator(compStr);
+      node->m_type = LEAF;
+      node->m_leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
+      node->m_rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
+      node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
+      node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
       return;
     }
   }
@@ -129,17 +129,17 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
       initialString = initialString.substr(0, i-1)+initialString.substr(i);
     }else if(quoteDeep == 0 && initialString[i] == ' '){ // splitor that not between quato are the real splitor
       if ( boost::to_upper_copy<string>(initialString.substr(i)).find(splitor) == 0){
-        node->type = BRANCH;
-        node->junction = encodeJunction(boost::algorithm::trim_copy<string>(splitor));
-        node->leftNode = new FilterC();
-        node->leftNode->parentNode = node;
+        node->m_type = BRANCH;
+        node->m_junction = encodeJunction(boost::algorithm::trim_copy<string>(splitor));
+        node->m_leftNode = new FilterC();
+        node->m_leftNode->parentNode = node;
         //printf("Building leftNode\n");
-        if (!buildFilter(node->leftNode, initialString.substr(0, i)," OR ",quoters)) { // OR priority higher than AND
-          delete node->leftNode;
+        if (!buildFilter(node->m_leftNode, initialString.substr(0, i)," OR ",quoters)) { // OR priority higher than AND
+          delete node->m_leftNode;
           return false;
         }
-        node->rightNode = new FilterC();
-        node->rightNode->parentNode = node;
+        node->m_rightNode = new FilterC();
+        node->m_rightNode->m_parentNode = node;
         //printf("Building rightNode\n");
         if (!buildFilter(node->rightNode, initialString.substr(i+splitor.length())," OR ",quoters)){
           delete node->rightNode;

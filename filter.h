@@ -31,19 +31,19 @@ class FilterC
 
     ~FilterC();
 
-    int type;       // 1: branch; 2: leaf
-    int junction;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
-    int comparator; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=; 7: LIKE; 8: REGLIKE. Otherwise, it's meaningless
-    int datatype;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
-    int leftColId;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
-    int rightColId;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
-    string leftExpStr;    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
-    string rightExpStr;   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
-    ExpressionC* leftExpression; // meaningful only if type is LEAF
-    ExpressionC* rightExpression; // meaningful only if type is LEAF
-    FilterC* leftNode;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
-    FilterC* rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
-    FilterC* parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
+    int m_type;       // 1: branch; 2: leaf
+    int m_junction;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
+    int m_comparator; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=; 7: LIKE; 8: REGLIKE. Otherwise, it's meaningless
+    int m_datatype;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
+    int m_leftColId;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
+    int m_rightColId;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
+    string m_leftExpStr;    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
+    string m_rightExpStr;   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
+    ExpressionC* m_leftExpression; // meaningful only if type is LEAF
+    ExpressionC* m_rightExpression; // meaningful only if type is LEAF
+    FilterC* m_leftNode;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
+    FilterC* m_rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
+    FilterC* m_parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
 
     int getLeftHeight(); // get left tree Height
     int getRightHeight(); // get left tree Height

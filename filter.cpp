@@ -20,19 +20,19 @@ std::set<char> FilterC::m_operators;
 
 void FilterC::init()
 {
-  type = UNKNOWN;       // 1: branch; 2: leaf
-  junction = UNKNOWN;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
-  comparator = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
-  datatype = UNKNOWN;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
-  leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
-  rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
-  leftExpStr = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
-  rightExpStr = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
-  leftExpression = NULL; // meaningful only if type is LEAF
-  rightExpression = NULL; // meaningful only if type is LEAF
-  leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
-  rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
-  parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
+  m_type = UNKNOWN;       // 1: branch; 2: leaf
+  m_junction = UNKNOWN;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
+  m_comparator = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
+  m_datatype = UNKNOWN;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
+  m_leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
+  m_rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
+  m_leftExpStr = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
+  m_rightExpStr = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
+  m_leftExpression = NULL; // meaningful only if type is LEAF
+  m_rightExpression = NULL; // meaningful only if type is LEAF
+  m_leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
+  m_rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
+  m_parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
   
   metaDataAnzlyzed = false; // analyze column name to column id.
 }
@@ -51,19 +51,19 @@ FilterC::FilterC(FilterC* node)
 {
   init();
 
-  type = node->type;
-  junction = node->junction;
-  comparator = node->comparator;
-  datatype = node->datatype;
-  leftColId = node->leftColId;
-  rightColId = node->rightColId;
-  leftExpStr = node->leftExpStr;
-  rightExpStr = node->rightExpStr;
-  leftExpression = node->leftExpression;
-  rightExpression = node->rightExpression;
-  leftNode = node->leftNode;
-  rightNode = node->rightNode;
-  parentNode = node->parentNode;
+  m_type = node->m_type;
+  m_junction = node->m_junction;
+  m_comparator = node->m_comparator;
+  m_datatype = node->m_datatype;
+  m_leftColId = node->m_leftColId;
+  m_rightColId = node->m_rightColId;
+  m_leftExpStr = node->m_leftExpStr;
+  m_rightExpStr = node->m_rightExpStr;
+  m_leftExpression = node->m_leftExpression;
+  m_rightExpression = node->m_rightExpression;
+  m_leftNode = node->m_leftNode;
+  m_rightNode = node->m_rightNode;
+  m_parentNode = node->m_parentNode;
   metaDataAnzlyzed = node->metaDataAnzlyzed;
   //predStr = node.predStr;
 
@@ -74,21 +74,21 @@ FilterC::FilterC(FilterC* node)
 FilterC::FilterC(int junction, FilterC* leftNode, FilterC* rightNode)
 {
   init();
-  type = BRANCH;
-  junction = junction;
-  leftNode = leftNode;
-  rightNode = rightNode;
-  //leftNode = leftNode==NULL?NULL:new Prediction(leftNode);
-  //rightNode = rightNode==NULL?NULL:new Prediction(rightNode);;
+  m_type = BRANCH;
+  m_junction = junction;
+  m_leftNode = leftNode;
+  m_rightNode = rightNode;
+  //m_leftNode = leftNode==NULL?NULL:new Prediction(leftNode);
+  //m_rightNode = rightNode==NULL?NULL:new Prediction(rightNode);;
 }
 
 FilterC::FilterC(int comparator, int colId, string data)
 {
   init();
-  type = LEAF;
-  comparator = comparator;
-  leftColId = colId;
-  rightExpStr = data;
+  m_type = LEAF;
+  m_comparator = comparator;
+  m_leftColId = colId;
+  m_rightExpStr = data;
 }
 
 // split input command line into pieces; \ is escape char, " could be escaped.
@@ -148,7 +148,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
               rightNode->m_parentNode = node;
               return true;
             }else{
-              delete rightNode;
+              delete leftNode;
               return false;
             }
           }else{
@@ -346,8 +346,8 @@ ExpressionC* FilterC::buildExpression(string initialString)
 // get left tree Height
 int FilterC::getLeftHeight(){
   int height = 1;
-  if (type == BRANCH && leftNode)
-    height += leftNode->getLeftHeight();
+  if (m_type == BRANCH && m_leftNode)
+    height += m_leftNode->getLeftHeight();
 
   return height;
 }
@@ -355,8 +355,8 @@ int FilterC::getLeftHeight(){
 // get left tree Height
 int FilterC::getRightHeight(){
   int height = 1;
-  if (type == BRANCH && rightNode)
-    height += rightNode->getRightHeight();
+  if (m_type == BRANCH && m_rightNode)
+    height += m_rightNode->getRightHeight();
   
   return height;
 }
@@ -364,76 +364,76 @@ int FilterC::getRightHeight(){
 // add a NEW filter into tree
 void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
   // not add any null or UNKNOWN node
-  if (node || node->type ==  UNKNOWN) 
+  if (node || node->m_type ==  UNKNOWN) 
       return;
-  if (type ==  UNKNOWN){ // not assinged
+  if (m_type ==  UNKNOWN){ // not assinged
       node->copyTo(this);
-  }else if (type == LEAF){
+  }else if (m_type == LEAF){
     FilterC* existingNode = new FilterC();
     copyTo(existingNode);
-    type = BRANCH;
-    junction = junction;
-    comparator = UNKNOWN;   
-    leftColId = -1;  
-    rightColId = -1;    
-    leftExpStr = "";
-    rightExpStr = "";
-    leftExpression = NULL;
-    rightExpression = NULL;
+    m_type = BRANCH;
+    m_junction = junction;
+    m_comparator = UNKNOWN;   
+    m_leftColId = -1;  
+    m_rightColId = -1;    
+    m_leftExpStr = "";
+    m_rightExpStr = "";
+    m_leftExpression = NULL;
+    m_rightExpression = NULL;
     if (leafGrowth){
-      rightNode = existingNode;
-      rightNode->parentNode = this;
-      leftNode = node;
-      leftNode->parentNode = this;
+      m_rightNode = existingNode;
+      m_rightNode->m_parentNode = this;
+      m_leftNode = node;
+      m_leftNode->m_parentNode = this;
     }else{
-      leftNode = existingNode;
-      leftNode->parentNode = this;
-      rightNode = node;
-      rightNode->parentNode = this;
+      m_leftNode = existingNode;
+      m_leftNode->m_parentNode = this;
+      m_rightNode = node;
+      m_rightNode->m_parentNode = this;
     }
   }else{
     if (addOnTop){
       FilterC* existingNode = new FilterC();
       copyTo(existingNode);
-      junction = junction;
+      m_junction = junction;
       if (leafGrowth){
-        leftNode = node;
-        leftNode->parentNode = this;
-        rightNode = existingNode;
-        rightNode->parentNode = this;
+        m_leftNode = node;
+        m_leftNode->m_parentNode = this;
+        m_rightNode = existingNode;
+        m_rightNode->m_parentNode = this;
       }else{
-        leftNode = existingNode;
-        leftNode->parentNode = this;
-        rightNode = node;
-        rightNode->parentNode = this;
+        m_leftNode = existingNode;
+        m_leftNode->m_parentNode = this;
+        m_rightNode = node;
+        m_rightNode->m_parentNode = this;
       }
     }else{
       if (leafGrowth){
-        if (leftNode)
-          leftNode->add(node, junction, leafGrowth, addOnTop);
+        if (m_leftNode)
+          m_leftNode->add(node, junction, leafGrowth, addOnTop);
         else 
-          rightNode->add(node, junction, leafGrowth, addOnTop);
+          m_rightNode->add(node, junction, leafGrowth, addOnTop);
       }else{
-        if (rightNode)
-          rightNode->add(node, junction, leafGrowth, addOnTop);
+        if (m_rightNode)
+          m_rightNode->add(node, junction, leafGrowth, addOnTop);
         else 
-          leftNode->add(node, junction, leafGrowth, addOnTop);
+          m_leftNode->add(node, junction, leafGrowth, addOnTop);
       }
     }
   }
 }
 
 void FilterC::dump(int deep){
-  if (type == BRANCH){
+  if (m_type == BRANCH){
     trace(INFO,"(%d)%s\n",deep,decodeJunction(junction).c_str());
     trace(INFO,"L-");
-    leftNode->dump(deep+1);
+    m_leftNode->dump(deep+1);
     trace(INFO,"R-");
-    rightNode->dump(deep+1);
+    m_rightNode->dump(deep+1);
   }else{
-    trace(INFO,"(%d)%s(%d)",deep,leftExpStr.c_str(),leftColId);
-    trace(INFO,"%s",decodeComparator(comparator).c_str());
-    trace(INFO,"%s\n",rightExpStr.c_str());
+    trace(INFO,"(%d)%s(%d)",deep,m_leftExpStr.c_str(),m_leftColId);
+    trace(INFO,"%s",decodeComparator(m_comparator).c_str());
+    trace(INFO,"%s\n",m_rightExpStr.c_str());
   }
 }
 
@@ -444,11 +444,11 @@ void FilterC::dump(){
 // detect if predication contains special colId    
 bool FilterC::containsColId(int colId){
   bool contain = false;
-  if (type == BRANCH){
-    contain = contain || leftNode->containsColId(colId);
-    contain = contain || rightNode->containsColId(colId);
+  if (m_type == BRANCH){
+    contain = contain || m_leftNode->containsColId(colId);
+    contain = contain || m_rightNode->containsColId(colId);
   }else
-    contain = (leftColId == colId);
+    contain = (m_leftColId == colId);
 
   return contain;
 }
@@ -456,20 +456,20 @@ bool FilterC::containsColId(int colId){
 // detect if predication contains special colId    
 FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
   FilterC* node;
-  if (type == BRANCH){
+  if (m_type == BRANCH){
     if (leftFirst){
-      if (leftNode)
-        node = leftNode->getFirstPredByColId(colId, leftFirst);
+      if (m_leftNode)
+        node = m_leftNode->getFirstPredByColId(colId, leftFirst);
       if (!node)
-        node = rightNode->getFirstPredByColId(colId, leftFirst);
+        node = m_rightNode->getFirstPredByColId(colId, leftFirst);
     }else{
-      if (rightNode)
-        node = rightNode->getFirstPredByColId(colId, leftFirst);
+      if (m_rightNode)
+        node = m_rightNode->getFirstPredByColId(colId, leftFirst);
       if (!node)
-        node = leftNode->getFirstPredByColId(colId, leftFirst);
+        node = m_leftNode->getFirstPredByColId(colId, leftFirst);
     }
-  }else if (type == LEAF)
-    if (leftColId == colId)
+  }else if (m_type == LEAF)
+    if (m_leftColId == colId)
       node = this;
 
   return node;
@@ -477,47 +477,47 @@ FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
 
 // analyze column ID & name from metadata
 bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fieldnames2){
-  if (type == BRANCH){
+  if (m_type == BRANCH){
     metaDataAnzlyzed = true;
-    if (leftNode)
-        metaDataAnzlyzed = metaDataAnzlyzed && leftNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
+    if (m_leftNode)
+        metaDataAnzlyzed = metaDataAnzlyzed && m_leftNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
     if (!metaDataAnzlyzed)
         return metaDataAnzlyzed;
-    if (rightNode)
-        metaDataAnzlyzed = metaDataAnzlyzed &&  rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
-  }else if (type == LEAF){
-    datatype = detectDataType(rightExpStr);
-    if (datatype == UNKNOWN)
-      datatype = detectDataType(leftExpStr);
+    if (m_rightNode)
+        metaDataAnzlyzed = metaDataAnzlyzed &&  m_rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
+  }else if (m_type == LEAF){
+    m_datatype = detectDataType(m_rightExpStr);
+    if (m_datatype == UNKNOWN)
+      m_datatype = detectDataType(m_leftExpStr);
 
     if (m_fieldnames1.size()>0){
-      if (leftExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
-        leftExpStr = trim_one(leftExpStr,'"'); // remove quoters
-        leftColId = -1;
+      if (m_leftExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
+        m_leftExpStr = trim_one(m_leftExpStr,'"'); // remove quoters
+        m_leftColId = -1;
       }else {
-        if (isInt(leftExpStr)){ // check if the name is ID already
-          leftColId = atoi(leftExpStr.c_str());
-          leftExpStr = m_fieldnames1[leftColId];
+        if (isInt(m_leftExpStr)){ // check if the name is ID already
+          m_leftColId = atoi(m_leftExpStr.c_str());
+          m_leftExpStr = m_fieldnames1[m_leftColId];
         }else{
-          leftColId = findStrArrayId(m_fieldnames1, leftExpStr);
+          m_leftColId = findStrArrayId(m_fieldnames1, m_leftExpStr);
         }
       }
     }
     if (m_fieldnames2.size()>0){
-      if (rightExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
-        rightExpStr = trim_one(rightExpStr,'"'); // remove quoters
-        rightColId = -1;
+      if (m_rightExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
+        m_rightExpStr = trim_one(m_rightExpStr,'"'); // remove quoters
+        m_rightColId = -1;
       }else {
-        if (isInt(rightExpStr)){ // check if the name is ID already
-          rightColId = atoi(rightExpStr.c_str());
-          rightExpStr = m_fieldnames2[rightColId];
+        if (isInt(m_rightExpStr)){ // check if the name is ID already
+          m_rightColId = atoi(m_rightExpStr.c_str());
+          m_rightExpStr = m_fieldnames2[m_rightColId];
         }else{
-          rightColId = findStrArrayId(m_fieldnames2, rightExpStr);
+          m_rightColId = findStrArrayId(m_fieldnames2, m_rightExpStr);
         }
       }
     }
-    if(leftColId != -1 && rightColId != -1){
-      //if (metaData1.getColumnType(leftColId) != metaData2.getColumnType(rightColId)){
+    if(m_leftColId != -1 && m_rightColId != -1){
+      //if (metaData1.getColumnType(m_leftColId) != metaData2.getColumnType(m_rightColId)){
       //  //dtrace.trace(254);
       //  return false;
       //}else
@@ -536,30 +536,30 @@ FilterC* FilterC::cloneMe(){
   FilterC* node = new FilterC();
   node->metaDataAnzlyzed = metaDataAnzlyzed;
   //node->predStr = predStr;
-  node->type = type;
-  node->datatype = datatype;
-  node->junction = junction;
-  node->comparator = comparator;
-  node->leftColId = leftColId;
-  node->rightColId = rightColId;
-  node->rightExpStr = rightExpStr;
-  node->leftExpStr = leftExpStr;
-  if (type == BRANCH){
-    node->leftExpression = new ExpressionC(node->leftExpStr);
-    node->leftExpression = leftExpression->cloneMe();
-    node->rightExpression = new ExpressionC(node->rightExpStr);
-    node->rightExpression = rightExpression->cloneMe();
-    node->leftNode = new FilterC();
-    node->leftNode = leftNode->cloneMe();
-    node->rightNode = new FilterC();
-    node->rightNode = rightNode->cloneMe();
-    node->leftNode->parentNode = node;
-    node->rightNode->parentNode = node;
+  node->m_type = m_type;
+  node->m_datatype = m_datatype;
+  node->m_junction = m_junction;
+  node->m_comparator = m_comparator;
+  node->m_leftColId = m_leftColId;
+  node->m_rightColId = m_rightColId;
+  node->m_rightExpStr = m_rightExpStr;
+  node->m_leftExpStr = m_leftExpStr;
+  if (m_type == BRANCH){
+    node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
+    node->m_leftExpression = m_leftExpression->cloneMe();
+    node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
+    node->m_rightExpression = m_rightExpression->cloneMe();
+    node->m_leftNode = new FilterC();
+    node->m_leftNode = m_leftNode->cloneMe();
+    node->m_rightNode = new FilterC();
+    node->m_rightNode = m_rightNode->cloneMe();
+    node->m_leftNode->m_parentNode = node;
+    node->m_rightNode->m_parentNode = node;
   }else{
-    node->leftExpression = NULL;
-    node->rightExpression = NULL;
-    node->leftNode = NULL;
-    node->rightNode = NULL;
+    node->m_leftExpression = NULL;
+    node->m_rightExpression = NULL;
+    node->m_leftNode = NULL;
+    node->m_rightNode = NULL;
   }
   return node;
 }
@@ -570,38 +570,38 @@ void FilterC::copyTo(FilterC* node){
   else{
     node->metaDataAnzlyzed = metaDataAnzlyzed;
     //node->predStr = predStr;
-    node->type = type;
-    node->datatype = datatype;
-    node->junction = junction;
-    node->comparator = comparator;
-    node->leftColId = leftColId;
-    node->rightColId = rightColId;
-    node->rightExpStr = rightExpStr;
-    node->leftExpStr = leftExpStr;
-    if (type == BRANCH){
-      if (leftNode){
-        node->leftNode = new FilterC();
-        leftNode->copyTo(node->leftNode);
-        node->leftNode->parentNode = node;
+    node->m_type = m_type;
+    node->m_datatype = m_datatype;
+    node->m_junction = m_junction;
+    node->m_comparator = m_comparator;
+    node->m_leftColId = m_leftColId;
+    node->m_rightColId = m_rightColId;
+    node->m_rightExpStr = m_rightExpStr;
+    node->m_leftExpStr = m_leftExpStr;
+    if (m_type == BRANCH){
+      if (m_leftNode){
+        node->m_leftNode = new FilterC();
+        m_leftNode->copyTo(node->m_leftNode);
+        node->m_leftNode->m_parentNode = node;
       }else
-        node->leftNode = NULL;
+        node->m_leftNode = NULL;
 
-      if (rightNode){
-        node->rightNode = new FilterC();
-        rightNode->copyTo(node->rightNode);
-        node->rightNode->parentNode = node;
+      if (m_rightNode){
+        node->m_rightNode = new FilterC();
+        m_rightNode->copyTo(node->m_rightNode);
+        node->m_rightNode->m_parentNode = node;
       }else
-        node->rightNode = NULL;
-      node->leftExpression = NULL;
-      node->rightExpression = NULL;
+        node->m_rightNode = NULL;
+      node->m_leftExpression = NULL;
+      node->m_rightExpression = NULL;
     }else{
-      if (leftExpression){
-        node->leftExpression = new ExpressionC(leftExpStr);
-        leftExpression->copyTo(node->leftExpression);
+      if (m_leftExpression){
+        node->m_leftExpression = new ExpressionC(m_leftExpStr);
+        m_leftExpression->copyTo(node->m_leftExpression);
       }
-      if (rightExpression){
-        node->rightExpression = new ExpressionC(rightExpStr);
-        rightExpression->copyTo(node->rightExpression);
+      if (m_rightExpression){
+        node->m_rightExpression = new ExpressionC(m_rightExpStr);
+        m_rightExpression->copyTo(node->m_rightExpression);
       }
     }
   }
@@ -610,20 +610,20 @@ void FilterC::copyTo(FilterC* node){
 // get all involved colIDs in this prediction
 std::set<int> FilterC::getAllColIDs(int side){
   std::set<int> colIDs;
-  if (type == BRANCH){
-    if (leftNode){
-      std::set<int> foo = leftNode->getAllColIDs(side);
+  if (m_type == BRANCH){
+    if (m_leftNode){
+      std::set<int> foo = m_leftNode->getAllColIDs(side);
       colIDs.insert(foo.begin(), foo.end());
     }
-    if (rightNode){
-      std::set<int> foo = rightNode->getAllColIDs(side);
+    if (m_rightNode){
+      std::set<int> foo = m_rightNode->getAllColIDs(side);
       colIDs.insert(foo.begin(), foo.end());
     }
-  }else if(type == LEAF){
-    if (side == LEFT && leftColId>=0)
-      colIDs.insert(leftColId);
-    else if (side == RIGHT && rightColId>=0)
-      colIDs.insert(rightColId);
+  }else if(m_type == LEAF){
+    if (side == LEFT && m_leftColId>=0)
+      colIDs.insert(m_leftColId);
+    else if (side == RIGHT && m_rightColId>=0)
+      colIDs.insert(m_rightColId);
   }
   return colIDs;
 }
@@ -631,18 +631,18 @@ std::set<int> FilterC::getAllColIDs(int side){
 // build the prediction as a HashMap
 map<int,string> FilterC::buildMap(){
   map<int,string> datas;
-  if (type == BRANCH){
-    if (leftNode){
-      map<int,string> foo = leftNode->buildMap();
+  if (m_type == BRANCH){
+    if (m_leftNode){
+      map<int,string> foo = m_leftNode->buildMap();
       datas.insert(foo.begin(), foo.end());
     }
-    if (rightNode){
-      map<int,string> foo = rightNode->buildMap();
+    if (m_rightNode){
+      map<int,string> foo = m_rightNode->buildMap();
       datas.insert(foo.begin(), foo.end());
     }
-  }else if(type == LEAF){
-    if (leftColId>=0)
-      datas.insert( pair<int,string>(leftColId,rightExpStr) );
+  }else if(m_type == LEAF){
+    if (m_leftColId>=0)
+      datas.insert( pair<int,string>(m_leftColId,m_rightExpStr) );
   }
   return datas;
 }
@@ -650,15 +650,15 @@ map<int,string> FilterC::buildMap(){
 // calculate an expression prediction
 bool FilterC::compareExpression(){
   bool result=true;
-  if (type == BRANCH){
-    if (!leftNode || !rightNode)
+  if (m_type == BRANCH){
+    if (!m_leftNode || !m_rightNode)
       return false;
-    if (junction == AND)
-      result = leftNode->compareExpression() && rightNode->compareExpression();
+    if (m_junction == AND)
+      result = m_leftNode->compareExpression() && m_rightNode->compareExpression();
     else
-      result = leftNode->compareExpression() || rightNode->compareExpression();
-  }else if(type == LEAF){
-    return anyDataCompare(leftExpStr, comparator, rightExpStr, STRING) == 1;
+      result = m_leftNode->compareExpression() || m_rightNode->compareExpression();
+  }else if(m_type == LEAF){
+    return anyDataCompare(m_leftExpStr, m_comparator, m_rightExpStr, STRING) == 1;
   }else{ // no predication means alway true
     return true;
   }
@@ -668,12 +668,12 @@ bool FilterC::compareExpression(){
 // get all involved colIDs in this prediction
 int FilterC::size(){
   int size = 0;
-  if (type == BRANCH){
-    if (leftNode)
-      size += leftNode->size();
-    if (rightNode)
-      size += rightNode->size();
-  }else if (type == LEAF)
+  if (m_type == BRANCH){
+    if (m_leftNode)
+      size += m_leftNode->size();
+    if (m_rightNode)
+      size += m_rightNode->size();
+  }else if (m_type == LEAF)
     size = 1;
   else 
     size = 0;
@@ -682,24 +682,24 @@ int FilterC::size(){
 
 // clear predictin
 void FilterC::clear(){
-  if (leftNode){
-    leftNode->clear();
-    delete leftNode;
-    leftNode = NULL;
+  if (m_leftNode){
+    m_leftNode->clear();
+    delete m_leftNode;
+    m_leftNode = NULL;
   }
-  if (rightNode){
-    rightNode->clear();
-    delete rightNode;
-    rightNode = NULL;
+  if (m_rightNode){
+    m_rightNode->clear();
+    delete m_rightNode;
+    m_rightNode = NULL;
   }
-  type = UNKNOWN;
-  datatype = UNKNOWN;
-  junction = UNKNOWN;
-  comparator = UNKNOWN;
-  leftColId = -1;
-  rightColId = -1;
-  rightExpStr = "";
-  leftExpStr = "";
+  m_type = UNKNOWN;
+  m_datatype = UNKNOWN;
+  m_junction = UNKNOWN;
+  m_comparator = UNKNOWN;
+  m_leftColId = -1;
+  m_rightColId = -1;
+  m_rightExpStr = "";
+  m_leftExpStr = "";
   metaDataAnzlyzed = false;
 }
 
@@ -709,26 +709,26 @@ void FilterC::clear(){
 //3  4
 bool FilterC::remove(FilterC* node){
   bool removed = false;
-  if (leftNode){
-    if (leftNode == node){
-      leftNode->clear();
-      delete leftNode;
-      leftNode = NULL;
+  if (m_leftNode){
+    if (m_leftNode == node){
+      m_leftNode->clear();
+      delete m_leftNode;
+      m_leftNode = NULL;
       return true;
     }else{
-      removed = removed || leftNode->remove(node);
+      removed = removed || m_leftNode->remove(node);
       if (removed)
         return removed;
     }
   }
-  if (rightNode){
-    if (rightNode == node){
-      rightNode->clear();
-      delete rightNode;
-      rightNode = NULL;
+  if (m_rightNode){
+    if (m_rightNode == node){
+      m_rightNode->clear();
+      delete m_rightNode;
+      m_rightNode = NULL;
       return true;
     }else{
-      removed = removed || rightNode->remove(node);
+      removed = removed || m_rightNode->remove(node);
       if (removed)
         return removed;
     }
@@ -740,15 +740,15 @@ bool FilterC::remove(FilterC* node){
     return removed;
 
   /*if (this == node){
-      if (this.parentNode != null){
-          if (this.parentNode.leftNode == this ) // this is leftnode
-              this.parentNode.rightNode.copyTo(this); // assign right brother as parent
-          else if (this.parentNode.rightNode == this ) // this is rihtnode
-               this.parentNode.leftNode.copyTo(this); // assign left brother as parent
+      if (this.m_parentNode != null){
+          if (this.m_parentNode.m_leftNode == this ) // this is m_leftNode
+              this.m_parentNode.m_rightNode.copyTo(this); // assign right brother as parent
+          else if (this.m_parentNode.m_rightNode == this ) // this is rihtnode
+               this.m_parentNode.m_leftNode.copyTo(this); // assign left brother as parent
       }
       return true;
-  }else if (type == Consts.BRANCH){
-      return (leftNode != null && leftNode.remove(node)) || (rightNode != null && rightNode.remove(node));
+  }else if (m_type == Consts.BRANCH){
+      return (m_leftNode != null && m_leftNode.remove(node)) || (m_rightNode != null && m_rightNode.remove(node));
   }
   return false;//*/
 }
@@ -757,11 +757,11 @@ bool FilterC::remove(FilterC* node){
 void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string> columns){
   if (columns.size() == 0)
     return;
-  if (type == BRANCH){
-    if (leftNode)
-      leftNode->fillDataForColumns(dataList, columns);
-    if (rightNode)
-      rightNode->fillDataForColumns(dataList, columns);
-  }else if (type == LEAF && leftColId >= 0)
-    dataList.insert( pair<string,string>(columns[leftColId],rightExpStr) );
+  if (m_type == BRANCH){
+    if (m_leftNode)
+      m_leftNode->fillDataForColumns(dataList, columns);
+    if (m_rightNode)
+      m_rightNode->fillDataForColumns(dataList, columns);
+  }else if (m_type == LEAF && m_leftColId >= 0)
+    dataList.insert( pair<string,string>(columns[m_leftColId],m_rightExpStr) );
 }

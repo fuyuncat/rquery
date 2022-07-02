@@ -17,6 +17,8 @@
 #include "expression.h"
 #include "function.h"
 
+std::set<char> ExpressionC::m_operators;
+
 void ExpressionC::init()
 {
   m_type = UNKNOWN;       // 1: branch; 2: leaf
@@ -31,6 +33,9 @@ void ExpressionC::init()
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;   // if expression string analyzed
+
+  //m_operators = {'^','*','/','+','-'};
+  m_operators.insert('^');m_operators.insert('*');m_operators.insert('/');m_operators.insert('+');m_operators.insert('-'); // "^", "*", "/" should be before "+", "-"
 }
 
 void ExpressionC::setExpstr(string expString)

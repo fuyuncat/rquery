@@ -71,6 +71,8 @@ class ExpressionC
     void alignChildrenDataType(); // align children datatype with current datatype
     bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.
 
+    static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
+
   protected:
     void init();
 };

@@ -16,8 +16,6 @@
 #include <boost/algorithm/string.hpp>
 #include "filter.h"
 
-std::set<char> FilterC::m_operators;
-
 void FilterC::init()
 {
   m_type = UNKNOWN;       // 1: branch; 2: leaf
@@ -82,9 +80,6 @@ FilterC::FilterC(FilterC* node)
   m_metaDataAnzlyzed = node->m_metaDataAnzlyzed;
   m_expstrAnalyzed = node->m_expstrAnalyzed;
   //predStr = node.predStr;
-
-  //m_operators = {'^','*','/','+','-'};
-  m_operators.insert('^');m_operators.insert('*');m_operators.insert('/');m_operators.insert('+');m_operators.insert('-'); // "^", "*", "/" should be before "+", "-"
 }
 
 FilterC::FilterC(int junction, FilterC* leftNode, FilterC* rightNode)

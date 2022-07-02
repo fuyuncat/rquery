@@ -69,8 +69,6 @@ class FilterC
 
     bool compareExpression(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues); // calculate an expression prediction. no predication or comparasion failed means alway false
 
-    static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
-
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.
     bool m_expstrAnalyzed;   // if expression string analyzed

@@ -68,12 +68,32 @@ void GlobalVars::setVars(size_t inputbuffer, short tracelevel){
   g_tracelevel = tracelevel;
 }
 
+string decodeTracelevel(int level)
+{
+  switch (level){
+  case FATAL:
+    return "FATAL";
+  case ERROR:
+    return "ERROR";
+  case WARNING:
+    return "WARNING";
+  case INFO:
+    return "INFO";
+  case DEBUG:
+    return "DEBUG";
+  default:
+    return "UNKNOWN";
+  }
+}
+
 void trace(short level, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  if (GlobalVars::g_tracelevel>=level)
+  if (GlobalVars::g_tracelevel>=level){
+    vprintf(decodeTracelevel(level)+":");
     vprintf(fmt, args);
+  }
   va_end(args);
 }
 
@@ -197,6 +217,22 @@ string trim(string str, char c)
   return newstr;
 }
 
+string trim_right(string str, char c)
+{
+  string newstr = str;
+  if (newstr[newstr.size()-1] == c)
+    newstr = newstr.substr(0,newstr.size()-1);
+  return newstr;
+}
+
+string trim_left(string str, char c)
+{
+  string newstr = str;
+  if (newstr[0] == c)
+    newstr = newstr.substr(1);
+  return newstr;
+}
+
 string trim_one(string str, char c)
 {
   string newstr = str;
@@ -204,8 +240,6 @@ string trim_one(string str, char c)
     newstr = newstr.substr(1);
   if (newstr[newstr.size()-1] == c)
     newstr = newstr.substr(0,newstr.size()-1);
-  //printf("Old Reg: %s\n",str.c_str());
-  //printf("New Reg: %s\n",newstr.c_str());
   return newstr;
 }
 
@@ -883,7 +917,7 @@ bool evalString(string str1, int operate, string str2, string& result)
 {
   switch(operate){
   case PLUS:
-    result = str1 + str2;
+    result = trim_right(str1,'\'') + trim_left(str2,'\'');
     return true;
   default:
     trace(ERROR, "Operation %s is not supported for STRING data type!\n", decodeOperator(operate).c_str());

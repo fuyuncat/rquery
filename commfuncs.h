@@ -108,6 +108,8 @@ int matchQuoters(string listStr, int offset, string quoters); // detect if quote
 vector<string> split(string str, char delim = ' ', string quoters = "''", char escape = '\\'); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 
 string trim_pair(string str, string pair);
+string trim_left(string str, char c = ' ');
+string trim_right(string str, char c = ' ');
 string trim_one(string str, char c = ' ');
 string trim(string str, char c = ' ');
 

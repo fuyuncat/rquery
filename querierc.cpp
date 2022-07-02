@@ -96,7 +96,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
     return true;
   }
   if (rowValue.size() != m_fieldnames.size() + 3){ // field name number + 3 variables (@raw @line @row)
-    trace(ERROR, "Filed number and value number dont match!\n");
+    trace(ERROR, "Filed number %d and value number %d dont match!\n", rowValue.size(), m_fieldnames.size());
     return false;
   }
   bool matched = false; 

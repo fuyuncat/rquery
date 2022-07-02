@@ -57,7 +57,6 @@ class FunctionC
     void copyTo(FunctionC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
-    string evalExpression(); // calculate an expression prediction
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin
     bool remove(FunctionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
@@ -67,6 +66,7 @@ class FunctionC
     bool m_metaDataAnzlyzed; // analyze column name to column id.
 
     void dump(int deep);
+    void detectDataType();
 
   protected:
     void init();

@@ -41,6 +41,7 @@ FunctionC::FunctionC(string expString)
 {
   init();
   m_expStr = expString;
+  detectDataType();
 }
 
 FunctionC::~FunctionC()
@@ -82,6 +83,12 @@ FunctionC::FunctionC(int operate, int colId, string data)
   m_operate = operate;
   m_colId = colId;
   m_expStr = data;
+}
+
+// detect function return type
+void FunctionC::detectDataType()
+{
+  m_datatype = UNKNOWN;
 }
 
 // get left tree Height
@@ -291,8 +298,8 @@ int FunctionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes)
     // check if it is a function FUNCNAME(...)
     int lefParPos = m_expStr.find("(");
     if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
-      m_expType = FUNCTION;
-      m_datatype = funcReturnType(m_expStr.substr(0,lefParPos));
+      //m_expType = FUNCTION;
+      //m_datatype = funcReturnType(m_expStr.substr(0,lefParPos));
       return m_datatype;
     }
     // check if it is a column
@@ -403,21 +410,6 @@ map<int,string> FunctionC::buildMap(){
       datas.insert( pair<int,string>(m_colId,m_expStr) );
   }
   return datas;
-}
-
-// calculate an expression 
-string FunctionC::evalExpression(){
-  string result="";
-  if (m_type == BRANCH){
-    if (!m_leftNode || !m_rightNode)
-      return result;
-    result = anyDataOperate(m_leftNode->evalExpression(), m_operate, m_rightNode->evalExpression(), m_datatype);
-  }else if(m_type == LEAF){
-    return m_expStr;
-  }else{ // no expression
-    return result;
-  }
-  return result;
 }
 
 // get all involved colIDs in this prediction

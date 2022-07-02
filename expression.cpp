@@ -292,7 +292,9 @@ int ExpressionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtype
     int lefParPos = m_expStr.find("(");
     if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
       m_expType = FUNCTION;
-      m_datatype = funcReturnType(m_expStr.substr(0,lefParPos));
+      FunctionC* func = new FunctionC(m_expStr);
+      m_datatype = func->m_dataType;
+      delete func;
       return m_datatype;
     }
     // check if it is a column

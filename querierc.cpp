@@ -88,7 +88,26 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
   }
 }
 
-void QuerierC::analyzeFiledTypes()
+void QuerierC::setFieldDatatype(string field, int datetype)
+{
+  if (m_fieldntypes->find(field) != m_fieldntypes->end())
+    m_fieldntypes[field] = datetype;
+  else
+    m_fieldntypes.insert( pair<string, int>(field,datetype) );
+}
+
+void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
+{
+  m_fieldtypes.clear();
+  for (int i=1; i<matches.size(); i++){
+    if (m_fieldntypes->find(field) != m_fieldntypes->end()) 
+      m_fieldtypes.push_back(m_fieldntypes[field]);
+    else if (m_fieldntypes->find("@field"+intToStr(i)) != m_fieldntypes->end())
+      m_fieldtypes.push_back(m_fieldntypes["@field"+intToStr(i)]);
+    else
+      m_fieldtypes.push_back(detectDataType(matches[i]));
+  }
+}
 
 // filt a row data by filter. no predication mean true. comparasion failed means alway false
 bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
@@ -150,7 +169,7 @@ int QuerierC::searchNext()
         matcheddata.push_back(matches[i]);
       if (m_fieldnames.size() == 0){
         pairFiledNames(matches);
-        analyzeFiledTypes();
+        analyzeFiledTypes(matches);
         if (m_filter)
           m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes);
       }

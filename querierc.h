@@ -41,6 +41,7 @@ class QuerierC
     int boostmatch( vector<string> *result = NULL);
     int boostmatch( map<string,string> & result);
     void printFieldNames();
+    void setFieldDatatype(string field, int datetype);
 
   private:
     string m_regexstr;
@@ -54,8 +55,9 @@ class QuerierC
     long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
     
     //vector<namesaving_smatch> m_results;
-    vector<string> m_fieldnames;
-    vector<int> m_fieldtypes;
+    vector<string> m_fieldnames;    // field names
+    vector<int> m_fieldtypes;       // field datatype in sequence
+    map<string, int> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     FilterC* m_filter;
     
@@ -66,7 +68,7 @@ class QuerierC
     //void formatoutput(namesaving_smatch matches);
     void formatoutput(vector<string> datas, bool rawstronly = false);
     void pairFiledNames(namesaving_smatch matches);
-    void analyzeFiledTypes();
+    void analyzeFiledTypes(namesaving_smatch matches);
 };
 
 #endif // __QUERIERC_H

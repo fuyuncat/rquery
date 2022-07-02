@@ -767,7 +767,7 @@ bool FilterC::compareExpression(vector<string>* fieldnames, map<string,string>* 
       return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues) || m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues);
   }else if(m_type == LEAF){
     string leftRst = "", rightRst = "";
-    if (m_leftExpStr->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpStr->evalExpression(fieldnames, fieldvalues, varvalues, rightRst))
+    if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst))
       return anyDataCompare(leftRst, m_comparator, rightRst, STRING) == 1;
     else
       return false;

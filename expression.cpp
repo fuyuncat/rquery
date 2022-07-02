@@ -15,6 +15,7 @@
 #include <string.h>
 #include <boost/algorithm/string.hpp>
 #include "expression.h"
+#include "function.h"
 
 void ExpressionC::init()
 {

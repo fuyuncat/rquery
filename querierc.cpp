@@ -53,7 +53,6 @@ void QuerierC::setregexp(string regexstr)
 void QuerierC::assignFilter(FilterC* filter)
 {
   m_filter = filter;
-  trace(INFO,"Dumping filter ... \n");
   m_filter->dump();
 }
 

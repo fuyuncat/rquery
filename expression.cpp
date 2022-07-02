@@ -596,8 +596,8 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
       return UNKNOWN;
     }
   }else{
-    if (fieldnames.size() != fieldtypes.size()){
-      trace(ERROR,"Field name number %d does not match field type number %d.\n", fieldnames.size(), fieldtypes.size());
+    if (fieldnames->size() != fieldtypes->size()){
+      trace(ERROR,"Field name number %d does not match field type number %d.\n", fieldnames->size(), fieldtypes->size());
       m_metaDataAnzlyzed = false;
       return UNKNOWN;
     }
@@ -613,9 +613,9 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
         m_datatype = LONG;
       else if (strLowName.find("@field") == 0){
         string sColId = strLowName.substr(string("@field").size());
-        if (isInt(sColId) && atoi(sColId.c_str()) < fieldtypes.size()){
+        if (isInt(sColId) && atoi(sColId.c_str()) < fieldtypes->size()){
           m_expType = COLUMN;
-          m_datatype = fieldtypes[atoi(sColId.c_str())];
+          m_datatype = (*fieldtypes)[atoi(sColId.c_str())];
         }else{
           trace(ERROR, "Unrecognized variable %s .\n", m_expStr.c_str());
           m_expType = UNKNOWN;
@@ -640,11 +640,11 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
       return m_datatype;
     }
     // check if it is a column
-    for (int i=0; i<fieldnames.size(); i++){
-      if (boost::to_upper_copy<string>(m_expStr).compare(fieldnames[i]) == 0){
+    for (int i=0; i<fieldnames->size(); i++){
+      if (boost::to_upper_copy<string>(m_expStr).compare((*fieldnames)[i]) == 0){
         m_expStr = boost::to_upper_copy<string>(m_expStr);
         m_expType = COLUMN;
-        m_datatype = fieldtypes[i];
+        m_datatype = (*fieldtypes)[i];
         return m_datatype;
       }
     }

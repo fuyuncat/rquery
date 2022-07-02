@@ -372,12 +372,20 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
     if (m_rightNode)
         m_metaDataAnzlyzed = m_metaDataAnzlyzed &&  m_rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
   }else if (m_type == LEAF){
-    m_leftExpression = buildExpression(m_leftExpStr);
-    if (!m_leftExpression)
+    m_leftExpression = new ExpressionC(m_leftExpStr);
+    if (!m_leftExpression->expstrAnalyzed()){
+      m_leftExpression->clear();
+      delete m_leftExpression;
+      m_leftExpression = NULL
       return false;
-    m_rightExpression = buildExpression(m_rightExpStr);
-    if (!m_rightExpression)
+    }
+    m_rightExpression = new ExpressionC(m_rightExpStr);
+    if (!m_rightExpression->expstrAnalyzed()){
+      m_rightExpression->clear();
+      delete m_rightExpression;
+      m_rightExpression = NULL
       return false;
+    }
 
     m_datatype = detectDataType(m_rightExpStr);
     if (m_datatype == UNKNOWN)

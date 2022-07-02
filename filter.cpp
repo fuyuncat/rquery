@@ -362,7 +362,7 @@ FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
 }
 
 // analyze column ID & name from metadata
-bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<string>* fieldtypes){
+bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes){
   if (m_type == BRANCH){
     m_metaDataAnzlyzed = true;
     if (m_leftNode)

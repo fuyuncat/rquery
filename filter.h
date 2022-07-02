@@ -55,7 +55,7 @@ class FilterC
     void dump();
     bool containsColId(int colId); // detect if predication contains special colId
     FilterC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
-    bool analyzeColumns(vector<string>* fieldnames, vector<string>* fieldtypes); // analyze column ID & name from metadata
+    bool analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes); // analyze column ID & name from metadata
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     FilterC* cloneMe();

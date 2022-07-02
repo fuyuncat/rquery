@@ -55,7 +55,7 @@ class QuerierC
     
     //vector<namesaving_smatch> m_results;
     vector<string> m_fieldnames;
-    vector<string> m_fieldtypes;
+    vector<int> m_fieldtypes;
     vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     FilterC* m_filter;
     

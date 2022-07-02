@@ -630,6 +630,24 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
       }
       return m_datatype;
     }
+    // check if it is a time, quoted by {}
+    if (m_expStr.size()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.size()-1]=='}'){
+      m_expType = CONST;
+      m_datatype = DATE;
+      return m_datatype;
+    }
+    // check if it is a string, quoted by ''
+    if (m_expStr.size()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.size()-1]=='\''){
+      m_expType = CONST;
+      m_datatype = STRING;
+      return m_datatype;
+    }
+    // check if it is a regular expression string, quoted by //
+    if (m_expStr.size()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.size()-1]=='/'){
+      m_expType = CONST;
+      m_datatype = STRING;
+      return m_datatype;
+    }
     // check if it is a function FUNCNAME(...)
     int lefParPos = m_expStr.find("(");
     if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
@@ -642,15 +660,26 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
     }
     // check if it is a column
     for (int i=0; i<fieldnames->size(); i++){
-      if (boost::to_upper_copy<string>(m_expStr).compare((*fieldnames)[i]) == 0){
+      if (boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>((*fieldnames)[i])) == 0){
         m_expStr = boost::to_upper_copy<string>(m_expStr);
         m_expType = COLUMN;
         m_datatype = (*fieldtypes)[i];
         return m_datatype;
       }
     }
-    m_expType = CONST;
-    m_datatype = detectDataType(m_expStr);
+    if (isDouble(m_expStr)){
+      m_expType = CONST;
+      m_datatype = DOUBLE;
+    }else if (isInt(m_expStr)){
+      m_expType = CONST;
+      m_datatype = INTEGER;
+    }else if (isLong(m_expStr)){
+      m_expType = CONST;
+      m_datatype = LONG;
+    }else{
+      m_expType = UNKNOWN;
+      m_datatype = UNKNOWN;
+    }
     return m_datatype;
   }
 }

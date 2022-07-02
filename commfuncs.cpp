@@ -879,7 +879,7 @@ bool evalString(string str1, int operate, string str2, string& result)
   switch(operate){
   case PLUS:
     result = str1 + str2;
-    return true
+    return true;
   default:
     trace(ERROR, "Operation %s is not supported for STRING data type!\n", decodeOperator(operate).c_str());
     return false;

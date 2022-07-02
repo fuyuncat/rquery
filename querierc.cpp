@@ -71,7 +71,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
   using boost::lexical_cast;
   using boost::bad_lexical_cast; 
 
-  for (int i=0; i<matches.size(); i++){
+  for (int i=1; i<matches.size(); i++){
     bool foundName = false;
     for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
       if (&(matches[i]) == &(matches[*it])){

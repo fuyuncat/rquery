@@ -27,14 +27,14 @@ ParserC::~ParserC()
 
 }
 
-vector<string> ParserC::junctionWords;
-vector<string> ParserC::junctionSplitors;
+vector<string> ParserC::m_junctionWords;
+vector<string> ParserC::m_junctionSplitors;
 
 void ParserC::init()
 {
   analyzedPos = 0;
-  junctionWords.push_back("AND"); junctionWords.push_back("OR");
-  junctionSplitors.push_back(" AND ");junctionSplitors.push_back(" OR ");
+  m_junctionWords.push_back("AND"); m_junctionWords.push_back("OR");
+  m_junctionSplitors.push_back(" AND ");m_junctionSplitors.push_back(" OR ");
 }
 
 //map<string,string> ParserC::parsequery(string raw)
@@ -46,8 +46,8 @@ void ParserC::init()
 
 bool ParserC::isJunctionWord(string word)
 {
-  for (int i=0;i<junctionWords.size();i++)
-    if (boost::iequals(junctionWords[i], word))
+  for (int i=0;i<m_junctionWords.size();i++)
+    if (boost::iequals(m_junctionWords[i], word))
       return true;
   return false;
 }

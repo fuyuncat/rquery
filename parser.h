@@ -38,8 +38,8 @@ class ParserC
     //string m_filterStr;
     int analyzedPos;
 
-    static vector<string> junctionWords;
-    static vector<string> junctionSplitors;
+    static vector<string> m_junctionWords;
+    static vector<string> m_junctionSplitors;
 
     //void buildLeafNodeFromStr(FilterC* node, string str);
     //bool buildFilter(FilterC* node, string initialString, string splitor, string quoters = "()"); // split input command line into pieces; \ is escape char, " and splitor could be escaped.

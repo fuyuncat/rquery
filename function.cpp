@@ -86,7 +86,7 @@ FunctionC::FunctionC(int operate, int colId, string data)
 }
 
 // detect function return type
-void FunctionC::detectDataType()
+void FunctionC::checkDataType()
 {
   m_datatype = UNKNOWN;
 }
@@ -306,7 +306,7 @@ int FunctionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes)
     for (int i=0; i<fieldnames.size(); i++){
       if (boost::to_upper_copy<string>(m_expStr).compare(fieldnames[i]) == 0){
         m_expType = COLUMN;
-        m_datatype = m_fieldtypes[i];
+        m_datatype = fieldtypes[i];
         return m_datatype;
       }
     }

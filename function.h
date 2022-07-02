@@ -66,7 +66,7 @@ class FunctionC
     bool m_metaDataAnzlyzed; // analyze column name to column id.
 
     void dump(int deep);
-    void detectDataType();
+    void checkDataType();
 
   protected:
     void init();

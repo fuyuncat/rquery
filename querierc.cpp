@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <boost/algorithm/string.hpp>
 #include "querierc.h"
 
 QuerierC::QuerierC()
@@ -37,7 +38,7 @@ void QuerierC::init()
   m_filter = NULL;
   m_rawstr = "";
   m_searchflags = regex_constants::match_default;
-  m_filename = 0;
+  m_filename = "";
   m_line = 0;
   m_matchcount = 0; 
   m_outputrow = 0;

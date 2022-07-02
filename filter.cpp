@@ -148,10 +148,12 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
               rightNode->m_parentNode = node;
               return true;
             }else{
+              leftNode->clear();
               delete leftNode;
               return false;
             }
           }else{
+            rightNode->clear();
             delete rightNode;
             return false;
           }
@@ -208,6 +210,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
             rightNode->m_parentNode = node;
             return true;
           }else{
+            rightNode->clear();
             delete rightNode;
             return false;
           }
@@ -264,6 +267,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
             rightNode->m_parentNode = node;
             return true;
           }else{
+            rightNode->clear();
             delete rightNode;
             return false;
           }
@@ -318,6 +322,7 @@ bool FilterC::buildExpression(ExpressionC* node, string initialString)
         rightNode->m_parentNode = node;
         return true;
       }else{
+        rightNode->clear();
         delete rightNode;
         return false;
       }
@@ -334,6 +339,7 @@ ExpressionC* FilterC::buildExpression(string initialString)
   //printf("building filter: %s", initialString.c_str());
   ExpressionC* node = new ExpressionC(initialString);
   if (!buildExpression(node, initialString)){
+    node->clear();
     delete node;
     trace(ERROR, "Building expression from %s failed!\n", initialString.c_str());
     return NULL;

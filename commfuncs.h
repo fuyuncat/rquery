@@ -103,6 +103,7 @@ public:
 void trace(short level, const char *fmt, ...);
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
+int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
 vector<string> split(string str, char delim = ' ', string quoters = "''", char escape = '\\'); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 
 string trim_pair(string str, string pair);
@@ -147,7 +148,6 @@ bool anyDataOperate(string str1, int operate, string str2, int type, string& res
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
 int startsWithWords(string str, vector<string> words); // detect if string start with special words
 string removeSpace(string originalStr, string keepPattern); //remove space
-int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
 string getFirstToken(string str, string token); //get the first matched regelar token from a string
 vector <string> getAllTokens(string str, string token); //get all matched regelar token from a string
 bool matchToken(string str, string token); // check if matched regelar token

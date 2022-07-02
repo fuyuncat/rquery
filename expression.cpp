@@ -295,6 +295,7 @@ int ExpressionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtype
       m_expType = FUNCTION;
       FunctionC* func = new FunctionC(m_expStr);
       m_datatype = func->m_datatype;
+      func->clear();
       delete func;
       return m_datatype;
     }
@@ -409,7 +410,6 @@ map<int,string> ExpressionC::buildMap(){
   return datas;
 }
 
-
 // get all involved colIDs in this prediction
 int ExpressionC::size(){
   int size = 0;
@@ -438,7 +438,9 @@ void ExpressionC::clear(){
     m_rightNode = NULL;
   }
   m_type = UNKNOWN;
+  m_datatype = UNKNOWN;
   m_operate = UNKNOWN;
+  m_expType = UNKNOWN;
   m_colId = -1;
   m_expStr = "";
 }
@@ -538,6 +540,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
     }else if (m_expType == FUNCTION){
       FunctionC* func = new FunctionC(m_expStr);
       bool gotResult = func->runFunction(fieldnames, fieldvalues, varvalues, sResult);
+      func->clear();
       delete func;
       return gotResult;
     }else if (m_expType == COLUMN){
@@ -586,6 +589,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
     }else if (m_expType == FUNCTION){
       FunctionC* func = new FunctionC(m_expStr);
       bool gotResult = func->runFunction(sResult);
+      func->clear();
       delete func;
       return gotResult;
     }else
@@ -598,8 +602,10 @@ bool ExpressionC::mergeConstNodes(string & sResult)
       return false;
     bool gotResult = anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
     if (gotResult){
+      m_leftNode->clear()
       delete m_leftNode;
       m_leftNode = NULL;
+      m_rightNode->clear();
       delete m_rightNode;
       m_rightNode = NULL;
       m_type = LEAF;

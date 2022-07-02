@@ -135,6 +135,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
         node->m_leftNode->m_parentNode = node;
         //printf("Building leftNode\n");
         if (!buildFilter(node->m_leftNode, initialString.substr(0, i)," OR ",quoters)) { // OR priority higher than AND
+          node->m_leftNode->clear();
           delete node->m_leftNode;
           return false;
         }
@@ -142,6 +143,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
         node->m_rightNode->m_parentNode = node;
         //printf("Building rightNode\n");
         if (!buildFilter(node->m_rightNode, initialString.substr(i+splitor.length())," OR ",quoters)){
+          node->m_rightNode->clear();
           delete node->m_rightNode;
           return false;
         }
@@ -172,6 +174,7 @@ FilterC* ParserC::buildFilter(string initialString)
   //printf("building filter: %s", initialString.c_str());
   FilterC* node = new FilterC();
   if (!buildFilter(node, initialString, " OR ", "()")){
+    node->clear();
     delete node;
     //printf(" failed!\n");
     return NULL;

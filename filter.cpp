@@ -363,6 +363,7 @@ FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
 
 // analyze column ID & name from metadata
 bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes){
+  trace(DEBUG, "Analyzing filter '%s'\n", m_expStr.c_str());
   if (m_type == BRANCH){
     m_metaDataAnzlyzed = true;
     if (m_leftNode)

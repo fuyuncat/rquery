@@ -37,7 +37,7 @@ class FunctionC
     bool runFunction(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool isConst();   // if all parameters are const
     void setExpStr(string expStr);
-    int analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes); 
+    int analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes); 
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     void dump();

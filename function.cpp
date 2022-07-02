@@ -95,7 +95,7 @@ bool FunctionC::analyzeExpStr()
       return false;
     }
     ExpressionC eParam(sParam);
-    eParam.analyzeColumns(m_fieldnames, m_fieldtypes)
+    eParam.analyzeColumns(m_fieldnames, m_fieldtypes);
     m_params.push_back(eParam);
   }
   if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0)
@@ -118,7 +118,7 @@ void FunctionC::dump(){
 
 // analyze column ID & name from metadata, return data type of current node
 // decide current node data type by checking children's data type
-int FunctionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes)
+int FunctionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes)
 {
   m_metaDataAnzlyzed = true;
   m_fieldnames = fieldnames;

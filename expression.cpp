@@ -294,7 +294,7 @@ int ExpressionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtype
     if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
       m_expType = FUNCTION;
       FunctionC* func = new FunctionC(m_expStr);
-      m_datatype = func->m_dataType;
+      m_datatype = func->m_datatype;
       delete func;
       return m_datatype;
     }
@@ -541,14 +541,14 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
       delete func;
       return gotResult;
     }else if (m_expType == COLUMN){
-      if (fieldvalues.find(m_expStr) != fieldvalues.end()){
-        sResult = fieldvalues[m_expStr];
+      if (fieldvalues->find(m_expStr) != fieldvalues->end()){
+        sResult = *fieldvalues[m_expStr];
         return true;
       }else
         return false;
     }else if (m_expType == VARIABLE){
-      if (varvalues.find(m_expStr) != varvalues.end()){
-        sResult = varvalues[m_expStr];
+      if (varvalues->find(m_expStr) != varvalues->end()){
+        sResult = *varvalues[m_expStr];
         return true;
       }else
         return false;
@@ -560,7 +560,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
       return false;
     if (!m_rightNode || !m_rightNode->evalExpression(fieldnames, fieldvalues, varvalues, rightRst))
       return false;
-    return anyDataOperate(leftRst, m_operate, rightRst, m_dataType, sResult);
+    return anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
   }
 
   //string result="";
@@ -583,7 +583,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
     if (m_expType == CONST){
       sResult = m_expStr;
       return true
-    }else if (m_expType == FUNCTION){
+    }else if (m_exptype == FUNCTION){
       FunctionC* func = new FunctionC(m_expStr);
       bool gotResult = func->runFunction(sResult);
       delete func;
@@ -596,7 +596,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
       return false;
     if (!m_rightNode || !m_rightNode->mergeConstNodes(rightRst))
       return false;
-    bool gotResult = anyDataOperate(leftRst, m_operate, rightRst, m_dataType, sResult);
+    bool gotResult = anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
     if (gotResult){
       delete m_leftNode;
       m_leftNode = NULL;

@@ -49,7 +49,7 @@ class ExpressionC
     void dump();
     bool containsColId(int colId); // detect if predication contains special colId
     ExpressionC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
-    int analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes); // analyze column ID & name from metadata, return data type of current node
+    int analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes); // analyze column ID & name from metadata, return data type of current node
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     ExpressionC* cloneMe();

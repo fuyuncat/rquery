@@ -360,13 +360,13 @@ bool ExpressionC::buildExpression()
           m_expstrAnalyzed = true;
           return true;
         }else{
+          leafNode->clear();
+          delete leafNode;
           rightNode->clear();
           delete rightNode;
           return false;
         }
       }else{
-        leafNode->clear();
-        delete leafNode;
         rightNode->clear();
         delete rightNode;
         return false;
@@ -616,7 +616,7 @@ bool ExpressionC::columnsAnalyzed(){
 ExpressionC* ExpressionC::cloneMe(){
   ExpressionC* node = new ExpressionC();
   node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
-  node->m_expstrAnalyzed = m_expstrAnalyzed
+  node->m_expstrAnalyzed = m_expstrAnalyzed;
   //node->predStr = predStr;
   node->m_type = m_type;
   node->m_operate = m_operate;
@@ -908,7 +908,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
       return false;
     bool gotResult = anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
     if (gotResult){
-      m_leftNode->clear()
+      m_leftNode->clear();
       delete m_leftNode;
       m_leftNode = NULL;
       m_rightNode->clear();

@@ -41,7 +41,7 @@ FunctionC::FunctionC(string expString)
 {
   init();
   m_expStr = expString;
-  detectDataType();
+  checkDataType();
 }
 
 FunctionC::~FunctionC()

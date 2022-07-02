@@ -52,14 +52,6 @@ void FunctionC::setExpStr(string expStr)
   if (!analyzeExpStr()){
     m_funcName = "";
     m_params.clear();
-  }else{
-    m_isconst = true;
-    for (int i=0; i<m_params.size(); i++){
-      if (m_params[i].m_expType != CONST){
-        m_isconst = false;
-        break;
-      }
-    }
   }
 }
 

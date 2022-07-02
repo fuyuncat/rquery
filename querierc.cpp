@@ -37,7 +37,9 @@ void QuerierC::init()
   m_filter = NULL;
   m_rawstr = "";
   m_searchflags = regex_constants::match_default;
-  m_matchcount = 0;
+  m_filename = 0;
+  m_line = 0;
+  m_matchcount = 0; 
   m_outputrow = 0;
 }
 
@@ -86,30 +88,45 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
   }
 }
 
-// filt a row data by filter
+// filt a row data by filter. no predication mean true. comparasion failed means alway false
 bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
 {
-  if (!filter)
-    return true;
-  bool matched = false; 
-  if (filter->m_type == BRANCH){
-    if (!filter->m_leftNode || !filter->m_rightNode){
-      return false;
-    }
-    if (filter->m_junction == AND)  // and
-      matched = matchFilter(rowValue, filter->m_leftNode) && matchFilter(rowValue, filter->m_rightNode);
-    else // or
-      matched = matchFilter(rowValue, filter->m_leftNode) || matchFilter(rowValue, filter->m_rightNode);
-  }else if (filter->m_type == LEAF){
-    if (filter->m_leftColId < 0) // filter is expression
-      return !filter->m_leftExpStr.empty()?!filter->m_rightExpStr.empty():filter->m_leftExpStr.compare(filter->m_rightExpStr)==0;
-    if (rowValue.size() == 0 || filter->m_leftColId > rowValue.size()-1)
-      return false;
-    //printf("left:%s %s right:%s (%s)\n",rowValue[filter->m_leftColId].c_str(),decodeComparator(filter->m_comparator).c_str(),filter->m_rightExpStr.c_str(),decodeDatatype(filter->m_datatype).c_str());
-    return anyDataCompare(rowValue[filter->m_leftColId], filter->m_comparator, filter->m_rightExpStr, filter->m_datatype) == 1;
-  }else{ // no predication means alway true
+  if (!filter){
+    //trace(INFO, "No filter defined\n");
     return true;
   }
+  if (rowValue.size() != m_fieldnames.size() + 3){ // field name number + 3 variables (@raw @line @row)
+    trace(ERROR, "Filed number and value number dont match!\n");
+    return false;
+  }
+  bool matched = false; 
+  map<string,string> fieldValues, varValues;
+  for (int i=0; i<m_fieldnames.size(); i++)
+    fieldValues.insert( pair<string,string>(boost::algorithm::to_upper_copy<string>(m_fieldnames[i]),rowValue[i+1]));
+  varValues.insert( pair<string,string>("@raw",rowValue[0]));
+  varValues.insert( pair<string,string>("@file",m_filename));
+  varValues.insert( pair<string,string>("@line",rowValue[m_fieldnames.size()+1]));
+  varValues.insert( pair<string,string>("@row",rowValue[m_fieldnames.size()+2]));
+  return filter->compareExpression(&m_fieldnames, &fieldValues, &varValues);
+
+  //if (filter->m_type == BRANCH){
+  //  if (!filter->m_leftNode || !filter->m_rightNode){
+  //    return false;
+  //  }
+  //  if (filter->m_junction == AND)  // and
+  //    matched = matchFilter(rowValue, filter->m_leftNode) && matchFilter(rowValue, filter->m_rightNode);
+  //  else // or
+  //    matched = matchFilter(rowValue, filter->m_leftNode) || matchFilter(rowValue, filter->m_rightNode);
+  //}else if (filter->m_type == LEAF){
+  //  if (filter->m_leftColId < 0) // filter is expression
+  //    return !filter->m_leftExpStr.empty()?!filter->m_rightExpStr.empty():filter->m_leftExpStr.compare(filter->m_rightExpStr)==0;
+  //  if (rowValue.size() == 0 || filter->m_leftColId > rowValue.size()-1)
+  //    return false;
+  //  //printf("left:%s %s right:%s (%s)\n",rowValue[filter->m_leftColId].c_str(),decodeComparator(filter->m_comparator).c_str(),filter->m_rightExpStr.c_str(),decodeDatatype(filter->m_datatype).c_str());
+  //  return anyDataCompare(rowValue[filter->m_leftColId], filter->m_comparator, filter->m_rightExpStr, filter->m_datatype) == 1;
+  //}else{ // no predication means alway true
+  //  return false;
+  //}
   return matched;
 }
 
@@ -119,6 +136,7 @@ int QuerierC::searchNext()
   namesaving_smatch matches(m_regexstr);
   //smatch matches;
   int found = 0;
+  m_line++;
   if(regex_search(m_rawstr, matches, m_regexp)){
     //if(m_results.size()>0)
     //  formatoutput(m_results[0]);
@@ -130,9 +148,13 @@ int QuerierC::searchNext()
       if (m_filter)
         m_filter->analyzeColumns(m_fieldnames, m_fieldnames);
     }
+    // append variables
+    //matcheddata.push_back(m_filename);
+    matcheddata.push_back(intToStr(m_line));
+    matcheddata.push_back(intToStr(m_matchcount+1));
     if (matchFilter(matcheddata, m_filter)){
-      m_results.push_back(matcheddata);
       m_matchcount++;
+      m_results.push_back(matcheddata);
     }
     //m_results.push_back(matches);
     //vector<namesaving_smatch>::iterator p = m_results.end();

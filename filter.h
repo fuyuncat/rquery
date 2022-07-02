@@ -57,12 +57,13 @@ class FilterC
     void copyTo(FilterC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
-    bool compareExpression(); // calculate an expression prediction
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin
     bool remove(FilterC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     ExpressionC* buildExpression(string initialString);
+
+    bool compareExpression(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues); // calculate an expression prediction. no predication or comparasion failed means alway false
 
     static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
 

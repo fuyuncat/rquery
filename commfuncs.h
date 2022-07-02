@@ -104,9 +104,11 @@ void trace(short level, const char *fmt, ...);
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 vector<string> split(string str, char delim = ' ', string quoters = "''", char escape = '\\'); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+
 string trim_pair(string str, string pair);
 string trim_one(string str, char c = ' ');
 string trim(string str, char c = ' ');
+
 bool isNumber(const string& str);
 bool isInt(const string& str);
 bool isLong(const string& str);
@@ -117,10 +119,12 @@ string intToStr(const int val);
 string longToStr(const long val);
 string floatToStr(const float val);
 string doubleToStr(const double val);
+
 bool like(string str1, string str2); 
 bool reglike(string str, string regstr); 
 //char getch();
 //size_t getstr(char * buffer, const size_t len);
+
 string decodeJunction(int junction);
 string decodeComparator(int comparator);
 string decodeDatatype(int datatype);
@@ -129,14 +133,17 @@ int encodeComparator(string str);
 int encodeJunction(string str);
 int encodeOperator(string str);
 int findStrArrayId(const vector<string> array, const string member);
+
 int anyDataCompare(string str1, string str2, int type);
 int anyDataCompare(string str1, int comparator, string str2, int type);
-string evalString(string str1, int operate, string str2);
-long evalLong(string str1, int operate, string str2);
-int evalInteger(string str1, int operate, string str2);
-double evalDouble(string str1, int operate, string str2);
-struct tm evalDate(string str1, int operate, string str2);
-string anyDataOperate(string str1, int operate, string str2, int type);
+
+bool evalString(string str1, int operate, string str2, string& result);
+bool evalLong(string str1, int operate, string str2, long& result);
+bool evalInteger(string str1, int operate, string str2, int& result);
+bool evalDouble(string str1, int operate, string str2, double& result);
+bool evalDate(string str1, int operate, string str2, struct tm& result);
+bool anyDataOperate(string str1, int operate, string str2, int type, string& result); // return true if operated successfully, result returns result
+
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
 int startsWithWords(string str, vector<string> words); // detect if string start with special words
 string removeSpace(string originalStr, string keepPattern); //remove space
@@ -145,6 +152,5 @@ string getFirstToken(string str, string token); //get the first matched regelar 
 vector <string> getAllTokens(string str, string token); //get all matched regelar token from a string
 bool matchToken(string str, string token); // check if matched regelar token
 int detectDataType(string str); // detect the data type of an expression string
-int funcReturnType(string funcName); // get function return type
 
 #endif // __COMMFUNCS_H

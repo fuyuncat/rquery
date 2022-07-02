@@ -874,116 +874,167 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
   return -102;
 }
 
-string evalString(string str1, int operate, string str2)
+bool evalString(string str1, int operate, string str2, string& result)
 {
   switch(operate){
   case PLUS:
-    return str1 + str2;
+    result = str1 + str2;
+    return true
   default:
     trace(ERROR, "Operation %s is not supported for STRING data type!\n", decodeOperator(operate).c_str());
-    return "";
+    return false;
   }
 }
 
-long evalLong(string str1, int operate, string str2)
+bool evalLong(string str1, int operate, string str2, long& result)
 {
+  if (!isLong(str1) || !isLong(str2)){
+    trace(ERROR, "Invalid LONG data detected!\n");
+    return false;
+  }
   switch(operate){
   case PLUS:
-    return atol(str1.c_str()) + atol(str2.c_str());
+    result = atol(str1.c_str()) + atol(str2.c_str());
+    return true;
   case SUBTRACT:
-    return atol(str1.c_str()) - atol(str2.c_str());
+    result = atol(str1.c_str()) - atol(str2.c_str());
+    return true;
   case TIMES:
-    return atol(str1.c_str()) * atol(str2.c_str());
+    result = atol(str1.c_str()) * atol(str2.c_str());
+    return true;
   case DIVIDE:
-    return atol(str1.c_str()) / atol(str2.c_str());
+    result = atol(str1.c_str()) / atol(str2.c_str());
+    return true;
   case POWER:
-    return pow(atol(str1.c_str()), atol(str2.c_str()));
+    result = pow(atol(str1.c_str()), atol(str2.c_str()));
+    return true;
   default:
     trace(ERROR, "Operation %s is not supported for LONG data type!\n", decodeOperator(operate).c_str());
-    return 0;
+    return false;
   }
 }
 
-int evalInteger(string str1, int operate, string str2)
+bool evalInteger(string str1, int operate, string str2, int& result)
 {
+  if (!isInt(str1) || !isInt(str2)){
+    trace(ERROR, "Invalid INTEGER data detected!\n");
+    return false;
+  }
   switch(operate){
   case PLUS:
-    return atoi(str1.c_str()) + atoi(str2.c_str());
+    result = atoi(str1.c_str()) + atoi(str2.c_str());
+    return true;
   case SUBTRACT:
-    return atoi(str1.c_str()) - atoi(str2.c_str());
+    result = atoi(str1.c_str()) - atoi(str2.c_str());
+    return true;
   case TIMES:
-    return atoi(str1.c_str()) * atoi(str2.c_str());
+    result = atoi(str1.c_str()) * atoi(str2.c_str());
+    return true;
   case DIVIDE:
-    return atoi(str1.c_str()) / atoi(str2.c_str());
+    result = atoi(str1.c_str()) / atoi(str2.c_str());
+    return true;
   case POWER:
-    return pow(atoi(str1.c_str()), atoi(str2.c_str()));
+    result = pow(atoi(str1.c_str()), atoi(str2.c_str()));
+    return true;
   default:
     trace(ERROR, "Operation %s is not supported for INETEGER data type!\n", decodeOperator(operate).c_str());
-    return 0;
+    return false;
   }
 }
 
-double evalDouble(string str1, int operate, string str2)
+bool evalDouble(string str1, int operate, string str2, double& result)
 {
+  if (!isDouble(str1) || !isDouble(str2)){
+    trace(ERROR, "Invalid DOUBLE data detected!\n");
+    return false;
+  }
   switch(operate){
   case PLUS:
-    return atof(str1.c_str()) + atof(str2.c_str());
+    result = atof(str1.c_str()) + atof(str2.c_str());
+    return true;
   case SUBTRACT:
-    return atof(str1.c_str()) - atof(str2.c_str());
+    result = atof(str1.c_str()) - atof(str2.c_str());
+    return true;
   case TIMES:
-    return atof(str1.c_str()) * atof(str2.c_str());
+    result = atof(str1.c_str()) * atof(str2.c_str());
+    return true;
   case DIVIDE:
-    return atof(str1.c_str()) / atof(str2.c_str());
+    result = atof(str1.c_str()) / atof(str2.c_str());
+    return true;
   case POWER:
-    return pow(atof(str1.c_str()), atof(str2.c_str()));
+    result = pow(atof(str1.c_str()), atof(str2.c_str()));
+    return true;
   default:
     trace(ERROR, "Operation %s is not supported for DOUBLE data type!\n", decodeOperator(operate).c_str());
-    return 0;
+    return false;
   }
 }
 
-struct tm evalDate(string str1, int operate, string str2)
+bool evalDate(string str1, int operate, string str2, struct tm& result)
 {
-  struct tm dt;
-  strptime(str1.c_str(), DATEFMT, &dt);
   time_t t1;
+  string fmt;
+  int seconds;
+  if (isDate(str1, fmt) && isInt(str2)){
+    strptime(str1.c_str(), DATEFMT, &result);
+    t1 = mktime(&result);
+    seconds = atoi(str2.c_str());
+  }else if (isDate(str2, fmt) && isInt(str1)){
+    strptime(str2.c_str(), DATEFMT, &result);
+    t1 = mktime(&result);
+    seconds = atoi(str1.c_str());
+  }else{
+    trace(ERROR, "DATE can only +/- an INTEGER number !\n");
+    return false;
+  }
   switch(operate){
   case PLUS:
-    t1 = mktime(&dt);
-    t1+=atoi(str2.c_str());
-    //localtime_s(&dt,&t1);
-    dt = *(localtime(&t1));
-    return dt;
+    t1+=seconds;
+    //localtime_s(&result,&t1);
+    result = *(localtime(&t1));
+    return true;
   case SUBTRACT:
-    t1 = mktime(&dt);
-    t1-=atoi(str2.c_str());
-    dt = *(localtime(&t1));
-    return dt;
+    t1-=seconds;
+    result = *(localtime(&t1));
+    return true;
   default:
     trace(ERROR, "Operation %s is not supported for DATE data type!\n", decodeOperator(operate).c_str());
-    return dt;
+    return false;
   }
 }
 
-string anyDataOperate(string str1, int operate, string str2, int type)
+// return true if operated successfully, result returns result
+bool anyDataOperate(string str1, int operate, string str2, int type, string& result)
 {
   switch (type){
-  case LONG:
-    return longToStr(evalLong(str1, operate, str2));
-  case INTEGER:
-    return intToStr(evalInteger(str1, operate, str2));
-  case DOUBLE:
-    return doubleToStr(evalDouble(str1, operate, str2));
-  case DATE:
-  case TIMESTAMP:{
-    struct tm dt = evalDate(str1, operate, str2);
-    char buffer [80];
-    strftime (buffer,80,DATEFMT,&dt);
-    return(string(buffer));
-  }
-  case STRING:
-  default: 
-    return evalString(str1, operate, str2);
+    case LONG:{
+      long rslt;
+      bool gotResult = evalLong(str1, operate, str2, rslt);
+      result = longToStr(rslt);
+      return gotResult;
+    }case INTEGER:{
+      int rslt;
+      bool gotResult = evalInteger(str1, operate, str2, rslt);
+      result = intToStr(rslt);
+      return gotResult;
+    }case DOUBLE:{
+      double rslt;
+      bool gotResult = evalDouble(str1, operate, str2, rslt);
+      result = doubleToStr(rslt);
+      return gotResult;
+    }case DATE:
+    case TIMESTAMP:{
+      struct tm rslt;
+      bool gotResult = evalDate(str1, operate, str2, rslt);
+      char buffer [80];
+      strftime (buffer,80,DATEFMT,&rslt);
+      result = string(buffer);
+      return gotResult;
+    }
+    case STRING:
+    default:{
+      return evalString(str1, operate, str2, result);
+    }
   }
 }
 
@@ -1076,10 +1127,4 @@ vector <string> getAllTokens(string str, string token)
 // check if matched regelar token
 bool matchToken(string str, string token){
   return !getFirstToken(str, token).empty();
-}
-
-// get function return type
-int funcReturnType(string funcName)
-{
-  return STRING;
 }

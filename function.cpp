@@ -1,22 +1,23 @@
 /*******************************************************************************
 //
-//        File: expression.cpp
-// Description: Expression class defination
-//       Usage: expression.cpp
-//     Created: 18/06/2022
+//        File: function.cpp
+// Description: Function class defination
+//       Usage: function.cpp
+//     Created: 28/06/2022
 //      Author: Wei Huang
 //       Email: fuyuncat@gmail.com
 //
 //------------- Change History ------------- 
-//  18/06/2022: Created
+//  28/06/2022: Created
 //
 *******************************************************************************/
 #include <stdio.h>
 #include <string.h>
 #include <boost/algorithm/string.hpp>
 #include "expression.h"
+#include "function.h"
 
-void ExpressionC::init()
+void FunctionC::init()
 {
   m_type = UNKNOWN;       // 1: branch; 2: leaf
   m_operate = UNKNOWN; // if type is LEAF, 1: ==; 2: >; 3: <; 4: !=; 5: >=; 6: <=. Otherwise, it's meaningless
@@ -31,23 +32,23 @@ void ExpressionC::init()
   m_metaDataAnzlyzed = false; // analyze column name to column id.
 }
 
-ExpressionC::ExpressionC()
+FunctionC::FunctionC()
 {
   init();
 }
 
-ExpressionC::ExpressionC(string expString)
+FunctionC::FunctionC(string expString)
 {
   init();
   m_expStr = expString;
 }
 
-ExpressionC::~ExpressionC()
+FunctionC::~FunctionC()
 {
 
 }
 
-ExpressionC::ExpressionC(ExpressionC* node)
+FunctionC::FunctionC(FunctionC* node)
 {
   init();
 
@@ -64,7 +65,7 @@ ExpressionC::ExpressionC(ExpressionC* node)
   //predStr = node.predStr;
 }
 
-ExpressionC::ExpressionC(ExpressionC* m_leftNode, ExpressionC* m_rightNode)
+FunctionC::FunctionC(FunctionC* m_leftNode, FunctionC* m_rightNode)
 {
   init();
   m_type = BRANCH;
@@ -74,7 +75,7 @@ ExpressionC::ExpressionC(ExpressionC* m_leftNode, ExpressionC* m_rightNode)
   //m_rightNode = m_rightNode==NULL?NULL:new Prediction(m_rightNode);;
 }
 
-ExpressionC::ExpressionC(int operate, int colId, string data)
+FunctionC::FunctionC(int operate, int colId, string data)
 {
   init();
   m_type = LEAF;
@@ -84,7 +85,7 @@ ExpressionC::ExpressionC(int operate, int colId, string data)
 }
 
 // get left tree Height
-int ExpressionC::getLeftHeight(){
+int FunctionC::getLeftHeight(){
   int height = 1;
   if (m_type == BRANCH && m_leftNode)
     height += m_leftNode->getLeftHeight();
@@ -93,7 +94,7 @@ int ExpressionC::getLeftHeight(){
 }
 
 // get left tree Height
-int ExpressionC::getRightHeight(){
+int FunctionC::getRightHeight(){
   int height = 1;
   if (m_type == BRANCH && m_rightNode)
     height += m_rightNode->getRightHeight();
@@ -102,14 +103,14 @@ int ExpressionC::getRightHeight(){
 }
 
 // add a NEW expression into tree
-void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop){
+void FunctionC::add(FunctionC* node, int op, bool leafGrowth, bool addOnTop){
   // not add any null or UNKNOWN node
   if (node || node->m_type ==  UNKNOWN) 
       return;
   if (m_type ==  UNKNOWN){ // not assinged
       node->copyTo(this);
   }else if (m_type == LEAF){
-    ExpressionC* existingNode = new ExpressionC();
+    FunctionC* existingNode = new FunctionC();
     copyTo(existingNode);
     m_type = BRANCH;
     m_operate = op;   
@@ -128,7 +129,7 @@ void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop)
     }
   }else{
     if (addOnTop){
-      ExpressionC* existingNode = new ExpressionC();
+      FunctionC* existingNode = new FunctionC();
       copyTo(existingNode);
       m_type = BRANCH;
       m_operate = op;   
@@ -159,7 +160,7 @@ void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop)
   }
 }
 
-void ExpressionC::dump(int deep){
+void FunctionC::dump(int deep){
   if (m_type == BRANCH){
     trace(INFO,"%s(%d)\n",decodeOperator(m_operate).c_str(),deep);
     trace(INFO,"L-");
@@ -171,12 +172,12 @@ void ExpressionC::dump(int deep){
   }
 }
 
-void ExpressionC::dump(){
+void FunctionC::dump(){
   dump(0);
 }
 
 // detect if predication contains special colId    
-bool ExpressionC::containsColId(int colId){
+bool FunctionC::containsColId(int colId){
   bool contain = false;
   if (m_type == BRANCH){
     contain = contain || m_leftNode->containsColId(colId);
@@ -188,8 +189,8 @@ bool ExpressionC::containsColId(int colId){
 }
 
 // detect if predication contains special colId    
-ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
-  ExpressionC* node;
+FunctionC* FunctionC::getFirstPredByColId(int colId, bool leftFirst){
+  FunctionC* node;
   if (m_type == BRANCH){
     if (leftFirst){
       if (m_leftNode)
@@ -211,7 +212,7 @@ ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
 
 // analyze column ID & name from metadata, return data type of current node
 // decide current node data type by checking children's data type
-int ExpressionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes)
+int FunctionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes)
 {
   m_metaDataAnzlyzed = true;
   if (m_type == BRANCH){
@@ -264,7 +265,6 @@ int ExpressionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtype
     // check if it is a variable
     if (m_expStr.size()>0 && m_expStr[0]=='@'){
       m_expType = VARIABLE;
-      m_expStr = boost::to_upper_copy<string>(m_expStr);
       string strLowName = boost::to_lower_copy<string>(m_expStr);
       if (strLowName.compare("@raw") == 0 || strLowName.compare("@file") == 0)
         m_datatype = STRING;
@@ -298,9 +298,8 @@ int ExpressionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtype
     // check if it is a column
     for (int i=0; i<fieldnames.size(); i++){
       if (boost::to_upper_copy<string>(m_expStr).compare(fieldnames[i]) == 0){
-        m_expStr = boost::to_upper_copy<string>(m_expStr);
         m_expType = COLUMN;
-        m_datatype = fieldtypes[i];
+        m_datatype = m_fieldtypes[i];
         return m_datatype;
       }
     }
@@ -310,12 +309,12 @@ int ExpressionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtype
   }
 }
 
-bool ExpressionC::columnsAnalyzed(){
+bool FunctionC::columnsAnalyzed(){
     return m_metaDataAnzlyzed;
 }
 
-ExpressionC* ExpressionC::cloneMe(){
-  ExpressionC* node = new ExpressionC();
+FunctionC* FunctionC::cloneMe(){
+  FunctionC* node = new FunctionC();
   node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
   //node->predStr = predStr;
   node->m_type = m_type;
@@ -325,9 +324,9 @@ ExpressionC* ExpressionC::cloneMe(){
   node->m_expType = m_expType;
   node->m_expStr = m_expStr;
   if (m_type == BRANCH){
-    node->m_leftNode = new ExpressionC();
+    node->m_leftNode = new FunctionC();
     node->m_leftNode = m_leftNode->cloneMe();
-    node->m_rightNode = new ExpressionC();
+    node->m_rightNode = new FunctionC();
     node->m_rightNode = m_rightNode->cloneMe();
     node->m_leftNode->m_parentNode = node;
     node->m_rightNode->m_parentNode = node;
@@ -338,7 +337,7 @@ ExpressionC* ExpressionC::cloneMe(){
   return node;
 }
 
-void ExpressionC::copyTo(ExpressionC* node){
+void FunctionC::copyTo(FunctionC* node){
   if (!node)
     return;
   else{
@@ -352,14 +351,14 @@ void ExpressionC::copyTo(ExpressionC* node){
     node->m_expStr = m_expStr;
     if (m_type == BRANCH){
       if (m_leftNode){
-        node->m_leftNode = new ExpressionC();
+        node->m_leftNode = new FunctionC();
         m_leftNode->copyTo(node->m_leftNode);
         node->m_leftNode->m_parentNode = node;
       }else
         node->m_leftNode = NULL;
       
       if (m_rightNode){
-        node->m_rightNode = new ExpressionC();
+        node->m_rightNode = new FunctionC();
         m_rightNode->copyTo(node->m_rightNode);
         node->m_rightNode->m_parentNode = node;
       }else
@@ -369,7 +368,7 @@ void ExpressionC::copyTo(ExpressionC* node){
 }
 
 // get all involved colIDs in this expression
-std::set<int> ExpressionC::getAllColIDs(int side){
+std::set<int> FunctionC::getAllColIDs(int side){
   std::set<int> colIDs;
   if (m_type == BRANCH){
     if (m_leftNode){
@@ -388,7 +387,7 @@ std::set<int> ExpressionC::getAllColIDs(int side){
 }
 
 // build the expression as a HashMap
-map<int,string> ExpressionC::buildMap(){
+map<int,string> FunctionC::buildMap(){
   map<int,string> datas;
   if (m_type == BRANCH){
     if (m_leftNode){
@@ -406,9 +405,23 @@ map<int,string> ExpressionC::buildMap(){
   return datas;
 }
 
+// calculate an expression 
+string FunctionC::evalExpression(){
+  string result="";
+  if (m_type == BRANCH){
+    if (!m_leftNode || !m_rightNode)
+      return result;
+    result = anyDataOperate(m_leftNode->evalExpression(), m_operate, m_rightNode->evalExpression(), m_datatype);
+  }else if(m_type == LEAF){
+    return m_expStr;
+  }else{ // no expression
+    return result;
+  }
+  return result;
+}
 
 // get all involved colIDs in this prediction
-int ExpressionC::size(){
+int FunctionC::size(){
   int size = 0;
   if (m_type == BRANCH){
     if (m_leftNode)
@@ -423,7 +436,7 @@ int ExpressionC::size(){
 }
 
 // clear expression
-void ExpressionC::clear(){
+void FunctionC::clear(){
   if (m_leftNode){
     m_leftNode->clear();
     delete m_leftNode;
@@ -444,7 +457,7 @@ void ExpressionC::clear(){
 //   0                      0                  2                 1
 //  1  2  (remove 3) =>   4   2 (remove 1) =>      (remove 2)  3   4
 //3  4
-bool ExpressionC::remove(ExpressionC* node){
+bool FunctionC::remove(FunctionC* node){
   bool removed = false;
   if (m_leftNode){
     if (m_leftNode == node){
@@ -491,7 +504,7 @@ bool ExpressionC::remove(ExpressionC* node){
 }
 
 // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
-void ExpressionC::fillDataForColumns(map <string, string> & dataList, vector <string> columns){
+void FunctionC::fillDataForColumns(map <string, string> & dataList, vector <string> columns){
   if (columns.size() == 0)
     return;
   if (m_type == BRANCH){
@@ -503,105 +516,14 @@ void ExpressionC::fillDataForColumns(map <string, string> & dataList, vector <st
     dataList.insert( pair<string,string>(columns[m_colId],m_expStr) );
 }
 
-// align children datatype with current datatype
-void ExpressionC::alignChildrenDataType()
+// run function and get result
+bool FunctionC::runFunction(string & sResult)
 {
-  if (m_datatype != UNKNOWN){
-    if (m_leftNode){
-      m_leftNode->m_datatype = m_datatype;
-      m_leftNode->alignChildrenDataType();
-    }
-    if (m_rightNode){
-      m_rightNode->m_datatype = m_datatype;
-      m_rightNode->alignChildrenDataType();
-    }
-  }
+  return false;
 }
 
-// calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case
-bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult){
-  if (!fieldnames || !fieldvalues || varvalues){
-    trace(ERROR, "Insufficient metadata!\n");
-    return false;
-  }
-  if (!m_metaDataAnzlyzed){
-    trace(ERROR, "Expression is not analyzed!\n");
-    return false;
-  }
-  if (m_type == LEAF){
-    if (m_expType == CONST){
-      sResult = m_expStr;
-      return true
-    }else if (m_expType == FUNCTION){
-      FunctionC* func = new FunctionC(m_expStr);
-      bool gotResult = func->runFunction(fieldnames, fieldvalues, varvalues, sResult);
-      delete func;
-      return gotResult;
-    }else if (m_expType == COLUMN){
-      if (fieldvalues.find(m_expStr) != fieldvalues.end()){
-        sResult = fieldvalues[m_expStr];
-        return true;
-      }else
-        return false;
-    }else if (m_expType == VARIABLE){
-      if (varvalues.find(m_expStr) != varvalues.end()){
-        sResult = varvalues[m_expStr];
-        return true;
-      }else
-        return false;
-    }else
-      return false;
-  }else{
-    string leftRst = "", rightRst = "";
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldnames, fieldvalues, varvalues, leftRst))
-      return false;
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldnames, fieldvalues, varvalues, rightRst))
-      return false;
-    return anyDataOperate(leftRst, m_operate, rightRst, m_dataType, sResult);
-  }
-
-  //string result="";
-  //if (m_type == BRANCH){
-  //  if (!m_leftNode || !m_rightNode)
-  //    return result;
-  //  result = anyDataOperate(m_leftNode->evalExpression(), m_operate, m_rightNode->evalExpression(), m_datatype);
-  //}else if(m_type == LEAF){
-  //  return m_expStr;
-  //}else{ // no expression
-  //  return result;
-  //}
-  //return result;
-}
-
-// merge const expression, reduce calculation during matching
-bool ExpressionC::mergeConstNodes(string & sResult)
+// run function and get result
+bool FunctionC::runFunction(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  if (m_type == LEAF){
-    if (m_expType == CONST){
-      sResult = m_expStr;
-      return true
-    }else if (m_expType == FUNCTION){
-      FunctionC* func = new FunctionC(m_expStr);
-      bool gotResult = func->runFunction(sResult);
-      delete func;
-      return gotResult;
-    }else
-      return false;
-  }else{
-    string leftRst = "", rightRst = "";
-    if (!m_leftNode || !m_leftNode->mergeConstNodes(leftRst))
-      return false;
-    if (!m_rightNode || !m_rightNode->mergeConstNodes(rightRst))
-      return false;
-    bool gotResult = anyDataOperate(leftRst, m_operate, rightRst, m_dataType, sResult);
-    if (gotResult){
-      delete m_leftNode;
-      m_leftNode = NULL;
-      delete m_rightNode;
-      m_rightNode = NULL;
-      m_type = LEAF;
-      m_expStr = sResult;
-    }
-    return gotResult;
-  }
+  return false;
 }

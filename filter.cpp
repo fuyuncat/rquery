@@ -654,24 +654,6 @@ map<int,string> FilterC::buildMap(){
   return datas;
 }
 
-// calculate an expression prediction
-bool FilterC::compareExpression(){
-  bool result=true;
-  if (m_type == BRANCH){
-    if (!m_leftNode || !m_rightNode)
-      return false;
-    if (m_junction == AND)
-      result = m_leftNode->compareExpression() && m_rightNode->compareExpression();
-    else
-      result = m_leftNode->compareExpression() || m_rightNode->compareExpression();
-  }else if(m_type == LEAF){
-    return anyDataCompare(m_leftExpStr, m_comparator, m_rightExpStr, STRING) == 1;
-  }else{ // no predication means alway true
-    return true;
-  }
-  return result;
-}
-
 // get all involved colIDs in this prediction
 int FilterC::size(){
   int size = 0;
@@ -771,4 +753,26 @@ void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string
       m_rightNode->fillDataForColumns(dataList, columns);
   }else if (m_type == LEAF && m_leftColId >= 0)
     dataList.insert( pair<string,string>(columns[m_leftColId],m_rightExpStr) );
+}
+
+// calculate an expression prediction. no predication or comparasion failed means alway false
+bool FilterC::compareExpression(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues){
+  bool result=false;
+  if (m_type == BRANCH){
+    if (!m_leftNode || !m_rightNode)
+      return false;
+    if (m_junction == AND)
+      return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues) && m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues);
+    else
+      return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues) || m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues);
+  }else if(m_type == LEAF){
+    string leftRst = "", rightRst = "";
+    if (m_leftExpStr->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpStr->evalExpression(fieldnames, fieldvalues, varvalues, rightRst))
+      return anyDataCompare(leftRst, m_comparator, rightRst, STRING) == 1;
+    else
+      return false;
+  }else{ 
+    return false;
+  }
+  return result;
 }

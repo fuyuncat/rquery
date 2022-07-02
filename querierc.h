@@ -47,15 +47,18 @@ class QuerierC
     sregex m_regexp;
     string m_rawstr;
     regex_constants::match_flag_type m_searchflags;
-    long m_matchcount;
-    long m_outputrow;
+    
+    string m_filename;  // Data source file name
+    long m_line;        // data line number in the file or in a stream input
+    long m_matchcount;  // number of matched rows. Can be used to match @row
+    long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
     
     //vector<namesaving_smatch> m_results;
     vector<string> m_fieldnames;
-    vector< vector<string> > m_results;
+    vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     FilterC* m_filter;
     
-    bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter
+    bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
 
   protected:
     void init();

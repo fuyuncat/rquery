@@ -372,7 +372,7 @@ bool ExpressionC::buildExpression()
         return false;
       }
     }else{
-      trace(ERROR, "Invalide expression string. \n");
+      trace(ERROR, "Invalide expression string in %s, nextPos: %d. \n", m_expStr.c_str(), nextPos);
       return false;
     }
   }

@@ -154,4 +154,6 @@ vector <string> getAllTokens(string str, string token); //get all matched regela
 bool matchToken(string str, string token); // check if matched regelar token
 int detectDataType(string str); // detect the data type of an expression string
 
+void dumpVector(vector<string> v);
+
 #endif // __COMMFUNCS_H

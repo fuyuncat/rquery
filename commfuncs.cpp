@@ -1140,6 +1140,14 @@ vector <string> getAllTokens(string str, string token)
 }    
 
 // check if matched regelar token
-bool matchToken(string str, string token){
+bool matchToken(string str, string token)
+{
   return !getFirstToken(str, token).empty();
+}
+
+void dumpVector(vector<string> v)
+{
+  for (int i=0; i<v.size(); i++)
+    trace(INFO, "%d:%s\t", i, v[i].c_str());
+  trace(INFO, "\n");
 }

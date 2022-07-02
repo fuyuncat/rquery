@@ -85,27 +85,16 @@ bool FunctionC::analyzeExpStr()
     ExpressionC eParam(sParam);
     m_params.push_back(eParam);
   }
-  switch(m_funcName){
-  case "UPPER":
-  case "LOWER":
-  case "SUBSTR":
+  if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0)
     m_datatype = STRING;
-    break;
-  case "FLOOR":
-  case "CEIL":
-  case "TIMEDIFF":
-  case "INSTR":
-  case "COMPARESTR":
-  case "NOCASECOMPARESTR":
+  else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0){
     m_datatype = LONG;
-    break;
-  case "ROUND":
+  else if(m_funcName.compare("ROUND")==0){
     m_datatype = DOUBLE;
-    break;
-  case "NOW":
+  else if(m_funcName.compare("NOW")==0){
     m_datatype = DATE;
-    break;
-  }
+  else
+    m_datatype = UNKNOWN;
   return true;
 }
 
@@ -243,41 +232,30 @@ bool FunctionC::runNow(vector<string>* fieldnames, map<string,string>* fieldvalu
 bool FunctionC::runFunction(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   bool getResult = false;
-  switch(m_funcName){
-  case "UPPER":
+  if(m_funcName.compare("UPPER")==0)
     getResult = runUpper(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "LOWER":
+  else if(m_funcName.compare("LOWER")==0)
     getResult = runLower(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "SUBSTR":
+  else if(m_funcName.compare("SUBSTR")==0)
     getResult = runSubstr(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "FLOOR":
+  else if(m_funcName.compare("FLOOR")==0)
     getResult = runFloor(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "CEIL":
+  else if(m_funcName.compare("CEIL")==0)
     getResult = runCeil(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "TIMEDIFF":
+  else if(m_funcName.compare("TIMEDIFF")==0)
     getResult = runTimediff(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "INSTR":
+  else if(m_funcName.compare("INSTR")==0)
     getResult = runInstr(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "COMPARESTR":
+  else if(m_funcName.compare("COMPARESTR")==0)
     getResult = runComparestr(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "NOCASECOMPARESTR":
+  else if(m_funcName.compare("NOCASECOMPARESTR")==0)
     getResult = runNoCaseComparestr(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "ROUND":
+  else if(m_funcName.compare("ROUND")==0)
     getResult = runRound(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  case "NOW":
+  else if(m_funcName.compare("NOW")==0)
     getResult = runNow(fieldnames, fieldvalues, varvalues, sResult);
-    break;
-  }
+  else
+    return false;
 
   return getResult;
 }

@@ -372,8 +372,22 @@ bool ExpressionC::buildExpression()
         return false;
       }
     }else{
-      trace(ERROR, "Invalide expression string in %s, nextPos: %d. \n", m_expStr.c_str(), nextPos);
-      return false;
+      if (nextPos >= m_expStr.size() && !m_expStr.empty()){
+        m_type = LEAF;
+        m_operate = UNKNOWN;
+        m_datatype = detectDataType(m_expStr);
+        m_expType = UNKNOWN;
+        //m_expStr = m_expStr;
+        m_colId = -1;
+        m_leftNode = NULL;
+        m_rightNode = NULL;
+        m_parentNode = NULL;
+        m_expstrAnalyzed = true;
+        return true;
+      }else{
+        trace(ERROR, "Invalide expression string in %s, nextPos: %d. \n", m_expStr.c_str(), nextPos);
+        return false;
+      }
     }
   }
   return false;

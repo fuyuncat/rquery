@@ -60,7 +60,8 @@ using namespace boost::xpressive;
 #define FATAL 1
 #define ERROR 2
 #define WARNING 3
-#define INFO 9
+#define INFO 4
+#define DEBUG 9
 #define DATEFMT "%Y-%m-%d %H:%M:%S"
 #define CONST 1
 #define COLUMN 2

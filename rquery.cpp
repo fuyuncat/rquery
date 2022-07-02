@@ -86,7 +86,8 @@ int main(int argc, char *argv[])
 
   if (query.find("filter") != query.end()){
     trace(INFO,"Assigning filter: %s \n", query["filter"].c_str());
-    rq.assignFilter(ps.buildFilter(query["filter"]));
+    FilterC* filter = new FilterC(query["filter"]);
+    rq.assignFilter(filter);
   }
 
   if ( argc < 3 ){

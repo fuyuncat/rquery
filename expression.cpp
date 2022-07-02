@@ -30,6 +30,13 @@ void ExpressionC::init()
   m_parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
+  m_expstrAnalyzed = false;   // if expression string analyzed
+}
+
+void ExpressionC::setExpstr(string expString)
+{
+  m_expStr = expString;
+  buildExpression();
 }
 
 ExpressionC::ExpressionC()
@@ -40,7 +47,7 @@ ExpressionC::ExpressionC()
 ExpressionC::ExpressionC(string expString)
 {
   init();
-  m_expStr = expString;
+  setExpstr(expString);
 }
 
 ExpressionC::~ExpressionC()
@@ -62,6 +69,7 @@ ExpressionC::ExpressionC(ExpressionC* node)
   m_rightNode = node->m_rightNode;
   m_parentNode = node->m_parentNode;
   m_metaDataAnzlyzed = node->m_metaDataAnzlyzed;
+  m_expstrAnalyzed = node->m_expstrAnalyzed;
   //predStr = node.predStr;
 }
 
@@ -82,6 +90,288 @@ ExpressionC::ExpressionC(int operate, int colId, string data)
   m_operate = operate;
   m_colId = colId;
   m_expStr = data;
+}
+
+bool ExpressionC::expstrAnalyzed()
+{
+  return m_expstrAnalyzed;
+}
+
+// build expression class from the expression string
+bool ExpressionC::buildExpression()
+{
+  m_expstrAnalyzed = false;
+  //System.out.println(String.format("%d",deep) +":"+m_expStr);
+  if (m_expStr.empty()){
+    trace(ERROR, "Error: No statement found!\n");
+    return false;
+  }else
+    m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
+
+  int nextPos=0,strStart=0;
+
+  // checking reg expr str. the whole string is quoted by "//"
+  if (m_expStr[0] == '/'){
+    if (m_expStr[m_expStr.size()-1] == '/'){
+      m_type = LEAF;
+      m_operate = UNKNOWN;
+      m_datatype = STRING;
+      m_expType = CONST;
+      m_expStr = m_expStr;
+      m_colId = -1;
+      m_leftNode = NULL;
+      m_rightNode = NULL;
+      m_parentNode = NULL;
+      m_expstrAnalyzed = true;
+      return true;
+    }else{
+      trace(ERROR, "Regular expression is not closed. \n");
+      return false;
+    }
+  }else if (m_expStr[0] == '('){ // checking quoted expression
+    string sStr = readQuotedStr(m_expStr, nextPos, "()", '\0');
+    if (sStr.size() > 1){
+      if (nextPos == m_expStr.size()) { // whole string is a quoted string
+        m_expStr = m_expStr.substr(1,m_expStr.size()-2);
+        return buildExpression();
+      }else{
+        while (m_expStr[nextPos] == ' ') // skip space
+          nextPos++;
+        if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
+          ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
+          if (rightNode->expstrAnalyzed()){
+            ExpressionC* leftNode = new ExpressionC(sStr);
+            if (leftNode->expstrAnalyzed()){
+              m_type = BRANCH;
+              m_operate = encodeOperator(m_expStr.substr(nextPos,1));
+              m_datatype = DATE;
+              m_expType = UNKNOWN;
+              m_expStr = m_expStr.substr(nextPos,1);
+              m_colId = -1;
+              m_parentNode = NULL;
+              m_leftNode = leftNode;
+              m_rightNode = rightNode;
+              rightNode->m_parentNode = this;
+              leftNode->m_parentNode = this;
+              m_expstrAnalyzed = true;
+              return true;
+            }else{
+              leftNode->clear();
+              delete leftNode;
+              rightNode->clear();
+              delete rightNode;
+              return false;
+            }
+          }else{
+            rightNode->clear();
+            delete rightNode;
+            return false;
+          }
+        }else{
+          trace(ERROR, "Invalide expression involved DATE string. \n");
+          return false;
+        }
+      }
+    }else{
+      trace(ERROR, "DATE string is not closed. \n");
+      return false;
+    }
+  }else if (m_expStr[0] == '{'){ // checking DATE string
+    string sStr = readQuotedStr(m_expStr, nextPos, "{}", '\0');
+    if (sStr.size() > 1){
+      if (nextPos == m_expStr.size()) { // whole string is a date string
+        m_type = LEAF;
+        m_operate = UNKNOWN;
+        m_datatype = DATE;
+        m_expType = CONST;
+        m_expStr = sStr;
+        m_colId = -1;
+        m_leftNode = NULL;
+        m_rightNode = NULL;
+        m_parentNode = NULL;
+        m_expstrAnalyzed = true;
+        return true;
+      }else{
+        while (m_expStr[nextPos] == ' ') // skip space
+          nextPos++;
+        if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
+          ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
+          if (rightNode->expstrAnalyzed()){
+            ExpressionC* leafNode = new ExpressionC(sStr);
+            //leafNode->m_type = LEAF;
+            //leafNode->m_operate = UNKNOWN;
+            //leafNode->m_datatype = DATE;
+            //leafNode->m_expType = CONST;
+            //leafNode->m_expStr = sStr;
+            //leafNode->m_colId = -1;
+            //leafNode->m_leftNode = NULL;
+            //leafNode->m_rightNode = NULL;
+            //leafNode->m_parentNode = this;
+
+            if (leafNode->expstrAnalyzed()){
+              m_type = BRANCH;
+              m_operate = encodeOperator(m_expStr.substr(nextPos,1));
+              m_datatype = DATE;
+              m_expType = UNKNOWN;
+              m_expStr = m_expStr.substr(nextPos,1);
+              m_colId = -1;
+              m_parentNode = NULL;
+              m_leftNode = leafNode;
+              m_rightNode = rightNode;
+              
+              leafNode->m_parentNode = this;
+              rightNode->m_parentNode = this;
+              m_expstrAnalyzed = true;
+              return true;
+            }else{
+              leafNode->clear();
+              delete leafNode;
+              rightNode->clear();
+              delete rightNode;
+              return false;
+            }
+          }else{
+            rightNode->clear();
+            delete rightNode;
+            return false;
+          }
+        }else{
+          trace(ERROR, "Invalide expression involved DATE string. \n");
+          return false;
+        }
+      }
+    }else{
+      trace(ERROR, "DATE string is not closed. \n");
+      return false;
+    }
+  }else if (m_expStr[0] == '\''){ // checking STRING string
+    string sStr = readQuotedStr(m_expStr, nextPos, "''", '\\');
+    if (sStr.size() > 1){
+      if (nextPos == m_expStr.size()) { // whole string is a date string
+        m_type = LEAF;
+        m_operate = UNKNOWN;
+        m_datatype = STRING;
+        m_expType = CONST;
+        m_expStr = sStr;
+        m_colId = -1;
+        m_leftNode = NULL;
+        m_rightNode = NULL;
+        m_parentNode = NULL;
+        m_expstrAnalyzed = true;
+        return true;
+      }else{
+        while (m_expStr[nextPos] == ' ') // skip space
+          nextPos++;
+        if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
+          ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
+          if (rightNode->expstrAnalyzed()){
+            ExpressionC* leafNode = new ExpressionC(sStr);
+            //leafNode->m_type = LEAF;
+            //leafNode->m_operate = UNKNOWN;
+            //leafNode->m_datatype = STRING;
+            //leafNode->m_expType = CONST;
+            //leafNode->m_expStr = sStr;
+            //leafNode->m_colId = -1;
+            //leafNode->m_leftNode = NULL;
+            //leafNode->m_rightNode = NULL;
+            //leafNode->m_parentNode = this;
+            if (leafNode->expstrAnalyzed()){
+              m_type = BRANCH;
+              m_operate = encodeOperator(m_expStr.substr(nextPos,1));
+              m_datatype = STRING;
+              m_expType = UNKNOWN;
+              m_expStr = m_expStr.substr(nextPos,1);
+              m_colId = -1;
+              m_parentNode = NULL;
+              m_leftNode = leafNode;
+              m_rightNode = rightNode;
+              
+              leafNode->m_parentNode = this;
+              rightNode->m_parentNode = this;
+              m_expstrAnalyzed = true;
+              return true;
+            }else{
+              leafNode->clear();
+              delete leafNode;
+              rightNode->clear();
+              delete rightNode;
+              return false;
+            }
+          }else{
+            rightNode->clear();
+            delete rightNode;
+            return false;
+          }
+        }else{
+          trace(ERROR, "Invalide expression involved STRING string. \n");
+          return false;
+        }
+      }
+    }else{
+      trace(ERROR, "STRING string is not closed. \n");
+      return false;
+    }
+  }else{
+    while (m_expStr[nextPos] != ' ' && m_operators.find(m_expStr[nextPos]) == m_operators.end()) {// moving forward until reach the first operator
+      if (m_expStr[nextPos] == '\'' || m_expStr[nextPos] == '{' || m_expStr[nextPos] == '/' || m_expStr[nextPos] == '}'){
+        trace(ERROR, "Invalid character detected. \n");
+        return false;
+      }
+      nextPos++;
+    }
+    if (nextPos == 0){
+      trace(ERROR, "Expression cannot start with an operator \n");
+      return false;
+    }
+    string sExpStr = m_expStr.substr(0,nextPos);
+    while (m_expStr[nextPos] == ' ') // skip space
+      nextPos++;
+    if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
+      ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
+      if (rightNode->expstrAnalyzed()){
+        ExpressionC* leafNode = new ExpressionC(sExpStr);
+        //leafNode->m_type = LEAF;
+        //leafNode->m_operate = UNKNOWN;
+        //leafNode->m_datatype = UNKNOWN;
+        //leafNode->m_expType = CONST;
+        //leafNode->m_expStr = sExpStr;
+        //leafNode->m_colId = -1;
+        //leafNode->m_leftNode = NULL;
+        //leafNode->m_rightNode = NULL;
+        //leafNode->m_parentNode = this;
+        if (leafNode->expstrAnalyzed()){
+          m_type = BRANCH;
+          m_operate = encodeOperator(m_expStr.substr(nextPos,1));
+          m_datatype = UNKNOWN;
+          m_expType = UNKNOWN;
+          m_expStr = m_expStr.substr(nextPos,1);
+          m_colId = -1;
+          m_parentNode = NULL;
+          m_leftNode = leafNode;
+          m_rightNode = rightNode;
+          
+          m_leftNode->m_parentNode = this;
+          rightNode->m_parentNode = this;
+          m_expstrAnalyzed = true;
+          return true;
+        }else{
+          rightNode->clear();
+          delete rightNode;
+          return false;
+        }
+      }else{
+        leafNode->clear();
+        delete leafNode;
+        rightNode->clear();
+        delete rightNode;
+        return false;
+      }
+    }else{
+      trace(ERROR, "Invalide expression string. \n");
+      return false;
+    }
+  }
+  return false;
 }
 
 // get left tree Height
@@ -321,6 +611,7 @@ bool ExpressionC::columnsAnalyzed(){
 ExpressionC* ExpressionC::cloneMe(){
   ExpressionC* node = new ExpressionC();
   node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+  node->m_expstrAnalyzed = m_expstrAnalyzed
   //node->predStr = predStr;
   node->m_type = m_type;
   node->m_operate = m_operate;
@@ -347,6 +638,7 @@ void ExpressionC::copyTo(ExpressionC* node){
     return;
   else{
     node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+    node->m_expstrAnalyzed = m_expstrAnalyzed;
     //node->predStr = predStr;
     node->m_type = m_type;
     node->m_operate = m_operate;
@@ -437,6 +729,8 @@ void ExpressionC::clear(){
     delete m_rightNode;
     m_rightNode = NULL;
   }
+  m_expstrAnalyzed = false;
+  m_metaDataAnzlyzed = false;
   m_type = UNKNOWN;
   m_datatype = UNKNOWN;
   m_operate = UNKNOWN;
@@ -529,7 +823,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
     trace(ERROR, "Insufficient metadata!\n");
     return false;
   }
-  if (!m_metaDataAnzlyzed){
+  if (!m_metaDataAnzlyzed || !m_expstrAnalyzed){
     trace(ERROR, "Expression is not analyzed!\n");
     return false;
   }
@@ -588,7 +882,14 @@ bool ExpressionC::mergeConstNodes(string & sResult)
       return true;
     }else if (m_expType == FUNCTION){
       FunctionC* func = new FunctionC(m_expStr);
-      bool gotResult = func->runFunction(sResult);
+      bool gotResult = false;
+      if (func->isConst()){
+        vector<string> vfieldnames;
+        map<string,string> mfieldvalues;
+        map<string,string> mvarvalues;
+        gotResult = func->runFunction(&vfieldnames,&mfieldvalues,&mvarvalues,sResult);
+      }else
+        gotResult = false;
       func->clear();
       delete func;
       return gotResult;

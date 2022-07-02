@@ -35,10 +35,11 @@ class FunctionC
     vector<ExpressionC> m_params; // parameter expressions.
     
     bool runFunction(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
-
+    bool isConst();   // if all parameters are const
     void setExpStr(string expStr);
     int analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes); 
     bool columnsAnalyzed();
+    bool expstrAnalyzed();
     void dump();
     FunctionC* cloneMe();
     void copyTo(FunctionC* node);
@@ -47,6 +48,7 @@ class FunctionC
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.
+    bool m_expstrAnalyzed; // if expression string analyzed
 
     void checkDataType();
     bool analyzeExpStr();  // analyze expression string to get the function name (upper case) and parameter expression (classes)

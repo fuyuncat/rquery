@@ -26,6 +26,7 @@ void FilterC::init()
   m_datatype = UNKNOWN;   // if type is LEAF, 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
   m_leftColId = -1;              // if type is LEAF, it's id of column on the left to be predicted. Otherwise, it's meaningless
   m_rightColId = -1;             // if type is LEAF, it's id of column on the right to be predicted. Otherwise, it's meaningless
+  m_expStr = "";
   m_leftExpStr = "";    // if type is LEAF, it's id of column to be predicted. Otherwise, it's meaningless
   m_rightExpStr = "";   // if type is LEAF, it's data to be predicted. Otherwise, it's meaningless
   m_leftExpression = NULL; // meaningful only if type is LEAF
@@ -35,6 +36,13 @@ void FilterC::init()
   m_parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
   
   m_metaDataAnzlyzed = false; // analyze column name to column id.
+  m_expstrAnalyzed = false;
+}
+
+void FilterC::setExpstr(string expStr)
+{
+  m_expStr = expStr;
+  buildFilter();
 }
 
 FilterC::FilterC()
@@ -47,6 +55,12 @@ FilterC::~FilterC()
 
 }
 
+FilterC::FilterC(string expStr)
+{
+  init();
+  setExpstr(expStr);
+}
+
 FilterC::FilterC(FilterC* node)
 {
   init();
@@ -57,6 +71,7 @@ FilterC::FilterC(FilterC* node)
   m_datatype = node->m_datatype;
   m_leftColId = node->m_leftColId;
   m_rightColId = node->m_rightColId;
+  m_expStr = node->m_expStr;
   m_leftExpStr = node->m_leftExpStr;
   m_rightExpStr = node->m_rightExpStr;
   m_leftExpression = node->m_leftExpression;
@@ -65,6 +80,7 @@ FilterC::FilterC(FilterC* node)
   m_rightNode = node->m_rightNode;
   m_parentNode = node->m_parentNode;
   m_metaDataAnzlyzed = node->m_metaDataAnzlyzed;
+  m_expstrAnalyzed = node->m_expstrAnalyzed;
   //predStr = node.predStr;
 
   //m_operators = {'^','*','/','+','-'};
@@ -91,264 +107,128 @@ FilterC::FilterC(int comparator, int colId, string data)
   m_rightExpStr = data;
 }
 
-// split input command line into pieces; \ is escape char, " could be escaped.
-// \" is character '"'
-// splitString({ad cas asdfa}, ' ', {'{','}'}, true)  => {ad,cas,asdfa}
-// splitString("ad "cas\" asdfa"", ' ', {'"','"'}, true) => {ad,cas\" asdfa}
-bool FilterC::buildExpression(ExpressionC* node, string initialString)
+// build a leaf node
+void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
 {
-  //System.out.println(String.format("%d",deep) +":"+initialString);
-  if (initialString.empty()){
-    trace(ERROR, "Error: No statement found!\n");
+  bool quoteStarted = false;
+  int lastPos = 0;
+  for (int i=0;i<str.length();i++){
+    if (str[i] == '"'){
+      quoteStarted = !quoteStarted;
+      str = str.substr(0, i)+(i<str.length()-1?str.substr(i+1):"");
+      i--;
+    }else if(str[i] == '\\' && i<str.length()-1 && str[i+1] == '"'){
+      i++; // skip escaped " :\"
+      str = str.substr(0, i-1)+str.substr(i);
+    }else if(!quoteStarted && startsWithWords(str.substr(i), comparators) >= 0){ // splitor that not between quato are the real splitor
+      string compStr = comparators[startsWithWords(str.substr(i), comparators)];
+      node->m_comparator = encodeComparator(compStr);
+      node->m_type = LEAF;
+      node->m_leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
+      node->m_rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
+      node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
+      node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
+      return;
+    }
+  }
+}
+
+// build current filter class from the expression string
+bool FilterC::buildFilter(string splitor, string quoters)
+{
+  //System.out.println(String.format("%d",deep) +":"+m_expStr);
+  if (m_expStr.empty()){
+    printf("\n");
+    printf("Error: No statement found!\n");
+    printf("\n");
     return false;
   }else
-    initialString = boost::algorithm::trim_copy<string>(initialString);
-
-  int nextPos=0,strStart=0;
-
-  // checking reg expr str. the whole string is quoted by "//"
-  if (initialString[0] == '/'){
-    if (initialString[initialString.size()-1] == '/'){
-      node->m_type = LEAF;
-      node->m_operate = UNKNOWN;
-      node->m_datatype = STRING;
-      node->m_expType = CONST;
-      node->m_expStr = initialString;
-      node->m_colId = -1;
-      node->m_leftNode = NULL;
-      node->m_rightNode = NULL;
-      node->m_parentNode = NULL;
-      return true;
-    }else{
-      trace(ERROR, "Regular expression is not closed. \n");
-      return false;
+    m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
+  //m_expStr = m_expStr.trim();
+  char stringQuoter = '"';
+  if (quoters.empty() || quoters.length() != 2)
+      quoters = "()";
+  //printf("Building: %s; splitor: %s; quoters: %s\n", m_expStr.c_str(), splitor.c_str(), quoters.c_str());
+  int quoteDeep = 0;
+  int quoteStart = -1;  // top quoter start position
+  int quoteEnd = -1;;   // top quoter end position
+  bool stringStart = false;
+  for (int i=0;i<m_expStr.length();i++){
+    if (m_expStr[i] == stringQuoter &&(i==0 || (i>0 && m_expStr[i-1]!='\\'))){ // \ is ignore character
+      stringStart = !stringStart;
+      continue;
     }
-  }else if (initialString[0] == '('){ // checking quoted expression
-    string sStr = readQuotedStr(initialString, nextPos, "()", '\0');
-    if (sStr.size() > 1){
-      if (nextPos == initialString.size()) { // whole string is a quoted string
-        return buildExpression(node, initialString.substr(1,initialString.size()-2));
-      }else{
-        while (initialString[nextPos] == ' ') // skip space
-          nextPos++;
-        if (nextPos < initialString.size()-1 && m_operators.find(initialString[nextPos]) != m_operators.end()){
-          ExpressionC* rightNode = new ExpressionC();
-          if (buildExpression(rightNode, initialString.substr(nextPos+1))){
-            ExpressionC* leftNode = new ExpressionC();
-            if (buildExpression(leftNode, sStr)){
-              node->m_type = BRANCH;
-              node->m_operate = encodeOperator(initialString.substr(nextPos,1));
-              node->m_datatype = DATE;
-              node->m_expType = UNKNOWN;
-              node->m_expStr = initialString.substr(nextPos,1);
-              node->m_colId = -1;
-              node->m_parentNode = NULL;
-              node->m_leftNode = leftNode;
-              node->m_rightNode = rightNode;
-              rightNode->m_parentNode = node;
-              return true;
-            }else{
-              leftNode->clear();
-              delete leftNode;
-              return false;
-            }
-          }else{
-            rightNode->clear();
-            delete rightNode;
-            return false;
-          }
-        }else{
-          trace(ERROR, "Invalide expression involved DATE string. \n");
+    if (stringStart) // ignore all character being a string
+      continue;
+    if (m_expStr[i] == quoters[0]){
+      quoteDeep++;
+      if (quoteDeep == 1 && quoteStart < 0)
+        quoteStart = i;
+    }else if (m_expStr[i] == quoters[1]){
+      quoteDeep--;
+      if (quoteDeep == 0 && quoteEnd < 0)
+        quoteEnd = i;
+      if  (quoteDeep < 0){
+        printf("\n");
+        printf("Error: Left quoter missed!\n");
+        printf("\n");;
+      }
+    }else if(m_expStr[i] == '\\' && i<m_expStr.length()-1 && 
+            ((m_expStr[i+1] == quoters[0] || m_expStr[i+1] == quoters[1] || m_expStr[i+1] == ' '))){
+      i++; // skip escaped " \"
+      m_expStr = m_expStr.substr(0, i-1)+m_expStr.substr(i);
+    }else if(quoteDeep == 0 && m_expStr[i] == ' '){ // splitor that not between quato are the real splitor
+      if ( boost::to_upper_copy<string>(m_expStr.substr(i)).find(splitor) == 0){
+        m_type = BRANCH;
+        m_junction = encodeJunction(boost::algorithm::trim_copy<string>(splitor));
+        m_leftNode = new FilterC(m_expStr.substr(0, i));
+        m_leftNode->m_parentNode = this;
+        //printf("Building leftNode\n");
+        if (!m_leftNode->buildFilter(" OR ",quoters)) { // OR priority higher than AND
+          m_leftNode->clear();
+          delete m_leftNode;
+          m_leftNode = NULL;
           return false;
         }
-      }
-    }else{
-      trace(ERROR, "DATE string is not closed. \n");
-      return false;
-    }
-  }else if (initialString[0] == '{'){ // checking DATE string
-    string sStr = readQuotedStr(initialString, nextPos, "{}", '\0');
-    if (sStr.size() > 1){
-      if (nextPos == initialString.size()) { // whole string is a date string
-        node->m_type = LEAF;
-        node->m_operate = UNKNOWN;
-        node->m_datatype = DATE;
-        node->m_expType = CONST;
-        node->m_expStr = sStr;
-        node->m_colId = -1;
-        node->m_leftNode = NULL;
-        node->m_rightNode = NULL;
-        node->m_parentNode = NULL;
-        return true;
-      }else{
-        while (initialString[nextPos] == ' ') // skip space
-          nextPos++;
-        if (nextPos < initialString.size()-1 && m_operators.find(initialString[nextPos]) != m_operators.end()){
-          ExpressionC* rightNode = new ExpressionC();
-          if (buildExpression(rightNode, initialString.substr(nextPos+1))){
-            ExpressionC* leafNode = new ExpressionC();
-            leafNode->m_type = LEAF;
-            leafNode->m_operate = UNKNOWN;
-            leafNode->m_datatype = DATE;
-            leafNode->m_expType = CONST;
-            leafNode->m_expStr = sStr;
-            leafNode->m_colId = -1;
-            leafNode->m_leftNode = NULL;
-            leafNode->m_rightNode = NULL;
-            leafNode->m_parentNode = node;
-
-            node->m_type = BRANCH;
-            node->m_operate = encodeOperator(initialString.substr(nextPos,1));
-            node->m_datatype = DATE;
-            node->m_expType = UNKNOWN;
-            node->m_expStr = initialString.substr(nextPos,1);
-            node->m_colId = -1;
-            node->m_parentNode = NULL;
-            node->m_leftNode = leafNode;
-            node->m_rightNode = rightNode;
-            
-            rightNode->m_parentNode = node;
-            return true;
-          }else{
-            rightNode->clear();
-            delete rightNode;
-            return false;
-          }
-        }else{
-          trace(ERROR, "Invalide expression involved DATE string. \n");
+        m_rightNode = new FilterC(m_expStr.substr(i+splitor.length()));
+        m_rightNode->m_parentNode = this;
+        //printf("Building rightNode\n");
+        if (!m_rightNode->buildFilter(" OR ",quoters)){
+          m_rightNode->clear();
+          delete m_rightNode;
+          m_rightNode = NULL;
           return false;
         }
-      }
-    }else{
-      trace(ERROR, "DATE string is not closed. \n");
-      return false;
-    }
-  }else if (initialString[0] == '\''){ // checking STRING string
-    string sStr = readQuotedStr(initialString, nextPos, "''", '\\');
-    if (sStr.size() > 1){
-      if (nextPos == initialString.size()) { // whole string is a date string
-        node->m_type = LEAF;
-        node->m_operate = UNKNOWN;
-        node->m_datatype = STRING;
-        node->m_expType = CONST;
-        node->m_expStr = sStr;
-        node->m_colId = -1;
-        node->m_leftNode = NULL;
-        node->m_rightNode = NULL;
-        node->m_parentNode = NULL;
         return true;
-      }else{
-        while (initialString[nextPos] == ' ') // skip space
-          nextPos++;
-        if (nextPos < initialString.size()-1 && m_operators.find(initialString[nextPos]) != m_operators.end()){
-          ExpressionC* rightNode = new ExpressionC();
-          if (buildExpression(rightNode, initialString.substr(nextPos+1))){
-            ExpressionC* leafNode = new ExpressionC();
-            leafNode->m_type = LEAF;
-            leafNode->m_operate = UNKNOWN;
-            leafNode->m_datatype = STRING;
-            leafNode->m_expType = CONST;
-            leafNode->m_expStr = sStr;
-            leafNode->m_colId = -1;
-            leafNode->m_leftNode = NULL;
-            leafNode->m_rightNode = NULL;
-            leafNode->m_parentNode = node;
-
-            node->m_type = BRANCH;
-            node->m_operate = encodeOperator(initialString.substr(nextPos,1));
-            node->m_datatype = STRING;
-            node->m_expType = UNKNOWN;
-            node->m_expStr = initialString.substr(nextPos,1);
-            node->m_colId = -1;
-            node->m_parentNode = NULL;
-            node->m_leftNode = leafNode;
-            node->m_rightNode = rightNode;
-            
-            rightNode->m_parentNode = node;
-            return true;
-          }else{
-            rightNode->clear();
-            delete rightNode;
-            return false;
-          }
-        }else{
-          trace(ERROR, "Invalide expression involved STRING string. \n");
-          return false;
-        }
       }
-    }else{
-      trace(ERROR, "STRING string is not closed. \n");
-      return false;
-    }
-  }else{
-    while (initialString[nextPos] != ' ' && m_operators.find(initialString[nextPos]) == m_operators.end()) {// moving forward until reach the first operator
-      if (initialString[nextPos] == '\'' || initialString[nextPos] == '{' || initialString[nextPos] == '/' || initialString[nextPos] == '}'){
-        trace(ERROR, "Invalid character detected. \n");
-        return false;
-      }
-      nextPos++;
-    }
-    if (nextPos == 0){
-      trace(ERROR, "Expression cannot start with an operator \n");
-      return false;
-    }
-    string sExpStr = initialString.substr(0,nextPos);
-    while (initialString[nextPos] == ' ') // skip space
-      nextPos++;
-    if (nextPos < initialString.size()-1 && m_operators.find(initialString[nextPos]) != m_operators.end()){
-      ExpressionC* rightNode = new ExpressionC();
-      if (buildExpression(rightNode, initialString.substr(nextPos+1))){
-        ExpressionC* leafNode = new ExpressionC();
-        leafNode->m_type = LEAF;
-        leafNode->m_operate = UNKNOWN;
-        leafNode->m_datatype = UNKNOWN;
-        leafNode->m_expType = CONST;
-        leafNode->m_expStr = sExpStr;
-        leafNode->m_colId = -1;
-        leafNode->m_leftNode = NULL;
-        leafNode->m_rightNode = NULL;
-        leafNode->m_parentNode = node;
-
-        node->m_type = BRANCH;
-        node->m_operate = encodeOperator(initialString.substr(nextPos,1));
-        node->m_datatype = UNKNOWN;
-        node->m_expType = UNKNOWN;
-        node->m_expStr = initialString.substr(nextPos,1);
-        node->m_colId = -1;
-        node->m_parentNode = NULL;
-        node->m_leftNode = leafNode;
-        node->m_rightNode = rightNode;
-        
-        rightNode->m_parentNode = node;
-        return true;
-      }else{
-        rightNode->clear();
-        delete rightNode;
-        return false;
-      }
-    }else{
-      trace(ERROR, "Invalide expression string. \n");
-      return false;
     }
   }
-  return false;
+
+  if (quoteDeep != 0){
+    printf("\n");
+    printf("Error: Right quoter missed!\n");
+    printf("\n");
+    return false;
+  }
+
+  if (quoteStart == 0 && quoteEnd == m_expStr.length()-1){ // sub expression quoted 
+    m_expStr = m_expStr.substr(1,m_expStr.length()-2);  // trim the quoters
+    return buildFilter(" OR ",quoters);
+  }else if (boost::to_upper_copy<string>(splitor).compare(" OR ") == 0){
+    return buildFilter(" AND ",quoters);
+  }else
+    buildLeafNodeFromStr(this, m_expStr);
+  return true;
 }
 
-ExpressionC* FilterC::buildExpression(string initialString)
+void FilterC::buildFilter()
 {
-  //printf("building filter: %s", initialString.c_str());
-  ExpressionC* node = new ExpressionC(initialString);
-  if (!buildExpression(node, initialString)){
-    node->clear();
-    delete node;
-    trace(ERROR, "Building expression from %s failed!\n", initialString.c_str());
-    return NULL;
-  }
-  //node.dump();
-  //printf(" completed!\n");
-  return node;
+  if (!buildFilter(" OR ", "()")){
+    clear();
+    m_metaDataAnzlyzed = false;
+  }else
+    m_metaDataAnzlyzed = true;
 }
-
 // get left tree Height
 int FilterC::getLeftHeight(){
   int height = 1;
@@ -381,7 +261,8 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
     m_junction = junction;
     m_comparator = UNKNOWN;   
     m_leftColId = -1;  
-    m_rightColId = -1;    
+    m_rightColId = -1;
+    m_expStr = "";
     m_leftExpStr = "";
     m_rightExpStr = "";
     m_leftExpression = NULL;
@@ -545,9 +426,15 @@ bool FilterC::columnsAnalyzed(){
     return m_metaDataAnzlyzed;
 }
 
+bool FilterC::expstrAnalyzed()
+{
+  return m_expstrAnalyzed;
+}
+
 FilterC* FilterC::cloneMe(){
   FilterC* node = new FilterC();
   node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+  node->m_expstrAnalyzed = m_expstrAnalyzed;
   //node->predStr = predStr;
   node->m_type = m_type;
   node->m_datatype = m_datatype;
@@ -555,6 +442,7 @@ FilterC* FilterC::cloneMe(){
   node->m_comparator = m_comparator;
   node->m_leftColId = m_leftColId;
   node->m_rightColId = m_rightColId;
+  node->m_expStr = m_expStr;
   node->m_rightExpStr = m_rightExpStr;
   node->m_leftExpStr = m_leftExpStr;
   if (m_type == BRANCH){
@@ -582,6 +470,7 @@ void FilterC::copyTo(FilterC* node){
     return;
   else{
     node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+    node->m_expstrAnalyzed = m_expstrAnalyzed;
     //node->predStr = predStr;
     node->m_type = m_type;
     node->m_datatype = m_datatype;
@@ -591,6 +480,7 @@ void FilterC::copyTo(FilterC* node){
     node->m_rightColId = m_rightColId;
     node->m_rightExpStr = m_rightExpStr;
     node->m_leftExpStr = m_leftExpStr;
+    node->m_expStr = m_expStr;
     if (m_type == BRANCH){
       if (m_leftNode){
         node->m_leftNode = new FilterC();
@@ -695,7 +585,9 @@ void FilterC::clear(){
   m_rightColId = -1;
   m_rightExpStr = "";
   m_leftExpStr = "";
+  m_expStr = "";
   m_metaDataAnzlyzed = false;
+  m_expstrAnalyzed = false;
 }
 
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction

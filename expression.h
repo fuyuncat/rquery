@@ -42,6 +42,7 @@ class ExpressionC
     ExpressionC* m_rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
     ExpressionC* m_parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
 
+    void setExpstr(string expString); // set expression string and analyze the string
     int getLeftHeight(); // get left tree Height
     int getRightHeight(); // get left tree Height
     void add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop); // add a NEW expression into tree
@@ -50,6 +51,7 @@ class ExpressionC
     ExpressionC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
     int analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes); // analyze column ID & name from metadata, return data type of current node
     bool columnsAnalyzed();
+    bool expstrAnalyzed();
     ExpressionC* cloneMe();
     void copyTo(ExpressionC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
@@ -62,8 +64,10 @@ class ExpressionC
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.
+    bool m_expstrAnalyzed; // if expression string analyzed
 
     void dump(int deep);
+    bool buildExpression();  // build expression class from the expression string
     void alignChildrenDataType(); // align children datatype with current datatype
     bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.
 

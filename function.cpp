@@ -23,6 +23,7 @@ void FunctionC::init()
   m_expStr = "";          // it's the full function string, including function name and parameters
   m_funcName = "";        // analyzed function name, upper case
   m_params.clear();       // parameter expressions
+  m_expstrAnalyzed = false;
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
 }
@@ -45,12 +46,33 @@ FunctionC::~FunctionC()
 
 void FunctionC::setExpStr(string expStr)
 {
+  clear();
   m_expStr = expStr;
   checkDataType();
   if (!analyzeExpStr()){
     m_funcName = "";
     m_params.clear();
+  }else{
+    m_isconst = true;
+    for (int i=0; i<m_params.size(); i++){
+      if (m_params[i].m_expType != CONST){
+        m_isconst = false;
+        break;
+      }
+    }
   }
+}
+
+bool FunctionC::isConst()
+{
+  if (m_expstrAnalyzed){
+    for (int i=0; i<m_params.size(); i++){
+      if (m_params[i].m_expType != CONST)
+        return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 // detect function return type
@@ -65,12 +87,14 @@ bool FunctionC::analyzeExpStr()
   m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
   if (m_expStr.empty()){
     trace(ERROR, "Empty function expression string!\n");
+    m_expstrAnalyzed = false;
     return false;
   }
   int iPos = -1;
   string strParams = readQuotedStr(m_expStr, iPos, "()", '\0');
   if (iPos<0 || strParams.empty()){
     trace(ERROR, "No quoted parameters found!\n");
+    m_expstrAnalyzed = false;
     return false;
   }
   m_funcName = boost::to_upper_copy<string>(m_expStr.substr(0, iPos));
@@ -80,6 +104,7 @@ bool FunctionC::analyzeExpStr()
     string sParam = boost::algorithm::trim_copy<string>(vParams[i]);
     if (sParam.empty()){
       trace(ERROR, "Empty parameter string!\n");
+      m_expstrAnalyzed = false;
       return false;
     }
     ExpressionC eParam(sParam);
@@ -95,6 +120,7 @@ bool FunctionC::analyzeExpStr()
     m_datatype = DATE;
   else
     m_datatype = UNKNOWN;
+  m_expstrAnalyzed = true;
   return true;
 }
 
@@ -114,11 +140,18 @@ bool FunctionC::columnsAnalyzed(){
     return m_metaDataAnzlyzed;
 }
 
+bool FunctionC::expstrAnalyzed(){
+    return m_expstrAnalyzed;
+}
+
 FunctionC* FunctionC::cloneMe(){
   FunctionC* node = new FunctionC();
   node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+  node->m_expstrAnalyzed = m_expstrAnalyzed;
   node->m_datatype = m_datatype;
   node->m_expStr = m_expStr;
+  node->m_funcName = m_funcName;
+  node->m_params = m_params;
 
   return node;
 }
@@ -128,8 +161,11 @@ void FunctionC::copyTo(FunctionC* node){
     return;
   else{
     node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+    node->m_expstrAnalyzed = m_expstrAnalyzed;
     node->m_datatype = m_datatype;
     node->m_expStr = m_expStr;
+    node->m_funcName = m_funcName;
+    node->m_params = m_params;
   }
 }
 
@@ -139,6 +175,8 @@ void FunctionC::clear(){
   m_expStr = "";
   m_funcName = "";
   m_params.clear();
+  m_metaDataAnzlyzed = false;
+  m_expstrAnalyzed = false;
 }
 
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction

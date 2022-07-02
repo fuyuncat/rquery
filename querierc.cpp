@@ -90,7 +90,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
 
 void QuerierC::setFieldDatatype(string field, int datetype)
 {
-  if (m_fieldntypes->find(field) != m_fieldntypes->end())
+  if (m_fieldntypes.find(field) != m_fieldntypes.end())
     m_fieldntypes[field] = datetype;
   else
     m_fieldntypes.insert( pair<string, int>(field,datetype) );
@@ -100,9 +100,9 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
 {
   m_fieldtypes.clear();
   for (int i=1; i<matches.size(); i++){
-    if (m_fieldntypes->find(field) != m_fieldntypes->end()) 
+    if (m_fieldntypes.find(field) != m_fieldntypes.end()) 
       m_fieldtypes.push_back(m_fieldntypes[field]);
-    else if (m_fieldntypes->find("@field"+intToStr(i)) != m_fieldntypes->end())
+    else if (m_fieldntypes.find("@field"+intToStr(i)) != m_fieldntypes.end())
       m_fieldtypes.push_back(m_fieldntypes["@field"+intToStr(i)]);
     else
       m_fieldtypes.push_back(detectDataType(matches[i]));

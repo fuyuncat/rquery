@@ -311,15 +311,15 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
 
 void FilterC::dump(int deep){
   if (m_type == BRANCH){
-    trace(INFO,"(%d)%s\n",deep,decodeJunction(m_junction).c_str());
-    trace(INFO,"L-");
+    trace(DEBUG,"(%d)%s\n",deep,decodeJunction(m_junction).c_str());
+    trace(DEBUG,"L-");
     m_leftNode->dump(deep+1);
-    trace(INFO,"R-");
+    trace(DEBUG,"R-");
     m_rightNode->dump(deep+1);
   }else{
-    trace(INFO,"(%d)%s(%d)",deep,m_leftExpStr.c_str(),m_leftColId);
-    trace(INFO,"%s",decodeComparator(m_comparator).c_str());
-    trace(INFO,"%s\n",m_rightExpStr.c_str());
+    trace(DEBUG,"(%d)%s(%d)",deep,m_leftExpStr.c_str(),m_leftColId);
+    trace(DEBUG,"%s",decodeComparator(m_comparator).c_str());
+    trace(DEBUG,"%s\n",m_rightExpStr.c_str());
   }
 }
 

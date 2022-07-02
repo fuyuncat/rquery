@@ -138,49 +138,54 @@ int QuerierC::searchNext()
   //smatch matches;
   int found = 0;
   m_line++;
-  if(regex_search(m_rawstr, matches, m_regexp)){
-    //if(m_results.size()>0)
-    //  formatoutput(m_results[0]);
-    vector<string> matcheddata;
-    for (int i=0; i<matches.size(); i++)
-      matcheddata.push_back(matches[i]);
-    if (m_fieldnames.size() == 0){
-      pairFiledNames(matches);
-      if (m_filter)
-        m_filter->analyzeColumns(m_fieldnames, m_fieldnames);
-    }
-    // append variables
-    //matcheddata.push_back(m_filename);
-    matcheddata.push_back(intToStr(m_line));
-    matcheddata.push_back(intToStr(m_matchcount+1));
-    if (matchFilter(matcheddata, m_filter)){
-      m_matchcount++;
-      m_results.push_back(matcheddata);
-    }
-    //m_results.push_back(matches);
-    //vector<namesaving_smatch>::iterator p = m_results.end();
-    //m_results.insert(p, matches);
-    //if(m_results.size()>0)
-    //  formatoutput(m_results[0]);
-    //formatoutput(m_results[m_results.size()-1]);
-    //printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find(string(matches[0])),string(matches[0]).length());
-    //printf("orig: %s\n",m_rawstr.c_str());
-    //formatoutput(matches);
+  try {
+    if(regex_search(m_rawstr, matches, m_regexp)){
+      //if(m_results.size()>0)
+      //  formatoutput(m_results[0]);
+      vector<string> matcheddata;
+      for (int i=0; i<matches.size(); i++)
+        matcheddata.push_back(matches[i]);
+      if (m_fieldnames.size() == 0){
+        pairFiledNames(matches);
+        if (m_filter)
+          m_filter->analyzeColumns(m_fieldnames, m_fieldnames);
+      }
+      // append variables
+      //matcheddata.push_back(m_filename);
+      matcheddata.push_back(intToStr(m_line));
+      matcheddata.push_back(intToStr(m_matchcount+1));
+      if (matchFilter(matcheddata, m_filter)){
+        m_matchcount++;
+        m_results.push_back(matcheddata);
+      }
+      //m_results.push_back(matches);
+      //vector<namesaving_smatch>::iterator p = m_results.end();
+      //m_results.insert(p, matches);
+      //if(m_results.size()>0)
+      //  formatoutput(m_results[0]);
+      //formatoutput(m_results[m_results.size()-1]);
+      //printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find(string(matches[0])),string(matches[0]).length());
+      //printf("orig: %s\n",m_rawstr.c_str());
+      //formatoutput(matches);
 
-    //smatch m;
-    //regex_search(m_rawstr, m, m_regexp);
-    //for (int i=1; i<m.size(); i++)
-    //  printf("%s\t",m[i].str().c_str());
-    //printf("\n");
+      //smatch m;
+      //regex_search(m_rawstr, m, m_regexp);
+      //for (int i=1; i<m.size(); i++)
+      //  printf("%s\t",m[i].str().c_str());
+      //printf("\n");
 
-    size_t newlnpos = m_rawstr.find("\n",m_rawstr.find(matches[0])+matches[0].length()-1);
-    newlnpos != string::npos?m_rawstr = m_rawstr.substr(newlnpos):m_rawstr = "";
-    //printf("new: %s\n",m_rawstr.c_str());
-    //m_rawstr.emplace_back( start, matches[0].first );
-    //auto start = distance(m_rawstr.begin(),start);
-    //auto len   = distance(start, matches[0].first);
-    //auto sub_str = m_rawstr.substr(start,len);
-    found++;
+      size_t newlnpos = m_rawstr.find("\n",m_rawstr.find(matches[0])+matches[0].length()-1);
+      newlnpos != string::npos?m_rawstr = m_rawstr.substr(newlnpos):m_rawstr = "";
+      //printf("new: %s\n",m_rawstr.c_str());
+      //m_rawstr.emplace_back( start, matches[0].first );
+      //auto start = distance(m_rawstr.begin(),start);
+      //auto len   = distance(start, matches[0].first);
+      //auto sub_str = m_rawstr.substr(start,len);
+      found++;
+    }
+  } catch (char *e) {
+    trace(ERROR, "Regular search exception: %s\n", e);
+    return found;
   }
   return found;
 }
@@ -246,20 +251,22 @@ int QuerierC::boostmatch(vector<string> *result)
   if ( result != NULL ) {
     //printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexstr.c_str());
     result->clear();
-    //if (boost::regex_match(m_rawstr, matches, m_regexp, boost::match_perl|boost::match_extra)) {
-    if (regex_match(m_rawstr, matches, m_regexp)) {
-      //printf("Matched %d!\n", matches.size());
-      //for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
-      //  printf("%s: %s\n",string(*it).c_str(),matches[*it].str().c_str());
-      for (int i=1; i<matches.size(); i++){
-        //result->push_back(matches[i].str());
-        //printf("Matching %s => %s\n",matches[i].first, matches[i].second);
-        result->push_back(matches[i]);
+    try{
+      //if (boost::regex_match(m_rawstr, matches, m_regexp, boost::match_perl|boost::match_extra)) {
+      if (regex_match(m_rawstr, matches, m_regexp)) {
+        //printf("Matched %d!\n", matches.size());
+        //for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
+        //  printf("%s: %s\n",string(*it).c_str(),matches[*it].str().c_str());
+        for (int i=1; i<matches.size(); i++){
+          //result->push_back(matches[i].str());
+          //printf("Matching %s => %s\n",matches[i].first, matches[i].second);
+          result->push_back(matches[i]);
+        }
       }
+    } catch (char *e) {
+      trace(ERROR, "Regular match exception: %s\n", e);
+      return 0;
     }
-    //BOOST_THROW_EXCEPTION(
-    //    regex_error(regex_constants::error_badmark, "invalid named back-reference")
-    //);
   }
 }
 
@@ -267,8 +274,13 @@ int QuerierC::boostmatch(map<string,string> & result)
 {
   namesaving_smatch matches(m_regexstr);
   //printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexstr.c_str());
-  if (regex_match(m_rawstr, matches, m_regexp)) {
-    for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
-      result[string(*it)] = matches[*it].str();
+  try{
+    if (regex_match(m_rawstr, matches, m_regexp)) {
+      for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
+        result[string(*it)] = matches[*it].str();
+    }
+  } catch (char *e) {
+    trace(ERROR, "Regular match exception: %s\n", e);
+    return 0;
   }
 }

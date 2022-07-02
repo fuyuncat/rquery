@@ -117,7 +117,7 @@ bool FunctionC::analyzeExpStr()
 }
 
 void FunctionC::dump(){
-  trace(INFO,"%s\n", m_expStr.c_str());
+  trace(DEBUG,"%s\n", m_expStr.c_str());
 }
 
 // analyze column ID & name from metadata, return data type of current node

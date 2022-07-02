@@ -319,7 +319,7 @@ bool ExpressionC::buildExpression()
   }else{
     while (m_expStr[nextPos] != ' ' && m_operators.find(m_expStr[nextPos]) == m_operators.end()) {// moving forward until reach the first operator
       if (m_expStr[nextPos] == '\'' || m_expStr[nextPos] == '{' || m_expStr[nextPos] == '/' || m_expStr[nextPos] == '}'){
-        trace(ERROR, "Invalid character detected. \n");
+        trace(ERROR, "Invalid character detected in %s. \n", m_expStr.c_str());
         return false;
       }
       nextPos++;
@@ -457,13 +457,13 @@ void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop)
 
 void ExpressionC::dump(int deep){
   if (m_type == BRANCH){
-    trace(INFO,"%s(%d)\n",decodeOperator(m_operate).c_str(),deep);
-    trace(INFO,"L-");
+    trace(DEBUG,"%s(%d)\n",decodeOperator(m_operate).c_str(),deep);
+    trace(DEBUG,"L-");
     m_leftNode->dump(deep+1);
-    trace(INFO,"R-");
+    trace(DEBUG,"R-");
     m_rightNode->dump(deep+1);
   }else{
-    trace(INFO,"(%d)%s(%d)\n",deep,m_expStr.c_str(),m_colId);
+    trace(DEBUG,"(%d)%s(%d)\n",deep,m_expStr.c_str(),m_colId);
   }
 }
 

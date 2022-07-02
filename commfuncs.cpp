@@ -417,7 +417,12 @@ bool reglike(string str, string regstr)
 {
   sregex regexp = sregex::compile(regstr);
   smatch matches;
-  return regex_search(str, matches, regexp);
+  try{
+    return regex_search(str, matches, regexp);
+  } catch (char *e) {
+    trace(ERROR, "Regular search exception: %s\n", e);
+    return false;
+  }
 }
 
 /*
@@ -1105,8 +1110,13 @@ int matchQuoters(string listStr, int offset, string quoters){
 string getFirstToken(string str, string token){
   sregex regexp = sregex::compile(token);
   smatch matches;
-  if (regex_search(str, matches, regexp))
-    return matches[0];
+  try{
+    if (regex_search(str, matches, regexp))
+      return matches[0];
+  } catch (char *e) {
+    trace(ERROR, "Regular search exception: %s\n", e);
+    return "";
+  }
 }
 
 //get all matched regelar token from a string
@@ -1116,10 +1126,15 @@ vector <string> getAllTokens(string str, string token)
   sregex regexp = sregex::compile(token);
   smatch matches;
   string::const_iterator searchStart( str.begin() );
-  while ( regex_search( searchStart, str.end(), matches, regexp ) )
-  {
-      findings.push_back(matches[0]);  
-      searchStart = matches.suffix().first;
+  try{
+    while ( regex_search( searchStart, str.end(), matches, regexp ) )
+    {
+        findings.push_back(matches[0]);  
+        searchStart = matches.suffix().first;
+    }
+  } catch (char *e) {
+    trace(ERROR, "Regular search exception: %s\n", e);
+    return findings;
   }
   return findings;
 }    

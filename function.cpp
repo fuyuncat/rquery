@@ -87,11 +87,11 @@ bool FunctionC::analyzeExpStr()
   }
   if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0)
     m_datatype = STRING;
-  else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0){
+  else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0)
     m_datatype = LONG;
-  else if(m_funcName.compare("ROUND")==0){
+  else if(m_funcName.compare("ROUND")==0)
     m_datatype = DOUBLE;
-  else if(m_funcName.compare("NOW")==0){
+  else if(m_funcName.compare("NOW")==0)
     m_datatype = DATE;
   else
     m_datatype = UNKNOWN;

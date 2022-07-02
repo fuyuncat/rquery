@@ -140,7 +140,7 @@ bool ExpressionC::buildExpression()
         m_expStr = m_expStr.substr(1,m_expStr.size()-2);
         return buildExpression();
       }else{
-        while (m_expStr[nextPos] == ' ') // skip space
+        while (nextPos < m_expStr.size() &&m_expStr[nextPos] == ' ') // skip space
           nextPos++;
         if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
           ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
@@ -197,7 +197,7 @@ bool ExpressionC::buildExpression()
         m_expstrAnalyzed = true;
         return true;
       }else{
-        while (m_expStr[nextPos] == ' ') // skip space
+        while (nextPos < m_expStr.size() &&m_expStr[nextPos] == ' ') // skip space
           nextPos++;
         if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
           ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
@@ -265,7 +265,7 @@ bool ExpressionC::buildExpression()
         m_expstrAnalyzed = true;
         return true;
       }else{
-        while (m_expStr[nextPos] == ' ') // skip space
+        while (nextPos < m_expStr.size() &&m_expStr[nextPos] == ' ') // skip space
           nextPos++;
         if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
           ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
@@ -317,9 +317,9 @@ bool ExpressionC::buildExpression()
       return false;
     }
   }else{
-    while (m_expStr[nextPos] != ' ' && m_operators.find(m_expStr[nextPos]) == m_operators.end()) {// moving forward until reach the first operator
+    while (nextPos < m_expStr.size() && m_expStr[nextPos] != ' ' && m_operators.find(m_expStr[nextPos]) == m_operators.end()) {// moving forward until reach the first operator
       if (m_expStr[nextPos] == '\'' || m_expStr[nextPos] == '{' || m_expStr[nextPos] == '/' || m_expStr[nextPos] == '}'){
-        trace(ERROR, "Invalid character detected in %s. \n", m_expStr.c_str());
+        trace(ERROR, "Invalid character detected in %s. nextPos: %d \n", m_expStr.c_str(), nextPos);
         return false;
       }
       nextPos++;
@@ -329,7 +329,7 @@ bool ExpressionC::buildExpression()
       return false;
     }
     string sExpStr = m_expStr.substr(0,nextPos);
-    while (m_expStr[nextPos] == ' ') // skip space
+    while (nextPos < m_expStr.size() && m_expStr[nextPos] == ' ') // skip space
       nextPos++;
     if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
       ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));

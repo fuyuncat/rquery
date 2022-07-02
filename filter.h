@@ -72,6 +72,7 @@ class FilterC
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.
     bool m_expstrAnalyzed;   // if expression string analyzed
+    static vector<string> m_comparators; // ">=", "<=" should be before ">", "<"
     
     void dump(int deep);
     void buildLeafNodeFromStr(FilterC* node, string str); // build a leaf node

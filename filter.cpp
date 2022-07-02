@@ -16,6 +16,8 @@
 #include <boost/algorithm/string.hpp>
 #include "filter.h"
 
+vector<string> FilterC::m_comparators;
+
 void FilterC::init()
 {
   m_type = UNKNOWN;       // 1: branch; 2: leaf
@@ -35,6 +37,8 @@ void FilterC::init()
   
   m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;
+
+  m_comparators.push_back("=");m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back("LIKE");m_comparators.push_back("REGLIKE");m_comparators.push_back("NOLIKE");m_comparators.push_back("NOREGLIKE");m_comparators.push_back("IN");m_comparators.push_back("NOIN"); // ">=", "<=" should be before ">", "<"
 }
 
 void FilterC::setExpstr(string expStr)
@@ -115,8 +119,8 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
     }else if(str[i] == '\\' && i<str.length()-1 && str[i+1] == '"'){
       i++; // skip escaped " :\"
       str = str.substr(0, i-1)+str.substr(i);
-    }else if(!quoteStarted && startsWithWords(str.substr(i), comparators) >= 0){ // splitor that not between quato are the real splitor
-      string compStr = comparators[startsWithWords(str.substr(i), comparators)];
+    }else if(!quoteStarted && startsWithWords(str.substr(i), m_comparators) >= 0){ // splitor that not between quato are the real splitor
+      string compStr = m_comparators[startsWithWords(str.substr(i), m_comparators)];
       node->m_comparator = encodeComparator(compStr);
       node->m_type = LEAF;
       node->m_leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));

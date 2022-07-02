@@ -100,8 +100,8 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
 {
   m_fieldtypes.clear();
   for (int i=1; i<matches.size(); i++){
-    if (m_fieldntypes.find(field) != m_fieldntypes.end()) 
-      m_fieldtypes.push_back(m_fieldntypes[field]);
+    if (m_fieldnames.size()>i-1 && m_fieldntypes.find(m_fieldnames[i-1]) != m_fieldntypes.end()) 
+      m_fieldtypes.push_back(m_fieldntypes[m_fieldnames[i-1]]);
     else if (m_fieldntypes.find("@field"+intToStr(i)) != m_fieldntypes.end())
       m_fieldtypes.push_back(m_fieldntypes["@field"+intToStr(i)]);
     else

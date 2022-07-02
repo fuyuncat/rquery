@@ -49,8 +49,9 @@ class FunctionC
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.
     bool m_expstrAnalyzed; // if expression string analyzed
+    vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!
+    vector<int>* m_fieldtypes;     // all nodes (parent & children) point to the same address!!!
 
-    void checkDataType();
     bool analyzeExpStr();  // analyze expression string to get the function name (upper case) and parameter expression (classes)
     
     bool runUpper(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);

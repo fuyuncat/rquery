@@ -30,6 +30,8 @@ void ExpressionC::init()
   m_leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
   m_rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
   m_parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
+  m_fieldnames = NULL;
+  m_fieldtypes = NULL;
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;   // if expression string analyzed
@@ -75,6 +77,8 @@ ExpressionC::ExpressionC(ExpressionC* node)
   m_parentNode = node->m_parentNode;
   m_metaDataAnzlyzed = node->m_metaDataAnzlyzed;
   m_expstrAnalyzed = node->m_expstrAnalyzed;
+  m_fieldnames = node->m_fieldnames; // all nodes
+  m_fieldtypes = node->m_fieldtypes;
   //predStr = node.predStr;
 }
 
@@ -128,6 +132,8 @@ bool ExpressionC::buildExpression()
       m_rightNode = NULL;
       m_parentNode = NULL;
       m_expstrAnalyzed = true;
+      m_fieldnames = NULL;
+      m_fieldtypes = NULL;
       return true;
     }else{
       trace(ERROR, "Regular expression is not closed. \n");
@@ -154,6 +160,8 @@ bool ExpressionC::buildExpression()
               m_expStr = m_expStr.substr(nextPos,1);
               m_colId = -1;
               m_parentNode = NULL;
+              m_fieldnames = NULL;
+              m_fieldtypes = NULL;
               m_leftNode = leftNode;
               m_rightNode = rightNode;
               rightNode->m_parentNode = this;
@@ -194,6 +202,8 @@ bool ExpressionC::buildExpression()
         m_leftNode = NULL;
         m_rightNode = NULL;
         m_parentNode = NULL;
+        m_fieldnames = NULL;
+        m_fieldtypes = NULL;
         m_expstrAnalyzed = true;
         return true;
       }else{
@@ -221,6 +231,8 @@ bool ExpressionC::buildExpression()
               m_expStr = m_expStr.substr(nextPos,1);
               m_colId = -1;
               m_parentNode = NULL;
+              m_fieldnames = NULL;
+              m_fieldtypes = NULL;
               m_leftNode = leafNode;
               m_rightNode = rightNode;
               
@@ -259,6 +271,8 @@ bool ExpressionC::buildExpression()
         m_expType = CONST;
         m_expStr = sStr;
         m_colId = -1;
+        m_fieldnames = NULL;
+        m_fieldtypes = NULL;
         m_leftNode = NULL;
         m_rightNode = NULL;
         m_parentNode = NULL;
@@ -288,6 +302,8 @@ bool ExpressionC::buildExpression()
               m_expStr = m_expStr.substr(nextPos,1);
               m_colId = -1;
               m_parentNode = NULL;
+              m_fieldnames = NULL;
+              m_fieldtypes = NULL;
               m_leftNode = leafNode;
               m_rightNode = rightNode;
               
@@ -352,6 +368,8 @@ bool ExpressionC::buildExpression()
           m_expStr = m_expStr.substr(nextPos,1);
           m_colId = -1;
           m_parentNode = NULL;
+          m_fieldnames = NULL;
+          m_fieldtypes = NULL;
           m_leftNode = leafNode;
           m_rightNode = rightNode;
           
@@ -382,6 +400,8 @@ bool ExpressionC::buildExpression()
         m_leftNode = NULL;
         m_rightNode = NULL;
         m_parentNode = NULL;
+        m_fieldnames = NULL;
+        m_fieldtypes = NULL;
         m_expstrAnalyzed = true;
         return true;
       }else{
@@ -521,53 +541,64 @@ ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
 
 // analyze column ID & name from metadata, return data type of current node
 // decide current node data type by checking children's data type
-int ExpressionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes)
+int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes)
 {
   m_metaDataAnzlyzed = true;
+  m_fieldnames = fieldnames;
+  m_fieldtypes = fieldtypes;
   if (m_type == BRANCH){
     int rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes):UNKNOWN;
     int ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes):UNKNOWN;
     if (ldatatype == STRING || rdatatype == STRING)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING).c_str(), decodeDatatype(ldatatype==STRING?rdatatype:ldatatype).c_str());
+        m_metaDataAnzlyzed = false;
         return UNKNOWN;
       }else
         return STRING;
     else if (ldatatype == DOUBLE || rdatatype == DOUBLE)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DOUBLE).c_str(), decodeDatatype(ldatatype==DOUBLE?rdatatype:ldatatype).c_str());
+        m_metaDataAnzlyzed = false;
         return UNKNOWN;
       }else
         return DOUBLE;
     else if (ldatatype == LONG || rdatatype == LONG)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(LONG).c_str(), decodeDatatype(ldatatype==LONG?rdatatype:ldatatype).c_str());
+        m_metaDataAnzlyzed = false;
         return UNKNOWN;
       }else
         return LONG;
     else if (ldatatype == INTEGER || rdatatype == INTEGER)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(INTEGER).c_str(), decodeDatatype(ldatatype==INTEGER?rdatatype:ldatatype).c_str());
+        m_metaDataAnzlyzed = false;
         return UNKNOWN;
       }else
         return INTEGER;
     else if (ldatatype == BOOLEAN || rdatatype == BOOLEAN)
       if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(BOOLEAN).c_str(), decodeDatatype(ldatatype==BOOLEAN?rdatatype:ldatatype).c_str());
+        m_metaDataAnzlyzed = false;
         return UNKNOWN;
       }else
         return BOOLEAN;
     else if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP)
       if (ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER || ldatatype == BOOLEAN || rdatatype == BOOLEAN){ // incompatible types
         trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DATE).c_str(), decodeDatatype((ldatatype==DATE||ldatatype==TIMESTAMP)?rdatatype:ldatatype).c_str());
+        m_metaDataAnzlyzed = false;
         return UNKNOWN;
       }else
         return DATE;
-    else
+    else{
+      m_metaDataAnzlyzed = false;
       return UNKNOWN;
+    }
   }else{
     if (fieldnames.size() != fieldtypes.size()){
       trace(ERROR,"Field name number %d does not match field type number %d.\n", fieldnames.size(), fieldtypes.size());
+      m_metaDataAnzlyzed = false;
       return UNKNOWN;
     }
     m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
@@ -638,6 +669,8 @@ ExpressionC* ExpressionC::cloneMe(){
   node->m_datatype = m_datatype;
   node->m_expType = m_expType;
   node->m_expStr = m_expStr;
+  node->m_fieldnames = m_fieldnames;
+  node->m_fieldtypes = m_fieldtypes;
   if (m_type == BRANCH){
     node->m_leftNode = new ExpressionC();
     node->m_leftNode = m_leftNode->cloneMe();
@@ -665,6 +698,8 @@ void ExpressionC::copyTo(ExpressionC* node){
     node->m_datatype = m_datatype;
     node->m_expType = m_expType;
     node->m_expStr = m_expStr;
+    node->m_fieldnames = m_fieldnames;
+    node->m_fieldtypes = m_fieldtypes;
     if (m_type == BRANCH){
       if (m_leftNode){
         node->m_leftNode = new ExpressionC();
@@ -748,6 +783,8 @@ void ExpressionC::clear(){
     delete m_rightNode;
     m_rightNode = NULL;
   }
+  m_fieldnames = NULL;  // dont delete, as it points to an variable address
+  m_fieldtypes = NULL;  // dont delete, as it points to an variable address
   m_expstrAnalyzed = false;
   m_metaDataAnzlyzed = false;
   m_type = UNKNOWN;
@@ -852,6 +889,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
       return true;
     }else if (m_expType == FUNCTION){
       FunctionC* func = new FunctionC(m_expStr);
+      func->analyzeColumns(m_fieldnames, m_fieldtypes);
       bool gotResult = func->runFunction(fieldnames, fieldvalues, varvalues, sResult);
       func->clear();
       delete func;
@@ -906,6 +944,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
         vector<string> vfieldnames;
         map<string,string> mfieldvalues;
         map<string,string> mvarvalues;
+        func->analyzeColumns(m_fieldnames, m_fieldtypes);
         gotResult = func->runFunction(&vfieldnames,&mfieldvalues,&mvarvalues,sResult);
       }else
         gotResult = false;

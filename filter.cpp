@@ -362,15 +362,19 @@ FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
 }
 
 // analyze column ID & name from metadata
-bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fieldnames2){
+bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<string>* fieldtypes){
   if (m_type == BRANCH){
     m_metaDataAnzlyzed = true;
     if (m_leftNode)
-        m_metaDataAnzlyzed = m_metaDataAnzlyzed && m_leftNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
+        m_metaDataAnzlyzed = m_metaDataAnzlyzed && m_leftNode->analyzeColumns(fieldnames, fieldtypes);
+    if (m_rightNode)
+        m_metaDataAnzlyzed = m_metaDataAnzlyzed &&  m_rightNode->analyzeColumns(fieldnames, fieldtypes);
     if (!m_metaDataAnzlyzed)
         return m_metaDataAnzlyzed;
-    if (m_rightNode)
-        m_metaDataAnzlyzed = m_metaDataAnzlyzed &&  m_rightNode->analyzeColumns(m_fieldnames1, m_fieldnames2);
+    if (m_leftExpression)
+      m_leftExpression->analyzeColumns(fieldnames, fieldtypes);
+    if (m_rightExpression)
+      m_rightExpression->analyzeColumns(fieldnames, fieldtypes);
   }else if (m_type == LEAF){
     m_leftExpression = new ExpressionC(m_leftExpStr);
     if (!m_leftExpression->expstrAnalyzed()){
@@ -391,29 +395,28 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
     if (m_datatype == UNKNOWN)
       m_datatype = detectDataType(m_leftExpStr);
 
-    if (m_fieldnames1.size()>0){
+    if (fieldnames->size()>0){
       if (m_leftExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
         m_leftExpStr = trim_one(m_leftExpStr,'"'); // remove quoters
         m_leftColId = -1;
       }else {
         if (isInt(m_leftExpStr)){ // check if the name is ID already
           m_leftColId = atoi(m_leftExpStr.c_str());
-          m_leftExpStr = m_fieldnames1[m_leftColId];
+          m_leftExpStr = (*fieldnames)[m_leftColId];
         }else{
-          m_leftColId = findStrArrayId(m_fieldnames1, m_leftExpStr);
+          m_leftColId = findStrArrayId(*fieldnames, m_leftExpStr);
         }
       }
-    }
-    if (m_fieldnames2.size()>0){
+
       if (m_rightExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
         m_rightExpStr = trim_one(m_rightExpStr,'"'); // remove quoters
         m_rightColId = -1;
       }else {
         if (isInt(m_rightExpStr)){ // check if the name is ID already
           m_rightColId = atoi(m_rightExpStr.c_str());
-          m_rightExpStr = m_fieldnames2[m_rightColId];
+          m_rightExpStr = (*fieldnames)[m_rightColId];
         }else{
-          m_rightColId = findStrArrayId(m_fieldnames2, m_rightExpStr);
+          m_rightColId = findStrArrayId(*fieldnames, m_rightExpStr);
         }
       }
     }

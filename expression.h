@@ -72,6 +72,8 @@ class ExpressionC
     bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.
 
     static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
+    vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!
+    vector<int>* m_fieldtypes;     // all nodes (parent & children) point to the same address!!!
 
   protected:
     void init();

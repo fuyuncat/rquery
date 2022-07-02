@@ -24,6 +24,8 @@ void FunctionC::init()
   m_funcName = "";        // analyzed function name, upper case
   m_params.clear();       // parameter expressions
   m_expstrAnalyzed = false;
+  m_fieldnames = NULL;
+  m_fieldtypes = NULL;
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
 }
@@ -48,7 +50,6 @@ void FunctionC::setExpStr(string expStr)
 {
   clear();
   m_expStr = expStr;
-  checkDataType();
   if (!analyzeExpStr()){
     m_funcName = "";
     m_params.clear();
@@ -65,12 +66,6 @@ bool FunctionC::isConst()
     return true;
   }
   return false;
-}
-
-// detect function return type
-void FunctionC::checkDataType()
-{
-  m_datatype = UNKNOWN;
 }
 
 // analyze expression string to get the function name (upper case) and parameter expression (classes)
@@ -100,6 +95,7 @@ bool FunctionC::analyzeExpStr()
       return false;
     }
     ExpressionC eParam(sParam);
+    eParam.analyzeColumns(m_fieldnames, m_fieldtypes)
     m_params.push_back(eParam);
   }
   if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0)
@@ -125,6 +121,8 @@ void FunctionC::dump(){
 int FunctionC::analyzeColumns(vector<string> fieldnames, vector<int> fieldtypes)
 {
   m_metaDataAnzlyzed = true;
+  m_fieldnames = fieldnames;
+  m_fieldtypes = fieldtypes;
   return m_datatype;
 }
 
@@ -144,6 +142,8 @@ FunctionC* FunctionC::cloneMe(){
   node->m_expStr = m_expStr;
   node->m_funcName = m_funcName;
   node->m_params = m_params;
+  node->m_fieldnames = m_fieldnames;
+  node->m_fieldtypes = m_fieldtypes;
 
   return node;
 }
@@ -158,6 +158,8 @@ void FunctionC::copyTo(FunctionC* node){
     node->m_expStr = m_expStr;
     node->m_funcName = m_funcName;
     node->m_params = m_params;
+    node->m_fieldnames = m_fieldnames;
+    node->m_fieldtypes = m_fieldtypes;
   }
 }
 
@@ -169,6 +171,8 @@ void FunctionC::clear(){
   m_params.clear();
   m_metaDataAnzlyzed = false;
   m_expstrAnalyzed = false;
+  m_fieldnames = NULL;
+  m_fieldtypes = NULL;
 }
 
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction

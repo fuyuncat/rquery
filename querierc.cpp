@@ -88,6 +88,8 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
   }
 }
 
+void QuerierC::analyzeFiledTypes()
+
 // filt a row data by filter. no predication mean true. comparasion failed means alway false
 bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
 {
@@ -148,8 +150,9 @@ int QuerierC::searchNext()
         matcheddata.push_back(matches[i]);
       if (m_fieldnames.size() == 0){
         pairFiledNames(matches);
+        analyzeFiledTypes();
         if (m_filter)
-          m_filter->analyzeColumns(m_fieldnames, m_fieldnames);
+          m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes);
       }
       // append variables
       //matcheddata.push_back(m_filename);

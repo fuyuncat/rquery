@@ -421,6 +421,8 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
         }
       }
     }
+    m_leftExpression->analyzeColumns(fieldnames, fieldtypes);
+    m_rightExpression->analyzeColumns(fieldnames, fieldtypes);
     if(m_leftColId != -1 && m_rightColId != -1){
       //if (metaData1.getColumnType(m_leftColId) != metaData2.getColumnType(m_rightColId)){
       //  //dtrace.trace(254);

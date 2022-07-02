@@ -534,7 +534,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
   if (m_type == LEAF){
     if (m_expType == CONST){
       sResult = m_expStr;
-      return true
+      return true;
     }else if (m_expType == FUNCTION){
       FunctionC* func = new FunctionC(m_expStr);
       bool gotResult = func->runFunction(fieldnames, fieldvalues, varvalues, sResult);
@@ -542,13 +542,13 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
       return gotResult;
     }else if (m_expType == COLUMN){
       if (fieldvalues->find(m_expStr) != fieldvalues->end()){
-        sResult = *fieldvalues[m_expStr];
+        sResult = (*fieldvalues)[m_expStr];
         return true;
       }else
         return false;
     }else if (m_expType == VARIABLE){
       if (varvalues->find(m_expStr) != varvalues->end()){
-        sResult = *varvalues[m_expStr];
+        sResult = (*varvalues)[m_expStr];
         return true;
       }else
         return false;
@@ -582,7 +582,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
   if (m_type == LEAF){
     if (m_expType == CONST){
       sResult = m_expStr;
-      return true
+      return true;
     }else if (m_exptype == FUNCTION){
       FunctionC* func = new FunctionC(m_expStr);
       bool gotResult = func->runFunction(sResult);

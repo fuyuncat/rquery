@@ -91,7 +91,7 @@ void trace(short level, const char *fmt, ...)
   va_list args;
   va_start(args, fmt);
   if (GlobalVars::g_tracelevel>=level){
-    vprintf(decodeTracelevel(level)+":");
+    printf(decodeTracelevel(level)+":");
     vprintf(fmt, args);
   }
   va_end(args);

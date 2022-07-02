@@ -880,7 +880,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
     return false;
   }
   if (!m_metaDataAnzlyzed || !m_expstrAnalyzed){
-    trace(ERROR, "Expression is not analyzed!\n");
+    trace(ERROR, "Expression is not analyzed! metaData: %d, expstr: %d \n",m_metaDataAnzlyzed,m_expstrAnalyzed);
     return false;
   }
   if (m_type == LEAF){

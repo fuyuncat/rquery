@@ -376,14 +376,14 @@ bool FilterC::analyzeColumns(vector<string> m_fieldnames1, vector<string> m_fiel
     if (!m_leftExpression->expstrAnalyzed()){
       m_leftExpression->clear();
       delete m_leftExpression;
-      m_leftExpression = NULL
+      m_leftExpression = NULL;
       return false;
     }
     m_rightExpression = new ExpressionC(m_rightExpStr);
     if (!m_rightExpression->expstrAnalyzed()){
       m_rightExpression->clear();
       delete m_rightExpression;
-      m_rightExpression = NULL
+      m_rightExpression = NULL;
       return false;
     }
 

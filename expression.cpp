@@ -583,7 +583,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
     if (m_expType == CONST){
       sResult = m_expStr;
       return true;
-    }else if (m_exptype == FUNCTION){
+    }else if (m_expType == FUNCTION){
       FunctionC* func = new FunctionC(m_expStr);
       bool gotResult = func->runFunction(sResult);
       delete func;

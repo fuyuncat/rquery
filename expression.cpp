@@ -461,8 +461,8 @@ bool ExpressionC::buildExpression()
         if (nextPos >= m_expStr.size() && !m_expStr.empty()){
           m_type = LEAF;
           m_operate = UNKNOWN;
-          m_datatype = UNKNOWN;
-          m_expType = UNKNOWN;
+          m_datatype = detectDataType(m_expStr);
+          m_expType = m_datatype==UNKNOWN?UNKNOWN:CONST;
           //m_expStr = m_expStr;
           m_colId = -1;
           m_leftNode = NULL;
@@ -471,6 +471,7 @@ bool ExpressionC::buildExpression()
           m_fieldnames = NULL;
           m_fieldtypes = NULL;
           m_expstrAnalyzed = true;
+          trace(DEBUG, "Expression '%s' data type is %s. \n", m_expStr.c_str(), decodeDatatype(m_datatype));
           return true;
         }else{
           trace(ERROR, "Invalide expression string in '%s', nextPos: %d. \n", m_expStr.c_str(), nextPos);

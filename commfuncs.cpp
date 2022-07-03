@@ -412,7 +412,6 @@ int getCompatibleDataType(int ldatatype, int rdatatype)
       trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING).c_str(), decodeDatatype(ldatatype==STRING?rdatatype:ldatatype).c_str());
       return UNKNOWN;
     }else{
-      trace(DEBUG, "Expression '%s' data type is STRING\n", m_expStr.c_str());
       return STRING;
     }
   else if (ldatatype == DOUBLE || rdatatype == DOUBLE)
@@ -420,7 +419,6 @@ int getCompatibleDataType(int ldatatype, int rdatatype)
       trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DOUBLE).c_str(), decodeDatatype(ldatatype==DOUBLE?rdatatype:ldatatype).c_str());
       return UNKNOWN;
     }else{
-      trace(DEBUG, "Expression '%s' data type is DOUBLE\n", m_expStr.c_str());
       return DOUBLE;
     }
   else if (ldatatype == LONG || rdatatype == LONG)
@@ -428,7 +426,6 @@ int getCompatibleDataType(int ldatatype, int rdatatype)
       trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(LONG).c_str(), decodeDatatype(ldatatype==LONG?rdatatype:ldatatype).c_str());
       return UNKNOWN;
     }else{
-      trace(DEBUG, "Expression '%s' data type is LONG\n", m_expStr.c_str());
       return LONG;
     }
   else if (ldatatype == INTEGER || rdatatype == INTEGER)
@@ -436,7 +433,6 @@ int getCompatibleDataType(int ldatatype, int rdatatype)
       trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(INTEGER).c_str(), decodeDatatype(ldatatype==INTEGER?rdatatype:ldatatype).c_str());
       return UNKNOWN;
     }else{
-      trace(DEBUG, "Expression '%s' data type is INTEGER\n", m_expStr.c_str());
       return INTEGER;
     }
   else if (ldatatype == BOOLEAN || rdatatype == BOOLEAN)
@@ -444,7 +440,6 @@ int getCompatibleDataType(int ldatatype, int rdatatype)
       trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(BOOLEAN).c_str(), decodeDatatype(ldatatype==BOOLEAN?rdatatype:ldatatype).c_str());
       return UNKNOWN;
     }else{
-      trace(DEBUG, "Expression '%s' data type is BOOLEAN\n", m_expStr.c_str());
       return BOOLEAN;
     }
   else if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP)
@@ -452,7 +447,6 @@ int getCompatibleDataType(int ldatatype, int rdatatype)
       trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DATE).c_str(), decodeDatatype((ldatatype==DATE||ldatatype==TIMESTAMP)?rdatatype:ldatatype).c_str());
       return UNKNOWN;
     }else{
-      trace(DEBUG, "Expression '%s' data type is DATE\n", m_expStr.c_str());
       return DATE;
     }
   else{

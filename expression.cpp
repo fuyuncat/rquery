@@ -1058,7 +1058,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
 // merge const expression, reduce calculation during matching
 bool ExpressionC::mergeConstNodes(string & sResult)
 {
-  trace(DEBUG,"Merging consts in expression '%s'\n", m_expStr.c_str());
+  trace(DEBUG,"Merging consts in expression '%s' (%s)\n", m_expStr.c_str(), decodeExptype(m_expType).c_str());
   if (m_type == LEAF){
     if (m_expType == CONST){
       sResult = m_expStr;
@@ -1076,15 +1076,17 @@ bool ExpressionC::mergeConstNodes(string & sResult)
         if (gotResult){
           m_expStr = sResult;
           m_expType = CONST;
-          trace(DEBUG,"Return function '%s' result '%s'\n", func->m_expStr.c_str(), m_expStr.c_str());
+          trace(DEBUG,"Return function '%s' result '%s'\n", func->m_expStr.c_str(), sResult.c_str());
         }
       }else
         gotResult = false;
       func->clear();
       delete func;
       return gotResult;
-    }else
+    }else{
+      trace(DEBUG,"'%s' is not a CONST or FUNCTION.\n", m_expStr.c_str());
       return false;
+    }
   }else{
     string leftRst = "", rightRst = "";
     if (!m_leftNode || !m_leftNode->mergeConstNodes(leftRst))

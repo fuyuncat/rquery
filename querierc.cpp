@@ -208,7 +208,7 @@ int QuerierC::searchNext()
     }
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());
-    return "";
+    return found;
   }
   return found;
 }
@@ -288,9 +288,11 @@ int QuerierC::boostmatch(vector<string> *result)
       }
     }catch (exception& e) {
       trace(ERROR, "Regular search exception: %s\n", e.what());
-      return "";
+      return -1;
     }
-  }
+    return result->size();
+  }else
+    return -1;
 }
 
 int QuerierC::boostmatch(map<string,string> & result)
@@ -304,6 +306,7 @@ int QuerierC::boostmatch(map<string,string> & result)
     }
   }catch (exception& e) {
     trace(ERROR, "Regular match exception: %s\n", e.what());
-    return "";
+    return -1;
   }
+  return result.size();
 }

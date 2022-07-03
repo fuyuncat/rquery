@@ -455,7 +455,7 @@ bool reglike(string str, string regstr)
     return regex_search(str, matches, regexp);
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());
-    return "";
+    return false;
   }
 }
 
@@ -1168,7 +1168,7 @@ vector <string> getAllTokens(string str, string token)
     }
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());
-    return "";
+    return findings;
   }
   return findings;
 }    

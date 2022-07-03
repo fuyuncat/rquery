@@ -618,7 +618,7 @@ ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
 // decide current node data type by checking children's data type
 int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes)
 {
-  trace(DEBUG, "Analyzing columns in expression '%s'\n", ASSERTNULLSTR(m_expStr).c_str());
+  trace(DEBUG, "Analyzing columns in expression '%s'\n", m_expStr.c_str());
   if (!fieldnames || !fieldtypes){
     trace(ERROR, "fieldnames or fieldtypes is NULL!\n");
     return UNKNOWN;

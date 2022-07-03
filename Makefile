@@ -11,7 +11,7 @@ function.o: function.cpp function.h
 expression.o: expression.cpp expression.h function.o
 	g++ -g -c expression.cpp
 filter.o: filter.cpp filter.h expression.o
-	g++ -c filter.cpp
+	g++ -g -c filter.cpp
 parser.o: parser.cpp parser.h filter.o
 	g++ -c parser.cpp
 querierc.o: querierc.cpp querierc.h filter.o

@@ -109,7 +109,7 @@ bool FunctionC::analyzeExpStr()
   else if(m_funcName.compare("NOW")==0 || m_funcName.compare("DATEROUND")==0)
     m_datatype = DATE;
   else{
-    trace(ERROR, "Function '%s' is not supported yet!\n", m_funcName.c_str());
+    trace(ERROR, "Function(1) '%s' is not supported yet!\n", m_funcName.c_str());
     m_datatype = UNKNOWN;
   }
   m_expstrAnalyzed = true;
@@ -319,7 +319,7 @@ bool FunctionC::runFunction(vector<string>* fieldnames, map<string,string>* fiel
   else if(m_funcName.compare("NOW")==0)
     getResult = runNow(fieldnames, fieldvalues, varvalues, sResult);
   else{
-    trace(ERROR, "Function '%s' is not supported yet!\n", m_funcName.c_str());
+    trace(ERROR, "Function(2) '%s' is not supported yet!\n", m_funcName.c_str());
     return false;
   }
 

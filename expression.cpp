@@ -142,7 +142,7 @@ bool ExpressionC::buildExpression()
         return false;
       }
     }else if (m_expStr[0] == '('){ // checking quoted expression
-      string sStr = readQuotedStr(m_expStr, nextPos, "()", '\0');
+      string sStr = readQuotedStr(m_expStr, nextPos, "()", '\0'); // get the quoted string
       if (sStr.size() > 1){
         if (nextPos == m_expStr.size()) { // whole string is a quoted string
           m_expStr = m_expStr.substr(1,m_expStr.size()-2);
@@ -157,8 +157,8 @@ bool ExpressionC::buildExpression()
               if (leftNode->expstrAnalyzed()){
                 m_type = BRANCH;
                 m_operate = encodeOperator(m_expStr.substr(nextPos,1));
-                m_datatype = DATE;
-                m_expType = UNKNOWN;
+                m_datatype = getCompatibleDataType(leftNode->m_datatype, rightNode->m_datatype);
+                m_expType = leftNode->m_expType==CONST&&rightNode->m_expType==CONST?CONST:UNKNOWN;
                 m_expStr = m_expStr.substr(nextPos,1);
                 m_colId = -1;
                 m_parentNode = NULL;
@@ -228,8 +228,9 @@ bool ExpressionC::buildExpression()
               if (leafNode->expstrAnalyzed()){
                 m_type = BRANCH;
                 m_operate = encodeOperator(m_expStr.substr(nextPos,1));
-                m_datatype = DATE;
-                m_expType = UNKNOWN;
+                //m_datatype = DATE;
+                m_datatype = getCompatibleDataType(leafNode->m_datatype, rightNode->m_datatype);
+                m_expType = leafNode->m_expType==CONST&&rightNode->m_expType==CONST?CONST:UNKNOWN;
                 m_expStr = m_expStr.substr(nextPos,1);
                 m_colId = -1;
                 m_parentNode = NULL;
@@ -299,8 +300,9 @@ bool ExpressionC::buildExpression()
               if (leafNode->expstrAnalyzed()){
                 m_type = BRANCH;
                 m_operate = encodeOperator(m_expStr.substr(nextPos,1));
-                m_datatype = STRING;
-                m_expType = UNKNOWN;
+                //m_datatype = STRING;
+                m_datatype = getCompatibleDataType(leafNode->m_datatype, rightNode->m_datatype);
+                m_expType = leafNode->m_expType==CONST&&rightNode->m_expType==CONST?CONST:UNKNOWN;
                 m_expStr = m_expStr.substr(nextPos,1);
                 m_colId = -1;
                 m_parentNode = NULL;
@@ -366,8 +368,8 @@ bool ExpressionC::buildExpression()
             if (leafNode->expstrAnalyzed()){
               m_type = BRANCH;
               m_operate = encodeOperator(m_expStr.substr(nextPos,1));
-              m_datatype = UNKNOWN;
-              m_expType = UNKNOWN;
+              m_datatype = getCompatibleDataType(leafNode->m_datatype, rightNode->m_datatype);
+              m_expType = leafNode->m_expType==CONST&&rightNode->m_expType==CONST?CONST:UNKNOWN;
               m_expStr = m_expStr.substr(nextPos,1);
               m_colId = -1;
               m_parentNode = NULL;
@@ -419,8 +421,8 @@ bool ExpressionC::buildExpression()
                 if (leafNode->expstrAnalyzed()){
                   m_type = BRANCH;
                   m_operate = encodeOperator(m_expStr.substr(nextPos,1));
-                  m_datatype = UNKNOWN;
-                  m_expType = UNKNOWN;
+                  m_datatype = getCompatibleDataType(leafNode->m_datatype, rightNode->m_datatype);
+                  m_expType = leafNode->m_expType==CONST&&rightNode->m_expType==CONST?CONST:UNKNOWN;
                   m_expStr = m_expStr.substr(nextPos,1);
                   m_colId = -1;
                   m_parentNode = NULL;
@@ -471,7 +473,7 @@ bool ExpressionC::buildExpression()
           m_fieldnames = NULL;
           m_fieldtypes = NULL;
           m_expstrAnalyzed = true;
-          trace(DEBUG, "Expression '%s' data type is %s. \n", m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
+          //trace(DEBUG, "Expression '%s' data type is %s. \n", m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
           return true;
         }else{
           trace(ERROR, "Invalide expression string in '%s', nextPos: %d. \n", m_expStr.c_str(), nextPos);
@@ -627,64 +629,7 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
   if (m_type == BRANCH){
     int rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes):UNKNOWN;
     int ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes):UNKNOWN;
-    if (ldatatype == STRING || rdatatype == STRING)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING).c_str(), decodeDatatype(ldatatype==STRING?rdatatype:ldatatype).c_str());
-        m_metaDataAnzlyzed = false;
-        return UNKNOWN;
-      }else{
-        trace(DEBUG, "Expression '%s' data type is STRING\n", m_expStr.c_str());
-        return STRING;
-      }
-    else if (ldatatype == DOUBLE || rdatatype == DOUBLE)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DOUBLE).c_str(), decodeDatatype(ldatatype==DOUBLE?rdatatype:ldatatype).c_str());
-        m_metaDataAnzlyzed = false;
-        return UNKNOWN;
-      }else{
-        trace(DEBUG, "Expression '%s' data type is DOUBLE\n", m_expStr.c_str());
-        return DOUBLE;
-      }
-    else if (ldatatype == LONG || rdatatype == LONG)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(LONG).c_str(), decodeDatatype(ldatatype==LONG?rdatatype:ldatatype).c_str());
-        m_metaDataAnzlyzed = false;
-        return UNKNOWN;
-      }else{
-        trace(DEBUG, "Expression '%s' data type is LONG\n", m_expStr.c_str());
-        return LONG;
-      }
-    else if (ldatatype == INTEGER || rdatatype == INTEGER)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(INTEGER).c_str(), decodeDatatype(ldatatype==INTEGER?rdatatype:ldatatype).c_str());
-        m_metaDataAnzlyzed = false;
-        return UNKNOWN;
-      }else{
-        trace(DEBUG, "Expression '%s' data type is INTEGER\n", m_expStr.c_str());
-        return INTEGER;
-      }
-    else if (ldatatype == BOOLEAN || rdatatype == BOOLEAN)
-      if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(BOOLEAN).c_str(), decodeDatatype(ldatatype==BOOLEAN?rdatatype:ldatatype).c_str());
-        m_metaDataAnzlyzed = false;
-        return UNKNOWN;
-      }else{
-        trace(DEBUG, "Expression '%s' data type is BOOLEAN\n", m_expStr.c_str());
-        return BOOLEAN;
-      }
-    else if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP)
-      if (ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER || ldatatype == BOOLEAN || rdatatype == BOOLEAN){ // incompatible types
-        trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DATE).c_str(), decodeDatatype((ldatatype==DATE||ldatatype==TIMESTAMP)?rdatatype:ldatatype).c_str());
-        m_metaDataAnzlyzed = false;
-        return UNKNOWN;
-      }else{
-        trace(DEBUG, "Expression '%s' data type is DATE\n", m_expStr.c_str());
-        return DATE;
-      }
-    else{
-      m_metaDataAnzlyzed = false;
-      return UNKNOWN;
-    }
+    m_datatype = getCompatibleDataType(ldatatype, rdatatype);
   }else{
     if (fieldnames->size() != fieldtypes->size()){
       trace(ERROR,"Field name number %d does not match field type number %d.\n", fieldnames->size(), fieldtypes->size());
@@ -720,59 +665,61 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
       trace(DEBUG, "Expression '%s' type is VARIABLE, data type is UNKNOWN\n", m_expStr.c_str());
       return m_datatype;
     }
-    // check if it is a time, quoted by {}
-    if (m_expStr.size()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.size()-1]=='}'){
-      m_expType = CONST;
-      m_datatype = DATE;
-      trace(DEBUG, "Expression '%s' type is CONST, data type is DATE\n", m_expStr.c_str());
-      return m_datatype;
-    }
-    // check if it is a string, quoted by ''
-    if (m_expStr.size()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.size()-1]=='\''){
-      m_expType = CONST;
-      m_datatype = STRING;
-      return m_datatype;
-    }
-    // check if it is a regular expression string, quoted by //
-    if (m_expStr.size()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.size()-1]=='/'){
-      m_expType = CONST;
-      m_datatype = STRING;
-      trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
-      return m_datatype;
-    }
-    // check if it is a function FUNCNAME(...)
-    int lefParPos = m_expStr.find("(");
-    if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
-      m_expType = FUNCTION;
-      FunctionC* func = new FunctionC(m_expStr);
-      m_datatype = func->m_datatype;
-      func->clear();
-      delete func;
-      trace(DEBUG, "Expression '%s' type is FUNCTION, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
-      return m_datatype;
-    }
-    // check if it is a column
-    for (int i=0; i<fieldnames->size(); i++){
-      if (boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>((*fieldnames)[i])) == 0){
-        m_expStr = boost::to_upper_copy<string>(m_expStr);
-        m_expType = COLUMN;
-        m_datatype = (*fieldtypes)[i];
-        trace(DEBUG, "Expression '%s' type is COLUMN, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
+    if (m_datatype == UNKNOWN){
+      // check if it is a time, quoted by {}
+      if (m_expStr.size()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.size()-1]=='}'){
+        m_expType = CONST;
+        m_datatype = DATE;
+        trace(DEBUG, "Expression '%s' type is CONST, data type is DATE\n", m_expStr.c_str());
         return m_datatype;
       }
-    }
-    if (isInt(m_expStr)){
-      m_expType = CONST;
-      m_datatype = INTEGER;
-    }else if (isLong(m_expStr)){
-      m_expType = CONST;
-      m_datatype = LONG;
-    }else if (isDouble(m_expStr)){
-      m_expType = CONST;
-      m_datatype = DOUBLE;
-    }else{
-      m_expType = UNKNOWN;
-      m_datatype = UNKNOWN;
+      // check if it is a string, quoted by ''
+      if (m_expStr.size()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.size()-1]=='\''){
+        m_expType = CONST;
+        m_datatype = STRING;
+        return m_datatype;
+      }
+      // check if it is a regular expression string, quoted by //
+      if (m_expStr.size()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.size()-1]=='/'){
+        m_expType = CONST;
+        m_datatype = STRING;
+        trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
+        return m_datatype;
+      }
+      // check if it is a function FUNCNAME(...)
+      int lefParPos = m_expStr.find("(");
+      if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
+        m_expType = FUNCTION;
+        FunctionC* func = new FunctionC(m_expStr);
+        m_datatype = func->m_datatype;
+        func->clear();
+        delete func;
+        trace(DEBUG, "Expression '%s' type is FUNCTION, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
+        return m_datatype;
+      }
+      // check if it is a column
+      for (int i=0; i<fieldnames->size(); i++){
+        if (boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>((*fieldnames)[i])) == 0){
+          m_expStr = boost::to_upper_copy<string>(m_expStr);
+          m_expType = COLUMN;
+          m_datatype = (*fieldtypes)[i];
+          trace(DEBUG, "Expression '%s' type is COLUMN, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
+          return m_datatype;
+        }
+      }
+      if (isInt(m_expStr)){
+        m_expType = CONST;
+        m_datatype = INTEGER;
+      }else if (isLong(m_expStr)){
+        m_expType = CONST;
+        m_datatype = LONG;
+      }else if (isDouble(m_expStr)){
+        m_expType = CONST;
+        m_datatype = DOUBLE;
+      }else{
+        m_expType = UNKNOWN;
+        m_datatype = UNKNOWN;
+      }
     }
     trace(DEBUG, "Expression '%s' type is %s, data type is %s\n", m_expStr.c_str(), decodeExptype(m_expType).c_str(), decodeDatatype(m_datatype).c_str());
     return m_datatype;
@@ -1039,7 +986,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
       return false;
     if (!m_rightNode || !m_rightNode->evalExpression(fieldnames, fieldvalues, varvalues, rightRst))
       return false;
-    //trace(DEBUG,"calculating(2) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
+    //trace(DEBUG,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
     return anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
   }
 

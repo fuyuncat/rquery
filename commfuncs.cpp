@@ -404,6 +404,70 @@ bool isDate(const string& str, string& fmt)
   return false;
 }
 
+// get the compatible data type from two data types
+int getCompatibleDataType(int ldatatype, int rdatatype) 
+{
+  if (ldatatype == STRING || rdatatype == STRING)
+    if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP){ // incompatible types
+      trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING).c_str(), decodeDatatype(ldatatype==STRING?rdatatype:ldatatype).c_str());
+      m_metaDataAnzlyzed = false;
+      return UNKNOWN;
+    }else{
+      trace(DEBUG, "Expression '%s' data type is STRING\n", m_expStr.c_str());
+      return STRING;
+    }
+  else if (ldatatype == DOUBLE || rdatatype == DOUBLE)
+    if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING){ // incompatible types
+      trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DOUBLE).c_str(), decodeDatatype(ldatatype==DOUBLE?rdatatype:ldatatype).c_str());
+      m_metaDataAnzlyzed = false;
+      return UNKNOWN;
+    }else{
+      trace(DEBUG, "Expression '%s' data type is DOUBLE\n", m_expStr.c_str());
+      return DOUBLE;
+    }
+  else if (ldatatype == LONG || rdatatype == LONG)
+    if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE){ // incompatible types
+      trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(LONG).c_str(), decodeDatatype(ldatatype==LONG?rdatatype:ldatatype).c_str());
+      m_metaDataAnzlyzed = false;
+      return UNKNOWN;
+    }else{
+      trace(DEBUG, "Expression '%s' data type is LONG\n", m_expStr.c_str());
+      return LONG;
+    }
+  else if (ldatatype == INTEGER || rdatatype == INTEGER)
+    if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG){ // incompatible types
+      trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(INTEGER).c_str(), decodeDatatype(ldatatype==INTEGER?rdatatype:ldatatype).c_str());
+      m_metaDataAnzlyzed = false;
+      return UNKNOWN;
+    }else{
+      trace(DEBUG, "Expression '%s' data type is INTEGER\n", m_expStr.c_str());
+      return INTEGER;
+    }
+  else if (ldatatype == BOOLEAN || rdatatype == BOOLEAN)
+    if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP || ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER){ // incompatible types
+      trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(BOOLEAN).c_str(), decodeDatatype(ldatatype==BOOLEAN?rdatatype:ldatatype).c_str());
+      m_metaDataAnzlyzed = false;
+      return UNKNOWN;
+    }else{
+      trace(DEBUG, "Expression '%s' data type is BOOLEAN\n", m_expStr.c_str());
+      return BOOLEAN;
+    }
+  else if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP)
+    if (ldatatype == STRING || rdatatype == STRING || ldatatype == DOUBLE || rdatatype == DOUBLE || ldatatype == LONG || rdatatype == LONG || ldatatype == INTEGER || rdatatype == INTEGER || ldatatype == BOOLEAN || rdatatype == BOOLEAN){ // incompatible types
+      trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DATE).c_str(), decodeDatatype((ldatatype==DATE||ldatatype==TIMESTAMP)?rdatatype:ldatatype).c_str());
+      m_metaDataAnzlyzed = false;
+      return UNKNOWN;
+    }else{
+      trace(DEBUG, "Expression '%s' data type is DATE\n", m_expStr.c_str());
+      return DATE;
+    }
+  else{
+    m_metaDataAnzlyzed = false;
+    return UNKNOWN;
+  }
+}
+
+
 // detect the data type of an expression string
 // STRING: quoted by '', or regular expression: //
 // DATE/TIMESTAMP: quoted by {}

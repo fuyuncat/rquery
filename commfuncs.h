@@ -149,13 +149,15 @@ bool evalDouble(string str1, int operate, string str2, double& result);
 bool evalDate(string str1, int operate, string str2, struct tm& result);
 bool anyDataOperate(string str1, int operate, string str2, int type, string& result); // return true if operated successfully, result returns result
 
+int detectDataType(string str); // detect the data type of an expression string
+int getCompatibleDataType(int ldatatype, int rdatatype); // get the compatible data type from two data types
+
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
 int startsWithWords(string str, vector<string> words); // detect if string start with special words
 string removeSpace(string originalStr, string keepPattern); //remove space
 string getFirstToken(string str, string token); //get the first matched regelar token from a string
 vector <string> getAllTokens(string str, string token); //get all matched regelar token from a string
 bool matchToken(string str, string token); // check if matched regelar token
-int detectDataType(string str); // detect the data type of an expression string
 
 void dumpVector(vector<string> v);
 

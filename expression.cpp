@@ -630,6 +630,7 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
     int rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes):UNKNOWN;
     int ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes):UNKNOWN;
     m_datatype = getCompatibleDataType(ldatatype, rdatatype);
+    m_metaDataAnzlyzed = m_datatype!=UNKNOWN;
   }else{
     if (fieldnames->size() != fieldtypes->size()){
       trace(ERROR,"Field name number %d does not match field type number %d.\n", fieldnames->size(), fieldtypes->size());

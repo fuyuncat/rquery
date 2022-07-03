@@ -71,6 +71,7 @@ bool FunctionC::isConst()
 // analyze expression string to get the function name (upper case) and parameter expression (classes)
 bool FunctionC::analyzeExpStr()
 {
+  trace(DEBUG, "Analyzing function from '%s'\n", m_expStr.c_str());
   m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
   if (m_expStr.empty()){
     trace(ERROR, "Empty function expression string!\n");
@@ -123,7 +124,7 @@ void FunctionC::dump(){
 // decide current node data type by checking children's data type
 int FunctionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes)
 {
-  trace(DEBUG, "Analyzing function '%s'\n", m_expStr.c_str());
+  trace(DEBUG, "Analyzing columns in function '%s'\n", m_expStr.c_str());
   m_metaDataAnzlyzed = true;
   m_fieldnames = fieldnames;
   m_fieldtypes = fieldtypes;

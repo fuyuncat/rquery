@@ -245,7 +245,7 @@ void FilterC::mergeExprConstNodes()
   }
   if (m_rightExpression){
     string sResult;
-    if (m_rightExpression->mergeConstNodes(sResult){
+    if (m_rightExpression->mergeConstNodes(sResult)){
       m_rightExpStr = sResult;
     }
   }

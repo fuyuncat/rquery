@@ -85,7 +85,7 @@ bool FunctionC::analyzeExpStr()
     m_expstrAnalyzed = false;
     return false;
   }
-  m_funcName = boost::to_upper_copy<string>(m_expStr.substr(0, iPos));
+  m_funcName = boost::trim_copy<string>(boost::to_upper_copy<string>(m_expStr.substr(0, m_expStr.find("("))));
   strParams = trim_pair(strParams, "()");
   vector<string> vParams = split(strParams,',',"//''{}",'\\');
   for (int i=0; i<vParams.size(); i++){

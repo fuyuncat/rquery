@@ -760,15 +760,15 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
         return m_datatype;
       }
     }
-    if (isDouble(m_expStr)){
-      m_expType = CONST;
-      m_datatype = DOUBLE;
-    }else if (isInt(m_expStr)){
+    if (isInt(m_expStr)){
       m_expType = CONST;
       m_datatype = INTEGER;
     }else if (isLong(m_expStr)){
       m_expType = CONST;
       m_datatype = LONG;
+    }else if (isDouble(m_expStr)){
+      m_expType = CONST;
+      m_datatype = DOUBLE;
     }else{
       m_expType = UNKNOWN;
       m_datatype = UNKNOWN;

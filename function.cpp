@@ -77,7 +77,7 @@ bool FunctionC::analyzeExpStr()
     m_expstrAnalyzed = false;
     return false;
   }
-  int iPos = -1;
+  int iPos = 0;
   string strParams = readQuotedStr(m_expStr, iPos, "()", '\0');
   if (iPos<0 || strParams.empty()){
     trace(ERROR, "No quoted parameters found in '%s'!\n", m_expStr.c_str());

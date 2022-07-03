@@ -1038,6 +1038,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
       return false;
     if (!m_rightNode || !m_rightNode->evalExpression(fieldnames, fieldvalues, varvalues, rightRst))
       return false;
+    //trace(DEBUG,"calculating(2) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
     return anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
   }
 
@@ -1083,6 +1084,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
       return false;
     if (!m_rightNode || !m_rightNode->mergeConstNodes(rightRst))
       return false;
+    trace(DEBUG,"calculating(2) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
     bool gotResult = anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
     if (gotResult){
       m_leftNode->clear();

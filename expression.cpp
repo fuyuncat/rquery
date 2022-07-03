@@ -471,7 +471,7 @@ bool ExpressionC::buildExpression()
           m_fieldnames = NULL;
           m_fieldtypes = NULL;
           m_expstrAnalyzed = true;
-          trace(DEBUG, "Expression '%s' data type is %s. \n", m_expStr.c_str(), decodeDatatype(m_datatype));
+          trace(DEBUG, "Expression '%s' data type is %s. \n", m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
           return true;
         }else{
           trace(ERROR, "Invalide expression string in '%s', nextPos: %d. \n", m_expStr.c_str(), nextPos);

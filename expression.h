@@ -61,6 +61,7 @@ class ExpressionC
     bool remove(ExpressionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     bool evalExpression(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case
+    bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.
@@ -69,7 +70,6 @@ class ExpressionC
     void dump(int deep);
     bool buildExpression();  // build expression class from the expression string
     void alignChildrenDataType(); // align children datatype with current datatype
-    bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.
 
     static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
     vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!

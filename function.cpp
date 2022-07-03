@@ -125,6 +125,10 @@ void FunctionC::dump(){
 int FunctionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes)
 {
   trace(DEBUG, "Analyzing columns in function '%s'\n", m_expStr.c_str());
+  if (!fieldnames || !fieldtypes){
+    trace(DEBUG, "WARING: fieldnames or fieldtypes is NULL!\n");
+    return UNKNOWN;
+  }
   m_metaDataAnzlyzed = true;
   m_fieldnames = fieldnames;
   m_fieldtypes = fieldtypes;

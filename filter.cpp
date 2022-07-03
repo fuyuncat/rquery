@@ -225,9 +225,24 @@ void FilterC::buildFilter()
   if (!buildFilter(" OR ", "()")){
     clear();
     m_metaDataAnzlyzed = false;
-  }else
+  }else{
     m_metaDataAnzlyzed = true;
+  }
 }
+
+// merge const in the expressions
+void FilterC::mergeExprConstNodes()
+{
+  if (m_leftNode)
+    m_leftNode->mergeExprConstNodes();
+  if (m_rightNode)
+    m_rightNode->mergeExprConstNodes();
+  if (m_leftExpression)
+    m_leftExpression->mergeConstNodes();
+  if (m_rightExpression)
+    m_rightExpression->mergeConstNodes();
+}
+
 // get left tree Height
 int FilterC::getLeftHeight(){
   int height = 1;

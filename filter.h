@@ -77,6 +77,7 @@ class FilterC
     void dump(int deep);
     void buildLeafNodeFromStr(FilterC* node, string str); // build a leaf node
     bool buildFilter(string splitor, string quoters); // build current filter class from the expression string
+    void mergeExprConstNodes();  // merge const in the expressions
 
   protected:
     void init();

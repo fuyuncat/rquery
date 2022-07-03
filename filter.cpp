@@ -365,7 +365,7 @@ FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
 bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes){
   trace(DEBUG, "Analyzing columns in filter '%s'\n", m_expStr.c_str());
   if (!fieldnames || !fieldtypes){
-    trace(DEBUG, "WARING: fieldnames or fieldtypes is NULL!\n");
+    trace(ERROR, "fieldnames or fieldtypes is NULL!\n");
     return UNKNOWN;
   }
   if (m_type == BRANCH){

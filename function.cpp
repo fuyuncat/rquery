@@ -97,7 +97,7 @@ bool FunctionC::analyzeExpStr()
       return false;
     }
     ExpressionC eParam(sParam);
-    eParam.analyzeColumns(m_fieldnames, m_fieldtypes);
+    //eParam.analyzeColumns(m_fieldnames, m_fieldtypes);
     m_params.push_back(eParam);
   }
   if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0 || m_funcName.compare("REPLACE")==0 || m_funcName.compare("DATEFORMAT")==0)
@@ -126,7 +126,7 @@ int FunctionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtype
 {
   trace(DEBUG, "Analyzing columns in function '%s'\n", m_expStr.c_str());
   if (!fieldnames || !fieldtypes){
-    trace(DEBUG, "WARING: fieldnames or fieldtypes is NULL!\n");
+    trace(ERROR, "fieldnames or fieldtypes is NULL!\n");
     return UNKNOWN;
   }
   m_metaDataAnzlyzed = true;

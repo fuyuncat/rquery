@@ -390,7 +390,7 @@ bool ExpressionC::buildExpression()
           delete rightNode;
           return false;
         }
-      }else if (m_expStr[nextPos]) == '('){ // reached a function quotor.
+      }else if (m_expStr[nextPos] == '('){ // reached a function quotor.
         string sParams = readQuotedStr(m_expStr, nextPos, "()", '\\')
         if (!sParams.empty()){ // got parameters
           // the character following the functions should either be the end of string (skip spaces) or a operator

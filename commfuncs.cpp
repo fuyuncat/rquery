@@ -577,6 +577,22 @@ string decodeDatatype(int datatype){
   }
 }
 
+string decodeExptype(int exptype)
+{
+  switch (exptype){
+  case CONST:
+    return "CONST";
+  case COLUMN:
+    return "COLUMN";
+  case VARIABLE:
+    return "VARIABLE";
+  case FUNCTION:
+    return "FUNCTION";
+  default:
+    return "UNKNOWN";
+  }
+}
+
 int encodeComparator(string str)
 {
   //printf("encode comparator: %s\n",str.c_str());

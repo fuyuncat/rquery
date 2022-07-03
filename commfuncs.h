@@ -66,7 +66,7 @@ using namespace boost::xpressive;
 #define CONST 1
 #define COLUMN 2
 #define VARIABLE 3
-#define FUNCTION 3
+#define FUNCTION 4
 
 class namesaving_smatch : public smatch
 {
@@ -133,6 +133,7 @@ string decodeJunction(int junction);
 string decodeComparator(int comparator);
 string decodeDatatype(int datatype);
 string decodeOperator(int op);
+string decodeExptype(int exptype);
 int encodeComparator(string str);
 int encodeJunction(string str);
 int encodeOperator(string str);

@@ -649,7 +649,7 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
         m_datatype = LONG;
       else if (m_expStr.find("@FIELD") == 0){
         string sColId = m_expStr.substr(string("@FIELD").size());
-        if (isInt(sColId) && atoi(sColId.c_str()) < fieldtypes->size()){
+        if (!sColId.empty() && isInt(sColId) && atoi(sColId.c_str()) < fieldtypes->size()){
           m_expType = COLUMN;
           m_datatype = (*fieldtypes)[atoi(sColId.c_str())];
         }else{

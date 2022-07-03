@@ -237,10 +237,18 @@ void FilterC::mergeExprConstNodes()
     m_leftNode->mergeExprConstNodes();
   if (m_rightNode)
     m_rightNode->mergeExprConstNodes();
-  if (m_leftExpression)
-    m_leftExpression->mergeConstNodes();
-  if (m_rightExpression)
-    m_rightExpression->mergeConstNodes();
+  if (m_leftExpression){
+    string sResult;
+    if (m_leftExpression->mergeConstNodes(sResult)){
+      m_leftExpStr = sResult;
+    }      
+  }
+  if (m_rightExpression){
+    string sResult;
+    if (m_rightExpression->mergeConstNodes(sResult){
+      m_rightExpStr = sResult;
+    }
+  }
 }
 
 // get left tree Height

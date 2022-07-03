@@ -262,7 +262,7 @@ bool ExpressionC::buildExpression()
       return false;
     }
   }else if (m_expStr[0] == '\''){ // checking STRING string
-    string sStr = readQuotedStr(m_expStr, nextPos, "''", '\\');
+    string sStr = readQuotedStr(m_expStr, nextPos, "''", '\0');
     if (sStr.size() > 1){
       if (nextPos == m_expStr.size()) { // whole string is a date string
         m_type = LEAF;

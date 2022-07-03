@@ -80,7 +80,7 @@ bool FunctionC::analyzeExpStr()
   int iPos = -1;
   string strParams = readQuotedStr(m_expStr, iPos, "()", '\0');
   if (iPos<0 || strParams.empty()){
-    trace(ERROR, "No quoted parameters found!\n");
+    trace(ERROR, "No quoted parameters found in '%s'!\n", c_str());
     m_expstrAnalyzed = false;
     return false;
   }

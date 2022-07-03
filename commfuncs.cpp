@@ -453,9 +453,9 @@ bool reglike(string str, string regstr)
   smatch matches;
   try{
     return regex_search(str, matches, regexp);
-  } catch (char *e) {
-    trace(ERROR, "Regular search exception: %s\n", e);
-    return false;
+  }catch (exception& e) {
+    trace(ERROR, "Regular search exception: %s\n", e.what());
+    return "";
   }
 }
 
@@ -1147,8 +1147,8 @@ string getFirstToken(string str, string token){
   try{
     if (regex_search(str, matches, regexp))
       return matches[0];
-  } catch (char *e) {
-    trace(ERROR, "Regular search exception: %s\n", e);
+  }catch (exception& e) {
+    trace(ERROR, "Regular search exception: %s\n", e.what());
     return "";
   }
 }
@@ -1166,9 +1166,9 @@ vector <string> getAllTokens(string str, string token)
         findings.push_back(matches[0]);  
         searchStart = matches.suffix().first;
     }
-  } catch (char *e) {
-    trace(ERROR, "Regular search exception: %s\n", e);
-    return findings;
+  }catch (exception& e) {
+    trace(ERROR, "Regular search exception: %s\n", e.what());
+    return "";
   }
   return findings;
 }    

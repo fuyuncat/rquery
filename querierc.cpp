@@ -206,9 +206,9 @@ int QuerierC::searchNext()
       //auto sub_str = m_rawstr.substr(start,len);
       found++;
     }
-  } catch (char *e) {
-    trace(ERROR, "Regular search exception: %s\n", e);
-    return found;
+  }catch (exception& e) {
+    trace(ERROR, "Regular search exception: %s\n", e.what());
+    return "";
   }
   return found;
 }
@@ -286,9 +286,9 @@ int QuerierC::boostmatch(vector<string> *result)
           result->push_back(matches[i]);
         }
       }
-    } catch (char *e) {
-      trace(ERROR, "Regular match exception: %s\n", e);
-      return 0;
+    }catch (exception& e) {
+      trace(ERROR, "Regular search exception: %s\n", e.what());
+      return "";
     }
   }
 }
@@ -302,8 +302,8 @@ int QuerierC::boostmatch(map<string,string> & result)
       for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
         result[string(*it)] = matches[*it].str();
     }
-  } catch (char *e) {
-    trace(ERROR, "Regular match exception: %s\n", e);
-    return 0;
+  }catch (exception& e) {
+    trace(ERROR, "Regular match exception: %s\n", e.what());
+    return "";
   }
 }

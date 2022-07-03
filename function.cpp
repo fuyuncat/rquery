@@ -123,6 +123,7 @@ void FunctionC::dump(){
 // decide current node data type by checking children's data type
 int FunctionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes)
 {
+  trace(DEBUG, "Analyzing function '%s'\n", m_expStr.c_str());
   m_metaDataAnzlyzed = true;
   m_fieldnames = fieldnames;
   m_fieldtypes = fieldtypes;

@@ -238,7 +238,7 @@ bool FunctionC::runNoCaseComparestr(vector<string>* fieldnames, map<string,strin
   return false;
 }
 
-bool FunctionC::runNoReplace(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+bool FunctionC::runReplace(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   return false;
 }

@@ -9,7 +9,7 @@ commfuncs.o: commfuncs.cpp commfuncs.h
 function.o: function.cpp function.h
 	g++ -c function.cpp
 expression.o: expression.cpp expression.h function.o
-	g++ -c expression.cpp
+	g++ -g -c expression.cpp
 filter.o: filter.cpp filter.h expression.o
 	g++ -c filter.cpp
 parser.o: parser.cpp parser.h filter.o
@@ -19,7 +19,7 @@ querierc.o: querierc.cpp querierc.h filter.o
 rquery.o: rquery.cpp commfuncs.h querierc.h parser.h filter.h
 	g++ -c rquery.cpp
 rquery: rquery.o commfuncs.o querierc.o parser.o expression.o filter.o
-	g++ -I /usr/lib/boost/include -L /usr/lib/boost/lib rquery.o commfuncs.o function.o expression.o filter.o parser.o querierc.o -o $@
+	g++ -g -I /usr/lib/boost/include -L /usr/lib/boost/lib rquery.o commfuncs.o function.o expression.o filter.o parser.o querierc.o -o $@
 check: all
 	./rquery
 clean:

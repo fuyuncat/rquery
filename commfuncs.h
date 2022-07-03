@@ -26,6 +26,8 @@
 using namespace std;
 using namespace boost::xpressive;
 
+#define ASSERTNULLSTR(x) (x == NULL ? "" : x)
+
 #define UNKNOWN 0
 #define BRANCH 1
 #define LEAF 2

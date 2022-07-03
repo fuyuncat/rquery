@@ -17,6 +17,7 @@
 #include <boost/algorithm/string.hpp>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <math.h> 
 //#include <stdexcept.h>
 #include "commfuncs.h"
 
@@ -93,6 +94,8 @@ void trace(short level, const char *fmt, ...)
   if (GlobalVars::g_tracelevel>=level){
     printf((decodeTracelevel(level)+":").c_str());
     vprintf(fmt, args);
+    if (level == FATAL)
+      exit(EXIT_FAILURE);
   }
   va_end(args);
 }

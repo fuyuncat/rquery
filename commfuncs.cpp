@@ -240,6 +240,8 @@ string trim_one(string str, char c)
     newstr = newstr.substr(1);
   if (newstr[newstr.size()-1] == c)
     newstr = newstr.substr(0,newstr.size()-1);
+  if (c == ' ')
+    newstr = trim_one(str, '\t');
   return newstr;
 }
 

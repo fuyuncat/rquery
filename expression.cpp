@@ -148,7 +148,7 @@ bool ExpressionC::buildExpression()
           m_expStr = m_expStr.substr(1,m_expStr.size()-2);
           return buildExpression();
         }else{
-          while (nextPos < m_expStr.size() &&m_expStr[nextPos] == ' ') // skip space
+          while (nextPos < m_expStr.size() && (m_expStr[nextPos] == ' ' || m_expStr[nextPos] == '\t')) // skip space
             nextPos++;
           if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
             ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
@@ -209,7 +209,7 @@ bool ExpressionC::buildExpression()
           m_expstrAnalyzed = true;
           return true;
         }else{
-          while (nextPos < m_expStr.size() &&m_expStr[nextPos] == ' ') // skip space
+          while (nextPos < m_expStr.size() && (m_expStr[nextPos] == ' ' || m_expStr[nextPos] == '\t')) // skip space
             nextPos++;
           if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
             ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
@@ -282,7 +282,7 @@ bool ExpressionC::buildExpression()
           m_expstrAnalyzed = true;
           return true;
         }else{
-          while (nextPos < m_expStr.size() &&m_expStr[nextPos] == ' ') // skip space
+          while (nextPos < m_expStr.size() && (m_expStr[nextPos] == ' ' || m_expStr[nextPos] == '\t')) // skip space
             nextPos++;
           if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
             ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
@@ -337,7 +337,7 @@ bool ExpressionC::buildExpression()
         return false;
       }
     }else{
-      while (nextPos < m_expStr.size() && m_expStr[nextPos] != ' ' && m_expStr[nextPos] != '(' && m_operators.find(m_expStr[nextPos]) == m_operators.end()) {// moving forward until reach the first operator or function quoter
+      while (nextPos < m_expStr.size() && m_expStr[nextPos] != ' ' && m_expStr[nextPos] != '\t' && m_expStr[nextPos] != '(' && m_operators.find(m_expStr[nextPos]) == m_operators.end()) {// moving forward until reach the first operator or function quoter
         if (m_expStr[nextPos] == '\'' || m_expStr[nextPos] == '{' || m_expStr[nextPos] == '/' || m_expStr[nextPos] == '}' || m_expStr[nextPos] == ')'){
           trace(ERROR, "Invalid character detected in '%s'. nextPos: %d \n", m_expStr.c_str(), nextPos);
           return false;
@@ -349,7 +349,7 @@ bool ExpressionC::buildExpression()
         return false;
       }
       string sExpStr = m_expStr.substr(0,nextPos);
-      while (nextPos < m_expStr.size() && m_expStr[nextPos] == ' ') // skip space
+      while (nextPos < m_expStr.size() && (m_expStr[nextPos] == ' ' || m_expStr[nextPos] == '\t')) // skip space
         nextPos++;
       if (nextPos < m_expStr.size()-1){
         if (m_operators.find(m_expStr[nextPos]) != m_operators.end()){ // reached an operator.
@@ -398,7 +398,7 @@ bool ExpressionC::buildExpression()
           string sParams = readQuotedStr(m_expStr, nextPos, "()", '\\');
           if (!sParams.empty()){ // got parameters
             // the character following the functions should either be the end of string (skip spaces) or a operator
-            while (nextPos < m_expStr.size() && m_expStr[nextPos] == ' ') // skip space
+            while (nextPos < m_expStr.size() && (m_expStr[nextPos] == ' ' || m_expStr[nextPos] == '\t')) // skip space
               nextPos++;
             if (nextPos >= m_expStr.size()){ // reached the end
               m_type = LEAF;
@@ -641,14 +641,14 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
     // check if it is a variable
     if (m_expStr.size()>0 && m_expStr[0]=='@'){
       m_expType = VARIABLE;
-      m_expStr = boost::to_upper_copy<string>(m_expStr);
-      string strLowName = boost::to_lower_copy<string>(m_expStr);
-      if (strLowName.compare("@raw") == 0 || strLowName.compare("@file") == 0)
+      m_expStr = boost::to_upper_copy<string>(boost::trim_copy<string>(m_expStr));
+      //string strVarName = boost::to_upper_copy<string>(m_expStr);
+      if (m_expStr.compare("@RAW") == 0 || m_expStr.compare("@FILE") == 0)
         m_datatype = STRING;
-      else if (strLowName.compare("@line") == 0 || strLowName.compare("@row") == 0 || strLowName.compare("@rowsorted") == 0)
+      else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0)
         m_datatype = LONG;
-      else if (strLowName.find("@field") == 0){
-        string sColId = strLowName.substr(string("@field").size());
+      else if (m_expStr.find("@FIELD") == 0){
+        string sColId = m_expStr.substr(string("@FIELD").size());
         if (isInt(sColId) && atoi(sColId.c_str()) < fieldtypes->size()){
           m_expType = COLUMN;
           m_datatype = (*fieldtypes)[atoi(sColId.c_str())];

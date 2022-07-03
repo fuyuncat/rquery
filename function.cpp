@@ -104,7 +104,7 @@ bool FunctionC::analyzeExpStr()
     m_datatype = STRING;
   else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0)
     m_datatype = LONG;
-  else if(m_funcName.compare("ROUND")==0)
+  else if(m_funcName.compare("ROUND")==0 || m_funcName.compare("LOG")==0)
     m_datatype = DOUBLE;
   else if(m_funcName.compare("NOW")==0 || m_funcName.compare("DATEROUND")==0)
     m_datatype = DATE;
@@ -272,6 +272,11 @@ bool FunctionC::runRound(vector<string>* fieldnames, map<string,string>* fieldva
   return false;
 }
 
+bool FunctionC::runLog(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  return false;
+}
+
 bool FunctionC::runDateround(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   return false;
@@ -314,6 +319,8 @@ bool FunctionC::runFunction(vector<string>* fieldnames, map<string,string>* fiel
     getResult = runReplace(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("ROUND")==0)
     getResult = runRound(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("LOG")==0)
+    getResult = runLog(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("DATEFORMAT")==0)
     getResult = runDateformat(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("DATEROUND")==0)

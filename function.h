@@ -65,6 +65,7 @@ class FunctionC
     bool runCeil(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runTimediff(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runRound(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runLog(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runDateformat(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runDateround(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runNow(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);

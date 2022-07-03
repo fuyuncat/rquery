@@ -88,7 +88,7 @@ bool FunctionC::analyzeExpStr()
   strParams = trim_pair(strParams, "()");
   vector<string> vParams = split(strParams,',',"//''{}",'\\');
   for (int i=0; i<vParams.size(); i++){
-    trace(DEBUG, "Processing parameter(%d)!\n", i);
+    trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
     string sParam = boost::algorithm::trim_copy<string>(vParams[i]);
     if (sParam.empty()){
       trace(ERROR, "Empty parameter string!\n");

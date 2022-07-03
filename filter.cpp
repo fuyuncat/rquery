@@ -224,7 +224,6 @@ void FilterC::buildFilter()
     clear();
     m_metaDataAnzlyzed = false;
   }else{
-    mergeExprConstNodes();
     m_metaDataAnzlyzed = true;
   }
 }

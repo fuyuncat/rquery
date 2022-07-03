@@ -170,8 +170,10 @@ int QuerierC::searchNext()
       if (m_fieldnames.size() == 0){
         pairFiledNames(matches);
         analyzeFiledTypes(matches);
-        if (m_filter)
+        if (m_filter){
           m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes);
+          m_filter->mergeExprConstNodes();
+        }
       }
       // append variables
       //matcheddata.push_back(m_filename);

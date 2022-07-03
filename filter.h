@@ -66,6 +66,7 @@ class FilterC
     void clear(); // clear predictin
     bool remove(FilterC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
+    void mergeExprConstNodes();  // merge const in the expressions
 
     bool compareExpression(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues); // calculate an expression prediction. no predication or comparasion failed means alway false
 
@@ -77,7 +78,6 @@ class FilterC
     void dump(int deep);
     void buildLeafNodeFromStr(FilterC* node, string str); // build a leaf node
     bool buildFilter(string splitor, string quoters); // build current filter class from the expression string
-    void mergeExprConstNodes();  // merge const in the expressions
 
   protected:
     void init();

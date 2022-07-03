@@ -132,6 +132,8 @@ int FunctionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtype
   m_metaDataAnzlyzed = true;
   m_fieldnames = fieldnames;
   m_fieldtypes = fieldtypes;
+  for (int i=0; i<m_params.size(); i++)
+    m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes);
   return m_datatype;
 }
 

@@ -324,72 +324,138 @@ bool ExpressionC::buildExpression()
             return false;
           }
         }else{
-          trace(ERROR, "Invalide expression involved STRING string. \n");
+          trace(ERROR, "Invalide expression involved STRING '%s'. nextPos: %d. \n", m_expStr.c_str(), nextPos);
           return false;
         }
       }
     }else{
-      trace(ERROR, "STRING string is not closed. \n");
+      trace(ERROR, "STRING '%s' is not closed. nextPos: %d. \n", m_expStr.c_str(), nextPos);
       return false;
     }
   }else{
-    while (nextPos < m_expStr.size() && m_expStr[nextPos] != ' ' && m_operators.find(m_expStr[nextPos]) == m_operators.end()) {// moving forward until reach the first operator
-      if (m_expStr[nextPos] == '\'' || m_expStr[nextPos] == '{' || m_expStr[nextPos] == '/' || m_expStr[nextPos] == '}'){
-        trace(ERROR, "Invalid character detected in %s. nextPos: %d \n", m_expStr.c_str(), nextPos);
+    while (nextPos < m_expStr.size() && m_expStr[nextPos] != ' ' && m_expStr[nextPos] != '(' && m_operators.find(m_expStr[nextPos]) == m_operators.end()) {// moving forward until reach the first operator or function quoter
+      if (m_expStr[nextPos] == '\'' || m_expStr[nextPos] == '{' || m_expStr[nextPos] == '/' || m_expStr[nextPos] == '}' || m_expStr[nextPos] == ')'){
+        trace(ERROR, "Invalid character detected in '%s'. nextPos: %d \n", m_expStr.c_str(), nextPos);
         return false;
       }
       nextPos++;
     }
     if (nextPos == 0){
-      trace(ERROR, "Expression cannot start with an operator \n");
+      trace(ERROR, "Expression '%s' cannot start with an operator \n", m_expStr.c_str());
       return false;
     }
     string sExpStr = m_expStr.substr(0,nextPos);
     while (nextPos < m_expStr.size() && m_expStr[nextPos] == ' ') // skip space
       nextPos++;
-    if (nextPos < m_expStr.size()-1 && m_operators.find(m_expStr[nextPos]) != m_operators.end()){
-      ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
-      if (rightNode->expstrAnalyzed()){
-        ExpressionC* leafNode = new ExpressionC(sExpStr);
-        //leafNode->m_type = LEAF;
-        //leafNode->m_operate = UNKNOWN;
-        //leafNode->m_datatype = UNKNOWN;
-        //leafNode->m_expType = CONST;
-        //leafNode->m_expStr = sExpStr;
-        //leafNode->m_colId = -1;
-        //leafNode->m_leftNode = NULL;
-        //leafNode->m_rightNode = NULL;
-        //leafNode->m_parentNode = this;
-        if (leafNode->expstrAnalyzed()){
-          m_type = BRANCH;
-          m_operate = encodeOperator(m_expStr.substr(nextPos,1));
-          m_datatype = UNKNOWN;
-          m_expType = UNKNOWN;
-          m_expStr = m_expStr.substr(nextPos,1);
-          m_colId = -1;
-          m_parentNode = NULL;
-          m_fieldnames = NULL;
-          m_fieldtypes = NULL;
-          m_leftNode = leafNode;
-          m_rightNode = rightNode;
-          
-          m_leftNode->m_parentNode = this;
-          rightNode->m_parentNode = this;
-          m_expstrAnalyzed = true;
-          return true;
+    if (nextPos < m_expStr.size()-1){
+      if (m_operators.find(m_expStr[nextPos]) != m_operators.end()){ // reached an operator.
+        ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
+        if (rightNode->expstrAnalyzed()){
+          ExpressionC* leafNode = new ExpressionC(sExpStr);
+          //leafNode->m_type = LEAF;
+          //leafNode->m_operate = UNKNOWN;
+          //leafNode->m_datatype = UNKNOWN;
+          //leafNode->m_expType = CONST;
+          //leafNode->m_expStr = sExpStr;
+          //leafNode->m_colId = -1;
+          //leafNode->m_leftNode = NULL;
+          //leafNode->m_rightNode = NULL;
+          //leafNode->m_parentNode = this;
+          if (leafNode->expstrAnalyzed()){
+            m_type = BRANCH;
+            m_operate = encodeOperator(m_expStr.substr(nextPos,1));
+            m_datatype = UNKNOWN;
+            m_expType = UNKNOWN;
+            m_expStr = m_expStr.substr(nextPos,1);
+            m_colId = -1;
+            m_parentNode = NULL;
+            m_fieldnames = NULL;
+            m_fieldtypes = NULL;
+            m_leftNode = leafNode;
+            m_rightNode = rightNode;
+            
+            m_leftNode->m_parentNode = this;
+            rightNode->m_parentNode = this;
+            m_expstrAnalyzed = true;
+            return true;
+          }else{
+            leafNode->clear();
+            delete leafNode;
+            rightNode->clear();
+            delete rightNode;
+            return false;
+          }
         }else{
-          leafNode->clear();
-          delete leafNode;
           rightNode->clear();
           delete rightNode;
           return false;
         }
+      }else if (m_expStr[nextPos]) == '('){ // reached a function quotor.
+        string sParams = readQuotedStr(m_expStr, nextPos, "()", '\\')
+        if (!sParams.empty()){ // got parameters
+          // the character following the functions should either be the end of string (skip spaces) or a operator
+          while (nextPos < m_expStr.size() && m_expStr[nextPos] == ' ') // skip space
+            nextPos++;
+          if (nextPos >= m_expStr.size()){ // reached the end
+            m_type = LEAF;
+            m_operate = UNKNOWN;
+            m_datatype = UNKNOWN;
+            m_expType = FUNCTION;
+            m_expStr = sExpStr+sParams;
+            m_colId = -1;
+            m_fieldnames = NULL;
+            m_fieldtypes = NULL;
+            m_leftNode = NULL;
+            m_rightNode = NULL;
+            m_parentNode = NULL;
+            m_expstrAnalyzed = true;
+            return true;
+          }else if (m_operators.find(m_expStr[nextPos]) != m_operators.end()){ // Operator more string
+            ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
+            if (rightNode->expstrAnalyzed()){
+              ExpressionC* leafNode = new ExpressionC(sExpStr+sParams);
+              if (leafNode->expstrAnalyzed()){
+                m_type = BRANCH;
+                m_operate = encodeOperator(m_expStr.substr(nextPos,1));
+                m_datatype = UNKNOWN;
+                m_expType = UNKNOWN;
+                m_expStr = m_expStr.substr(nextPos,1);
+                m_colId = -1;
+                m_parentNode = NULL;
+                m_fieldnames = NULL;
+                m_fieldtypes = NULL;
+                m_leftNode = leafNode;
+                m_rightNode = rightNode;
+                
+                m_leftNode->m_parentNode = this;
+                rightNode->m_parentNode = this;
+                m_expstrAnalyzed = true;
+                return true;
+              }else{
+                leafNode->clear();
+                delete leafNode;
+                rightNode->clear();
+                delete rightNode;
+                return false;
+              }
+            }else{
+              rightNode->clear();
+              delete rightNode;
+              return false;
+            }
+          }else{
+            trace(ERROR, "Invalide(2) character in '%s', nextPos: %d. \n", m_expStr.c_str(), nextPos);
+            return false;
+          }
+        }else{
+          trace(ERROR, "Function '%s' quoter is not closed. \n", sExpStr.c_str());
+          return false;
+        }
       }else{
-        rightNode->clear();
-        delete rightNode;
+        trace(ERROR, "Invalide(3) character in '%s', nextPos: %d. \n", m_expStr.c_str(), nextPos);
         return false;
       }
-    }else{
+    }else{ // nextPos reached the end of the string. the whole string could be a column/variable name, unknown yet
       if (nextPos >= m_expStr.size() && !m_expStr.empty()){
         m_type = LEAF;
         m_operate = UNKNOWN;
@@ -405,7 +471,7 @@ bool ExpressionC::buildExpression()
         m_expstrAnalyzed = true;
         return true;
       }else{
-        trace(ERROR, "Invalide expression string in %s, nextPos: %d. \n", m_expStr.c_str(), nextPos);
+        trace(ERROR, "Invalide expression string in '%s', nextPos: %d. \n", m_expStr.c_str(), nextPos);
         return false;
       }
     }

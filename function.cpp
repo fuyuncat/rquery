@@ -98,16 +98,18 @@ bool FunctionC::analyzeExpStr()
     eParam.analyzeColumns(m_fieldnames, m_fieldtypes);
     m_params.push_back(eParam);
   }
-  if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0)
+  if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0 || m_funcName.compare("REPLACE")==0 || m_funcName.compare("DATEFORMAT")==0)
     m_datatype = STRING;
   else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0)
     m_datatype = LONG;
   else if(m_funcName.compare("ROUND")==0)
     m_datatype = DOUBLE;
-  else if(m_funcName.compare("NOW")==0)
+  else if(m_funcName.compare("NOW")==0 || m_funcName.compare("DATEROUND")==0)
     m_datatype = DATE;
-  else
+  else{
+    trace(ERROR, "Function '%s' is not supported yet!\n", m_funcName.c_str());
     m_datatype = UNKNOWN;
+  }
   m_expstrAnalyzed = true;
   return true;
 }
@@ -236,6 +238,11 @@ bool FunctionC::runNoCaseComparestr(vector<string>* fieldnames, map<string,strin
   return false;
 }
 
+bool FunctionC::runNoReplace(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  return false;
+}
+
 bool FunctionC::runFloor(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   return false;
@@ -252,6 +259,16 @@ bool FunctionC::runTimediff(vector<string>* fieldnames, map<string,string>* fiel
 }
 
 bool FunctionC::runRound(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  return false;
+}
+
+bool FunctionC::runDateround(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  return false;
+}
+
+bool FunctionC::runDateformat(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   return false;
 }
@@ -284,12 +301,20 @@ bool FunctionC::runFunction(vector<string>* fieldnames, map<string,string>* fiel
     getResult = runComparestr(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("NOCASECOMPARESTR")==0)
     getResult = runNoCaseComparestr(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("REPLACE")==0)
+    getResult = runReplace(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("ROUND")==0)
     getResult = runRound(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("DATEFORMAT")==0)
+    getResult = runDateformat(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("DATEROUND")==0)
+    getResult = runDateround(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("NOW")==0)
     getResult = runNow(fieldnames, fieldvalues, varvalues, sResult);
-  else
+  else{
+    trace(ERROR, "Function '%s' is not supported yet!\n", m_funcName.c_str());
     return false;
+  }
 
   return getResult;
 }

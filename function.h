@@ -60,10 +60,13 @@ class FunctionC
     bool runInstr(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runComparestr(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runNoCaseComparestr(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runReplace(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runFloor(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runCeil(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runTimediff(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runRound(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runDateformat(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runDateround(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runNow(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
 
   protected:

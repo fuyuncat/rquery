@@ -391,7 +391,7 @@ bool ExpressionC::buildExpression()
           return false;
         }
       }else if (m_expStr[nextPos] == '('){ // reached a function quotor.
-        string sParams = readQuotedStr(m_expStr, nextPos, "()", '\\')
+        string sParams = readQuotedStr(m_expStr, nextPos, "()", '\\');
         if (!sParams.empty()){ // got parameters
           // the character following the functions should either be the end of string (skip spaces) or a operator
           while (nextPos < m_expStr.size() && m_expStr[nextPos] == ' ') // skip space

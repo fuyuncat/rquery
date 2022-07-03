@@ -204,9 +204,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
   }
 
   if (quoteDeep != 0){
-    printf("\n");
-    printf("Error: Right quoter missed!\n");
-    printf("\n");
+    trace(ERROR, "Right quoter missed!\n");
     return false;
   }
 
@@ -234,6 +232,7 @@ void FilterC::buildFilter()
 // merge const in the expressions
 void FilterC::mergeExprConstNodes()
 {
+  trace(DEBUG, "Merging consts in filter '%s'!\n", m_expStr.c_str());
   if (m_leftNode)
     m_leftNode->mergeExprConstNodes();
   if (m_rightNode)

@@ -172,7 +172,7 @@ int QuerierC::searchNext()
         analyzeFiledTypes(matches);
         if (m_filter){
           m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes);
-          m_filter->mergeExprConstNodes();
+          //m_filter->mergeExprConstNodes();
         }
       }
       // append variables

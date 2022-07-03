@@ -353,7 +353,7 @@ bool ExpressionC::buildExpression()
         if (m_operators.find(m_expStr[nextPos]) != m_operators.end()){ // reached an operator.
           ExpressionC* rightNode = new ExpressionC(m_expStr.substr(nextPos+1));
           if (rightNode->expstrAnalyzed()){
-            ExpressionC* leafNode = new ExpressionC(sExpStr);
+            ExpressionC* leafNode = new ExpressionC(sExpStr); // it could either be a COLUMN or a VARIABLE
             //leafNode->m_type = LEAF;
             //leafNode->m_operate = UNKNOWN;
             //leafNode->m_datatype = UNKNOWN;
@@ -461,7 +461,7 @@ bool ExpressionC::buildExpression()
         if (nextPos >= m_expStr.size() && !m_expStr.empty()){
           m_type = LEAF;
           m_operate = UNKNOWN;
-          m_datatype = detectDataType(m_expStr);
+          m_datatype = UNKNOWN;
           m_expType = UNKNOWN;
           //m_expStr = m_expStr;
           m_colId = -1;

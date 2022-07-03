@@ -1058,9 +1058,11 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
 // merge const expression, reduce calculation during matching
 bool ExpressionC::mergeConstNodes(string & sResult)
 {
+  trace(DEBUG,"Merging consts in expression '%s'\n", m_expStr.c_str());
   if (m_type == LEAF){
     if (m_expType == CONST){
       sResult = m_expStr;
+      trace(DEBUG,"Return CONST '%s'\n", m_expStr.c_str());
       return true;
     }else if (m_expType == FUNCTION){
       FunctionC* func = new FunctionC(m_expStr);
@@ -1071,6 +1073,11 @@ bool ExpressionC::mergeConstNodes(string & sResult)
         map<string,string> mvarvalues;
         func->analyzeColumns(m_fieldnames, m_fieldtypes);
         gotResult = func->runFunction(&vfieldnames,&mfieldvalues,&mvarvalues,sResult);
+        if (gotResult){
+          m_expStr = sResult;
+          m_expType = CONST;
+          trace(DEBUG,"Return function '%s' result '%s'\n", func->m_expStr.c_str(), m_expStr.c_str());
+        }
       }else
         gotResult = false;
       func->clear();

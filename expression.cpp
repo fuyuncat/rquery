@@ -616,6 +616,10 @@ ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
 int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes)
 {
   trace(DEBUG, "Analyzing columns in expression '%s'\n", m_expStr.c_str());
+  if (!fieldnames || !fieldtypes){
+    trace(DEBUG, "WARING: fieldnames or fieldtypes is NULL!\n");
+    return UNKNOWN;
+  }
   m_metaDataAnzlyzed = true;
   m_fieldnames = fieldnames;
   m_fieldtypes = fieldtypes;

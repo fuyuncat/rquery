@@ -478,7 +478,7 @@ bool ExpressionC::buildExpression()
       }
     }
   }catch (exception& e) {
-    trace(ERROR, "Building expression exception: %s\n", e.what().c_str());
+    trace(ERROR, "Building expression exception: %s\n", e.what());
     return "";
   }
   return false;

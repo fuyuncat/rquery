@@ -252,7 +252,7 @@ bool FunctionC::runSubstr(vector<string>* fieldnames, vector<string>* fieldvalue
         sResult = sRaw.substr(iPos,iLen);
         return true;
       }else{
-        trace(ERROR, "Failed to run substr(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr);
+        trace(ERROR, "Failed to run substr(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
         return false;
       }
     }else{
@@ -273,7 +273,7 @@ bool FunctionC::runInstr(vector<string>* fieldnames, vector<string>* fieldvalues
   }
   string sRaw, sSub; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sRaw) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sSub)){
-    sResult = intToStr(sRaw.find(iPos));
+    sResult = intToStr(sRaw.find(sSub));
     return true;
   }else{
     trace(ERROR, "Failed to run instr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
@@ -340,7 +340,7 @@ bool FunctionC::runFloor(vector<string>* fieldnames, vector<string>* fieldvalues
   }
   string sNum; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sNum) && isDouble(sNum)){
-    sResult = intToStr(floor(atof(sNum)));
+    sResult = intToStr(floor(atof(sNum.c_str())));
     return true;
   }else{
     trace(ERROR, "Failed to run floor(%s)!\n", m_params[0].m_expStr.c_str());
@@ -356,7 +356,7 @@ bool FunctionC::runCeil(vector<string>* fieldnames, vector<string>* fieldvalues,
   }
   string sNum; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sNum) && isDouble(sNum)){
-    sResult = intToStr(ceil(atof(sNum)));
+    sResult = intToStr(ceil(atof(sNum.c_str())));
     return true;
   }else{
     trace(ERROR, "Failed to run ceil(%s)!\n", m_params[0].m_expStr.c_str());
@@ -396,7 +396,7 @@ bool FunctionC::runRound(vector<string>* fieldnames, vector<string>* fieldvalues
   }
   string sNum; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sNum) && isDouble(sNum)){
-    sResult = intToStr(round(atof(sNum)));
+    sResult = intToStr(round(atof(sNum.c_str())));
     return true;
   }else{
     trace(ERROR, "Failed to run round(%s)!\n", m_params[0].m_expStr.c_str());
@@ -412,7 +412,7 @@ bool FunctionC::runLog(vector<string>* fieldnames, vector<string>* fieldvalues, 
   }
   string sNum; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sNum) && isDouble(sNum)){
-    sResult = intToStr(log(atof(sNum)));
+    sResult = intToStr(log(atof(sNum.c_str())));
     return true;
   }else{
     trace(ERROR, "Failed to run log(%s)!\n", m_params[0].m_expStr.c_str());
@@ -434,7 +434,7 @@ bool FunctionC::runDateformat(vector<string>* fieldnames, vector<string>* fieldv
   string sTm, sOrigFmt, sFmt; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sTm) && isDate(sTm, sOrigFmt) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sFmt)){
     struct tm tm;
-    if (strptime(sTm1.c_str(), sOrigFmt.c_str(), &tm)){
+    if (strptime(sTm.c_str(), sOrigFmt.c_str(), &tm)){
       sResult = dateToStr(tm, sFmt);
       return !sResult.empty();
     }else{

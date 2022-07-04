@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
     rq.assignFilter(filter);
   }
   if (query.find("select") != query.end()){
+    rq.assignSelString(query["select"]);
     trace(INFO,"Assigning filter: %s \n", query["select"].c_str());
   }
 

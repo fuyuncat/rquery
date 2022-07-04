@@ -567,7 +567,8 @@ void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop)
   }
 }
 
-void ExpressionC::dump(int deep){
+void ExpressionC::dump(int deep)
+{
   if (m_type == BRANCH){
     trace(DEBUG,"%s(%d)\n",decodeOperator(m_operate).c_str(),deep);
     trace(DEBUG,"L-");
@@ -579,8 +580,14 @@ void ExpressionC::dump(int deep){
   }
 }
 
-void ExpressionC::dump(){
+void ExpressionC::dump()
+{
   dump(0);
+}
+
+string getEntireExpstr()
+{
+  return (m_leftNode?m_leftNode->getEntireExpstr():"")+m_expStr+(m_rightNode?m_rightNode->getEntireExpstr():"");
 }
 
 // detect if predication contains special colId    

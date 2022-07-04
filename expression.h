@@ -47,6 +47,7 @@ class ExpressionC
     int getRightHeight(); // get left tree Height
     void add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop); // add a NEW expression into tree
     void dump();
+    string getEntireExpstr();
     bool containsColId(int colId); // detect if predication contains special colId
     ExpressionC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
     int analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes); // analyze column ID & name from metadata, return data type of current node

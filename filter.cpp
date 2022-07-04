@@ -428,25 +428,36 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
       if (m_leftExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
         m_leftExpStr = trim_one(m_leftExpStr,'"'); // remove quoters
         m_leftColId = -1;
-      }else {
-        if (isInt(m_leftExpStr)){ // check if the name is ID already
-          m_leftColId = atoi(m_leftExpStr.c_str());
+      }
+      int iLeftColID = -1;
+      if (isInt(m_leftExpStr)){ // check if the name is ID already
+        iLeftColID = atoi(m_leftExpStr.c_str());
+        if (iLeftColID >= 0 && iLeftColID < fieldnames->size()){
+          m_leftColId = iLeftColID;
           m_leftExpStr = (*fieldnames)[m_leftColId];
-        }else{
-          m_leftColId = findStrArrayId(*fieldnames, m_leftExpStr);
         }
+      }
+      if (iLeftColID<0){
+        m_leftColId = findStrArrayId(*fieldnames, m_leftExpStr);
       }
 
       if (m_rightExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
         m_rightExpStr = trim_one(m_rightExpStr,'"'); // remove quoters
         m_rightColId = -1;
-      }else {
-        if (isInt(m_rightExpStr)){ // check if the name is ID already
-          m_rightColId = atoi(m_rightExpStr.c_str());
+      }
+      int iRightColID = -1;
+      if (isInt(m_rightExpStr)){ // check if the name is ID already
+        iRightColID = atoi(m_rightExpStr.c_str());
+        if (iRightColID >= 0 && iRightColID < fieldnames->size()){
+          m_rightColId = iRightColID;
           m_rightExpStr = (*fieldnames)[m_rightColId];
-        }else{
-          m_rightColId = findStrArrayId(*fieldnames, m_rightExpStr);
         }
+      }
+      if (iRightColID<0){
+        m_rightColId = findStrArrayId(*fieldnames, m_rightExpStr);
+      }
+      if (m_leftColId >= 0 && m_leftColId < fieldtypes->size() && m_rightColId >= 0 && m_rightColId < fieldtypes->size()){
+        m_datatype = getCompatibleDataType((*fieldtypes)[m_leftColId], (*fieldtypes)[m_rightColId]);
       }
     }
     m_leftExpression->analyzeColumns(fieldnames, fieldtypes);

@@ -652,6 +652,7 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
         if (!sColId.empty() && isInt(sColId) && atoi(sColId.c_str()) < fieldtypes->size()){
           m_expType = COLUMN;
           m_datatype = (*fieldtypes)[atoi(sColId.c_str())];
+          m_colId = atoi(sColId.c_str());
           trace(DEBUG, "Tuning '%s' from VARIABLE to COLUMN.\n", m_expStr.c_str());
         }else{
           trace(ERROR, "Unrecognized variable %s .\n", m_expStr.c_str());

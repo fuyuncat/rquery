@@ -347,6 +347,7 @@ void FilterC::dump(int deep){
 }
 
 void FilterC::dump(){
+  trace(DEBUG,"Dumping filter construct...\n");;
   dump(0);
 }
 

@@ -154,8 +154,6 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
   }
 }
 
-checkRowInTopFilter
-
 // filt a row data by filter. no predication mean true. comparasion failed means alway false
 bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
 {

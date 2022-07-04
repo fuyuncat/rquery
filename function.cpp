@@ -199,7 +199,7 @@ bool FunctionC::remove(FunctionC* node){
     return removed;
 }
 
-bool FunctionC::runUpper(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+bool FunctionC::runUpper(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   if (m_params.size() != 1){
     trace(ERROR, "Upper() function accepts only one parameter.\n");
@@ -213,7 +213,7 @@ bool FunctionC::runUpper(vector<string>* fieldnames, map<string,string>* fieldva
     return false;
 }
 
-bool FunctionC::runLower(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+bool FunctionC::runLower(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   if (m_params.size() != 1){
     trace(ERROR, "Lower() function accepts only one parameter.\n");

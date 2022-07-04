@@ -159,7 +159,7 @@ vector<string> split(string str, char delim, string quoters, char escape)
   int quoterId = -1;
   while(i < str.size()) {
     if (str[i] == delim && i>0 && !quoted) {
-      trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
+      //trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       //v.push_back(string(str, begin, i));
       v.push_back(str.substr(begin, i-begin));
       begin = i+1;
@@ -179,6 +179,7 @@ vector<string> split(string str, char delim, string quoters, char escape)
           quoterId = -1;
         }
     }
+    trace(DEBUG, "spliting %d/%d\n", i, str.size());
     ++i;
   }
   if (begin<str.size())

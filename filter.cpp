@@ -38,7 +38,7 @@ void FilterC::init()
   m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;
 
-  m_comparators.push_back("=");m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back("LIKE");m_comparators.push_back("REGLIKE");m_comparators.push_back("NOLIKE");m_comparators.push_back("NOREGLIKE");m_comparators.push_back("IN");m_comparators.push_back("NOIN"); // ">=", "<=" should be before ">", "<"
+  m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back("=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back("LIKE");m_comparators.push_back("REGLIKE");m_comparators.push_back("NOLIKE");m_comparators.push_back("NOREGLIKE");m_comparators.push_back("IN");m_comparators.push_back("NOIN"); // ">=", "<=" should be before ">", "<"
 }
 
 void FilterC::setExpstr(string expStr)

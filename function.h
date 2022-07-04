@@ -67,7 +67,7 @@ class FunctionC
     bool runRound(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runLog(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runDateformat(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
-    bool runDateround(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runTruncdate(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runNow(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
 
   protected:

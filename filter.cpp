@@ -126,13 +126,32 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
       node->m_leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
       node->m_rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
       node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
-      if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN, right expression should be a () quoted expression string
-        string sInStr = boost::algorithm::trim_copy<string>(node->m_rightExpStr);
-        if (sInStr.size()<2 || sInStr[0] != '(' || sInStr[sInStr.size()-1] != ')'){
-          trace(ERROR, "'%s' is not a valid IN string!\n", sInStr.c_str());
+      if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
+        if (node->m_rightExpression){
+          node->m_rightExpression->clear();
+          delete node->m_rightExpression;
         }
-        node->m_rightExpression = new ExpressionC();
-        node->m_rightExpression->m_expStr = sInStr;
+        node->m_rightExpression = NULL;
+        if (node->m_rightExpStr.size()<2 || node->m_rightExpStr[0]!='(' || node->m_rightExpStr[node->m_rightExpStr.size()-1]!=')'){
+          trace(ERROR, "Invalid IN string '%s'\n", node->m_rightExpStr.c_str());
+          return false;
+        }
+        string sElements = node->m_rightExpStr.substr(1,node->m_rightExpStr.size()-2);
+        vector<string> vElements = split(sElements,',',"//''{}",'\\');
+        for (int i=0;i<vElements.size();i++){
+          string sResult, sElement = boost::algorithm::trim_copy<string>(vElements[i]);
+          if (sElement.empty()){
+            trace(ERROR, "Empty IN element string!\n");
+            return false;
+          }
+          ExpressionC eElement(sElement);
+          if (!eElement.expstrAnalyzed()){
+            trace(ERROR, "Failed to analyze the expression of %s!\n", sElement.c_str());
+            return false;
+          }
+          m_inExpressions.push_back(eElement);
+        }
+        return false;
       }else
         node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
       return;
@@ -413,24 +432,53 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
     //if (m_rightExpression)
     //  m_rightExpression->analyzeColumns(fieldnames, fieldtypes);
   }else if (m_type == LEAF){
-    m_leftExpression = new ExpressionC(m_leftExpStr);
+    if (m_leftExpression){
+      if (!m_leftExpression->expstrAnalyzed()){
+        m_leftExpression->clear();
+        delete m_leftExpression;
+        m_leftExpression = new ExpressionC(m_leftExpStr);
+      }
+    }else
+      m_leftExpression = new ExpressionC(m_leftExpStr);
     if (!m_leftExpression->expstrAnalyzed()){
       m_leftExpression->clear();
       delete m_leftExpression;
       m_leftExpression = NULL;
       return false;
     }
-    m_rightExpression = new ExpressionC(m_rightExpStr);
-    if (!m_rightExpression->expstrAnalyzed()){
-      m_rightExpression->clear();
-      delete m_rightExpression;
-      m_rightExpression = NULL;
-      return false;
-    }
-
     m_leftExpression->analyzeColumns(fieldnames, fieldtypes);
-    m_rightExpression->analyzeColumns(fieldnames, fieldtypes);
-    m_datatype = getCompatibleDataType(m_leftExpression->m_datatype, m_rightExpression->m_datatype);
+
+    if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
+      int iDataType = -99;
+      for (int = 0; i<m_inExpressions.size(); i++){
+        if (m_inExpressions[i].expstrAnalyzed()){
+          m_inExpressions[i].analyzeColumns(fieldnames, fieldtypes);
+          if (iDataType == -99)
+            iDataType = m_inExpressions[i].m_datatype;
+          else
+            iDataType = getCompatibleDataType(iDataType, m_inExpressions[i].m_datatype);
+        }else
+          return false;
+      }
+      m_datatype = getCompatibleDataType(m_leftExpression->m_datatype, iDataType);
+    }else{
+      if (m_rightExpression){
+        if (!m_rightExpression->expstrAnalyzed()){
+          m_rightExpression->clear();
+          delete m_rightExpression;
+          m_rightExpression = new ExpressionC(m_leftExpStr);
+        }
+      }else
+        m_rightExpression = new ExpressionC(m_leftExpStr);
+      if (!m_rightExpression->expstrAnalyzed()){
+        m_rightExpression->clear();
+        delete m_rightExpression;
+        m_rightExpression = NULL;
+        return false;
+      }
+      m_rightExpression->analyzeColumns(fieldnames, fieldtypes);
+      m_datatype = getCompatibleDataType(m_leftExpression->m_datatype, m_rightExpression->m_datatype);
+    }
     
     /*
     //m_datatype = detectDataType(m_rightExpStr);
@@ -717,26 +765,21 @@ void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string
     dataList.insert( pair<string,string>(columns[m_leftColId],m_rightExpStr) );
 }
 
-bool FilterC::compareIn(string str, string inExpStr, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues)
+bool FilterC::compareIn(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues)
 {
-  if (inExpStr.size()<2 || inExpStr[0]!='(' || inExpStr[inExpStr.size()-1]!=')'){
-    trace(ERROR, "Invalid IN string '%s'\n", inExpStr.c_str());
+  string leftRst, sResult;
+  if (m_inExpressions.size() == 0 || !m_leftExpression || !m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst)){
+    trace(ERROR, "Failed to get the value to be compared in IN!\n"); 
     return false;
   }
-  string sElements = inExpStr.substr(1,inExpStr.size()-2);
-  vector<string> vElements = split(inExpStr,',',"//''{}",'\\');
-  for (int i=0;i<vElements.size();i++){
-    string sResult, sElement = boost::algorithm::trim_copy<string>(vElements[i]);
-    if (sElement.empty()){
-      trace(ERROR, "Empty IN element string!\n");
+  trace(DEBUG, "Comparing '%s' IN '%s' (data type: %s)\n", leftRst.c_str(), m_rightExpression->getEntireExpstr().c_str(), decodeDatatype(m_datatype).c_str());
+
+  for (int i=0;i<m_inExpressions.size();i++){
+    if (!m_inExpressions[i].evalExpression(fieldnames, fieldvalues, varvalues, sResult)){
+      trace(ERROR, "Failed to get result of IN element %s!\n", m_inExpressions[i].getEntireExpstr().c_str());
       return false;
     }
-    ExpressionC eElement(sElement);
-    if (!eElement.evalExpression(fieldnames, fieldvalues, varvalues, sResult)){
-      trace(ERROR, "Failed to get result of %s!\n", sElement.c_str());
-      return false;
-    }
-    if (anyDataCompare(str, EQ, sResult, m_datatype) == 1){
+    if (anyDataCompare(leftRst, EQ, sResult, m_datatype) == 1){
       return true;
     }
   }
@@ -755,12 +798,7 @@ bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fiel
       return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues) || m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues);
   }else if(m_type == LEAF){
     if (m_comparator == IN || m_comparator == NOIN){
-      string leftRst = "";
-      if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst)){
-        trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), m_rightExpression->m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
-        return compareIn(leftRst, m_rightExpression->m_expStr, fieldnames, fieldvalues, varvalues) == 1&&m_comparator == IN;
-      }else
-        return false;
+      return compareIn(fieldnames, fieldvalues, varvalues) == 1&&m_comparator == IN;
     }
     else{
       string leftRst = "", rightRst = "";

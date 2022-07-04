@@ -420,9 +420,28 @@ bool FunctionC::runLog(vector<string>* fieldnames, vector<string>* fieldvalues, 
   }
 }
 
-bool FunctionC::runDateround(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+bool FunctionC::runTruncdate(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 2){
+    trace(ERROR, "truncdate(date, fmt) function accepts only two parameters.\n");
+    return false;
+  }
+  string sTm, sFmt, sSeconds; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sTm) && isDate(sTm, sFmt) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sSeconds) && isInt(sSeconds)){
+    struct tm tm;
+    if (strptime(sTm.c_str(), sFmt.c_str(), &tm)){
+      time_t t1 = (mktime(&tm)/sSeconds)*sSeconds;
+      tm = *(localtime(&t1));
+      sResult = dateToStr(tm, sFmt);
+      return !sResult.empty();
+    }else{
+      trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+      return false;
+    }
+  }else{
+    trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }  
 }
 
 bool FunctionC::runDateformat(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
@@ -488,8 +507,8 @@ bool FunctionC::runFunction(vector<string>* fieldnames, vector<string>* fieldval
     getResult = runLog(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("DATEFORMAT")==0)
     getResult = runDateformat(fieldnames, fieldvalues, varvalues, sResult);
-  else if(m_funcName.compare("DATEROUND")==0)
-    getResult = runDateround(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("TRUNCDATE")==0)
+    getResult = runTruncdate(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("NOW")==0)
     getResult = runNow(fieldnames, fieldvalues, varvalues, sResult);
   else{

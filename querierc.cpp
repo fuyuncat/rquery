@@ -127,8 +127,8 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
     else if (m_fieldntypes.find("@FIELD"+intToStr(i)) != m_fieldntypes.end())
       m_fieldtypes.push_back(m_fieldntypes["@FIELD"+intToStr(i)]);
     else{
-      int iType = detectDataType(matches[i];
-      m_fieldtypes.push_back(iType==UNKNOWN?STRING:iType)); // set UNKNOWN (real) data as STRING
+      int iType = detectDataType(matches[i]);
+      m_fieldtypes.push_back(iType==UNKNOWN?STRING:iType); // set UNKNOWN (real) data as STRING
     }
     trace(DEBUG, "Detected column '%s' data type '%s'\n", m_fieldnames[i-1].c_str(), decodeDatatype(m_fieldtypes[m_fieldtypes.size()-1]).c_str());
   }

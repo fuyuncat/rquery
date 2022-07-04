@@ -198,7 +198,6 @@ map<string,string> ParserC::parseparam(string parameterstr)
       m_queryparts.insert( pair<string,string>(boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))),boost::algorithm::trim_copy<string>(params[i].substr(found+1))) );
     }
   }
-  trace(DEBUG, "parseparam completed!\n");
 
   return m_queryparts;
 }

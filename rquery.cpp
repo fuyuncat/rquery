@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
   ParserC ps;
   map<string,string> query = ps.parseparam(argv[1]);
-  //dumpMap(query);
+  dumpMap(query);
   //ps.dumpQueryparts();
   /*
   for (map<string,string>::iterator it=query.begin(); it!=query.end(); ++it)

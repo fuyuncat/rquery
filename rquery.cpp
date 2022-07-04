@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
   }
   if (query.find("select") != query.end()){
     rq.assignSelString(query["select"]);
-    trace(INFO,"Assigning filter: %s \n", query["select"].c_str());
+    trace(INFO,"Assigning selections: %s \n", query["select"].c_str());
   }
 
   if ( argc < 3 ){

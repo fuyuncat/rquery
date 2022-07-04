@@ -121,11 +121,11 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
       str = str.substr(0, i-1)+str.substr(i);
     }else if(!quoteStarted && startsWithWords(str.substr(i), m_comparators) >= 0){ // splitor that not between quato are the real splitor
       string compStr = m_comparators[startsWithWords(str.substr(i), m_comparators)];
-      trace(DEBUG, "Found comparator '%s' in '%s'\n",compStr.c_str(),str.substr(i).c_str());
       node->m_comparator = encodeComparator(compStr);
       node->m_type = LEAF;
       node->m_leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
       node->m_rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
+      trace(DEBUG, "Found comparator '%s' in '%s'. left:%s;comp:%s;right:%s\n",compStr.c_str(),str.c_str(),node->m_leftExpStr.c_str(),compStr.c_str(),node->m_rightExpStr.c_str());
       node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
       if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
         if (node->m_rightExpression){

@@ -420,9 +420,14 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
       return false;
     }
 
-    m_datatype = detectDataType(m_rightExpStr);
-    if (m_datatype == UNKNOWN)
-      m_datatype = detectDataType(m_leftExpStr);
+    m_leftExpression->analyzeColumns(fieldnames, fieldtypes);
+    m_rightExpression->analyzeColumns(fieldnames, fieldtypes);
+    m_datatype = getCompatibleDataType(m_leftExpression->m_datatype, m_rightExpression->m_datatype);
+    
+    /*
+    //m_datatype = detectDataType(m_rightExpStr);
+    //if (m_datatype == UNKNOWN)
+    //  m_datatype = detectDataType(m_leftExpStr);
 
     if (fieldnames->size()>0){
       if (m_leftExpStr[0] == '"') {// quoted, treat as expression, otherwise, as columns
@@ -456,12 +461,10 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
       if (iRightColID<0){
         m_rightColId = findStrArrayId(*fieldnames, m_rightExpStr);
       }
-      if (m_leftColId >= 0 && m_leftColId < fieldtypes->size() && m_rightColId >= 0 && m_rightColId < fieldtypes->size()){
-        m_datatype = getCompatibleDataType((*fieldtypes)[m_leftColId], (*fieldtypes)[m_rightColId]);
-      }
+      //if (m_leftColId >= 0 && m_leftColId < fieldtypes->size() && m_rightColId >= 0 && m_rightColId < fieldtypes->size()){
+      //  m_datatype = getCompatibleDataType((*fieldtypes)[m_leftColId], (*fieldtypes)[m_rightColId]);
+      //}
     }
-    m_leftExpression->analyzeColumns(fieldnames, fieldtypes);
-    m_rightExpression->analyzeColumns(fieldnames, fieldtypes);
     if(m_leftColId != -1 && m_rightColId != -1){
       //if (metaData1.getColumnType(m_leftColId) != metaData2.getColumnType(m_rightColId)){
       //  //dtrace.trace(254);
@@ -470,6 +473,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
         return true;
     }else
       return true;
+    */
   }
   return m_metaDataAnzlyzed;
 }

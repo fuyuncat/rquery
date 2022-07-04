@@ -294,7 +294,7 @@ bool FunctionC::runNow(vector<string>* fieldnames, map<string,string>* fieldvalu
 
 
 // run function and get result
-bool FunctionC::runFunction(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+bool FunctionC::runFunction(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   bool getResult = false;
   if(m_funcName.compare("UPPER")==0)

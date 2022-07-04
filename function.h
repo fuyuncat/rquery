@@ -34,7 +34,7 @@ class FunctionC
     string m_funcName; // analyzed function name, upper case
     vector<ExpressionC> m_params; // parameter expressions.
     
-    bool runFunction(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runFunction(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool isConst();   // if all parameters are const
     void setExpStr(string expStr);
     int analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes); 

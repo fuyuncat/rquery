@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <math.h> 
+//#include <chrono>
 //#include <stdexcept.h>
 #include "commfuncs.h"
 
@@ -248,6 +249,15 @@ string trim_one(string str, char c)
   return newstr;
 }
 
+void replacestr(string & sRaw, string sReplace, string sNew)
+{
+  int pos=0;
+  while (sRaw.find(sReplace, pos) != string::npos){
+    sRaw.replace(pos, sReplace.length(), sNew);
+    pos+=sReplace.length();
+  }
+}
+
 bool isNumber(const string& str)
 {
     for (int i=0; i<str.length(); i++) {
@@ -370,6 +380,44 @@ string doubleToStr(const double val)
   }
 
   return str;
+}
+
+string dateToStr(struct tm val, string fmt)
+{
+  char buffer [256];
+  if (strftime(buffer,256,fmt,&val)
+    return string(buffer);
+  else {
+    trace(ERROR, "Unrecognized date format '%s'.\n", fmt.s_str());
+    return "";
+  }
+}
+
+bool strToDate(string str, struct tm & tm);
+{
+  str fmt;
+  if (isDate(str, fmt) && strptime(str.c_str(), fmt.c_str(), &tm))
+    return true;
+  else
+    return false;
+}
+
+struct tm now()
+{
+  //time_t timer;
+  //time_t now = time(&timer);  // get current time; same as: timer = time(NULL) 
+  time_t now = time(NULL);
+  return *(localtime(&now));
+
+  //using namespace std::chrono;
+  //duration<int,std::ratio<60*60*24> > one_day (1);
+  //system_clock::time_point curtime = system_clock::now();
+  //system_clock::time_point tomorrow = today + one_day;
+  //time_t tt;
+  //tt = system_clock::to_time_t ( curtime );
+  //std::cout << "today is: " << ctime(&tt);
+  //tt = system_clock::to_time_t ( tomorrow );
+  //std::cout << "tomorrow will be: " << ctime(&tt);
 }
 
 bool isDate(const string& str, string& fmt)
@@ -1137,9 +1185,10 @@ bool anyDataOperate(string str1, int operate, string str2, int type, string& res
     case TIMESTAMP:{
       struct tm rslt;
       bool gotResult = evalDate(str1, operate, str2, rslt);
-      char buffer [80];
-      strftime (buffer,80,DATEFMT,&rslt);
-      result = string(buffer);
+      result = dateToStr(rslt);
+      //char buffer [256];
+      //strftime (buffer,256,DATEFMT,&rslt);
+      //result = string(buffer);
       return gotResult;
     }
     case STRING:

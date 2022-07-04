@@ -403,9 +403,12 @@ bool ExpressionC::buildExpression()
             if (nextPos >= m_expStr.size()){ // reached the end
               m_type = LEAF;
               m_operate = UNKNOWN;
-              m_datatype = UNKNOWN;
+              //m_datatype = UNKNOWN;
               m_expType = FUNCTION;
               m_expStr = sExpStr+sParams;
+              FunctionC* func = new FunctionC(m_expStr);
+              m_datatype = func->m_datatype;
+              delete func;
               m_colId = -1;
               m_fieldnames = NULL;
               m_fieldtypes = NULL;
@@ -1044,6 +1047,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
         if (gotResult){
           m_expStr = sResult;
           m_expType = CONST;
+          m_datatype = func->m_datatype;
           trace(DEBUG,"Return function '%s' result '%s'\n", func->m_expStr.c_str(), sResult.c_str());
         }
       }else

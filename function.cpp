@@ -216,65 +216,208 @@ bool FunctionC::runUpper(vector<string>* fieldnames, vector<string>* fieldvalues
 bool FunctionC::runLower(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   if (m_params.size() != 1){
-    trace(ERROR, "Lower() function accepts only one parameter.\n");
+    trace(ERROR, "lower() function accepts only one parameter.\n");
     return false;
   }
   bool gotResult = m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult);
   if (gotResult){
     sResult = boost::to_lower_copy<string>(sResult);
     return true;
-  }else
+  }else{
+    trace(ERROR, "Failed to run lower(%s)\n", m_params[0].m_expStr.c_str());
     return false;
+  }
 }
 
 bool FunctionC::runSubstr(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 2 || m_params.size() != 3){
+    trace(ERROR, "substr(str, startPos, len) function accepts only two or three parameters.\n");
+    return false;
+  }
+  string sRaw, sPos, sLen; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sRaw) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sPos) && isInt(sPos)){
+    int iPos = atoi(sPos.c_str());
+    if (iPos<0 || iPos>=sRaw.length()){
+      trace(ERROR, "%s is out of length of %s!\n", sPos.c_str(), m_params[0].m_expStr.c_str());
+      return false;
+    }
+    if (m_params.size() == 3){
+      if (m_params[2].evalExpression(fieldnames, fieldvalues, varvalues, sLen) && isInt(sLen)){
+        int iLen = atoi(sLen.c_str());
+        if (iLen<0 || iLen+iPos>sRaw.length()){
+          trace(ERROR, "%s is out of length of %s starting from %s!\n", sLen.c_str(), m_params[0].m_expStr.c_str(), sPos.c_str());
+          return false;
+        }
+        sResult = sRaw.substr(iPos,iLen);
+        return true;
+      }else{
+        trace(ERROR, "Failed to run substr(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr);
+        return false;
+      }
+    }else{
+      sResult = sRaw.substr(iPos);
+      return true;
+    }      
+  }else{
+    trace(ERROR, "Failed to run substr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runInstr(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 2){
+    trace(ERROR, "instr(str, sub) function accepts only two parameters.\n");
+    return false;
+  }
+  string sRaw, sSub; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sRaw) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sSub)){
+    sResult = intToStr(sRaw.find(iPos));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run instr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runComparestr(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 2){
+    trace(ERROR, "comparestr(str1, str2) function accepts only two parameters.\n");
+    return false;
+  }
+  string str1, str2; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, str1) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, str2)){
+    sResult = intToStr(str1.compare(str2));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run comparestr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runNoCaseComparestr(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 2){
+    trace(ERROR, "nocasecomparestr(str1, str2) function accepts only two parameters.\n");
+    return false;
+  }
+  string str1, str2; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, str1) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, str2)){
+    str1=boost::to_upper_copy<string>(str1);
+    str2=boost::to_upper_copy<string>(str2);
+    sResult = intToStr(str1.compare(str2));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run nocasecomparestr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runReplace(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 3){
+    trace(ERROR, "replace(str, tobereplaced, newstr) function accepts only two parameters.\n");
+    return false;
+  }
+  string sRaw, sReplace, sNew; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sRaw) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sReplace) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sNew)){
+    replacestr(sRaw, sReplace, sNew);
+    sResult=sRaw;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run replace(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runFloor(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 1){
+    trace(ERROR, "floor(num) function accepts only one parameter.\n");
+    return false;
+  }
+  string sNum; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sNum) && isDouble(sNum)){
+    sResult = intToStr(floor(atof(sNum)));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run floor(%s)!\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runCeil(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 1){
+    trace(ERROR, "ceil(num) function accepts only one parameter.\n");
+    return false;
+  }
+  string sNum; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sNum) && isDouble(sNum)){
+    sResult = intToStr(ceil(atof(sNum)));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run ceil(%s)!\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runTimediff(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 2){
+    trace(ERROR, "timediff(tm1, tm2) function accepts only two parameters.\n");
+    return false;
+  }
+  string sTm1, sTm2, sFmt1, sFmt2; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sTm1) && isDate(sTm1, sFmt1) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sTm2) && isDate(sTm2, sFmt2)){
+    struct tm tm1, tm2;
+    if (strptime(sTm1.c_str(), sFmt1.c_str(), &tm1) && strptime(sTm2.c_str(), sFmt2.c_str(), &tm2)){
+      time_t t1 = mktime(&tm1);
+      time_t t2 = mktime(&tm2);
+      sResult = doubleToStr(difftime(t1, t2));
+      return true;
+    }else{
+      trace(ERROR, "Failed to run timediff(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+      return false;
+    }
+  }else{
+    trace(ERROR, "Failed to run timediff(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runRound(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 1){
+    trace(ERROR, "round(num) function accepts only one parameter.\n");
+    return false;
+  }
+  string sNum; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sNum) && isDouble(sNum)){
+    sResult = intToStr(round(atof(sNum)));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run round(%s)!\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runLog(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 1){
+    trace(ERROR, "log(num) function accepts only one parameter.\n");
+    return false;
+  }
+  string sNum; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sNum) && isDouble(sNum)){
+    sResult = intToStr(log(atof(sNum)));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run log(%s)!\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
 }
 
 bool FunctionC::runDateround(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
@@ -284,14 +427,36 @@ bool FunctionC::runDateround(vector<string>* fieldnames, vector<string>* fieldva
 
 bool FunctionC::runDateformat(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 2){
+    trace(ERROR, "dateformat(date, fmt) function accepts only two parameters.\n");
+    return false;
+  }
+  string sTm, sOrigFmt, sFmt; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sTm) && isDate(sTm, sOrigFmt) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sFmt)){
+    struct tm tm;
+    if (strptime(sTm1.c_str(), sOrigFmt.c_str(), &tm)){
+      sResult = dateToStr(tm, sFmt);
+      return !sResult.empty();
+    }else{
+      trace(ERROR, "Failed to run dateformat(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+      return false;
+    }
+  }else{
+    trace(ERROR, "Failed to run dateformat(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }  
 }
 
 bool FunctionC::runNow(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
-  return false;
+  if (m_params.size() != 0){
+    trace(ERROR, "now() function does not accept any parameter.\n");
+    return false;
+  }
+  struct tm curtime = now();
+  sResult = dateToStr(curtime);
+  return true;
 }
-
 
 // run function and get result
 bool FunctionC::runFunction(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)

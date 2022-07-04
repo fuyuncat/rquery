@@ -112,6 +112,7 @@ string trim_left(string str, char c = ' ');
 string trim_right(string str, char c = ' ');
 string trim_one(string str, char c = ' ');
 string trim(string str, char c = ' ');
+void replacestr(string & sRaw, string sReplace, string sNew);
 
 bool isNumber(const string& str);
 bool isInt(const string& str);
@@ -123,6 +124,10 @@ string intToStr(const int val);
 string longToStr(const long val);
 string floatToStr(const float val);
 string doubleToStr(const double val);
+string dateToStr(struct tm val, string fmt = DATEFMT);
+
+bool strToDate(string str, struct tm & tm);
+struct tm now();
 
 bool like(string str1, string str2); 
 bool reglike(string str, string regstr); 

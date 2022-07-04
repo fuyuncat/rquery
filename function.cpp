@@ -429,7 +429,7 @@ bool FunctionC::runTruncdate(vector<string>* fieldnames, vector<string>* fieldva
   string sTm, sFmt, sSeconds; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sTm) && isDate(sTm, sFmt) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sSeconds) && isInt(sSeconds)){
     struct tm tm;
-    int iSeconds = atoi(sSeconds);
+    int iSeconds = atoi(sSeconds.c_str());
     if (strptime(sTm.c_str(), sFmt.c_str(), &tm)){
       time_t t1 = (mktime(&tm)/iSeconds)*iSeconds;
       tm = *(localtime(&t1));

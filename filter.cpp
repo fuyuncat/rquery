@@ -121,7 +121,7 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
       str = str.substr(0, i-1)+str.substr(i);
     }else if(!quoteStarted && startsWithWords(str.substr(i), m_comparators) >= 0){ // splitor that not between quato are the real splitor
       string compStr = m_comparators[startsWithWords(str.substr(i), m_comparators)];
-      trace(DEBUG, "Found comparator '%s' in '%s'\n",compStr.c_str(),str.substr(i).c_str())
+      trace(DEBUG, "Found comparator '%s' in '%s'\n",compStr.c_str(),str.substr(i).c_str());
       node->m_comparator = encodeComparator(compStr);
       node->m_type = LEAF;
       node->m_leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));

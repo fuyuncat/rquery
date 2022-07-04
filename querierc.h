@@ -45,6 +45,7 @@ class QuerierC
     int boostmatch( map<string,string> & result);
     void printFieldNames();
     void setFieldDatatype(string field, int datetype);
+    long getMatchedCount();
 
   private:
     string m_regexstr;

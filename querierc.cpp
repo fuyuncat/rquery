@@ -355,3 +355,8 @@ int QuerierC::boostmatch(map<string,string> & result)
   }
   return result.size();
 }
+
+long QuerierC::getMatchedCount()
+{
+  return m_matchcount;
+}

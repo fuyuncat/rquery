@@ -395,7 +395,7 @@ string dateToStr(struct tm val, string fmt)
 
 bool strToDate(string str, struct tm & tm)
 {
-  str fmt;
+  string fmt;
   if (isDate(str, fmt) && strptime(str.c_str(), fmt.c_str(), &tm))
     return true;
   else

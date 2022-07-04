@@ -623,7 +623,7 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
 {
   trace(DEBUG, "Analyzing columns in expression '%s'\n", m_expStr.c_str());
   if (!fieldnames || !fieldtypes){
-    trace(ERROR, "fieldnames or fieldtypes is NULL!\n");
+    trace(ERROR, "(Expression)fieldnames or fieldtypes is NULL!\n");
     return UNKNOWN;
   }
   m_metaDataAnzlyzed = true;

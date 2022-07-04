@@ -83,6 +83,26 @@ bool QuerierC::assignSelString(string selstr)
   return true;
 }
 
+bool QuerierC::setFieldTypeFromStr(string setstr)
+{
+  vector<string> vSetFields = split(strParams,',',"//''{}",'\\');
+  for (int i=0; i<vSetFields.size(); i++){
+    vector<string> vField = split(vSetFields[i],' ',"//''{}",'\\');
+    vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"//''{}",'\\');
+    if (vField.size()<2){
+      trace(ERROR, "SET field type failed! Correct format is SET <FIELD> <TYPE>!\n");
+      return false;
+    }
+    int iType = encodeDatatype(vField[1]);
+    if (iType == UNKNOWN){
+      trace(ERROR, "Unknown data type %s!\n", vField[1].c_str());
+      return false;
+    }else
+      setFieldDatatype(vField[0], encodeDatatype(vField[1]));
+  }
+  return true;
+}
+
 void QuerierC::pairFiledNames(namesaving_smatch matches)
 {
   using boost::lexical_cast;

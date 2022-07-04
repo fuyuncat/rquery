@@ -140,6 +140,7 @@ string decodeDatatype(int datatype);
 string decodeOperator(int op);
 string decodeExptype(int exptype);
 int encodeComparator(string str);
+int encodeDatatype(string str);
 int encodeJunction(string str);
 int encodeOperator(string str);
 int findStrArrayId(const vector<string> array, const string member);

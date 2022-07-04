@@ -730,6 +730,26 @@ int encodeComparator(string str)
     return UNKNOWN;
 }
 
+int encodeDatatype(string str)
+{
+  if (boost::to_upper_copy<string>(str).compare("STRING") == 0)
+    return STRING;
+  else if (boost::to_upper_copy<string>(str).compare("LONG") == 0)
+    return LONG;
+  else if (boost::to_upper_copy<string>(str).compare("INTEGER") == 0)
+    return INTEGER;
+  else if (boost::to_upper_copy<string>(str).compare("DOUBLE") == 0)
+    return DOUBLE;
+  else if (boost::to_upper_copy<string>(str).compare("DATE") == 0)
+    return DATE;
+  else if (boost::to_upper_copy<string>(str).compare("TIMESTAMP") == 0)
+    return TIMESTAMP;
+  else if (boost::to_upper_copy<string>(str).compare("BOOLEAN") == 0)
+    return BOOLEAN;
+  else
+    return UNKNOWN;
+}
+
 int encodeJunction(string str)
 {
   if (boost::to_upper_copy<string>(str).compare("AND") == 0)

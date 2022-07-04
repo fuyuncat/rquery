@@ -37,6 +37,7 @@ class QuerierC
     void appendrawstr(string rawstr);
     void assignFilter(FilterC* filter);
     bool assignSelString(string selstr);
+    bool setFieldTypeFromStr(string setstr);
     int searchNext();
     int searchAll();
     void output();

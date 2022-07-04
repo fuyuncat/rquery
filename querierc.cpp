@@ -69,18 +69,18 @@ void QuerierC::setrawstr(string rawstr)
 
 bool assignSelString(string selstr)
 {
-  vector<string> vSelections = split(strParams,',',"//''{}",'\\');
+  vector<string> vSelections = split(selstr,',',"//''{}",'\\');
   for (int i=0; i<vSelections.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
-    string sParam = boost::algorithm::trim_copy<string>(vSelections[i]);
-    if (sParam.empty()){
-      trace(ERROR, "Empty parameter string!\n");
-      m_expstrAnalyzed = false;
+    string sSel = boost::algorithm::trim_copy<string>(vSelections[i]);
+    if (sSel.empty()){
+      trace(ERROR, "Empty selection string!\n");
       return false;
     }
-    ExpressionC eSel(sParam);
+    ExpressionC eSel(sSel);
     m_selections.push_back(eSel);
   }
+  return true;
 }
 
 void QuerierC::pairFiledNames(namesaving_smatch matches)

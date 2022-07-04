@@ -724,7 +724,7 @@ bool FilterC::compareIn(string str, string inExpStr, vector<string>* fieldnames,
     return false;
   }
   string sElements = inExpStr.substr(1,inExpStr.size()-2);
-  vector<string> vElements = split(strParams,',',"//''{}",'\\');
+  vector<string> vElements = split(inExpStr,',',"//''{}",'\\');
   for (int i=0;i<vElements.size();i++){
     string sResult, sElement = boost::algorithm::trim_copy<string>(vElements[i]);
     if (sElement.empty()){

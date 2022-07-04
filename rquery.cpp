@@ -153,6 +153,7 @@ int main(int argc, char *argv[])
     rq.printFieldNames();
     rq.outputAndClean();
   }
+  trace(DEBUG, "Found %d row(s).\n", rq.m_matchcount);
 
   //boost::regex reg(rex);
   //boost::smatch match;

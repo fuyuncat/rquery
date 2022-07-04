@@ -153,10 +153,10 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   for (int i=0; i<m_fieldnames.size(); i++)
     fieldValues.push_back(rowValue[i+1]);
     //fieldValues.insert( pair<string,string>(boost::algorithm::to_upper_copy<string>(m_fieldnames[i]),rowValue[i+1]));
-  varValues.insert( pair<string,string>("@raw",rowValue[0]));
-  varValues.insert( pair<string,string>("@file",m_filename));
-  varValues.insert( pair<string,string>("@line",rowValue[m_fieldnames.size()+1]));
-  varValues.insert( pair<string,string>("@row",rowValue[m_fieldnames.size()+2]));
+  varValues.insert( pair<string,string>("@RAW",rowValue[0]));
+  varValues.insert( pair<string,string>("@FILE",m_filename));
+  varValues.insert( pair<string,string>("@LINE",rowValue[m_fieldnames.size()+1]));
+  varValues.insert( pair<string,string>("@ROW",rowValue[m_fieldnames.size()+2]));
   bool bMatchedbMatched = filter->compareExpression(&m_fieldnames, &fieldValues, &varValues);
   if (bMatchedbMatched){
     if (m_selections.size()>0){

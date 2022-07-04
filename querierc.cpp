@@ -153,7 +153,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   if (bMatchedbMatched){
     if (m_selections.size()>0){
       vector<string> vResults;
-      sResult.push_back(rowValue[0]);
+      vResults.push_back(rowValue[0]);
       for (int i=0; i<m_selections.size(); i++){
         string sResult;
         m_selections[0].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);

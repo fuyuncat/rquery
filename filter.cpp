@@ -154,6 +154,7 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
         }
       }else
         node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
+      i+=(compStr.length()-1); // skip comparator
     }
   }
 }

@@ -85,7 +85,7 @@ bool QuerierC::assignSelString(string selstr)
 
 bool QuerierC::setFieldTypeFromStr(string setstr)
 {
-  vector<string> vSetFields = split(strParams,',',"//''{}",'\\');
+  vector<string> vSetFields = split(setstr,',',"//''{}",'\\');
   for (int i=0; i<vSetFields.size(); i++){
     vector<string> vField = split(vSetFields[i],' ',"//''{}",'\\');
     vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"//''{}",'\\');

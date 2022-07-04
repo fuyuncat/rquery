@@ -1312,6 +1312,6 @@ void dumpMap(map<string, string> m)
 {
   trace(DEBUG, "Dumping map<string, string>...\n");
   for (map<string,string>::iterator it=m.begin(); it!=m.end(); ++it)
-    trace(DEBUG, "%s: %s\n", it->c_str(), m[*it].c_str());
+    trace(DEBUG, "%s: %s\n", it->first.c_str(), it->second.c_str());
   trace(DEBUG, "\n");
 }

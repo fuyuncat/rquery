@@ -204,6 +204,7 @@ map<string,string> ParserC::parseparam(string parameterstr)
 
 void ParserC::dumpQueryparts()
 {
-  for (map<string,string>::iterator it=m_queryparts.begin(); it!=m_queryparts.end(); ++it)
-    printf("%s: %s\n", it->first.c_str(), it->second.c_str());
+  dumpMap(m_queryparts);
+  //for (map<string,string>::iterator it=m_queryparts.begin(); it!=m_queryparts.end(); ++it)
+  //  printf("%s: %s\n", it->first.c_str(), it->second.c_str());
 }

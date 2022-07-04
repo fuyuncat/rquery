@@ -385,7 +385,7 @@ string doubleToStr(const double val)
 string dateToStr(struct tm val, string fmt)
 {
   char buffer [256];
-  if (strftime(buffer,256,fmt.c_str(),&val)
+  if (strftime(buffer,256,fmt.c_str(),&val))
     return string(buffer);
   else {
     trace(ERROR, "Unrecognized date format '%s'.\n", fmt.s_str());

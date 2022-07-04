@@ -194,7 +194,7 @@ map<string,string> ParserC::parseparam(string parameterstr)
     size_t found = params[i].find_first_of(" ")==string::npos?params[i].find_first_of("\t"):string::npos;
     //trace(DEBUG, "Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);
     if  (found!=string::npos){
-      //trace(DEBUG, "Operation %s: %s\n", boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))).c_str(), boost::algorithm::trim_copy<string>(params[i].substr(found+1)).c_str());
+      trace(DEBUG, "Operation %s: %s\n", boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))).c_str(), boost::algorithm::trim_copy<string>(params[i].substr(found+1)).c_str());
       m_queryparts.insert( pair<string,string>(boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))),boost::algorithm::trim_copy<string>(params[i].substr(found+1))) );
     }
   }

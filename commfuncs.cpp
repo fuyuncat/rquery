@@ -388,12 +388,12 @@ string dateToStr(struct tm val, string fmt)
   if (strftime(buffer,256,fmt.c_str(),&val))
     return string(buffer);
   else {
-    trace(ERROR, "Unrecognized date format '%s'.\n", fmt.s_str());
+    trace(ERROR, "Unrecognized date format '%s'.\n", fmt.c_str());
     return "";
   }
 }
 
-bool strToDate(string str, struct tm & tm);
+bool strToDate(string str, struct tm & tm)
 {
   str fmt;
   if (isDate(str, fmt) && strptime(str.c_str(), fmt.c_str(), &tm))

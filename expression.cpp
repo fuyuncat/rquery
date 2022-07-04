@@ -585,7 +585,7 @@ void ExpressionC::dump()
   dump(0);
 }
 
-string getEntireExpstr()
+string ExpressionC::getEntireExpstr()
 {
   return (m_leftNode?m_leftNode->getEntireExpstr():"")+m_expStr+(m_rightNode?m_rightNode->getEntireExpstr():"");
 }

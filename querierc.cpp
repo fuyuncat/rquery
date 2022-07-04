@@ -123,7 +123,8 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
     return false;
   }
   bool matched = false; 
-  vector<string> fieldValues, varValues;
+  vector<string> fieldValues;
+  map<string, string> varValues;
   for (int i=0; i<m_fieldnames.size(); i++)
     fieldValues.push_back(rowValue[i+1]);
     //fieldValues.insert( pair<string,string>(boost::algorithm::to_upper_copy<string>(m_fieldnames[i]),rowValue[i+1]));

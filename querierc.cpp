@@ -67,7 +67,7 @@ void QuerierC::setrawstr(string rawstr)
   m_rawstr = rawstr;
 }
 
-bool assignSelString(string selstr)
+bool QuerierC::assignSelString(string selstr)
 {
   vector<string> vSelections = split(selstr,',',"//''{}",'\\');
   for (int i=0; i<vSelections.size(); i++){

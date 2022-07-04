@@ -271,6 +271,7 @@ int QuerierC::searchAll()
 void QuerierC::formatoutput(vector<string> datas)
 {
   m_outputrow++;
+  dumpVector(datas);
   //printf("%d: ", m_outputrow);
   if (m_selections.size()==0)
     printf("%s\n", datas[0].c_str());

@@ -92,12 +92,12 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
     bool foundName = false;
     for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
       if (&(matches[i]) == &(matches[*it])){
-        m_fieldnames.push_back(string(*it));
+        m_fieldnames.push_back(boost::to_upper_copy<string>(string(*it)));
         foundName = true;
       }
     if (!foundName){
       try{
-        m_fieldnames.push_back("@field"+boost::lexical_cast<std::string>(i));
+        m_fieldnames.push_back("@FIELD"+boost::lexical_cast<std::string>(i));
       }catch (bad_lexical_cast &){
         m_fieldnames.push_back("?");
       }
@@ -107,10 +107,15 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
 
 void QuerierC::setFieldDatatype(string field, int datetype)
 {
-  if (m_fieldntypes.find(field) != m_fieldntypes.end())
-    m_fieldntypes[field] = datetype;
+  str fname = boost::to_upper_copy<string>(field);
+  if (m_fieldntypes.find(fname) != m_fieldntypes.end())
+    m_fieldntypes[fname] = datetype;
   else
-    m_fieldntypes.insert( pair<string, int>(field,datetype) );
+    m_fieldntypes.insert( pair<string, int>(fname,datetype) );
+  for (int i=0;i<m_fieldnames.size();i++){
+    if (fname.compare(m_fieldnames[i]) == 0 && i<m_fieldtypes.size())
+      m_fieldtypes[i] = datetype;
+  }
 }
 
 void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
@@ -119,8 +124,8 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
   for (int i=1; i<matches.size(); i++){
     if (m_fieldnames.size()>i-1 && m_fieldntypes.find(m_fieldnames[i-1]) != m_fieldntypes.end()) 
       m_fieldtypes.push_back(m_fieldntypes[m_fieldnames[i-1]]);
-    else if (m_fieldntypes.find("@field"+intToStr(i)) != m_fieldntypes.end())
-      m_fieldtypes.push_back(m_fieldntypes["@field"+intToStr(i)]);
+    else if (m_fieldntypes.find("@FIELD"+intToStr(i)) != m_fieldntypes.end())
+      m_fieldtypes.push_back(m_fieldntypes["@FIELD"+intToStr(i)]);
     else
       m_fieldtypes.push_back(detectDataType(matches[i]));
   }

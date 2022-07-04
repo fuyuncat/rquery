@@ -107,7 +107,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
 
 void QuerierC::setFieldDatatype(string field, int datetype)
 {
-  str fname = boost::to_upper_copy<string>(field);
+  string fname = boost::to_upper_copy<string>(field);
   if (m_fieldntypes.find(fname) != m_fieldntypes.end())
     m_fieldntypes[fname] = datetype;
   else

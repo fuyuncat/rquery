@@ -509,7 +509,6 @@ int getCompatibleDataType(int ldatatype, int rdatatype)
   }
 }
 
-
 // detect the data type of an expression string
 // STRING: quoted by '', or regular expression: //
 // DATE/TIMESTAMP: quoted by {}
@@ -563,6 +562,12 @@ bool reglike(string str, string regstr)
     trace(ERROR, "Regular search exception: %s\n", e.what());
     return false;
   }
+}
+
+bool in(string str1, string str2)
+{
+  //return boost::to_upper_copy<string>(str2).find(boost::to_upper_copy<string>(str1))!=string::npos;
+  return str2.find(str1)!=string::npos;
 }
 
 /*
@@ -699,67 +704,6 @@ string decodeExptype(int exptype)
   }
 }
 
-int encodeComparator(string str)
-{
-  //printf("encode comparator: %s\n",str.c_str());
-  if (str.compare("=") == 0)
-    return EQ;
-  else if (str.compare(">") == 0)
-    return LT;
-  else if (str.compare("<") == 0)
-    return ST;
-  else if (str.compare("!=") == 0)
-    return NEQ;
-  else if (str.compare(">=") == 0)
-    return LE;
-  else if (str.compare("<=") == 0)
-    return SE;
-  else if (boost::to_upper_copy<string>(str).compare("LIKE") == 0)
-    return LIKE;
-  else if (boost::to_upper_copy<string>(str).compare("REGLIKE") == 0)
-    return REGLIKE;
-  else if (boost::to_upper_copy<string>(str).compare("NOLIKE") == 0)
-    return NOLIKE;
-  else if (boost::to_upper_copy<string>(str).compare("NOREGLIKE") == 0)
-    return NOREGLIKE;
-  else if (boost::to_upper_copy<string>(str).compare("IN") == 0)
-    return IN;
-  else if (boost::to_upper_copy<string>(str).compare("NOIN") == 0)
-    return NOIN;
-  else
-    return UNKNOWN;
-}
-
-int encodeDatatype(string str)
-{
-  if (boost::to_upper_copy<string>(str).compare("STRING") == 0)
-    return STRING;
-  else if (boost::to_upper_copy<string>(str).compare("LONG") == 0)
-    return LONG;
-  else if (boost::to_upper_copy<string>(str).compare("INTEGER") == 0)
-    return INTEGER;
-  else if (boost::to_upper_copy<string>(str).compare("DOUBLE") == 0)
-    return DOUBLE;
-  else if (boost::to_upper_copy<string>(str).compare("DATE") == 0)
-    return DATE;
-  else if (boost::to_upper_copy<string>(str).compare("TIMESTAMP") == 0)
-    return TIMESTAMP;
-  else if (boost::to_upper_copy<string>(str).compare("BOOLEAN") == 0)
-    return BOOLEAN;
-  else
-    return UNKNOWN;
-}
-
-int encodeJunction(string str)
-{
-  if (boost::to_upper_copy<string>(str).compare("AND") == 0)
-    return AND;
-  else if (boost::to_upper_copy<string>(str).compare("OR") == 0)
-    return OR;
-  else
-    return UNKNOWN;
-}
-
 string decodeOperator(int op)
 {
   switch (op){
@@ -776,6 +720,70 @@ string decodeOperator(int op)
   default:
     return "UNKNOWN";
   }
+}
+
+int encodeComparator(string str)
+{
+  //printf("encode comparator: %s\n",str.c_str());
+  string sUpper = boost::to_upper_copy<string>(str);
+  if (sUpper.compare("=") == 0)
+    return EQ;
+  else if (sUpper.compare(">") == 0)
+    return LT;
+  else if (sUpper.compare("<") == 0)
+    return ST;
+  else if (sUpper.compare("!=") == 0)
+    return NEQ;
+  else if (sUpper.compare(">=") == 0)
+    return LE;
+  else if (sUpper.compare("<=") == 0)
+    return SE;
+  else if (sUpper.compare("LIKE") == 0)
+    return LIKE;
+  else if (sUpper.compare("REGLIKE") == 0)
+    return REGLIKE;
+  else if (sUpper.compare("NOLIKE") == 0)
+    return NOLIKE;
+  else if (sUpper.compare("NOREGLIKE") == 0)
+    return NOREGLIKE;
+  else if (sUpper.compare("IN") == 0)
+    return IN;
+  else if (sUpper.compare("NOIN") == 0)
+    return NOIN;
+  else
+    return UNKNOWN;
+}
+
+int encodeDatatype(string str)
+{
+  string sUpper = boost::to_upper_copy<string>(str);
+  if (sUpper.compare("STRING") == 0)
+    return STRING;
+  else if (sUpper.compare("LONG") == 0)
+    return LONG;
+  else if (sUpper.compare("INTEGER") == 0)
+    return INTEGER;
+  else if (sUpper.compare("DOUBLE") == 0)
+    return DOUBLE;
+  else if (sUpper.compare("DATE") == 0)
+    return DATE;
+  else if (sUpper.compare("TIMESTAMP") == 0)
+    return TIMESTAMP;
+  else if (sUpper.compare("BOOLEAN") == 0)
+    return BOOLEAN;
+  else
+    return UNKNOWN;
+}
+
+int encodeJunction(string str)
+{
+  string sUpper = boost::to_upper_copy<string>(str);
+  if (sUpper.compare("AND") == 0)
+    return AND;
+  else if (sUpper.compare("OR") == 0)
+    return OR;
+  else
+    return UNKNOWN;
 }
 
 int encodeOperator(string str)
@@ -1046,6 +1054,10 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
       return !like(newstr1, newstr2);
     case NOREGLIKE:
       return !reglike(newstr1, newstr2);
+    case IN:
+      return in(newstr1, newstr2);
+    case NOIN:
+      return !in(newstr1, newstr2);
     default:
       return -101;
     }

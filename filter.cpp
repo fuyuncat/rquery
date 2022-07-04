@@ -126,7 +126,15 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
       node->m_leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
       node->m_rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
       node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
-      node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
+      if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN, right expression should be a () quoted expression string
+        string sInStr = boost::algorithm::trim_copy<string>(node->m_rightExpStr);
+        if (sInStr.size()<2 || sInStr[0] != '(' || sInStr[sInStr.size()-1] != ')'){
+          trace(ERROR, "'%s' is not a valid IN string!\n", sInStr.c_str());
+        }
+        node->m_rightExpression = new ExpressionC();
+        node->m_rightExpression->m_expStr = sInStr;
+      }else
+        node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
       return;
     }
   }
@@ -709,6 +717,32 @@ void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string
     dataList.insert( pair<string,string>(columns[m_leftColId],m_rightExpStr) );
 }
 
+bool FilterC::compareIn(string str, string inExpStr, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues)
+{
+  if (inExpStr.size()<2 || inExpStr[0]!='(' || inExpStr[inExpStr.size()-1]!=')'){
+    trace(ERROR, "Invalid IN string '%s'\n", inExpStr.c_str())
+    return false;
+  }
+  string sElements = inExpStr.substr(1,inExpStr.size()-2)
+  vector<string> vElements = split(strParams,',',"//''{}",'\\');
+  for (int i=0;i<vElements.size();i++){
+    string sResult, sElement = boost::algorithm::trim_copy<string>(vElements[i]);
+    if (sElement.empty()){
+      trace(ERROR, "Empty IN element string!\n");
+      return false;
+    }
+    ExpressionC eElement(sElement);
+    if (!eElement.evalExpression(fieldnames, fieldvalues, varvalues, sResult)){
+      trace(ERROR, "Failed to get result of %s!\n", sElement.c_str());
+      return false;
+    }
+    if (anyDataCompare(str, EQ, rightRst, m_datatype) == 1){
+      return true;
+    }
+  }
+  return false;
+}
+
 // calculate an expression prediction. no predication or comparasion failed means alway false
 bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues){
   bool result=false;
@@ -720,12 +754,22 @@ bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fiel
     else
       return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues) || m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues);
   }else if(m_type == LEAF){
-    string leftRst = "", rightRst = "";
-    if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
-      trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype).c_str());
-      return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
-    }else
-      return false;
+    if (m_comparator == IN || m_comparator == NOIN){
+      string leftRst = "";
+      if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst)){
+        trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), m_rightExpression->m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
+        return compareIn(leftRst, m_comparator, m_rightExpression->m_expStr, m_datatype) == 1&&m_comparator == IN;
+      }else
+        return false;
+    }
+    else{
+      string leftRst = "", rightRst = "";
+      if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
+        trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype).c_str());
+        return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
+      }else
+        return false;
+    }
   }else{ 
     return false;
   }

@@ -78,6 +78,7 @@ class FilterC
     void dump(int deep);
     void buildLeafNodeFromStr(FilterC* node, string str); // build a leaf node
     bool buildFilter(string splitor, string quoters); // build current filter class from the expression string
+    bool compareIn(string str, string inExpStr, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues);
 
   protected:
     void init();

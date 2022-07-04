@@ -131,6 +131,7 @@ struct tm now();
 
 bool like(string str1, string str2); 
 bool reglike(string str, string regstr); 
+bool in(string str1, string str2); 
 //char getch();
 //size_t getstr(char * buffer, const size_t len);
 

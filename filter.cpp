@@ -695,7 +695,7 @@ void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string
 }
 
 // calculate an expression prediction. no predication or comparasion failed means alway false
-bool FilterC::compareExpression(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues){
+bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues){
   bool result=false;
   if (m_type == BRANCH){
     if (!m_leftNode || !m_rightNode)

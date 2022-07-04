@@ -649,13 +649,15 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
         m_datatype = LONG;
       else if (m_expStr.find("@FIELD") == 0){
         string sColId = m_expStr.substr(string("@FIELD").size());
-        if (!sColId.empty() && isInt(sColId) && atoi(sColId.c_str()) < fieldtypes->size()){
+        int iColID = isInt(sColId)?atoi(sColId.c_str())-1:-1;
+        if (!sColId.empty() && iColID < fieldtypes->size()){
           m_expType = COLUMN;
-          m_datatype = (*fieldtypes)[atoi(sColId.c_str())];
-          m_colId = atoi(sColId.c_str());
+          //m_datatype = (*fieldtypes)[atoi(sColId.c_str())];
+          m_colId = iColID;
+          m_datatype = (*fieldtypes)[m_colId];
           trace(DEBUG, "Tuning '%s' from VARIABLE to COLUMN(%d).\n", m_expStr.c_str(), m_colId);
         }else{
-          trace(ERROR, "Unrecognized variable(1) %s, Extracted COL ID: %s, number of fields: %d.\n", m_expStr.c_str(), sColId.c_str(),fieldtypes->size());
+          trace(ERROR, "Unrecognized variable(1) %s, Extracted COL ID: %d, number of fields: %d.\n", iColID, sColId.c_str(),fieldtypes->size());
           m_expType = UNKNOWN;
           m_datatype = UNKNOWN;
         }
@@ -704,6 +706,7 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
         if (boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>((*fieldnames)[i])) == 0){
           m_expStr = boost::to_upper_copy<string>(m_expStr);
           m_expType = COLUMN;
+          m_colId = i;
           m_datatype = (*fieldtypes)[i];
           trace(DEBUG, "Expression '%s' type is COLUMN, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
           return m_datatype;
@@ -948,7 +951,7 @@ void ExpressionC::alignChildrenDataType()
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case
-bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues, string & sResult){
+bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult){
   if (!fieldnames || !fieldvalues || !varvalues){
     trace(ERROR, "Insufficient metadata!\n");
     return false;
@@ -969,19 +972,34 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, map<string,string>*
       delete func;
       return gotResult;
     }else if (m_expType == COLUMN){
-      if (fieldvalues->find(m_expStr) != fieldvalues->end()){
+      if (m_colId >= 0 && m_colId<fieldvalues->size()){
         sResult = (*fieldvalues)[m_expStr];
         return true;
-      }else
-        return false;
+      }else{
+        int i=0;
+        for (i=0; i<fieldnames->size(); i++)
+          if ((*fieldnames)[i].compare(m_expStr) == 0)
+            break;
+        if (i<fieldnames->size()){
+          sResult = (*fieldvalues)[i];
+          return true;
+        }else{
+          trace(ERROR, "Cannot find COLUMN '%s'\n",m_expStr.c_str());
+          return false;
+        }
+      }
     }else if (m_expType == VARIABLE){
       if (varvalues->find(m_expStr) != varvalues->end()){
         sResult = (*varvalues)[m_expStr];
         return true;
-      }else
+      }else{
+        trace(ERROR, "Cannot find VARIABLE '%s'\n",m_expStr.c_str());
         return false;
-    }else
+      }
+    }else{
+      trace(ERROR, "Unknown expression type of '%s'\n",m_expStr.c_str());
       return false;
+    }
   }else{
     string leftRst = "", rightRst = "";
     if (!m_leftNode || !m_leftNode->evalExpression(fieldnames, fieldvalues, varvalues, leftRst))

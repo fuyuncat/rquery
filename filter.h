@@ -68,7 +68,7 @@ class FilterC
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     void mergeExprConstNodes();  // merge const in the expressions
 
-    bool compareExpression(vector<string>* fieldnames, map<string,string>* fieldvalues, map<string,string>* varvalues); // calculate an expression prediction. no predication or comparasion failed means alway false
+    bool compareExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues); // calculate an expression prediction. no predication or comparasion failed means alway false
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.

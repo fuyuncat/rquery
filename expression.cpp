@@ -961,7 +961,7 @@ void ExpressionC::alignChildrenDataType()
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not
-bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResul){
+bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult){
   if (!fieldnames || !fieldvalues || !varvalues){
     trace(ERROR, "Insufficient metadata!\n");
     return false;

@@ -1302,7 +1302,16 @@ bool matchToken(string str, string token)
 
 void dumpVector(vector<string> v)
 {
+  trace(DEBUG, "Dumping vector<string>...\n");
   for (int i=0; i<v.size(); i++)
-    trace(INFO, "%d:%s\t", i, v[i].c_str());
-  trace(INFO, "\n");
+    trace(DEBUG, "%d:%s\t", i, v[i].c_str());
+  trace(DEBUG, "\n");
+}
+
+void dumpMap(map<string, string> m)
+{
+  trace(DEBUG, "Dumping map<string, string>...\n");
+  for (map<string,string>::iterator it=m.begin(); it!=m.end(); ++it)
+    trace(DEBUG, "%s: %s\n", it->c_str(), m[*it].c_str());
+  trace(DEBUG, "\n");
 }

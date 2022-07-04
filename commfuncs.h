@@ -165,5 +165,6 @@ vector <string> getAllTokens(string str, string token); //get all matched regela
 bool matchToken(string str, string token); // check if matched regelar token
 
 void dumpVector(vector<string> v);
+void dumpMap(map<string, string> m);
 
 #endif // __COMMFUNCS_H

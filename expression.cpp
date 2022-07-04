@@ -1040,9 +1040,10 @@ bool ExpressionC::mergeConstNodes(string & sResult)
       bool gotResult = false;
       if (func->isConst()){
         vector<string> vfieldnames;
+        vector<string> fieldtypes;
         vector<string> vfieldvalues;
         map<string,string> mvarvalues;
-        func->analyzeColumns(m_fieldnames, m_fieldtypes);
+        func->analyzeColumns(vfieldnames, fieldtypes);
         gotResult = func->runFunction(&vfieldnames,&vfieldvalues,&mvarvalues,sResult);
         if (gotResult){
           m_expStr = sResult;

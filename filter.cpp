@@ -134,7 +134,7 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
         node->m_rightExpression = NULL;
         if (node->m_rightExpStr.size()<2 || node->m_rightExpStr[0]!='(' || node->m_rightExpStr[node->m_rightExpStr.size()-1]!=')'){
           trace(ERROR, "Invalid IN string '%s'\n", node->m_rightExpStr.c_str());
-          return false;
+          return;
         }
         string sElements = node->m_rightExpStr.substr(1,node->m_rightExpStr.size()-2);
         vector<string> vElements = split(sElements,',',"//''{}",'\\');
@@ -142,19 +142,17 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
           string sResult, sElement = boost::algorithm::trim_copy<string>(vElements[i]);
           if (sElement.empty()){
             trace(ERROR, "Empty IN element string!\n");
-            return false;
+            return;
           }
           ExpressionC eElement(sElement);
           if (!eElement.expstrAnalyzed()){
             trace(ERROR, "Failed to analyze the expression of %s!\n", sElement.c_str());
-            return false;
+            return;
           }
           m_inExpressions.push_back(eElement);
         }
-        return false;
       }else
         node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
-      return;
     }
   }
 }

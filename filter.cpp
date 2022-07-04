@@ -446,9 +446,9 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
     }
     m_leftExpression->analyzeColumns(fieldnames, fieldtypes);
 
-    if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
+    if (m_comparator == IN || m_comparator == NOIN){ // hard code for IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
       int iDataType = -99;
-      for (int = 0; i<m_inExpressions.size(); i++){
+      for (int i=0; i<m_inExpressions.size(); i++){
         if (m_inExpressions[i].expstrAnalyzed()){
           m_inExpressions[i].analyzeColumns(fieldnames, fieldtypes);
           if (iDataType == -99)

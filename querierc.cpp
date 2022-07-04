@@ -207,7 +207,7 @@ int QuerierC::searchNext()
           //m_filter->mergeExprConstNodes();
         }
         for (int i=0; i<m_selections.size(); i++)
-          m_selections.analyzeColumns(&m_fieldnames, &m_fieldtypes);
+          m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
       }
       // append variables
       //matcheddata.push_back(m_filename);
@@ -287,10 +287,10 @@ void QuerierC::printFieldNames()
   //  printf("%s\t",m_fieldnames[i].c_str());
   if (m_selections.size()>0){
     for (int i=0; i<m_selections.size(); i++)
-      printf("%s\t",m_selections.m_expStr.c_str());
+      printf("%s\t",m_selections[i].m_expStr.c_str());
     printf("\n");
     for (int i=0; i<m_selections.size(); i++)
-      printf("%s\t",string(m_expStr.length(),'-').c_str());
+      printf("%s\t",string(m_selections[i].m_expStr.length(),'-').c_str());
   }else{
     printf("Row\n"); 
     printf("%s",string(58,'-').c_str());

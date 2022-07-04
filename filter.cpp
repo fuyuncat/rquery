@@ -399,10 +399,10 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
         m_metaDataAnzlyzed = m_metaDataAnzlyzed &&  m_rightNode->analyzeColumns(fieldnames, fieldtypes);
     if (!m_metaDataAnzlyzed)
         return m_metaDataAnzlyzed;
-    if (m_leftExpression)
-      m_leftExpression->analyzeColumns(fieldnames, fieldtypes);
-    if (m_rightExpression)
-      m_rightExpression->analyzeColumns(fieldnames, fieldtypes);
+    //if (m_leftExpression)
+    //  m_leftExpression->analyzeColumns(fieldnames, fieldtypes);
+    //if (m_rightExpression)
+    //  m_rightExpression->analyzeColumns(fieldnames, fieldtypes);
   }else if (m_type == LEAF){
     m_leftExpression = new ExpressionC(m_leftExpStr);
     if (!m_leftExpression->expstrAnalyzed()){

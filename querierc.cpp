@@ -153,6 +153,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   if (bMatchedbMatched){
     if (m_selections.size()>0){
       vector<string> vResults;
+      sResult.push_back(rowValue[0]);
       for (int i=0; i<m_selections.size(); i++){
         string sResult;
         m_selections[0].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
@@ -271,7 +272,6 @@ int QuerierC::searchAll()
 void QuerierC::formatoutput(vector<string> datas)
 {
   m_outputrow++;
-  dumpVector(datas);
   //printf("%d: ", m_outputrow);
   if (m_selections.size()==0)
     printf("%s\n", datas[0].c_str());

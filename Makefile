@@ -7,7 +7,7 @@ all: rquery
 commfuncs.o: commfuncs.cpp commfuncs.h
 	g++ -c commfuncs.cpp
 function.o: function.cpp function.h
-	g++ -c function.cpp
+	g++ -g -c function.cpp
 expression.o: expression.cpp expression.h function.o
 	g++ -g -c expression.cpp
 filter.o: filter.cpp filter.h expression.o

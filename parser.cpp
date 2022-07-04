@@ -187,17 +187,18 @@ FilterC* ParserC::buildFilter(string initialString)
 // return operation type: -1 error; 0: unused; 1: parse; 2:select; 3: filter; 4: group; 5: sort
 map<string,string> ParserC::parseparam(string parameterstr)
 {
-  //printf("Original string: %s\n", parameterstr.c_str());
+  //trace(DEBUG, "Original string: %s\n", parameterstr.c_str());
   vector<string> params = split(parameterstr,'|',"//''{}",'\\');
   for (int i = 0; i < params.size(); ++i){
     string trimmedstr = boost::algorithm::trim_copy<string>(params[i]);
     size_t found = params[i].find_first_of(" ")==string::npos?params[i].find_first_of("\t"):string::npos;
-    //printf("Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);
+    //trace(DEBUG, "Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);
     if  (found!=string::npos){
-      //printf("Operation %s: %s\n", boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))).c_str(), boost::algorithm::trim_copy<string>(params[i].substr(found+1)).c_str());
+      //trace(DEBUG, "Operation %s: %s\n", boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))).c_str(), boost::algorithm::trim_copy<string>(params[i].substr(found+1)).c_str());
       m_queryparts.insert( pair<string,string>(boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))),boost::algorithm::trim_copy<string>(params[i].substr(found+1))) );
     }
   }
+  trace(DEBUG, "parseparam completed!\n");
 
   return m_queryparts;
 }

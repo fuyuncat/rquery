@@ -204,7 +204,6 @@ vector<string> split(string str, char delim, string quoters, char escape)
     ++i;
   }*/
 
-  trace(DEBUG, "spliting returned!\n");
   return v;
 }
 

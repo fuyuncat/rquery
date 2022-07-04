@@ -973,7 +973,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
       return gotResult;
     }else if (m_expType == COLUMN){
       if (m_colId >= 0 && m_colId<fieldvalues->size()){
-        sResult = (*fieldvalues)[m_expStr];
+        sResult = (*fieldvalues)[m_colId];
         return true;
       }else{
         int i=0;

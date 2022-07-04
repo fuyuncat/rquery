@@ -22,6 +22,8 @@
 #include "filter.h"
 //#include <boost/regex.hpp>
 
+class ExpressionC;
+
 class QuerierC
 {
   public:
@@ -34,6 +36,7 @@ class QuerierC
     void setrawstr(string rawstr);
     void appendrawstr(string rawstr);
     void assignFilter(FilterC* filter);
+    bool assignSelString(string selstr);
     int searchNext();
     int searchAll();
     void output();
@@ -60,13 +63,14 @@ class QuerierC
     map<string, int> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     FilterC* m_filter;
+    vector<ExpressionC> m_selections;    // selected expressions
     
     bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
 
   protected:
     void init();
     //void formatoutput(namesaving_smatch matches);
-    void formatoutput(vector<string> datas, bool rawstronly = false);
+    void formatoutput(vector<string> datas);
     void pairFiledNames(namesaving_smatch matches);
     void analyzeFiledTypes(namesaving_smatch matches);
 };

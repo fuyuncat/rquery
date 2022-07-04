@@ -90,6 +90,9 @@ int main(int argc, char *argv[])
     FilterC* filter = new FilterC(query["filter"]);
     rq.assignFilter(filter);
   }
+  if (query.find("select") != query.end()){
+    trace(INFO,"Assigning filter: %s \n", query["select"].c_str());
+  }
 
   if ( argc < 3 ){
     bool namePrinted = false;

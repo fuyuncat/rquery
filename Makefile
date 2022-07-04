@@ -14,7 +14,7 @@ filter.o: filter.cpp filter.h expression.o
 	g++ -g -c filter.cpp
 parser.o: parser.cpp parser.h filter.o
 	g++ -c parser.cpp
-querierc.o: querierc.cpp querierc.h filter.o
+querierc.o: querierc.cpp querierc.h filter.o expression.o
 	g++ -c querierc.cpp
 rquery.o: rquery.cpp commfuncs.h querierc.h parser.h filter.h
 	g++ -c rquery.cpp

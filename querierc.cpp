@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "expression.h"
 #include <boost/algorithm/string.hpp>
 #include "querierc.h"
 
@@ -64,6 +65,22 @@ void QuerierC::appendrawstr(string rawstr)
 void QuerierC::setrawstr(string rawstr)
 {
   m_rawstr = rawstr;
+}
+
+bool assignSelString(string selstr)
+{
+  vector<string> vSelections = split(strParams,',',"//''{}",'\\');
+  for (int i=0; i<vSelections.size(); i++){
+    trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
+    string sParam = boost::algorithm::trim_copy<string>(vSelections[i]);
+    if (sParam.empty()){
+      trace(ERROR, "Empty parameter string!\n");
+      m_expstrAnalyzed = false;
+      return false;
+    }
+    ExpressionC eSel(sParam);
+    m_selections.push_back(eSel);
+  }
 }
 
 void QuerierC::pairFiledNames(namesaving_smatch matches)
@@ -132,7 +149,20 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   varValues.insert( pair<string,string>("@file",m_filename));
   varValues.insert( pair<string,string>("@line",rowValue[m_fieldnames.size()+1]));
   varValues.insert( pair<string,string>("@row",rowValue[m_fieldnames.size()+2]));
-  return filter->compareExpression(&m_fieldnames, &fieldValues, &varValues);
+  bool bMatchedbMatched = filter->compareExpression(&m_fieldnames, &fieldValues, &varValues);
+  if (bMatchedbMatched){
+    if (m_selections.size()>0){
+      vector<string> vResults;
+      for (int i=0; i<m_selections.size(); i++){
+        string sResult;
+        m_selections[0].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
+        vResults.push_back(sResult);
+      }
+      m_results.push_back(vResults);
+    }else
+      m_results.push_back(rowValue);
+  }
+  return bMatchedbMatched;
 
   //if (filter->m_type == BRANCH){
   //  if (!filter->m_leftNode || !filter->m_rightNode){
@@ -176,6 +206,8 @@ int QuerierC::searchNext()
           m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes);
           //m_filter->mergeExprConstNodes();
         }
+        for (int i=0; i<m_selections.size(); i++)
+          m_selections.analyzeColumns(&m_fieldnames, &m_fieldtypes);
       }
       // append variables
       //matcheddata.push_back(m_filename);
@@ -183,7 +215,6 @@ int QuerierC::searchNext()
       matcheddata.push_back(intToStr(m_matchcount+1));
       if (matchFilter(matcheddata, m_filter)){
         m_matchcount++;
-        m_results.push_back(matcheddata);
       }
       //m_results.push_back(matches);
       //vector<namesaving_smatch>::iterator p = m_results.end();
@@ -237,11 +268,11 @@ int QuerierC::searchAll()
 //  printf("\n");
 //}
 
-void QuerierC::formatoutput(vector<string> datas, bool rawstronly)
+void QuerierC::formatoutput(vector<string> datas)
 {
   m_outputrow++;
   //printf("%d: ", m_outputrow);
-  if (rawstronly)
+  if (m_selections.size()==0)
     printf("%s\n", datas[0].c_str());
   else{
     for (int i=1; i<datas.size(); i++)
@@ -252,8 +283,18 @@ void QuerierC::formatoutput(vector<string> datas, bool rawstronly)
 
 void QuerierC::printFieldNames()
 {
-  for (int i=1; i<m_fieldnames.size(); i++)
-    printf("%s\t",m_fieldnames[i].c_str());
+  //for (int i=1; i<m_fieldnames.size(); i++)
+  //  printf("%s\t",m_fieldnames[i].c_str());
+  if (m_selections.size()>0){
+    for (int i=0; i<m_selections.size(); i++)
+      printf("%s\t",m_selections.m_expStr.c_str());
+    printf("\n");
+    for (int i=0; i<m_selections.size(); i++)
+      printf("%s\t",string(m_expStr.length(),'-').c_str());
+  }else{
+    printf("Row\n"); 
+    printf("%s",string(58,'-').c_str());
+  }
   printf("\n");
 }
 
@@ -261,7 +302,7 @@ void QuerierC::output()
 {
   //printf("Result Num: %d\n",m_results.size());
   for (int i=0; i<m_results.size(); i++)
-    formatoutput(m_results[i], true);
+    formatoutput(m_results[i]);
 }
 
 void QuerierC::outputAndClean()

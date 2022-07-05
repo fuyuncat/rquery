@@ -1168,18 +1168,18 @@ bool ExpressionC::inColNamesRange(vector<string> fieldnames)
 {
   if (m_type == LEAF){
     if (m_expType == CONST){
-      trace(DEBUG,"666666 '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
+      trace(DEBUG,"666666 '%s' '%s'\n", m_expStr.c_str());
       return true;
     }
-    else if (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN)
+    else if (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN){
       for (int i=0;i<fieldnames.size();i++)
         if (boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(fieldnames[i])) == 0){
           trace(DEBUG,"777777 '%s' \n", m_expStr.c_str());
-          return true
+          return true;
         }
       trace(DEBUG,"888888 '%s' \n", m_expStr.c_str());
       return false;
-    else if (m_expType == FUNCTION){
+    }else if (m_expType == FUNCTION){
       if (groupFuncOnly()){
         trace(DEBUG,"999999 '%s' \n", m_expStr.c_str());
         return true;

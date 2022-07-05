@@ -667,10 +667,7 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
           m_datatype = (*fieldtypes)[m_colId];
           trace(DEBUG, "Tuning '%s' from VARIABLE to COLUMN(%d).\n", m_expStr.c_str(), m_colId);
         }else{
-          printf("iColID:%d\n",iColID);
-          printf("sColId:%s\n",sColId.c_str());
-          printf("fieldtypes:%d\n",fieldtypes->size());
-          trace(ERROR, "Unrecognized variable(1) %s, Extracted COL ID: %d, number of fields: %d.\n", iColID, sColId.c_str(),fieldtypes->size());
+          trace(ERROR, "Unrecognized variable(1) %s, Extracted COL ID: %d, number of fields: %d.\n", sColId.c_str(), iColID, fieldtypes->size());
           m_expType = UNKNOWN;
           m_datatype = UNKNOWN;
         }

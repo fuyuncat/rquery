@@ -97,11 +97,11 @@ bool QuerierC::assignSelString(string selstr)
     if (m_groups.size() > 0) {// checking if compatible with GROUP
       bool compatible = false;
       for (int i=0; i<m_groups.size(); i++)
-        if (sSel.compatibleExp(m_groups[i])){
+        if (eSel.compatibleExp(m_groups[i])){
           compatible = true;
           break;
         }
-      if (!sSel.groupFuncOnly() || !compatible){
+      if (!eSel.groupFuncOnly() || !compatible){
         trace(FATAL, "Selection '%s' does not exist in Group \n");
         return false;
       }

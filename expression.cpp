@@ -1130,6 +1130,7 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
   if (node->m_type != LEAF)
     return false;
   if (m_type == LEAF){
+    trace(DEBUG,"Checking %d => %d; '%s' => '%s'\n", m_expType, node->m_expType, m_expStr.c_str(), node->m_expStr.c_str());
     if (m_expType == node->m_expType && m_expStr.compare(node->m_expStr) == 0)
       return true;
   }else{

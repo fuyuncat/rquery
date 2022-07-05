@@ -1137,6 +1137,7 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
       return false;
     if (!m_rightNode || !m_rightNode->existLeafNode(node))
       return false;
+    return true;
   }
 }
 

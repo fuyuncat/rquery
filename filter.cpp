@@ -798,7 +798,7 @@ bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fiel
       return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues) || m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues);
   }else if(m_type == LEAF){
     if (m_comparator == IN || m_comparator == NOIN){
-      return compareIn(fieldnames, fieldvalues, varvalues) == 1&&m_comparator == IN;
+      return compareIn(fieldnames, fieldvalues, varvalues)?(m_comparator == IN?true:false):(m_comparator == IN?false:true);
     }
     else{
       string leftRst = "", rightRst = "";

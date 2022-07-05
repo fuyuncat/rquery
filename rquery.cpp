@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
   }
   
   GlobalVars gv;
-  gv.setVars(16384*2, DEBUG);
+  gv.setVars(16384*2, DEBUG, true);
 
   ParserC ps;
   map<string,string> query = ps.parseparam(argv[1]);

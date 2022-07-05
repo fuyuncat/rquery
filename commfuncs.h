@@ -95,10 +95,11 @@ public:
   ~GlobalVars();
   
   void initVars();
-  void setVars(size_t inputbuffer = 16384, short tracelevel=FATAL);
+  void setVars(size_t inputbuffer = 16384, short tracelevel=FATAL, bool printheader=TRUE);
 
   static size_t g_inputbuffer;
   static short g_tracelevel;
+  static bool g_printheader;
 };
 
 void trace(short level, const char *fmt, ...);

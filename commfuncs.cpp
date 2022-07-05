@@ -59,15 +59,18 @@ GlobalVars::~GlobalVars()
 
 size_t GlobalVars::g_inputbuffer;
 short GlobalVars::g_tracelevel;
+bool GlobalVars::g_printheader;
 
 void GlobalVars::initVars(){
   g_inputbuffer = 16384;
   g_tracelevel = FATAL;
+  g_printheader = true;
 }
 
-void GlobalVars::setVars(size_t inputbuffer, short tracelevel){
+void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader){
   g_inputbuffer = inputbuffer;
   g_tracelevel = tracelevel;
+  g_printheader = printheader;
 }
 
 string decodeTracelevel(int level)

@@ -410,9 +410,10 @@ bool ExpressionC::buildExpression()
               m_operate = UNKNOWN;
               //m_datatype = UNKNOWN;
               m_expType = FUNCTION;
-              m_expStr = sExpStr+sParams;
+              m_expStr = boost::trim_copy<string>(boost::to_upper_copy<string>(sExpStr))+sParams;
               FunctionC* func = new FunctionC(m_expStr);
               m_datatype = func->m_datatype;
+              func->clear();
               delete func;
               m_colId = -1;
               m_fieldnames = NULL;
@@ -711,6 +712,8 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
         m_expType = FUNCTION;
         FunctionC* func = new FunctionC(m_expStr);
         m_datatype = func->m_datatype;
+        //m_expStr = boost::to_upper_copy<string>(boost::trim_copy<string>(func->m_expStr)); -- should NOT turn the parameters to UPPER case.
+        m_expStr = func->m_expStr;
         func->clear();
         delete func;
         trace(DEBUG, "Expression '%s' type is FUNCTION, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype).c_str());
@@ -719,7 +722,7 @@ int ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldty
       // check if it is a column
       for (int i=0; i<fieldnames->size(); i++){
         if (boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>((*fieldnames)[i])) == 0){
-          m_expStr = boost::to_upper_copy<string>(m_expStr);
+          m_expStr = boost::trim_copy<string>(boost::to_upper_copy<string>(m_expStr));
           m_expType = COLUMN;
           m_colId = i;
           m_datatype = (*fieldtypes)[i];
@@ -1101,10 +1104,73 @@ bool ExpressionC::mergeConstNodes(string & sResult)
 
 bool ExpressionC::groupFuncOnly()
 {
+  if (m_type == LEAF){
+    if (m_expType == CONST)
+      return true;
+    if (m_expType == FUNCTION){
+      size_t nPos = m_expStr.find("(");
+      if (nPos == string::npos)
+        return false;
+      string sFuncName=boost::trim_copy<string>(boost::to_upper_copy<string>(m_expStr.substr(0,nPos)));
+      if (sFuncName.compare("SUM")==0 || sFuncName.compare("COUNT")==0 || sFuncName.compare("UNIQUECOUNT")==0 || sFuncName.compare("AVERAGE")==0 || sFuncName.compare("MAX")==0 || sFuncName.compare("MIN")==0)
+        return true;
+    }
+  }else{
+    if (!m_leftNode || !m_leftNode->groupFuncOnly())
+      return false;
+    if (!m_rightNode || !m_rightNode->groupFuncOnly())
+      return false;
+    return true;
+  }
   return false;
+}
+
+bool ExpressionC::existLeafNode(ExpressionC* node)
+{
+  if (node->m_type != LEAF)
+    return false;
+  if (m_type == LEAF){
+    if (m_expType == node->m_expType && m_expStr.compare(node->m_expStr) == 0)
+      return true;
+  }else{
+    if (!m_leftNode || !m_leftNode->existLeafNode(node))
+      return false;
+    if (!m_rightNode || !m_rightNode->existLeafNode(node))
+      return false;
+  }
 }
 
 bool ExpressionC::compatibleExp(ExpressionC comExp)
 {
+  if (m_type == LEAF){
+    if (m_expType == CONST)
+      return true;
+    else if (m_expType == COLUMN || m_expType == VARIABLE)
+      if (comExp.existLeafNode(this))
+        return true;
+      else
+        return false;
+    else if (m_expType == FUNCTION){
+      if (groupFuncOnly())
+        return true;
+      FunctionC* func = new FunctionC(m_expStr);
+      m_datatype = func->m_datatype;
+      bool compatible = true;
+      for (int i=0;i<func->m_params.size();i++)
+        if (!func->m_params[i].compatibleExp(comExp)){
+          compatible = false;
+          break;
+        }
+      func->clear();
+      delete func;
+      return compatible;
+    }
+  }else{
+    if (!m_leftNode || !m_leftNode->compatibleExp(comExp))
+      return false;
+    if (!m_rightNode || !m_rightNode->compatibleExp(comExp))
+      return false;
+    return true;
+  }
   return false;
 }

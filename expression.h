@@ -73,6 +73,7 @@ class ExpressionC
     void dump(int deep);
     bool buildExpression();  // build expression class from the expression string
     void alignChildrenDataType(); // align children datatype with current datatype
+    bool existLeafNode(ExpressionC* node); // check if exist leaf node
 
     static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
     vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!

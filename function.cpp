@@ -86,6 +86,7 @@ bool FunctionC::analyzeExpStr()
     return false;
   }
   m_funcName = boost::trim_copy<string>(boost::to_upper_copy<string>(m_expStr.substr(0, m_expStr.find("("))));
+  m_expStr = m_funcName+strParams;
   strParams = trim_pair(strParams, "()");
   vector<string> vParams = split(strParams,',',"//''{}",'\\');
   for (int i=0; i<vParams.size(); i++){
@@ -102,12 +103,14 @@ bool FunctionC::analyzeExpStr()
   }
   if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0 || m_funcName.compare("REPLACE")==0 || m_funcName.compare("DATEFORMAT")==0)
     m_datatype = STRING;
-  else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("ROUND")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0)
+  else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("ROUND")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0 || m_funcName.compare("SUM")==0 || m_funcName.compare("COUNT")==0 || m_funcName.compare("UNIQUECOUNT")==0)
     m_datatype = LONG;
-  else if(m_funcName.compare("LOG")==0)
+  else if(m_funcName.compare("LOG")==0 || m_funcName.compare("AVERAGE")==0)
     m_datatype = DOUBLE;
   else if(m_funcName.compare("NOW")==0 || m_funcName.compare("DATEROUND")==0)
     m_datatype = DATE;
+  else if(m_funcName.compare("MAX")==0 || m_funcName.compare("MIN")==0) // MAX and MIN could be any data type
+    m_datatype = UNKNOWN;
   else{
     trace(ERROR, "Function(1) '%s' is not supported yet!\n", m_funcName.c_str());
     m_datatype = UNKNOWN;

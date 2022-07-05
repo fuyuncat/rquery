@@ -465,6 +465,8 @@ bool isDate(const string& str, string& fmt)
 // get the compatible data type from two data types
 int getCompatibleDataType(int ldatatype, int rdatatype) 
 {
+  if (ldatatype == ANY || rdatatype == ANY)
+    return ldatatype == ANY?rdatatype:ldatatype;
   if (ldatatype == STRING || rdatatype == STRING)
     if (ldatatype == DATE || rdatatype == DATE || ldatatype == TIMESTAMP || rdatatype == TIMESTAMP){ // incompatible types
       trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING).c_str(), decodeDatatype(ldatatype==STRING?rdatatype:ldatatype).c_str());

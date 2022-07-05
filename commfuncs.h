@@ -95,7 +95,7 @@ public:
   ~GlobalVars();
   
   void initVars();
-  void setVars(size_t inputbuffer = 16384, short tracelevel=FATAL, bool printheader=TRUE);
+  void setVars(size_t inputbuffer = 16384, short tracelevel=FATAL, bool printheader=true);
 
   static size_t g_inputbuffer;
   static short g_tracelevel;

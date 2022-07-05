@@ -44,6 +44,11 @@ void ExpressionC::setExpstr(string expString)
 {
   m_expStr = expString;
   buildExpression();
+  string sResult;
+  if (mergeConstNodes(sResult)){
+    m_expStr = sResult;
+    m_expType = CONST;
+  }
 }
 
 ExpressionC::ExpressionC()
@@ -1092,4 +1097,14 @@ bool ExpressionC::mergeConstNodes(string & sResult)
     }
     return gotResult;
   }
+}
+
+bool ExpressionC::groupFuncOnly()
+{
+  return false;
+}
+
+bool ExpressionC::compatibleExp(ExpressionC comExp)
+{
+  return false;
 }

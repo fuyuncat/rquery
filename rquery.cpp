@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
   int rst;
   map<string,string> matches;
   vector<string> cmatches;
+  bool bGroup = false;
   //vector<string> fields = ps.parsereg(argv[2],query["parse"], rst);
   //for (int i = 0; i < fields.size(); ++i){
   //  printf("field %d: %s\n", i+1, fields[i].c_str());
@@ -91,6 +92,12 @@ int main(int argc, char *argv[])
     trace(INFO,"Assigning filter: %s \n", query["filter"].c_str());
     FilterC* filter = new FilterC(query["filter"]);
     rq.assignFilter(filter);
+  }
+  // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP
+  if (query.find("group") != query.end()){
+    rq.assignGroupStr(query["group"]);
+    bGroup = true;
+    trace(INFO,"Setting group : %s \n", query["set"].c_str());
   }
   if (query.find("select") != query.end()){
     rq.assignSelString(query["select"]);
@@ -120,9 +127,12 @@ int main(int argc, char *argv[])
         rq.printFieldNames();
         namePrinted = true;
       }
-      rq.outputAndClean();
+      if (!bGroup)
+        rq.outputAndClean();
       howmany += std::cin.gcount();
     }
+    if (bGroup)
+      rq.outputAndClean();
 
     /*
     string lineInput;

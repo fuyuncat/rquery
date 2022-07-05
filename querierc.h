@@ -37,6 +37,7 @@ class QuerierC
     void appendrawstr(string rawstr);
     void assignFilter(FilterC* filter);
     bool assignSelString(string selstr);
+    bool assignGroupStr(string groupstr);
     bool setFieldTypeFromStr(string setstr);
     int searchNext();
     int searchAll();
@@ -66,7 +67,8 @@ class QuerierC
     vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     FilterC* m_filter;
     vector<ExpressionC> m_selections;    // selected expressions
-    
+    vector<ExpressionC> m_groups;    // group expressions
+
     bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
 
   protected:

@@ -67,6 +67,22 @@ void QuerierC::setrawstr(string rawstr)
   m_rawstr = rawstr;
 }
 
+bool QuerierC::assignGroupStr(string groupstr)
+{
+  vector<string> vGroups = split(groupstr,',',"//''{}",'\\');
+  for (int i=0; i<vGroups.size(); i++){
+    trace(DEBUG, "Processing group (%d) '%s'!\n", i, vGroups[i].c_str());
+    string sGroup = boost::algorithm::trim_copy<string>(vGroups[i]);
+    if (sGroup.empty()){
+      trace(ERROR, "Empty group string!\n");
+      return false;
+    }
+    ExpressionC eGroup(sGroup);
+    m_groups.push_back(eGroup);
+  }
+  return true;
+}
+
 bool QuerierC::assignSelString(string selstr)
 {
   vector<string> vSelections = split(selstr,',',"//''{}",'\\');
@@ -78,6 +94,18 @@ bool QuerierC::assignSelString(string selstr)
       return false;
     }
     ExpressionC eSel(sSel);
+    if (m_groups.size() > 0) {// checking if compatible with GROUP
+      bool compatible = false;
+      for (int i=0; i<m_groups.size(); i++)
+        if (sSel.compatibleExp(m_groups[i])){
+          compatible = true;
+          break;
+        }
+      if (!sSel.groupFuncOnly() || !compatible){
+        trace(FATAL, "Selection '%s' does not exist in Group \n");
+        return false;
+      }
+    }
     m_selections.push_back(eSel);
   }
   return true;

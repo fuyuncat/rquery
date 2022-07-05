@@ -53,6 +53,8 @@ class ExpressionC
     int analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes); // analyze column ID & name from metadata, return data type of current node
     bool columnsAnalyzed();
     bool expstrAnalyzed();
+    bool groupFuncOnly();
+    bool compatibleExp(ExpressionC comExp);
     ExpressionC* cloneMe();
     void copyTo(ExpressionC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction

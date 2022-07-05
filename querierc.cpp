@@ -184,7 +184,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
       vResults.push_back(rowValue[0]);
       for (int i=0; i<m_selections.size(); i++){
         string sResult;
-        m_selections[0].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
+        m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
         vResults.push_back(sResult);
       }
       m_results.push_back(vResults);

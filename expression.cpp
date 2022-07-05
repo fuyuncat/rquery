@@ -1127,12 +1127,12 @@ bool ExpressionC::groupFuncOnly()
 
 bool ExpressionC::existLeafNode(ExpressionC* node)
 {
+  trace(DEBUG,"Checking %d => %d; '%s' => '%s'\n", m_expType, node->m_expType, m_expStr.c_str(), node->m_expStr.c_str());
   if (node->m_type != LEAF){
     trace(DEBUG,"111111 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
     return false;
   }
   if (m_type == LEAF){
-    trace(DEBUG,"Checking %d => %d; '%s' => '%s'\n", m_expType, node->m_expType, m_expStr.c_str(), node->m_expStr.c_str());
     if (m_expType == node->m_expType && boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(node->m_expStr)) == 0){
       trace(DEBUG,"222222 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return true;

@@ -223,10 +223,11 @@ int QuerierC::searchNext()
   //m_line++;
   try {
     if(regex_search(m_rawstr, matches, m_regexp)){
+      //if (string(matches[0]).empty()){ // found an empty string means no more searching!
+      //  m_rawstr = "";
+      //  return found;
+      //}
       m_line++;
-      trace(DEBUG,"matched: '%s'\n",string(matches[0]).c_str());
-      if (m_line>=10)
-        exit(99);
       //if(m_results.size()>0)
       //  formatoutput(m_results[0]);
       vector<string> matcheddata;
@@ -285,7 +286,7 @@ int QuerierC::searchAll()
 {
   int totalfound = 0;
   int found = searchNext();
-  while (found>0){
+  while (found>0 && !m_rawstr.empty()){
     found = searchNext();
     totalfound+=found;
   }

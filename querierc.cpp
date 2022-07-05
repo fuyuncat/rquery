@@ -97,8 +97,8 @@ bool QuerierC::assignSelString(string selstr)
     if (m_groups.size() > 0) {// checking if compatible with GROUP
       vector<string> allColNames;
       for (int i=0; i<m_groups.size(); i++)
-        m_groups[i].getAllColumnNames(fieldnames);
-      if (!eSel.groupFuncOnly() && !eSel.inColNamesRange(fieldnames)){
+        m_groups[i].getAllColumnNames(allColNames);
+      if (!eSel.groupFuncOnly() && !eSel.inColNamesRange(allColNames)){
         trace(FATAL, "Selection '%s' does not exist in Group \n", sSel.c_str());
         return false;
       }

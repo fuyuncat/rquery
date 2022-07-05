@@ -55,7 +55,7 @@ class QuerierC
     regex_constants::match_flag_type m_searchflags;
     
     string m_filename;  // Data source file name
-    long m_line;        // data line number in the file or in a stream input
+    long m_line;        // data line number matched searching pattern in the file or in a stream input
     long m_matchcount;  // number of matched rows. Can be used to match @row
     long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
     

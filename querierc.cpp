@@ -220,11 +220,12 @@ int QuerierC::searchNext()
   namesaving_smatch matches(m_regexstr);
   //smatch matches;
   int found = 0;
-  m_line++;
+  //m_line++;
   try {
     if(regex_search(m_rawstr, matches, m_regexp)){
       //if(m_results.size()>0)
       //  formatoutput(m_results[0]);
+      m_line++;
       vector<string> matcheddata;
       for (int i=0; i<matches.size(); i++)
         matcheddata.push_back(matches[i]);

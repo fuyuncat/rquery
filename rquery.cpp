@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
   //  printf("field %d: %s\n", i+1, fields[i].c_str());
   //}
 
-  string patternStr = "";
+  string patternStr = "[^\n]*"; // if no PARSE passed, search each lines
   if (query.find("parse") != query.end())
     patternStr = query["parse"];
 

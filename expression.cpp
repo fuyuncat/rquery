@@ -1127,17 +1127,26 @@ bool ExpressionC::groupFuncOnly()
 
 bool ExpressionC::existLeafNode(ExpressionC* node)
 {
-  if (node->m_type != LEAF)
+  if (node->m_type != LEAF){
+    trace(DEBUG,"111111 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
     return false;
+  }
   if (m_type == LEAF){
     trace(DEBUG,"Checking %d => %d; '%s' => '%s'\n", m_expType, node->m_expType, m_expStr.c_str(), node->m_expStr.c_str());
-    if (m_expType == node->m_expType && boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(node->m_expStr)) == 0)
+    if (m_expType == node->m_expType && boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(node->m_expStr)) == 0){
+      trace(DEBUG,"222222 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return true;
+    }
   }else{
-    if (m_leftNode && m_leftNode->existLeafNode(node))
+    if (m_leftNode && m_leftNode->existLeafNode(node)){
+      trace(DEBUG,"3333333 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return true;
-    if (m_rightNode && m_rightNode->existLeafNode(node))
+    }
+    if (m_rightNode && m_rightNode->existLeafNode(node)){
+      trace(DEBUG,"444444 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return true;
+    }
+    trace(DEBUG,"555555 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
     return false;
   }
 }
@@ -1145,34 +1154,49 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
 bool ExpressionC::compatibleExp(ExpressionC comExp)
 {
   if (m_type == LEAF){
-    if (m_expType == CONST)
+    if (m_expType == CONST){
+      trace(DEBUG,"666666 '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
       return true;
+    }
     else if (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN)
-      if (comExp.existLeafNode(this))
+      if (comExp.existLeafNode(this)){
+        trace(DEBUG,"777777 '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
         return true;
-      else
+      }else{
+        trace(DEBUG,"888888 '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
         return false;
+      }
     else if (m_expType == FUNCTION){
-      if (groupFuncOnly())
+      if (groupFuncOnly()){
+        trace(DEBUG,"999999 '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
         return true;
+      }
       FunctionC* func = new FunctionC(m_expStr);
       m_datatype = func->m_datatype;
       bool compatible = true;
       for (int i=0;i<func->m_params.size();i++)
         if (!func->m_params[i].compatibleExp(comExp)){
           compatible = false;
+          trace(DEBUG,"AAAAAA '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
           break;
         }
       func->clear();
       delete func;
+      trace(DEBUG,"BBBBBB '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
       return compatible;
     }
   }else{
-    if (!m_leftNode || !m_leftNode->compatibleExp(comExp))
+    if (!m_leftNode || !m_leftNode->compatibleExp(comExp)){
+      trace(DEBUG,"CCCCCC '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
       return false;
-    if (!m_rightNode || !m_rightNode->compatibleExp(comExp))
+    }
+    if (!m_rightNode || !m_rightNode->compatibleExp(comExp)){
+      trace(DEBUG,"DDDDDD '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
       return false;
+    }
+    trace(DEBUG,"EEEEEE '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
     return true;
   }
+  trace(DEBUG,"FFFFFF '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
   return false;
 }

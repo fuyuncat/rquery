@@ -1086,6 +1086,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
       m_rightNode->clear();
       delete m_rightNode;
       m_rightNode = NULL;
+      m_expType = CONST;
       m_type = LEAF;
       m_expStr = sResult;
     }

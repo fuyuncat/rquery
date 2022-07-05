@@ -224,10 +224,9 @@ int QuerierC::searchNext()
   try {
     if(regex_search(m_rawstr, matches, m_regexp)){
       m_line++;
-      trace(DEBUG,"matched: '%s'\n",matches[0].c_str());
+      trace(DEBUG,"matched: '%s'\n",string(matches[0]).c_str());
       if (m_line>=10)
-        return m_line;
-      continue;
+        exit(99);
       //if(m_results.size()>0)
       //  formatoutput(m_results[0]);
       vector<string> matcheddata;

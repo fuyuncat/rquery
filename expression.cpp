@@ -1190,11 +1190,11 @@ bool ExpressionC::compatibleExp(ExpressionC comExp)
     }
   }else{
     if (!m_leftNode || !m_leftNode->compatibleExp(comExp)){
-      trace(DEBUG,"CCCCCC '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
+      trace(DEBUG,"CCCCCC '%s' '%s'\n", m_leftNode?m_leftNode->m_expStr.c_str():m_expStr.c_str(), comExp.m_expStr.c_str());
       return false;
     }
     if (!m_rightNode || !m_rightNode->compatibleExp(comExp)){
-      trace(DEBUG,"DDDDDD '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
+      trace(DEBUG,"DDDDDD '%s' '%s'\n", m_rightNode?m_rightNode->m_expStr.c_str():m_expStr.c_str(), comExp.m_expStr.c_str());
       return false;
     }
     trace(DEBUG,"EEEEEE '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());

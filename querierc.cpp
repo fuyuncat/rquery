@@ -267,10 +267,10 @@ int QuerierC::searchNext()
       //printf("\n");
 
       m_rawstr = m_rawstr.substr(matcheddata[0].length());
-      if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, we will skip until the next newline
+      if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, skip until the next newline
         size_t newlnpos = m_rawstr.find("\n");
         if (newlnpos != string::npos)
-          m_rawstr = m_rawstr.substr(newlnpos);
+          m_rawstr = m_rawstr.substr(newlnpos+1);
       }
       //printf("new: %s\n",m_rawstr.c_str());
       //m_rawstr.emplace_back( start, matches[0].first );

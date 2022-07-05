@@ -53,7 +53,7 @@ class ExpressionC
     int analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes); // analyze column ID & name from metadata, return data type of current node
     bool columnsAnalyzed();
     bool expstrAnalyzed();
-    bool groupFuncOnly();
+    bool groupFuncOnly(); // check if the expression is a group (aggregation) function
     void getAllColumnNames(vector<string> & fieldnames);  // get all potential column/variable (upper case)
     bool inColNamesRange(vector<string> fieldnames); // check if all column/variable in a given list of names (upper case).
     ExpressionC* cloneMe();

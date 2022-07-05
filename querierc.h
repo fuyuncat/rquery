@@ -22,6 +22,11 @@
 #include "filter.h"
 //#include <boost/regex.hpp>
 
+struct GroupDataSet{
+  vector<string> nonAggSels;  // all non-aggr selections values
+  map<string,vector<string>> aggFuncTaget; // evaled func parameter expression. mapping func_expr:evaled parameter expressions
+};
+
 class ExpressionC;
 
 class QuerierC
@@ -41,6 +46,7 @@ class QuerierC
     bool setFieldTypeFromStr(string setstr);
     int searchNext();
     int searchAll();
+    bool group();
     void output();
     void outputAndClean();
     int boostmatch( vector<string> *result = NULL);
@@ -68,8 +74,11 @@ class QuerierC
     FilterC* m_filter;
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions
+    //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
+    // map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
 
     bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
+    void evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, GroupDataSet & dateSet); // eval expression in aggregation paramter and store in a data set
 
   protected:
     void init();

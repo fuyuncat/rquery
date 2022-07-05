@@ -515,7 +515,18 @@ bool FunctionC::runFunction(vector<string>* fieldnames, vector<string>* fieldval
     getResult = runTruncdate(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("NOW")==0)
     getResult = runNow(fieldnames, fieldvalues, varvalues, sResult);
-  else{
+  else if(m_funcName.compare("SUM")==0 || m_funcName.compare("COUNT")==0 || m_funcName.compare("UNIQUECOUNT")==0 || m_funcName.compare("MAX")==0 || m_funcName.compare("MIN")==0 || m_funcName.compare("AVERAGE")==0) {// aggregation function eval parameter expression only!
+    if (m_params.size() != 1){
+      trace(ERROR, "Aggregation (%s) function accepts only one parameter.\n", m_funcName.c_str());
+      return false;
+    }
+    if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult))
+      return true;
+    else{
+      trace(ERROR, "Failed to eval aggregation (%s) function parameter (%s).\n", m_funcName.c_str(),m_params[0].getEntireExpstr().c_str());
+      return false;
+    }
+  }else{
     trace(ERROR, "Function(2) '%s' is not supported yet!\n", m_funcName.c_str());
     return false;
   }

@@ -150,6 +150,7 @@ int findStrArrayId(const vector<string> array, const string member);
 
 int anyDataCompare(string str1, string str2, int type);
 int anyDataCompare(string str1, int comparator, string str2, int type);
+int compareVector(vector<string> array1, vector<string> array2);
 
 bool evalString(string str1, int operate, string str2, string& result);
 bool evalLong(string str1, int operate, string str2, long& result);

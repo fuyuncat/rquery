@@ -131,8 +131,10 @@ int main(int argc, char *argv[])
         rq.outputAndClean();
       howmany += std::cin.gcount();
     }
-    if (bGroup)
+    if (bGroup){
+      rq.group();
       rq.outputAndClean();
+    }
 
     /*
     string lineInput;
@@ -165,6 +167,7 @@ int main(int argc, char *argv[])
     rq.setrawstr(argv[2]);
     //rq.searchNext();
     rq.searchAll();
+    rq.group();
     rq.printFieldNames();
     rq.outputAndClean();
   }

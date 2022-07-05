@@ -817,6 +817,21 @@ int findStrArrayId(const vector<string> array, const string member)
   return -1;
 }
 
+// comoare two vector. return 0 means equal; positive means array1>array2; negative means array1<array2
+int compareVector(vector<string> array1, vector<string> array2)
+{
+  if (array1.size() == array2.size()){
+    int c;
+    for (int i=0;i<array1.size();i++){
+      c = array1[i].compare(array2[i]);
+      if (c!=0)
+        return c;
+    }
+    return 0;
+  }else
+    return array1.size()-array2.size();
+}
+
 // compare data according to data type
 // @return int str1 < str2: -1; str1 == str2:0; str1 > str2: 1
 //             error -101~-110 -101:invalid data according to data type; -102: data type not supported

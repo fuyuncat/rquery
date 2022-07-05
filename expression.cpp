@@ -1136,6 +1136,9 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
     if (m_expType == node->m_expType && boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(node->m_expStr)) == 0){
       trace(DEBUG,"222222 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return true;
+    }else{
+      trace(DEBUG,"000000 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
+      return false;
     }
   }else{
     if (m_leftNode && m_leftNode->existLeafNode(node)){

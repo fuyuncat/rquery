@@ -1134,11 +1134,11 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
     if (m_expType == node->m_expType && boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(node->m_expStr)) == 0)
       return true;
   }else{
-    if (!m_leftNode || !m_leftNode->existLeafNode(node))
-      return false;
-    if (!m_rightNode || !m_rightNode->existLeafNode(node))
-      return false;
-    return true;
+    if (m_leftNode && m_leftNode->existLeafNode(node))
+      return true;
+    if (m_rightNode && m_rightNode->existLeafNode(node))
+      return true;
+    return false;
   }
 }
 

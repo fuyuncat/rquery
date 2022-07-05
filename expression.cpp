@@ -1102,6 +1102,16 @@ bool ExpressionC::mergeConstNodes(string & sResult)
   }
 }
 
+void ExpressionC::getAllColumnNames(vector<string> & fieldnames)
+{
+  if (m_type == LEAF && (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN))
+    fieldnames.push_back(boost::trim_copy<string>(boost::to_upper_copy<string>(m_expStr)));
+  if (m_leftNode)
+    m_leftNode->getAllColumnNames(fieldnames);
+  if (m_rightNode)
+    m_rightNode->getAllColumnNames(fieldnames);
+}
+
 bool ExpressionC::groupFuncOnly()
 {
   if (m_type == LEAF){
@@ -1127,34 +1137,34 @@ bool ExpressionC::groupFuncOnly()
 
 bool ExpressionC::existLeafNode(ExpressionC* node)
 {
-  trace(DEBUG,"Checking %d => %d; '%s' => '%s'\n", m_expType, node->m_expType, getEntireExpstr().c_str(), node->m_expStr.c_str());
+  //trace(DEBUG,"Checking %d => %d; '%s' => '%s'\n", m_expType, node->m_expType, getEntireExpstr().c_str(), node->m_expStr.c_str());
   if (node->m_type != LEAF){
-    trace(DEBUG,"111111 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
+    //trace(DEBUG,"111111 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
     return false;
   }
   if (m_type == LEAF){
     if (m_expType == node->m_expType && boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(node->m_expStr)) == 0){
-      trace(DEBUG,"222222 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
+      //trace(DEBUG,"222222 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return true;
     }else{
-      trace(DEBUG,"000000 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
+      //trace(DEBUG,"000000 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return false;
     }
   }else{
     if (m_leftNode && m_leftNode->existLeafNode(node)){
-      trace(DEBUG,"3333333 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
+      //trace(DEBUG,"3333333 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return true;
     }
     if (m_rightNode && m_rightNode->existLeafNode(node)){
-      trace(DEBUG,"444444 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
+      //trace(DEBUG,"444444 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return true;
     }
-    trace(DEBUG,"555555 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
+    //trace(DEBUG,"555555 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
     return false;
   }
 }
 
-bool ExpressionC::compatibleExp(ExpressionC comExp)
+bool ExpressionC::inColNamesRange(vector<string> fieldnames)
 {
   if (m_type == LEAF){
     if (m_expType == CONST){
@@ -1162,44 +1172,44 @@ bool ExpressionC::compatibleExp(ExpressionC comExp)
       return true;
     }
     else if (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN)
-      if (comExp.existLeafNode(this)){
-        trace(DEBUG,"777777 '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
-        return true;
-      }else{
-        trace(DEBUG,"888888 '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
-        return false;
-      }
+      for (int i=0;i<fieldnames.size();i++)
+        if (boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(fieldnames[i])) == 0){
+          trace(DEBUG,"777777 '%s' \n", m_expStr.c_str());
+          return true
+        }
+      trace(DEBUG,"888888 '%s' \n", m_expStr.c_str());
+      return false;
     else if (m_expType == FUNCTION){
       if (groupFuncOnly()){
-        trace(DEBUG,"999999 '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
+        trace(DEBUG,"999999 '%s' \n", m_expStr.c_str());
         return true;
       }
       FunctionC* func = new FunctionC(m_expStr);
       m_datatype = func->m_datatype;
       bool compatible = true;
       for (int i=0;i<func->m_params.size();i++)
-        if (!func->m_params[i].compatibleExp(comExp)){
+        if (!func->m_params[i].inColNamesRange(fieldnames)){
           compatible = false;
-          trace(DEBUG,"AAAAAA '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
+          trace(DEBUG,"AAAAAA '%s' \n", m_expStr.c_str());
           break;
         }
       func->clear();
       delete func;
-      trace(DEBUG,"BBBBBB '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
+      trace(DEBUG,"BBBBBB '%s' \n", m_expStr.c_str());
       return compatible;
     }
   }else{
-    if (!m_leftNode || !m_leftNode->compatibleExp(comExp)){
-      trace(DEBUG,"CCCCCC '%s' '%s'\n", m_leftNode?m_leftNode->m_expStr.c_str():m_expStr.c_str(), comExp.m_expStr.c_str());
+    if (!m_leftNode || !m_leftNode->inColNamesRange(fieldnames)){
+      trace(DEBUG,"CCCCCC '%s' \n", m_leftNode?m_leftNode->m_expStr.c_str():m_expStr.c_str());
       return false;
     }
-    if (!m_rightNode || !m_rightNode->compatibleExp(comExp)){
-      trace(DEBUG,"DDDDDD '%s' '%s'\n", m_rightNode?m_rightNode->m_expStr.c_str():m_expStr.c_str(), comExp.m_expStr.c_str());
+    if (!m_rightNode || !m_rightNode->inColNamesRange(fieldnames)){
+      trace(DEBUG,"DDDDDD '%s' \n", m_rightNode?m_rightNode->m_expStr.c_str():m_expStr.c_str());
       return false;
     }
-    trace(DEBUG,"EEEEEE '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
+    trace(DEBUG,"EEEEEE '%s' \n", m_expStr.c_str());
     return true;
   }
-  trace(DEBUG,"FFFFFF '%s' '%s'\n", m_expStr.c_str(), comExp.m_expStr.c_str());
+  trace(DEBUG,"FFFFFF '%s' \n", m_expStr.c_str());
   return false;
 }

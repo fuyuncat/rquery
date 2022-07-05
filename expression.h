@@ -54,7 +54,8 @@ class ExpressionC
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     bool groupFuncOnly();
-    bool compatibleExp(ExpressionC comExp);
+    void getAllColumnNames(vector<string> & fieldnames);  // get all potential column/variable (upper case)
+    bool inColNamesRange(vector<string> fieldnames); // check if all column/variable in a given list of names (upper case).
     ExpressionC* cloneMe();
     void copyTo(ExpressionC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction

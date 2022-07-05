@@ -101,7 +101,7 @@ bool QuerierC::assignSelString(string selstr)
           compatible = true;
           break;
         }
-      if (!eSel.groupFuncOnly() || !compatible){
+      if (!eSel.groupFuncOnly() && !compatible){
         trace(FATAL, "Selection '%s' does not exist in Group \n", sSel.c_str());
         return false;
       }

@@ -1131,7 +1131,7 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
     return false;
   if (m_type == LEAF){
     trace(DEBUG,"Checking %d => %d; '%s' => '%s'\n", m_expType, node->m_expType, m_expStr.c_str(), node->m_expStr.c_str());
-    if (m_expType == node->m_expType && m_expStr.compare(node->m_expStr) == 0)
+    if (m_expType == node->m_expType && boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(node->m_expStr)) == 0)
       return true;
   }else{
     if (!m_leftNode || !m_leftNode->existLeafNode(node))
@@ -1147,7 +1147,7 @@ bool ExpressionC::compatibleExp(ExpressionC comExp)
   if (m_type == LEAF){
     if (m_expType == CONST)
       return true;
-    else if (m_expType == COLUMN || m_expType == VARIABLE)
+    else if (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN)
       if (comExp.existLeafNode(this))
         return true;
       else

@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
     trace(DEBUG, "1111111111111111111111111\n");
     rq.group();
     trace(DEBUG, "2222222222222222222222222\n");
-    rq.printFieldNames();
+    //rq.printFieldNames();
     trace(DEBUG, "3333333333333333333333333\n");
     rq.outputAndClean();
   }

@@ -516,16 +516,16 @@ void QuerierC::printFieldNames()
   GlobalVars gv;
   if (!GlobalVars::g_printheader)
     return;
-  /*if (m_selections.size()>0){
-    for (int i=0; i<m_selections.size(); i++)
-      printf("%s\t",m_selections[i].getEntireExpstr().c_str());
+  if (m_selections.size()>0){
+    //for (int i=0; i<m_selections.size(); i++)
+    //  printf("%s\t",m_selections[i].getEntireExpstr().c_str());
     printf("\n");
     for (int i=0; i<m_selections.size(); i++)
       printf("%s\t",string(m_selections[i].getEntireExpstr().length(),'-').c_str());
   }else{
     printf("Row\n"); 
     printf("%s",string(58,'-').c_str());
-  }*/
+  }
   printf("\n");
 }
 

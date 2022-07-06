@@ -840,7 +840,7 @@ int encodeOperator(string str)
 
 int operatorPriority(int iOperator)
 {
-  switch (op){
+  switch (iOperator){
   case PLUS:
     return 1;
   case SUBTRACT:

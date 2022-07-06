@@ -251,7 +251,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           if (!m_selections[i].containGroupFunc())
             m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
           else{
-            trace(ERROR, "Invalid using aggregation function in '%s', no group involved!\n", m_selections[i].getEntireExpstr().c_str());
+            trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", m_selections[i].getEntireExpstr().c_str());
             return false;
           }
           vResults.push_back(sResult);

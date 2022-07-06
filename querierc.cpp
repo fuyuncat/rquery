@@ -231,7 +231,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
     dumpVector(rowValue);
     return false;
   }
-  trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
+  //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
   bool matched = false; 
   vector<string> fieldValues;
   map<string, string> varValues;

@@ -538,7 +538,6 @@ void QuerierC::output()
 
 void QuerierC::outputAndClean()
 {
-  trace(DEBUG, "outputAndClean: \n");
   output();
   m_results.clear();
   m_groups.clear();

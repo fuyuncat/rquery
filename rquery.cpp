@@ -127,6 +127,7 @@ int main(int argc, char *argv[])
         rq.printFieldNames();
         namePrinted = true;
       }
+      trace(INFO,bGroup?"grouped!\n":"No group!\n");
       if (!bGroup)
         rq.outputAndClean();
       howmany += std::cin.gcount();

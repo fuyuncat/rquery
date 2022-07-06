@@ -195,9 +195,16 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
       bool gotResult = func->runFunction(fieldnames, fieldvalues, varvalues, sResult);
       func->clear();
       delete func;
-      if (gotResult)
-        dateSet.aggFuncTaget.insert( pair<string,string>(node->getEntireExpstr(),sResult));
-      else{
+      if (gotResult){
+        string sFuncStr = node->getEntireExpstr()
+        if (dateSet.aggFuncTaget.find(sFuncStr) != dateSet.aggFuncTaget.end())
+          dateSet.aggFuncTaget[sFuncStr].push_back(sResult)
+        else{
+          vector<string> newdata;
+          newdata.push_back(sResult);
+          dateSet.aggFuncTaget.insert( pair< string,vector<string> >(sFuncStr,newdata));
+        }
+      }else{
         trace(ERROR, "Failed to eval aggregation parameter!\n");
         return;
       }
@@ -418,11 +425,11 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
           sResult = doubleToStr(dSum/(*dateSet)[sFuncStr].size());
         }else if (sFuncStr.find("COUNT(")!=string::npos){
           sResult = intToStr((*dateSet)[sFuncStr].size());
-        /*}else if (sFuncStr.find("UNIQUECOUNT(")!=string::npos){
+        }else if (sFuncStr.find("UNIQUECOUNT(")!=string::npos){
           std::set<string> uniqueSet;
           for (int i=0; i<(*dateSet)[sFuncStr].size(); i++)
             uniqueSet.insert((*dateSet)[sFuncStr][i]);
-          sResult = intToStr(uniqueSet.size());*/
+          sResult = intToStr(uniqueSet.size());
         }else if (sFuncStr.find("MAX(")!=string::npos){
           sResult=(*dateSet)[sFuncStr][0];
           for (int i=1; i<(*dateSet)[sFuncStr].size(); i++)

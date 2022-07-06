@@ -201,7 +201,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
   int nextPos=0,strStart=0;
   try{
     ExpressionC* newNode = new ExpressionC();
-    newNode->m_expstrAnalyzed = false;
+    newNode->m_expstrAnalyzed = true;
     if (expStr.size()>1 && expStr[0]=='/' && expStr[expStr.size()-1]=='/') { // regular expression string can NOT operate with any other expression!
       buildLeafNode(expStr, newNode);
       return newNode->getTopParent();

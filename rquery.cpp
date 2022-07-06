@@ -167,8 +167,11 @@ int main(int argc, char *argv[])
     rq.setrawstr(argv[2]);
     //rq.searchNext();
     rq.searchAll();
+    trace(DEBUG, "1111111111111111111111111\n");
     rq.group();
+    trace(DEBUG, "2222222222222222222222222\n");
     rq.printFieldNames();
+    trace(DEBUG, "3333333333333333333333333\n");
     rq.outputAndClean();
   }
   trace(DEBUG, "Found %d row(s).\n", rq.getMatchedCount());

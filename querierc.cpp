@@ -390,7 +390,7 @@ int QuerierC::searchAll()
 }
 
 // run the aggregation functions in an expression 
-void QuerierC::runAggFuncExp(ExpressionC* node, map<string,vector<string>>* dateSet, string & sResult)
+void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* dateSet, string & sResult)
 {
   if (node->m_type == LEAF){ // eval leaf and store
     if (node->m_expType == FUNCTION && node->groupFuncOnly()){

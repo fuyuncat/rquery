@@ -198,7 +198,7 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
       if (gotResult){
         string sFuncStr = node->getEntireExpstr();
         if (dateSet.aggFuncTaget.find(sFuncStr) != dateSet.aggFuncTaget.end())
-          dateSet.aggFuncTaget[sFuncStr].push_back(sResult)
+          dateSet.aggFuncTaget[sFuncStr].push_back(sResult);
         else{
           vector<string> newdata;
           newdata.push_back(sResult);

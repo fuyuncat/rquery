@@ -268,7 +268,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
     node->m_parentNode = NULL;
     node->m_fieldnames = NULL;
     node->m_fieldtypes = NULL;
-    node->m_expstrAnalyzed = false;    
+    node->m_expstrAnalyzed = true;    
     // check if it is a variable
     if (expStr[0]=='@'){
       if (expStr.size()>1){

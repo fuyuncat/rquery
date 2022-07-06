@@ -858,7 +858,8 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
     trace(ERROR, "Insufficient metadata!\n");
     return false;
   }
-  if (!m_metaDataAnzlyzed || !m_expstrAnalyzed){
+  // if (!m_metaDataAnzlyzed || !m_expstrAnalyzed){
+  if (!m_metaDataAnzlyzed ){
     trace(ERROR, "Expression '%s' is not analyzed! metaData: %d, expstr: %d \n",m_expStr.c_str(),m_metaDataAnzlyzed,m_expstrAnalyzed);
     return false;
   }

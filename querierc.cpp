@@ -538,7 +538,6 @@ void QuerierC::output()
 
 void QuerierC::outputAndClean()
 {
-  trace(DEBUG, "Found %d row(s).\n", m_results.size());
   output();
   m_results.clear();
   m_groups.clear();
@@ -592,4 +591,9 @@ int QuerierC::boostmatch(map<string,string> & result)
 long QuerierC::getMatchedCount()
 {
   return m_matchcount;
+}
+
+long QuerierC::getOutputCount()
+{
+  return m_outputrow;
 }

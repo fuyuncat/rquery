@@ -224,7 +224,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
       }
       newNode->m_type = BRANCH;
       newNode->m_operate = encodeOperator(expStr.substr(iPos,1));
-      if (!parentNode && operatorPriority(newNode->m_operate)>operatorPriority(parentNode->m_operate)){
+      if (!parentNode || operatorPriority(newNode->m_operate)>operatorPriority(parentNode->m_operate)){
         if (parentNode){
           parentNode->m_rightNode = newNode;
         }

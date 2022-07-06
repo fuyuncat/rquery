@@ -76,8 +76,8 @@ class ExpressionC
     void alignChildrenDataType(); // align children datatype with current datatype
     bool existLeafNode(ExpressionC* node); // check if exist leaf node
     ExpressionC* getTopParent(); // get the top parent node
-    //ExpressionC* BuildTree(string expStr, ExpressionC* parentNode); // build a BTree from an expression string
-    //bool buildLeafNode(string expStr, ExpressionC* node); // build a Leaf Node from an (atom) expression string
+    ExpressionC* BuildTree(string expStr, ExpressionC* parentNode); // build a BTree from an expression string
+    bool buildLeafNode(string expStr, ExpressionC* node); // build a Leaf Node from an (atom) expression string
 
     static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
     vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!

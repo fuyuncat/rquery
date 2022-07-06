@@ -367,9 +367,7 @@ void FilterC::dump(int deep){
     trace(DUMP,"R-");
     m_rightNode->dump(deep+1);
   }else{
-    trace(DUMP,"(%d)%s(%d)",deep,m_leftExpStr.c_str(),m_leftColId);
-    trace(DUMP,"%s",decodeComparator(m_comparator).c_str());
-    trace(DUMP,"%s\n",m_rightExpStr.c_str());
+    trace(DUMP,"(%d)%s %s %s\n",deep,m_leftExpStr.c_str(),decodeComparator(m_comparator).c_str(),m_rightExpStr.c_str());
   }
 }
 

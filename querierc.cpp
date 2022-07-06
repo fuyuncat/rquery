@@ -94,6 +94,7 @@ bool QuerierC::assignSelString(string selstr)
       trace(ERROR, "Empty selection string!\n");
       return false;
     }
+    m_selnames.push_back(sSel);
     ExpressionC eSel(sSel);
     if (m_groups.size() > 0) {// checking if compatible with GROUP
       vector<string> allColNames;
@@ -517,12 +518,12 @@ void QuerierC::printFieldNames()
   //GlobalVars gv;
   //if (!GlobalVars::g_printheader)
   //  return;
-  if (m_selections.size()>0){
-    for (int i=0; i<m_selections.size(); i++)
-      printf("%s\t",m_selections[i].getEntireExpstr().c_str());
+  if (m_selnames.size()>0){
+    for (int i=0; i<m_selnames.size(); i++)
+      printf("%s\t",m_selnames[i].getEntireExpstr().c_str());
     printf("\n");
-    for (int i=0; i<m_selections.size(); i++)
-      printf("%s\t",string(m_selections[i].getEntireExpstr().length(),'-').c_str());
+    for (int i=0; i<m_selnames.size(); i++)
+      printf("%s\t",string(m_selnames[i].getEntireExpstr().length(),'-').c_str());
   }else{
     printf("Row\n"); 
     printf("%s",string(58,'-').c_str());

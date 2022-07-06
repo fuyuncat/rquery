@@ -127,7 +127,6 @@ int main(int argc, char *argv[])
         rq.printFieldNames();
         namePrinted = true;
       }
-      trace(INFO,bGroup?"grouped!\n":"No group!\n");
       if (!bGroup)
         rq.outputAndClean();
       howmany += std::cin.gcount();
@@ -170,6 +169,7 @@ int main(int argc, char *argv[])
     rq.searchAll();
     rq.group();
     rq.printFieldNames();
+    trace(INFO,bGroup?"grouped!\n":"No group!\n");
     rq.outputAndClean();
   }
   trace(DEBUG, "Found %d row(s).\n", rq.getMatchedCount());

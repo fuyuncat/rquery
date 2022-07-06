@@ -231,6 +231,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
     dumpVector(rowValue);
     return false;
   }
+  trace(DEBUG, "Filtering '%s' \n", rowValue[0].c_str());
   bool matched = false; 
   vector<string> fieldValues;
   map<string, string> varValues;
@@ -251,7 +252,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           string sResult;
           if (!m_selections[i].containGroupFunc()){
             m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
-            trace(DEBUG, "eval '%s' => '%s'\n", m_selections[i].getEntireExpstr().c_str(), sResult.c_str());
+            //trace(DEBUG, "eval '%s' => '%s'\n", m_selections[i].getEntireExpstr().c_str(), sResult.c_str());
           }else{
             trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", m_selections[i].getEntireExpstr().c_str());
             return false;

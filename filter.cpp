@@ -439,6 +439,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
     }else
       m_leftExpression = new ExpressionC(m_leftExpStr);
     if (!m_leftExpression->expstrAnalyzed()){
+      trace(ERROR, "Failed to analyze m_leftExpression of filter '%s'!\n", m_leftExpression->getEntireExpstr());
       m_leftExpression->clear();
       delete m_leftExpression;
       m_leftExpression = NULL;
@@ -469,6 +470,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
       }else
         m_rightExpression = new ExpressionC(m_leftExpStr);
       if (!m_rightExpression->expstrAnalyzed()){
+        trace(ERROR, "Failed to analyze m_rightExpression of filter '%s'!\n", m_rightExpression->getEntireExpstr());
         m_rightExpression->clear();
         delete m_rightExpression;
         m_rightExpression = NULL;

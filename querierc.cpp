@@ -104,7 +104,7 @@ bool QuerierC::assignSelString(string selstr)
         return false;
       }
     }else{
-      if (!eSel.containGroupFunc()){
+      if (eSel.containGroupFunc()){
         trace(FATAL, "Invalid using aggregation function in '%s', no group involved!\n", sSel.c_str());
         return false;
       }

@@ -154,7 +154,7 @@ string readQuotedStr(string str, int& pos, string quoters, char escape)
 }
 
 // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-int findFirstCharacter(string str, std::set<char> lookfor, int pos=0, string quoters = "''{}()",  char escape = '\\')
+int findFirstCharacter(string str, std::set<char> lookfor, int pos, string quoters,  char escape)
 {
   size_t i = 0, j = 0;
   bool quoted = false;

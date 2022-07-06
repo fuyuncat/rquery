@@ -516,7 +516,7 @@ void QuerierC::printFieldNames()
   GlobalVars gv;
   if (!GlobalVars::g_printheader)
     return;
-  if (m_selections.size()>0){
+  /*if (m_selections.size()>0){
     for (int i=0; i<m_selections.size(); i++)
       printf("%s\t",m_selections[i].getEntireExpstr().c_str());
     printf("\n");
@@ -525,7 +525,7 @@ void QuerierC::printFieldNames()
   }else{
     printf("Row\n"); 
     printf("%s",string(58,'-').c_str());
-  }
+  }*/
   printf("\n");
 }
 

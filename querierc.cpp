@@ -520,10 +520,10 @@ void QuerierC::printFieldNames()
   //  return;
   if (m_selnames.size()>0){
     for (int i=0; i<m_selnames.size(); i++)
-      printf("%s\t",m_selnames[i].getEntireExpstr().c_str());
+      printf("%s\t",m_selnames[i].c_str());
     printf("\n");
     for (int i=0; i<m_selnames.size(); i++)
-      printf("%s\t",string(m_selnames[i].getEntireExpstr().length(),'-').c_str());
+      printf("%s\t",string(m_selnames[i].length(),'-').c_str());
   }else{
     printf("Row\n"); 
     printf("%s",string(58,'-').c_str());

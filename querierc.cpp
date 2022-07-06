@@ -16,6 +16,7 @@
 #include <string.h>
 #include "expression.h"
 #include <boost/algorithm/string.hpp>
+#include "function.h"
 #include "querierc.h"
 
 QuerierC::QuerierC()
@@ -272,7 +273,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
             dateSet.nonAggSels.push_back(sResult);
           }else{
             // eval agg function parameter expression and store in the temp data set
-            evalAggExpNode(m_selections[i], fieldnames, fieldvalues, varvalues, dateSet);
+            evalAggExpNode(m_selections[i], &m_fieldnames, &fieldValues, &varValues, dateSet);
           }
         }
         if (dataSetExist)
@@ -395,42 +396,42 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
   if (node->m_type == LEAF){ // eval leaf and store
     if (node->m_expType == FUNCTION && node->groupFuncOnly()){
       string sFuncStr = node->getEntireExpstr();
-      if (dateSet.find(sFuncStr) != dateSet.end()){
+      if (dateSet->find(sFuncStr) != dateSet->end()){
         if (sFuncStr.find("SUM(")!=string::npos){
           double dSum=0;
-          for (int i=0; i<dateSet[sFuncStr].size(); i++){
-            if (isDouble(dateSet[sFuncStr][i]))
-              dSum+=atof(dateSet[sFuncStr][i]);
+          for (int i=0; i<(*dateSet)[sFuncStr].size(); i++){
+            if (isDouble((*dateSet)[sFuncStr][i]))
+              dSum+=atof((*dateSet)[sFuncStr][i]);
             else
-              trace(ERROR, "Invalid number '%s' to be SUM up!\n", dateSet[sFuncStr].c_str());
+              trace(ERROR, "Invalid number '%s' to be SUM up!\n", (*dateSet)[sFuncStr].c_str());
           }
           sResult = doubleToStr(dSum);
         }else if (sFuncStr.find("AVERAGE(")!=string::npos){
           double dSum=0;
-          for (int i=0; i<dateSet[sFuncStr].size(); i++){
-            if (isDouble(dateSet[sFuncStr][i]))
-              dSum+=atof(dateSet[sFuncStr][i]);
+          for (int i=0; i<(*dateSet)[sFuncStr].size(); i++){
+            if (isDouble((*dateSet)[sFuncStr][i]))
+              dSum+=atof((*dateSet)[sFuncStr][i]);
             else
-              trace(ERROR, "Invalid number '%s' to be SUM up!\n", dateSet[sFuncStr].c_str());
+              trace(ERROR, "Invalid number '%s' to be SUM up!\n", (*dateSet)[sFuncStr].c_str());
           }
-          sResult = doubleToStr(dSum/dateSet[sFuncStr].size());
+          sResult = doubleToStr(dSum/(*dateSet)[sFuncStr].size());
         }else if (sFuncStr.find("COUNT(")!=string::npos){
-          sResult = intToStr(dateSet[sFuncStr].size());
+          sResult = intToStr((*dateSet)[sFuncStr].size());
         }else if (sFuncStr.find("UNIQUECOUNT(")!=string::npos){
           std::set<string> uniqueSet;
-          for (int i=0; i<dateSet[sFuncStr].size(); i++)
-            uniqueSet.insert(dateSet[sFuncStr][i]);
+          for (int i=0; i<(*dateSet)[sFuncStr].size(); i++)
+            uniqueSet.insert((*dateSet)[sFuncStr][i]);
           sResult = intToStr(uniqueSet.size());
         }else if (sFuncStr.find("MAX(")!=string::npos){
-          sResult=dateSet[sFuncStr][0];
-          for (int i=1; i<dateSet[sFuncStr].size(); i++)
-            if (sResult.compare(dateSet[sFuncStr][i])<0)
-              sResult = dateSet[sFuncStr][i];
+          sResult=(*dateSet)[sFuncStr][0];
+          for (int i=1; i<(*dateSet)[sFuncStr].size(); i++)
+            if (sResult.compare((*dateSet)[sFuncStr][i])<0)
+              sResult = (*dateSet)[sFuncStr][i];
         }else if (sFuncStr.find("MAX(")!=string::npos){
-          sResult=dateSet[sFuncStr][0];
-          for (int i=1; i<dateSet[sFuncStr].size(); i++)
-            if (sResult.compare(dateSet[sFuncStr][i])>0)
-              sResult = dateSet[sFuncStr][i];
+          sResult=(*dateSet)[sFuncStr][0];
+          for (int i=1; i<(*dateSet)[sFuncStr].size(); i++)
+            if (sResult.compare((*dateSet)[sFuncStr][i])>0)
+              sResult = (*dateSet)[sFuncStr][i];
         }else{
           trace(ERROR, "Invalid aggregation function '%s'!\n", node->getEntireExpstr().c_str());
           return;

@@ -24,7 +24,7 @@
 
 struct GroupDataSet{
   vector<string> nonAggSels;  // all non-aggr selections values
-  map<string,vector<string>> aggFuncTaget; // evaled func parameter expression. mapping func_expr:evaled parameter expressions
+  map< string,vector<string> > aggFuncTaget; // evaled func parameter expression. mapping func_expr:evaled parameter expressions
 };
 
 class ExpressionC;

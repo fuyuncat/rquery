@@ -38,7 +38,7 @@ class ExpressionC
     int m_expType;    // if type is LEAF, the expression string type. 1: CONST, 2: COLUMN, 3: VARIABLE, 4:FUNCTION
     string m_expStr;  // if type is LEAF, the expression string, either be a CONST, COLUMN or FUNCTION; if type is BRANCH, it's the full expression string
     int m_colId;      // if type is LEAF, and the expression string type is COLUMN. it's id of column. Otherwise, it's meaningless
-    ExpressionC* m_leftNode // if type is BRANCH, it links to the left child node. Otherwise, it's meaningless
+    ExpressionC* m_leftNode; // if type is BRANCH, it links to the left child node. Otherwise, it's meaningless
     ExpressionC* m_rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
     ExpressionC* m_parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
 

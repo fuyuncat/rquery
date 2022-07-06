@@ -801,6 +801,7 @@ bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fiel
       return compareIn(fieldnames, fieldvalues, varvalues)?(m_comparator == IN?true:false):(m_comparator == IN?false:true);
     }
     else{
+      trace(DEBUG, "Comparing '%s' %s (data type: %s)\n", fieldvalues[0].c_str(), decodeComparator(m_comparator).c_str(), decodeDatatype(m_datatype).c_str());
       string leftRst = "", rightRst = "";
       if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
         trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype).c_str());

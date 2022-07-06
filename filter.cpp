@@ -802,7 +802,7 @@ bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fiel
     }
     else{
       string leftRst = "", rightRst = "";
-      trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s). %d, %d \n", m_leftExpression.getEntireExpstr().c_str(), decodeComparator(m_comparator).c_str(), m_rightExpression.getEntireExpstr().c_str(), decodeDatatype(m_datatype).c_str(), m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst), m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst));
+      trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s). %d, %d \n", m_leftExpression->getEntireExpstr().c_str(), decodeComparator(m_comparator).c_str(), m_rightExpression->getEntireExpstr().c_str(), decodeDatatype(m_datatype).c_str(), m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst), m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst));
       trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype).c_str());
       if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
         trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype).c_str());

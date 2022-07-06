@@ -75,10 +75,11 @@ class QuerierC
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
-    // map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
+    map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
 
     bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, GroupDataSet & dateSet); // eval expression in aggregation paramter and store in a data set
+    void runAggFuncExp(ExpressionC* node, map<string,vector<string>>* dateSet, string & sResult); // run aggregation function
 
   protected:
     void init();

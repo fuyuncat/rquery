@@ -153,6 +153,35 @@ string readQuotedStr(string str, int& pos, string quoters, char escape)
   return "";
 }
 
+// find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+int findFirstCharacter(string str, std::set<char> lookfor, int pos=0, string quoters = "''{}()",  char escape = '\\')
+{
+  size_t i = 0, j = 0;
+  bool quoted = false;
+  int quoterId = -1;
+  while(i < str.size()) {
+    if (lookfor.find(str[i]) != lookfor.end() && i>0 && !quoted) 
+      return i;
+    if (!quoted){
+      for (int k=0; k<(int)(quoters.size()/2); k++){
+        if (str[i] == quoters[k*2])
+          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+            quoted = !quoted;
+            quoterId=k*2;
+          }
+      }
+    }else{
+      if (str[i] == quoters[quoterId+1])
+        if (i>0 && str[i-1]!=escape){
+          quoted = !quoted;
+          quoterId = -1;
+        }
+    }
+    ++i;
+  }
+  return -1;
+}
+
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 vector<string> split(string str, char delim, string quoters, char escape) 
 {
@@ -530,6 +559,8 @@ int detectDataType(string str)
     return LONG;
   else if (isDouble(trimmedStr))
     return DOUBLE;
+  else if (isInt(trimmedStr))
+    return INTEGER;
   else
     return UNKNOWN;
 }
@@ -805,6 +836,24 @@ int encodeOperator(string str)
     return POWER;
   else
     return UNKNOWN;
+}
+
+int operatorPriority(int iOperator)
+{
+  switch (op){
+  case PLUS:
+    return 1;
+  case SUBTRACT:
+    return 1;
+  case TIMES:
+    return 2;
+  case DIVIDE:
+    return 2;
+  case POWER:
+    return 3;
+  default:
+    return 0;
+  }
 }
 
 int findStrArrayId(const vector<string> array, const string member)

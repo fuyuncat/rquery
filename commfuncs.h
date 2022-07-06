@@ -108,6 +108,14 @@ void trace(short level, const char *fmt, ...);
 string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
 vector<string> split(string str, char delim = ' ', string quoters = "''", char escape = '\\'); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+int findFirstCharacter(string str, std::set<char> lookfor, int pos=0, string quoters = "''{}()",  char escape = '\\'); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+
+int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
+int startsWithWords(string str, vector<string> words); // detect if string start with special words
+string removeSpace(string originalStr, string keepPattern); //remove space
+string getFirstToken(string str, string token); //get the first matched regelar token from a string
+vector <string> getAllTokens(string str, string token); //get all matched regelar token from a string
+bool matchToken(string str, string token); // check if matched regelar token
 
 string trim_pair(string str, string pair);
 string trim_left(string str, char c = ' ');
@@ -147,6 +155,7 @@ int encodeDatatype(string str);
 int encodeJunction(string str);
 int encodeOperator(string str);
 int findStrArrayId(const vector<string> array, const string member);
+int operatorPriority(int iOperator);
 
 int anyDataCompare(string str1, string str2, int type);
 int anyDataCompare(string str1, int comparator, string str2, int type);
@@ -161,13 +170,6 @@ bool anyDataOperate(string str1, int operate, string str2, int type, string& res
 
 int detectDataType(string str); // detect the data type of an expression string
 int getCompatibleDataType(int ldatatype, int rdatatype); // get the compatible data type from two data types
-
-int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
-int startsWithWords(string str, vector<string> words); // detect if string start with special words
-string removeSpace(string originalStr, string keepPattern); //remove space
-string getFirstToken(string str, string token); //get the first matched regelar token from a string
-vector <string> getAllTokens(string str, string token); //get all matched regelar token from a string
-bool matchToken(string str, string token); // check if matched regelar token
 
 void dumpVector(vector<string> v);
 void dumpMap(map<string, string> m);

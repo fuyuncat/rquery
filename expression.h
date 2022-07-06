@@ -38,7 +38,7 @@ class ExpressionC
     int m_expType;    // if type is LEAF, the expression string type. 1: CONST, 2: COLUMN, 3: VARIABLE, 4:FUNCTION
     string m_expStr;  // if type is LEAF, the expression string, either be a CONST, COLUMN or FUNCTION; if type is BRANCH, it's the full expression string
     int m_colId;      // if type is LEAF, and the expression string type is COLUMN. it's id of column. Otherwise, it's meaningless
-    ExpressionC* m_leftNode;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
+    ExpressionC* m_firstChildNode // if type is BRANCH, it links to the first child node. Otherwise, it's meaningless
     ExpressionC* m_rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
     ExpressionC* m_parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
 
@@ -75,6 +75,9 @@ class ExpressionC
     bool buildExpression();  // build expression class from the expression string
     void alignChildrenDataType(); // align children datatype with current datatype
     bool existLeafNode(ExpressionC* node); // check if exist leaf node
+    ExpressionC* getTopParent(); // get the top parent node
+    //ExpressionC* BuildTree(string expStr, ExpressionC* parentNode); // build a BTree from an expression string
+    //bool buildLeafNode(string expStr, ExpressionC* node); // build a Leaf Node from an (atom) expression string
 
     static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
     vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!

@@ -234,9 +234,9 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   bool bMatchedbMatched = filter->compareExpression(&m_fieldnames, &fieldValues, &varValues);
   if (bMatchedbMatched){
     if (m_selections.size()>0){
-      vector<string> vResults;
-      vResults.push_back(rowValue[0]);
       if (m_groups.size() == 0){
+        vector<string> vResults;
+        vResults.push_back(rowValue[0]);
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
           if (!m_selections[i].groupFuncOnly())
@@ -250,16 +250,21 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         m_results.push_back(vResults);
       }else{ // need to do group. store evaled data in a temp date set
         vector<string> groupExps;  // the group expressions. as the key of following hash map
-        map<vector<string>, GroupDataSet> tmpResults;
         GroupDataSet dateSet;
         string sResult;
+        bool dataSetExist = false;
         // group expressions to the sorting keys
         for (int i=0; i<m_groups.size(); i++){
           m_groups[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
-          dateSet.groupExps.push_back(sResult);
+          groupExps.push_back(sResult);
         }
-        
+        if (m_tmpResults.find(groupExps) != m_tmpResults.end()){
+          dateSet = m_tmpResults[groupExps];
+          dataSetExist = true;
+        }
+
         // get data sets
+        dateSet.nonAggSels.push_back(rowValue[0]); // nonAggSels store raw string in the first member.
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
           if (!m_selections[i].groupFuncOnly()){ // non aggregation function selections
@@ -267,18 +272,13 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
             dateSet.nonAggSels.push_back(sResult);
           }else{
             // eval agg function parameter expression and store in the temp data set
-            evalAggExpNode(this, fieldnames, fieldvalues, varvalues, dateSet);
+            evalAggExpNode(m_selections[i], fieldnames, fieldvalues, varvalues, dateSet);
           }
         }
-        // bubble sorting and add new member
-        for (vector<GroupDataSet>::iterator it=m_tmpResults.begin();it<m_tmpResults.end();it++){
-          if (compareVector(it->groupExps, dateSet.groupExps)>0){
-            m_tmpResults.insert(it, dateSet);
-            break;
-          }
-        }
-        if (!bAdded)
-          m_tmpResults.push_back(dateSet);
+        if (dataSetExist)
+          m_tmpResults[groupExps] = dateSet;
+        else
+          m_tmpResults.insert( pair<vector<string>, GroupDataSet>(groupExps,dateSet));
       }
     }else
       m_results.push_back(rowValue);
@@ -389,95 +389,90 @@ int QuerierC::searchAll()
   return totalfound;
 }
 
+// run the aggregation functions in an expression 
+void QuerierC::runAggFuncExp(ExpressionC* node, map<string,vector<string>>* dateSet, string & sResult)
+{
+  if (node->m_type == LEAF){ // eval leaf and store
+    if (node->m_expType == FUNCTION && node->groupFuncOnly()){
+      string sFuncStr = node->getEntireExpstr();
+      if (dateSet.find(sFuncStr) != dateSet.end()){
+        if (sFuncStr.find("SUM(")!=string::npos){
+          double dSum=0;
+          for (int i=0; i<dateSet[sFuncStr].size(); i++){
+            if (isDouble(dateSet[sFuncStr][i]))
+              dSum+=atof(dateSet[sFuncStr][i]);
+            else
+              trace(ERROR, "Invalid number '%s' to be SUM up!\n", dateSet[sFuncStr].c_str());
+          }
+          sResult = doubleToStr(dSum);
+        }else if (sFuncStr.find("AVERAGE(")!=string::npos){
+          double dSum=0;
+          for (int i=0; i<dateSet[sFuncStr].size(); i++){
+            if (isDouble(dateSet[sFuncStr][i]))
+              dSum+=atof(dateSet[sFuncStr][i]);
+            else
+              trace(ERROR, "Invalid number '%s' to be SUM up!\n", dateSet[sFuncStr].c_str());
+          }
+          sResult = doubleToStr(dSum/dateSet[sFuncStr].size());
+        }else if (sFuncStr.find("COUNT(")!=string::npos){
+          sResult = intToStr(dateSet[sFuncStr].size());
+        }else if (sFuncStr.find("UNIQUECOUNT(")!=string::npos){
+          std::set<string> uniqueSet;
+          for (int i=0; i<dateSet[sFuncStr].size(); i++)
+            uniqueSet.insert(dateSet[sFuncStr][i]);
+          sResult = intToStr(uniqueSet.size());
+        }else if (sFuncStr.find("MAX(")!=string::npos){
+          sResult=dateSet[sFuncStr][0];
+          for (int i=1; i<dateSet[sFuncStr].size(); i++)
+            if (sResult.compare(dateSet[sFuncStr][i])<0)
+              sResult = dateSet[sFuncStr][i];
+        }else if (sFuncStr.find("MAX(")!=string::npos){
+          sResult=dateSet[sFuncStr][0];
+          for (int i=1; i<dateSet[sFuncStr].size(); i++)
+            if (sResult.compare(dateSet[sFuncStr][i])>0)
+              sResult = dateSet[sFuncStr][i];
+        }else{
+          trace(ERROR, "Invalid aggregation function '%s'!\n", node->getEntireExpstr().c_str());
+          return;
+        }
+      }else{
+        trace(ERROR, "No data found for aggregation function '%s'!\n", node->getEntireExpstr().c_str());
+        return;
+      }
+    }else{
+      trace(ERROR, "No aggregation function found!\n");
+      return;
+    }
+  }else{ // eval branch and store
+    if (node->m_leftNode)
+      runAggFuncExp(node->m_leftNode, dateSet);
+    if (node->m_rightNode)
+      runAggFuncExp(node->m_rightNode, dateSet);
+  }
+}
+
 // group result
 bool QuerierC::group()
 {
-  if (m_groups.size() == 0)
+  if (m_groups.size() == 0 || m_tmpResults.size() == 0)
     return true;
 
-  GroupDataSet preDataSet;
-  vector<GroupDataSet>::iterator preSetStart=m_tmpResults.begin()
-  // going throng the SORTED data set
-  for (vector<GroupDataSet>::iterator it=m_tmpResults.begin();it<m_tmpResults.end();it++){
-    if (it==m_tmpResults.begin()){
-      preDataSet=*it;
-      continue
-    }
-    // as this is a sorted data set, this record doesnot match previous one means we can do aggregation calculation for previous data records
-    if (compareVector(preDataSet.groupExps,it->groupExps)!=0){
-      
-    }
-    
-    
-    
-    
-    
-    
-    vector<string> fieldValues;
-    map<string, string> varValues;
-    for (int i=0; i<m_fieldnames.size(); i++)
-      fieldValues.push_back(it->allValues[i+1]);
-      //fieldValues.insert( pair<string,string>(boost::algorithm::to_upper_copy<string>(m_fieldnames[i]),rowValue[i+1]));
-    varValues.insert( pair<string,string>("@RAW",it->allValues[0]));
-    varValues.insert( pair<string,string>("@FILE",m_filename));
-    varValues.insert( pair<string,string>("@LINE",it->allValues[m_fieldnames.size()+1]));
-    varValues.insert( pair<string,string>("@ROW",it->allValues[m_fieldnames.size()+2]));
-
-    for (int i=0; i<m_groups.size(); i++){
-      m_groups[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
-      dateSet.groupExps.push_back(sResult);
-    }
-
-    // get all NON aggregation selections as the KEY of a HashMap
-    vector<string> keys;
-    vector<int> aggIDs; // aggregation function id in the selections
+  for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
+    vector<string> vResults;
+    vResults.push_back(it->second.nonAggSels[0]);
+    int iNonAggSelID = 1;
     for (int i=0; i<m_selections.size(); i++){
       string sResult;
-      if (!m_selections[i].groupFuncOnly()){
-        m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
-        vResults.push_back(sResult);
+      if (!m_selections[i].groupFuncOnly()){ // non aggregation function selections
+        vResults.push_back(it->second.nonAggSels[iNonAggSelID]);
+        iNonAggSelID++;
       }else{
-        aggIDs.push_back(i);
-        vResults.push_back(sResult); // put a empty string as an aggregation result first. update later
+        // eval agg function parameter expression and store in the temp data set
+        string sResult;
+        runAggFuncExp(m_selections[i], &(it->second.aggFuncTaget), sResult);
+        vResults.push_back(sResult);
       }
-      keys.push_back(sResult);
     }
-  }
-  
-  m_tmpResults.clear();
-
-
-
-
-
-
-  map<vector<string>, vector<string>> tmpGroupResult;  // temp hashmap to store and calculate aggregation functions.
-  for (int k=0;k<m_tmpResults.size();k++){
-
-    vector<string> vals; // aggregation function result 
-    bool bValExists = false;
-    if (tmpGroupResult.find(keys) != tmpGroupResult.end()){
-      bValExists = true;
-      vals = tmpGroupResult[keys];
-    }else
-      bValExists = false;
-    if (bValExists && vals.size()!=aggIDs.size()){
-      trace(ERROR, "Existing aggregation results (%d) doesnot match selection aggregation (%d)!\n", vals.size(), aggIDs.size());
-      return false;
-    }
-    for (int i=0; i<aggIDs.size(); i++){
-      string sResult = bValExists?vals[i]:""; // if values exists, it should be a whole vector including all aggregation selections. Keep same sequence.
-      m_selections[aggIDs[i]].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
-      if (bValExists)
-        vals[i] = sResult;
-      else
-        vals.push_back(sResult);
-      m_selections[aggIDs[i]] = sResult
-    }
-    if (bValExists)
-      tmpGroupResult[keys] = vals;
-    else
-      tmpGroupResult.insert( pair< vector<string>, vector<string> >(keys,vals) );
   }
 }
 

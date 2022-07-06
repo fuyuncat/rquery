@@ -236,7 +236,8 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
       }
       newNode->m_rightNode = BuildTree(expStr.substr(iPos+1), NULL);
       newNode->m_datatype = getCompatibleDataType(newNode->m_leftNode->m_datatype, newNode->m_rightNode->m_datatype);
-      parentNode->m_datatype = getCompatibleDataType(parentNode->m_leftNode->m_datatype, parentNode->m_rightNode->m_datatype);
+      if (parentNode)
+        parentNode->m_datatype = getCompatibleDataType(parentNode->m_leftNode->m_datatype, parentNode->m_rightNode->m_datatype);
     }
     return newNode->getTopParent();
   }catch (exception& e) {

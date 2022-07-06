@@ -996,11 +996,9 @@ void ExpressionC::getAllColumnNames(vector<string> & fieldnames)
     m_rightNode->getAllColumnNames(fieldnames);
 }
 
-bool ExpressionC::groupFuncOnly()
+bool ExpressionC::containGroupFunc()
 {
   if (m_type == LEAF){
-    if (m_expType == CONST)
-      return true;
     if (m_expType == FUNCTION){
       size_t nPos = m_expStr.find("(");
       if (nPos == string::npos)
@@ -1009,6 +1007,23 @@ bool ExpressionC::groupFuncOnly()
       if (sFuncName.compare("SUM")==0 || sFuncName.compare("COUNT")==0 || sFuncName.compare("UNIQUECOUNT")==0 || sFuncName.compare("AVERAGE")==0 || sFuncName.compare("MAX")==0 || sFuncName.compare("MIN")==0)
         return true;
     }
+  }else{
+    if (m_leftNode && m_leftNode->containGroupFunc() && m_rightNode && m_rightNode->containGroupFunc())
+      return true;
+    return false;
+  }
+  return false;
+}
+
+bool ExpressionC::groupFuncOnly()
+{
+  if (m_type == LEAF){
+    if (m_expType == CONST)
+      return true;
+    if (m_expType == FUNCTION){
+      return containGroupFunc();
+    }else
+      return false;
   }else{
     if (!m_leftNode || !m_leftNode->groupFuncOnly())
       return false;

@@ -248,7 +248,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         vResults.push_back(rowValue[0]);
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
-          if (!m_selections[i].groupFuncOnly())
+          if (!m_selections[i].containGroupFunc())
             m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
           else{
             trace(ERROR, "Invalid using aggregation function in '%s', no group involved!\n", m_selections[i].getEntireExpstr().c_str());
@@ -276,7 +276,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         dateSet.nonAggSels.push_back(rowValue[0]); // nonAggSels store raw string in the first member.
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
-          if (!m_selections[i].groupFuncOnly()){ // non aggregation function selections
+          if (!m_selections[i].containGroupFunc()){ // non aggregation function selections
             m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
             dateSet.nonAggSels.push_back(sResult);
           }else{
@@ -402,7 +402,7 @@ int QuerierC::searchAll()
 void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* dateSet, string & sResult)
 {
   if (node->m_type == LEAF){ // eval leaf and store
-    if (node->m_expType == FUNCTION && node->groupFuncOnly()){
+    if (node->m_expType == FUNCTION && node->containGroupFunc()){
       string sFuncStr = node->getEntireExpstr();
       if (dateSet->find(sFuncStr) != dateSet->end()){
         if (sFuncStr.find("SUM(")!=string::npos){
@@ -474,7 +474,7 @@ bool QuerierC::group()
     int iNonAggSelID = 1;
     for (int i=0; i<m_selections.size(); i++){
       string sResult;
-      if (!m_selections[i].groupFuncOnly()){ // non aggregation function selections
+      if (!m_selections[i].containGroupFunc()){ // non aggregation function selections
         vResults.push_back(it->second.nonAggSels[iNonAggSelID]);
         iNonAggSelID++;
       }else{

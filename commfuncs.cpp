@@ -86,6 +86,8 @@ string decodeTracelevel(int level)
     return "INFO";
   case DEBUG:
     return "DEBUG";
+  case DUMP:
+    return "";
   default:
     return "UNKNOWN";
   }

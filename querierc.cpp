@@ -220,10 +220,10 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
 // filt a row data by filter. no predication mean true. comparasion failed means alway false
 bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
 {
-  if (!filter){
-    //trace(INFO, "No filter defined\n");
-    return true;
-  }
+  //if (!filter){
+  //  //trace(INFO, "No filter defined\n");
+  //  return true;
+  //}
   if (rowValue.size() != m_fieldnames.size() + 3){ // field name number + 3 variables (@raw @line @row)
     trace(ERROR, "Filed number %d and value number %d dont match!\n", m_fieldnames.size(), rowValue.size());
     dumpVector(m_fieldnames);

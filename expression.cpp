@@ -460,13 +460,13 @@ void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop)
 void ExpressionC::dump(int deep)
 {
   if (m_type == BRANCH){
-    trace(DEBUG,"%s(%d)\n",decodeOperator(m_operate).c_str(),deep);
-    trace(DEBUG,"L-");
+    trace(DUMP,"%s(%d)\n",decodeOperator(m_operate).c_str(),deep);
+    trace(DUMP,"L-");
     m_leftNode->dump(deep+1);
-    trace(DEBUG,"R-");
+    trace(DUMP,"R-");
     m_rightNode->dump(deep+1);
   }else{
-    trace(DEBUG,"(%d)%s(%d)\n",deep,m_expStr.c_str(),m_colId);
+    trace(DUMP,"(%d)%s(%d)\n",deep,m_expStr.c_str(),m_colId);
   }
 }
 

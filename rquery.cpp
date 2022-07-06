@@ -91,7 +91,6 @@ int main(int argc, char *argv[])
   if (query.find("filter") != query.end()){
     trace(INFO,"Assigning filter: %s \n", query["filter"].c_str());
     FilterC* filter = new FilterC(query["filter"]);
-    filter->dump();
     rq.assignFilter(filter);
   }
   // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP

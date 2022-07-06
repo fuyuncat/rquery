@@ -420,9 +420,9 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<int>* fieldtypes
   if (m_type == BRANCH){
     m_metaDataAnzlyzed = true;
     if (m_leftNode)
-        m_metaDataAnzlyzed = m_metaDataAnzlyzed && m_leftNode->analyzeColumns(fieldnames, fieldtypes);
+        m_metaDataAnzlyzed = m_leftNode->analyzeColumns(fieldnames, fieldtypes) && m_metaDataAnzlyzed ;
     if (m_rightNode)
-        m_metaDataAnzlyzed = m_metaDataAnzlyzed &&  m_rightNode->analyzeColumns(fieldnames, fieldtypes);
+        m_metaDataAnzlyzed = m_rightNode->analyzeColumns(fieldnames, fieldtypes && m_metaDataAnzlyzed );
     if (!m_metaDataAnzlyzed)
         return m_metaDataAnzlyzed;
     //if (m_leftExpression)

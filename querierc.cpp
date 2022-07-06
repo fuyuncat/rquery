@@ -243,7 +243,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   varValues.insert( pair<string,string>("@LINE",rowValue[m_fieldnames.size()+1]));
   varValues.insert( pair<string,string>("@ROW",rowValue[m_fieldnames.size()+2]));
   bool bMatchedbMatched = (!filter || filter->compareExpression(&m_fieldnames, &fieldValues, &varValues));
-  trace(DEBUG, " selected! \n");
+  trace(DEBUG, " selected:%d (%d)! \n", bMatchedbMatched, m_selections.size());
   if (bMatchedbMatched){
     if (m_selections.size()>0){
       if (m_groups.size() == 0){

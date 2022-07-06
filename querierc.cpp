@@ -190,7 +190,7 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
   if (node->m_type == LEAF){ // eval leaf and store
     if (node->m_expType == FUNCTION && node->groupFuncOnly()){
       FunctionC* func = new FunctionC(node->m_expStr);
-      func->analyzeColumns(m_fieldnames, m_fieldtypes);
+      func->analyzeColumns(&m_fieldnames, &m_fieldtypes);
       bool gotResult = func->runFunction(fieldnames, fieldvalues, varvalues, sResult);
       func->clear();
       delete func;
@@ -198,7 +198,7 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
         dateSet.aggFuncTaget.insert( pair<string,string>(node->getEntireExpstr(),sResult));
       else{
         trace(ERROR, "Failed to eval aggregation parameter!\n");
-        return false;
+        return;
       }
     }
   }else{ // eval branch and store
@@ -273,7 +273,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
             dateSet.nonAggSels.push_back(sResult);
           }else{
             // eval agg function parameter expression and store in the temp data set
-            evalAggExpNode(m_selections[i], &m_fieldnames, &fieldValues, &varValues, dateSet);
+            evalAggExpNode(&m_selections[i], &m_fieldnames, &fieldValues, &varValues, dateSet);
           }
         }
         if (dataSetExist)
@@ -401,18 +401,18 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
           double dSum=0;
           for (int i=0; i<(*dateSet)[sFuncStr].size(); i++){
             if (isDouble((*dateSet)[sFuncStr][i]))
-              dSum+=atof((*dateSet)[sFuncStr][i]);
+              dSum+=atof((*dateSet)[sFuncStr][i].c_str());
             else
-              trace(ERROR, "Invalid number '%s' to be SUM up!\n", (*dateSet)[sFuncStr].c_str());
+              trace(ERROR, "Invalid number '%s' to be SUM up!\n", (*dateSet)[sFuncStr][i].c_str());
           }
           sResult = doubleToStr(dSum);
         }else if (sFuncStr.find("AVERAGE(")!=string::npos){
           double dSum=0;
           for (int i=0; i<(*dateSet)[sFuncStr].size(); i++){
             if (isDouble((*dateSet)[sFuncStr][i]))
-              dSum+=atof((*dateSet)[sFuncStr][i]);
+              dSum+=atof((*dateSet)[sFuncStr][i].c_str());
             else
-              trace(ERROR, "Invalid number '%s' to be SUM up!\n", (*dateSet)[sFuncStr].c_str());
+              trace(ERROR, "Invalid number '%s' to be SUM up!\n", (*dateSet)[sFuncStr][i].c_str());
           }
           sResult = doubleToStr(dSum/(*dateSet)[sFuncStr].size());
         }else if (sFuncStr.find("COUNT(")!=string::npos){
@@ -445,10 +445,12 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
       return;
     }
   }else{ // eval branch and store
+    string sLeftRslt, sRightRslt;
     if (node->m_leftNode)
-      runAggFuncExp(node->m_leftNode, dateSet);
+      runAggFuncExp(node->m_leftNode, dateSet, sLeftRslt);
     if (node->m_rightNode)
-      runAggFuncExp(node->m_rightNode, dateSet);
+      runAggFuncExp(node->m_rightNode, dateSet, sRightRslt);
+    anyDataOperate(sLeftRslt, node->m_operate, sRightRslt, node->m_datatype, sResult);
   }
 }
 

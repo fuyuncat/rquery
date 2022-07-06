@@ -202,13 +202,13 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
   try{
     ExpressionC* newNode = new ExpressionC();
     newNode->m_expstrAnalyzed = false;
-    if (expStr.size()>1 && expStr[0]='/' && expStr[expStr.size()-1]=='/') { // regular expression string can NOT operate with any other expression!
+    if (expStr.size()>1 && expStr[0]=='/' && expStr[expStr.size()-1]=='/') { // regular expression string can NOT operate with any other expression!
       buildLeafNode(expStr, newNode);
       return newNode->getTopParent();
     }
     int iPos = findFirstCharacter(expStr, m_operators, 0, "''{}()", '\\');
     if (iPos<0) { // didnt find any operator, reached the end
-      if (expStr.size()>1 && expStr[0]='(' && expStr[expStr.size()-1]==')') { // quoted expression
+      if (expStr.size()>1 && expStr[0]=='(' && expStr[expStr.size()-1]==')') { // quoted expression
         newNode->clear();
         delete newNode;
         newNode = BuildTree(expStr.substr(1,expStr.size()-2),NULL);

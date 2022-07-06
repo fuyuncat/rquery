@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
     //rq.searchNext();
     rq.searchAll();
     rq.group();
-    //rq.printFieldNames();
+    rq.printFieldNames();
     rq.outputAndClean();
   }
   trace(DEBUG, "Found %d row(s).\n", rq.getOutputCount());

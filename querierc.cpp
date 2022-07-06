@@ -231,7 +231,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
     dumpVector(rowValue);
     return false;
   }
-  trace(DEBUG, "Filtering '%s' \n", rowValue[0].c_str());
+  trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
   bool matched = false; 
   vector<string> fieldValues;
   map<string, string> varValues;
@@ -243,6 +243,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   varValues.insert( pair<string,string>("@LINE",rowValue[m_fieldnames.size()+1]));
   varValues.insert( pair<string,string>("@ROW",rowValue[m_fieldnames.size()+2]));
   bool bMatchedbMatched = (!filter || filter->compareExpression(&m_fieldnames, &fieldValues, &varValues));
+  trace(DEBUG, " selected! \n");
   if (bMatchedbMatched){
     if (m_selections.size()>0){
       if (m_groups.size() == 0){

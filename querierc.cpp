@@ -247,13 +247,14 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   if (bMatchedbMatched){
     if (m_selections.size()>0){
       if (m_groups.size() == 0){
+        trace(DEBUG, " No group! \n");
         vector<string> vResults;
         vResults.push_back(rowValue[0]);
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
           if (!m_selections[i].containGroupFunc()){
             m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
-            //trace(DEBUG, "eval '%s' => '%s'\n", m_selections[i].getEntireExpstr().c_str(), sResult.c_str());
+            trace(DEBUG, "eval '%s' => '%s'\n", m_selections[i].getEntireExpstr().c_str(), sResult.c_str());
           }else{
             trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", m_selections[i].getEntireExpstr().c_str());
             return false;
@@ -262,6 +263,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         }
         m_results.push_back(vResults);
       }else{ // need to do group. store evaled data in a temp date set
+        trace(DEBUG, " Grouping! \n");
         vector<string> groupExps;  // the group expressions. as the key of following hash map
         GroupDataSet dateSet;
         string sResult;

@@ -70,7 +70,7 @@ void QuerierC::setrawstr(string rawstr)
 
 bool QuerierC::assignGroupStr(string groupstr)
 {
-  vector<string> vGroups = split(groupstr,',',"//''{}",'\\');
+  vector<string> vGroups = split(groupstr,',',"''{}",'\\');
   for (int i=0; i<vGroups.size(); i++){
     trace(DEBUG, "Processing group (%d) '%s'!\n", i, vGroups[i].c_str());
     string sGroup = boost::algorithm::trim_copy<string>(vGroups[i]);
@@ -86,7 +86,7 @@ bool QuerierC::assignGroupStr(string groupstr)
 
 bool QuerierC::assignSelString(string selstr)
 {
-  vector<string> vSelections = split(selstr,',',"//''{}",'\\');
+  vector<string> vSelections = split(selstr,',',"''{}",'\\');
   for (int i=0; i<vSelections.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
     string sSel = boost::algorithm::trim_copy<string>(vSelections[i]);

@@ -189,6 +189,7 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
 {
   if (node->m_type == LEAF){ // eval leaf and store
     if (node->m_expType == FUNCTION && node->groupFuncOnly()){
+      string sResult;
       FunctionC* func = new FunctionC(node->m_expStr);
       func->analyzeColumns(&m_fieldnames, &m_fieldtypes);
       bool gotResult = func->runFunction(fieldnames, fieldvalues, varvalues, sResult);
@@ -472,7 +473,7 @@ bool QuerierC::group()
       }else{
         // eval agg function parameter expression and store in the temp data set
         string sResult;
-        runAggFuncExp(m_selections[i], &(it->second.aggFuncTaget), sResult);
+        runAggFuncExp(&m_selections[i], &(it->second.aggFuncTaget), sResult);
         vResults.push_back(sResult);
       }
     }

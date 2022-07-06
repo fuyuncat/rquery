@@ -169,7 +169,6 @@ int main(int argc, char *argv[])
     rq.searchAll();
     rq.group();
     rq.printFieldNames();
-    trace(INFO,bGroup?"grouped!\n":"No group!\n");
     rq.outputAndClean();
   }
   trace(DEBUG, "Found %d row(s).\n", rq.getMatchedCount());

@@ -223,7 +223,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
         return NULL;
       }
       newNode->m_type = BRANCH;
-      newNode->m_operate = encodeOperator(expStr[iPos]);
+      newNode->m_operate = encodeOperator(expStr.substr(iPos,1));
       if (!parentNode && operatorPriority(newNode->m_operate)>operatorPriority(parentNode->m_operate)){
         if (parentNode){
           parentNode->m_rightNode = newNode;
@@ -371,7 +371,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
 // build expression class from the expression string
 bool ExpressionC::buildExpression()
 {
-  ExpressionC* root = buildLeafNode(m_expStr, NULL);
+  ExpressionC* root = BuildTree(m_expStr, NULL);
   if (root){
     root->copyTo(this);
     root->clear();

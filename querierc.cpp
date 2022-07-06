@@ -418,11 +418,11 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
           sResult = doubleToStr(dSum/(*dateSet)[sFuncStr].size());
         }else if (sFuncStr.find("COUNT(")!=string::npos){
           sResult = intToStr((*dateSet)[sFuncStr].size());
-        }else if (sFuncStr.find("UNIQUECOUNT(")!=string::npos){
+        /*}else if (sFuncStr.find("UNIQUECOUNT(")!=string::npos){
           std::set<string> uniqueSet;
           for (int i=0; i<(*dateSet)[sFuncStr].size(); i++)
             uniqueSet.insert((*dateSet)[sFuncStr][i]);
-          sResult = intToStr(uniqueSet.size());
+          sResult = intToStr(uniqueSet.size());*/
         }else if (sFuncStr.find("MAX(")!=string::npos){
           sResult=(*dateSet)[sFuncStr][0];
           for (int i=1; i<(*dateSet)[sFuncStr].size(); i++)

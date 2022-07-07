@@ -436,7 +436,7 @@ bool FunctionC::runTruncdate(vector<string>* fieldnames, vector<string>* fieldva
     struct tm tm;
     long iSeconds = atol(sSeconds.c_str());
     if (strToDate(sTm, tm, sFmt)){
-      time_t t1 = ((long)((long)mktime(&tm)/iSeconds))*iSeconds;
+      time_t t1 = (trunc((long)mktime(&tm)/iSeconds))*iSeconds;
       tm = *(localtime(&t1));
       sResult = dateToStr(tm, sFmt);
       trace(DEBUG, "Truncating date '%s'(%u) to '%s'(%u), format:%s\n", sTm.c_str(), (long)mktime(&tm), sResult.c_str(), (long)t1, sFmt.c_str());

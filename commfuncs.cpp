@@ -497,7 +497,7 @@ bool isDate(const string& str, string& fmt)
               if (strToDate(str, tm, string((*id)+(*ij)+(*it)+(*iz)))){
                 //trace(DEBUG, "Trying date format: %s\n", fmt.c_str());
                 fmt = string((*id)+(*ij)+(*it)+(*iz));
-                trace(DEBUG, "Got date format: %s", fmt.c_str());
+                trace(DEBUG, "Got date format: %s\n", fmt.c_str());
                 return true;
               }else if (strToDate(str, tm, string((*it)+(*ij)+(*id)+(*iz)))){
                 fmt = string((*it)+(*ij)+(*id)+(*iz));

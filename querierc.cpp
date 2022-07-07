@@ -533,7 +533,6 @@ bool QuerierC::group()
         //  m_groups[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
         //  groupExps.push_back(sResult);
         //}
-        dumpMap();
         // eval agg function parameter expression and store in the temp data set
         string sResult;
         runAggFuncExp(&m_selections[i], &(it->second.aggFuncTaget), sResult);

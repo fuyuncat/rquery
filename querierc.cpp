@@ -508,8 +508,8 @@ bool QuerierC::group()
   for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
     trace(DEBUG, "Dumping Keys ...\n");
     dumpVector(it->first);
-    trace(DEBUG, "Dumping nonAggSels ...\n");
-    dumpVector(it->second.nonAggSels);
+    //trace(DEBUG, "Dumping nonAggSels ...\n");
+    //dumpVector(it->second.nonAggSels);
     trace(DEBUG, "Dumping aggFuncTaget ...\n");
     for (map< string,vector<string> >::iterator ttt=it->second.aggFuncTaget.begin();ttt!=it->second.aggFuncTaget.end(); ++ttt){
       trace(DEBUG, "Dumping func_expr '%s' ...\n",ttt->first.c_str());

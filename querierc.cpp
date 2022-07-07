@@ -526,6 +526,7 @@ bool QuerierC::group()
     vector<string> vResults;
     vResults.push_back(it->second.nonAggSels[0]);
     int iNonAggSelID = 1;
+    trace(DEBUG1, "Selection: %d:%d\n", m_selections.size(), it->second.nonAggSels.size());
     for (int i=0; i<m_selections.size(); i++){
       string sResult;
       if (!m_selections[i].containGroupFunc()){ // non aggregation function selections

@@ -18,9 +18,6 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <math.h> 
-#include <iostream>
-#include <sstream>
-#include <iomanip> 
 //#include <chrono>
 //#include <stdexcept.h>
 #include "commfuncs.h"
@@ -432,12 +429,30 @@ string dateToStr(struct tm val, string fmt)
   }
 }
 
-bool strToDate(string str, struct tm & tm)
+bool strToDate(string str, struct tm & tm, string fmt)
 {
-  string fmt;
-  if (isDate(str, fmt) && strptime(str.c_str(), fmt.c_str(), &tm))
+  // accept %z at then of the time string only
+  string sRaw = str, sFm = fmt;
+  int iOffSet = 0
+  if (sFm.substr(sFm.length()-2).compare("%z") == 0){
+    int iTZ = 0
+    while (sRaw[iTZ]!='+' && iTZ<sRaw.length())
+      iTZ++;
+    if (iTZ>sRaw.length()) // at least one digit following +
+      return false;
+    string sTZ = sRaw.substr(iTZ);
+    if (isInt(sTZ)){
+      iOffSet = atoi(sTZ.c_str());
+      sRaw = boost::algorithm::trim_copy<string>(sRaw.substr(0,iTZ));
+      sFm = boost::algorithm::trim_copy<string>(sFm.substr(0,sFm.size()-2));
+    }else
+      return false;
+  }
+  if (strptime(sRaw.c_str(), sFm.c_str(), &tm)){
+    time_t t1 = mktime(&tm) - iOffSet*36;
+    tm = *(localtime(&t1));
     return true;
-  else
+  }else
     return false;
 }
 
@@ -467,14 +482,7 @@ bool isDate(const string& str, string& fmt)
   alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%h:%M:%S");alltimefmt.insert("%H/%M/%S");alltimefmt.insert("%h/%M/%S");
   alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
   alltzfmt.insert(" %z");alltzfmt.insert(" %Z");alltzfmt.insert("%z");alltzfmt.insert("%Z");alltzfmt.insert("");
-  istringstream ss(str);
-  struct tm when;
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
-    fmt = (*id);
-    ss >> get_time(when, fmt.c_str());
-    if (!ss.fail()){
-      return true;
-    }
     if (str.length()<=12 && strptime(str.c_str(), (*id).c_str(), &tm)){
       fmt = (*id);
       return true;

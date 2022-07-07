@@ -137,7 +137,7 @@ string floatToStr(const float val);
 string doubleToStr(const double val);
 string dateToStr(struct tm val, string fmt = DATEFMT);
 
-bool strToDate(string str, struct tm & tm);
+bool strToDate(string str, struct tm & tm, string fmt=DATEFMT);
 struct tm now();
 
 bool like(string str1, string str2); 

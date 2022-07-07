@@ -189,8 +189,6 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
 void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, GroupDataSet & dateSet)
 {
   if (node->m_type == LEAF){ // eval leaf and store
-    string sFuncStr = node->getEntireExpstr();
-    trace(DEBUG, "Eval: '%s'...\n", sFuncStr.c_str());
     if (node->m_expType == FUNCTION && node->groupFuncOnly()){
       string sResult;
       FunctionC* func = new FunctionC(node->m_expStr);
@@ -199,6 +197,8 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
       func->clear();
       delete func;
       if (gotResult){
+        string sFuncStr = node->getEntireExpstr();
+        //trace(DEBUG, "Eval: '%s'...\n", sFuncStr.c_str());
         if (dateSet.aggFuncTaget.find(sFuncStr) != dateSet.aggFuncTaget.end())
           dateSet.aggFuncTaget[sFuncStr].push_back(sResult);
         else{
@@ -439,11 +439,11 @@ int QuerierC::searchAll()
 void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* dateSet, string & sResult)
 {
   if (node->m_type == LEAF){ // eval leaf and store
-    string sFuncStr = node->getEntireExpstr();
-    trace(DEBUG,"Processing aggregation Function %s\n",sFuncStr.c_str());
     if (node->m_expType == FUNCTION && node->containGroupFunc()){
+      string sFuncStr = node->getEntireExpstr();
+      trace(DEBUG,"Processing aggregation Function %s\n",sFuncStr.c_str());
       if (dateSet->find(sFuncStr) != dateSet->end()){
-        trace(DEBUG,"Data size:%d\n", (*dateSet)[sFuncStr].size());
+        //trace(DEBUG,"Data size:%d\n", (*dateSet)[sFuncStr].size());
         if (sFuncStr.find("SUM(")!=string::npos){
           double dSum=0;
           for (int i=0; i<(*dateSet)[sFuncStr].size(); i++){
@@ -506,20 +506,20 @@ bool QuerierC::group()
 {
   if (m_groups.size() == 0 || m_tmpResults.size() == 0)
     return true;
-  trace(DEBUG, "Grouping result...%d\n", m_tmpResults.size());
-  trace(DEBUG, "Dumping temp result sets ...\n");
-  for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
-    trace(DEBUG, "Dumping Keys ...\n");
-    dumpVector(it->first);
-    //trace(DEBUG, "Dumping nonAggSels ...\n");
-    //dumpVector(it->second.nonAggSels);
-    trace(DEBUG, "Dumping aggFuncTaget ...\n");
-    for (map< string,vector<string> >::iterator ttt=it->second.aggFuncTaget.begin();ttt!=it->second.aggFuncTaget.end(); ++ttt){
-      trace(DEBUG, "Dumping func_expr '%s' ...\n",ttt->first.c_str());
-      trace(DEBUG, "Dumping data set ...\n");
-      dumpVector(ttt->second);
-    }
-  }
+  //trace(DEBUG, "Grouping result...%d\n", m_tmpResults.size());
+  //trace(DEBUG, "Dumping temp result sets ...\n");
+  //for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
+  //  trace(DEBUG, "Dumping Keys ...\n");
+  //  dumpVector(it->first);
+  //  trace(DEBUG, "Dumping nonAggSels ...\n");
+  //  dumpVector(it->second.nonAggSels);
+  //  trace(DEBUG, "Dumping aggFuncTaget ...\n");
+  //  for (map< string,vector<string> >::iterator ttt=it->second.aggFuncTaget.begin();ttt!=it->second.aggFuncTaget.end(); ++ttt){
+  //    trace(DEBUG, "Dumping func_expr '%s' ...\n",ttt->first.c_str());
+  //    trace(DEBUG, "Dumping data set ...\n");
+  //    dumpVector(ttt->second);
+  //  }
+  //}
 
   for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
     vector<string> vResults;

@@ -464,7 +464,7 @@ bool strToDate(string str, struct tm & tm, string fmt)
   if (strptime(sRaw.c_str(), sFm.c_str(), &tm)){
     if (dateToStr(tm, sFm).compare(sRaw) != 0)
       return false;
-    time_t t1 = mktime(&tm)
+    time_t t1 = mktime(&tm);
     //t1 -= iOffSet*36;
     tm = *(localtime(&t1));
     //trace(DEBUG, "Trying final get format %s : %s\n", str.c_str(), fmt.c_str());

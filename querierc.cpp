@@ -529,7 +529,7 @@ bool QuerierC::group()
     for (int i=0; i<m_selections.size(); i++){
       string sResult;
       if (!m_selections[i].containGroupFunc()){ // non aggregation function selections
-        trace(DEBUG1, "None aggr func selection: %s\n", it->second.nonAggSels[iNonAggSelID]);
+        trace(DEBUG1, "None aggr func selection: %s\n", it->second.nonAggSels[iNonAggSelID].c_str());
         vResults.push_back(it->second.nonAggSels[iNonAggSelID]);
         iNonAggSelID++;
       }else{

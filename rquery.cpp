@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
     char cachebuffer[cache_length];
     size_t howmany = 0, reads = 0;
     while(std::cin) {
-      std::cin.read(cachebuffer, cache_length-1);
-      cachebuffer[cache_length-1] = '\0';
+      memset( cachebuffer, '\0', sizeof(char)*cache_length );
+      std::cin.read(cachebuffer, cache_length);
       //reads = getstr(cachebuffer, cache_length);
       //if (reads < 1)
       //  break;

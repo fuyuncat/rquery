@@ -329,7 +329,9 @@ int QuerierC::searchNext()
   int found = 0;
   //m_line++;
   try {
-    if(regex_search(m_rawstr, matches, m_regexp)){
+    string::const_iterator searchStart( m_rawstr.cbegin() );
+    while ( regex_search( searchStart, m_rawstr.cend(), matches, m_regexp ) ){
+    // while(regex_search(m_rawstr, matches, m_regexp)){
       //if (string(matches[0]).empty()){ // found an empty string means no more searching!
       //  m_rawstr = "";
       //  return found;
@@ -361,37 +363,21 @@ int QuerierC::searchNext()
       if (matchFilter(matcheddata, m_filter)){
         m_matchcount++;
       }
-      //m_results.push_back(matches);
-      //vector<namesaving_smatch>::iterator p = m_results.end();
-      //m_results.insert(p, matches);
-      //if(m_results.size()>0)
-      //  formatoutput(m_results[0]);
-      //formatoutput(m_results[m_results.size()-1]);
-      //printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find(string(matches[0])),string(matches[0]).length());
-      //printf("orig: %s\n",m_rawstr.c_str());
-      //formatoutput(matches);
+      searchStart = matches.suffix().first;
 
-      //smatch m;
-      //regex_search(m_rawstr, m, m_regexp);
-      //for (int i=1; i<m.size(); i++)
-      //  printf("%s\t",m[i].str().c_str());
-      //printf("\n");
+      //m_rawstr = m_rawstr.substr(matcheddata[0].length());
+      //if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, skip until the next newline
+      //  size_t newlnpos = m_rawstr.find("\n");
+      //  if (newlnpos != string::npos)
+      //    m_rawstr = m_rawstr.substr(newlnpos+1);
+      //}
 
-      m_rawstr = m_rawstr.substr(matcheddata[0].length());
-      if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, skip until the next newline
-        size_t newlnpos = m_rawstr.find("\n");
-        if (newlnpos != string::npos)
-          m_rawstr = m_rawstr.substr(newlnpos+1);
-      }
-      //printf("new: %s\n",m_rawstr.c_str());
-      //m_rawstr.emplace_back( start, matches[0].first );
-      //auto start = distance(m_rawstr.begin(),start);
-      //auto len   = distance(start, matches[0].first);
-      //auto sub_str = m_rawstr.substr(start,len);
       found++;
-    }else{
+    }
+    int newlnpos = -1;
+    if (searchStart == m_rawstr.cbegin()){
       // if didnt match any one, discard all until the last newline
-      int i = m_rawstr.size(), newlnpos = -1;
+      int i = m_rawstr.size();
       while (i>=0){
         if (m_rawstr[i] == '\n'){
           newlnpos = i;
@@ -399,9 +385,19 @@ int QuerierC::searchNext()
         }
         i--;
       }
-      if (newlnpos>=0)
-        m_rawstr = m_rawstr.substr(newlnpos+1);
+    }else{
+      // if matched, discard all until the first newline
+      while (searchStart<=m_rawstr.cend()){
+        if (m_rawstr[searchStart] == '\n'){
+          newlnpos = searchStart;
+          break;
+        }
+        searchStart++;
+      }
     }
+    if (newlnpos>=0)
+      m_rawstr = m_rawstr.substr(newlnpos+1);
+    
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());
     return found;

@@ -329,9 +329,9 @@ int QuerierC::searchNext()
   int found = 0;
   //m_line++;
   try {
-    string::const_iterator searchStart( m_rawstr.cbegin() );
-    while ( regex_search( searchStart, m_rawstr.cend(), matches, m_regexp ) ){
-    // while(regex_search(m_rawstr, matches, m_regexp)){
+    //string::const_iterator searchStart( m_rawstr.cbegin() );
+    //while ( regex_search( searchStart, m_rawstr.cend(), matches, m_regexp ) ){
+    while(regex_search(m_rawstr, matches, m_regexp)){
       //if (string(matches[0]).empty()){ // found an empty string means no more searching!
       //  m_rawstr = "";
       //  return found;
@@ -365,19 +365,19 @@ int QuerierC::searchNext()
       }
       searchStart = matches.suffix().first;
 
-      //m_rawstr = m_rawstr.substr(matcheddata[0].length());
-      //if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, skip until the next newline
-      //  size_t newlnpos = m_rawstr.find("\n");
-      //  if (newlnpos != string::npos)
-      //    m_rawstr = m_rawstr.substr(newlnpos+1);
-      //}
+      m_rawstr = m_rawstr.substr(matcheddata[0].length());
+      if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, skip until the next newline
+        size_t newlnpos = m_rawstr.find("\n");
+        if (newlnpos != string::npos)
+          m_rawstr = m_rawstr.substr(newlnpos+1);
+      }
 
       found++;
     }
-    int newlnpos = -1;
-    if (searchStart == m_rawstr.cbegin()){
-      // if didnt match any one, discard all until the last newline
+    // if didnt match any one, discard all until the last newline
+    if (found == 0){
       int i = m_rawstr.size();
+      int newlnpos = -1;
       while (i>=0){
         if (m_rawstr[i] == '\n'){
           newlnpos = i;
@@ -385,18 +385,9 @@ int QuerierC::searchNext()
         }
         i--;
       }
-    }else{
-      // if matched, discard all until the first newline
-      while (searchStart<=m_rawstr.cend()){
-        if (m_rawstr[searchStart] == '\n'){
-          newlnpos = searchStart;
-          break;
-        }
-        searchStart++;
-      }
+      if (newlnpos>=0)
+        m_rawstr = m_rawstr.substr(newlnpos+1);
     }
-    if (newlnpos>=0)
-      m_rawstr = m_rawstr.substr(newlnpos+1);
     
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());

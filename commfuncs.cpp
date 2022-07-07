@@ -439,15 +439,19 @@ bool strToDate(string str, struct tm & tm, string fmt)
     int iTZ = 0;
     while (sRaw[iTZ]!='+' && iTZ<sRaw.length())
       iTZ++;
-    if (iTZ>sRaw.length()) // at least one digit following +
+    if (iTZ>sRaw.length()){ // at least one digit following +
+      trace(DEBUG, "Trying Missing digit number : %s\n", sRaw.c_str());
       return false;
+    }
     string sTZ = sRaw.substr(iTZ);
     if (isInt(sTZ)){
       iOffSet = atoi(sTZ.c_str());
       sRaw = boost::algorithm::trim_copy<string>(sRaw.substr(0,iTZ));
       sFm = boost::algorithm::trim_copy<string>(sFm.substr(0,sFm.size()-2));
-    }else
+    }else{
+      trace(DEBUG, "Trying It is not digit number : %s\n", sRaw.c_str());
       return false;
+    }
   }
   if (strptime(sRaw.c_str(), sFm.c_str(), &tm)){
     time_t t1 = mktime(&tm) - iOffSet*36;
@@ -497,11 +501,11 @@ bool isDate(const string& str, string& fmt)
             for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
               if (strToDate(str, tm, string((*id)+(*ij)+(*it)+(*iz)))){
                 fmt = string((*id)+(*ij)+(*it)+(*iz));
-                trace(DEBUG, "Got date format: %s\n", fmt.c_str());
+                //trace(DEBUG, "Got date format: %s\n", fmt.c_str());
                 return true;
               }else if (strToDate(str, tm, string((*it)+(*ij)+(*id)+(*iz)))){
                 fmt = string((*it)+(*ij)+(*id)+(*iz));
-                trace(DEBUG, "Got date format: %s\n", fmt.c_str());
+                //trace(DEBUG, "Got date format: %s\n", fmt.c_str());
                 return true;
               }else
                 continue;

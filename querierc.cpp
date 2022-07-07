@@ -205,6 +205,7 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
           newdata.push_back(sResult);
           dateSet.aggFuncTaget.insert( pair< string,vector<string> >(sFuncStr,newdata));
         }
+        trace(DEBUG, "aggFuncTaget: '%s'(%d)!\n", sFuncStr.c_str(), dateSet.aggFuncTaget[sFuncStr].size());
       }else{
         trace(ERROR, "Failed to eval aggregation parameter!\n");
         return;

@@ -772,7 +772,7 @@ bool FilterC::compareIn(vector<string>* fieldnames, vector<string>* fieldvalues,
     trace(ERROR, "Failed to get the value to be compared in IN!\n"); 
     return false;
   }
-  trace(DEBUG, "Comparing '%s' IN '%s' (data type: %s)\n", leftRst.c_str(), m_rightExpStr.c_str(), decodeDatatype(m_datatype).c_str());
+  // trace(DEBUG, "Comparing '%s' IN '%s' (data type: %s)\n", leftRst.c_str(), m_rightExpStr.c_str(), decodeDatatype(m_datatype).c_str());
 
   for (int i=0;i<m_inExpressions.size();i++){
     if (!m_inExpressions[i].evalExpression(fieldnames, fieldvalues, varvalues, sResult)){
@@ -803,7 +803,7 @@ bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fiel
     else{
       string leftRst = "", rightRst = "";
       if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
-        trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype).c_str());
+        // trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype).c_str());
         return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
       }else
         return false;

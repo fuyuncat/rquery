@@ -511,7 +511,7 @@ bool QuerierC::group()
     trace(DEBUG, "Dumping nonAggSels ...\n");
     dumpVector(it->second.nonAggSels);
     trace(DEBUG, "Dumping aggFuncTaget ...\n");
-    for (map< string,vector<string> >::iterator ttt=it->second.aggFuncTaget.begin();ttt!=ttt=it->second.aggFuncTaget.end(); ++ttt){
+    for (map< string,vector<string> >::iterator ttt=it->second.aggFuncTaget.begin();ttt!=it->second.aggFuncTaget.end(); ++ttt){
       trace(DEBUG, "Dumping func_expr '%s' ...\n",ttt->first.c_str());
       trace(DEBUG, "Dumping data set ...\n");
       dumpVector(ttt->second);

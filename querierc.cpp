@@ -371,6 +371,11 @@ int QuerierC::searchNext()
       if (matchFilter(matcheddata, m_filter)){
         m_matchcount++;
       }
+      if (matcheddata[0].find("clmswidget.prMain?in_sessionid=A59858881A09J501&in_rptName=LMT_WIDGET_MY_ANNOUNCEMENTS&in_widget_rows=3&in_widget_start=1&in_use_template=Y&in_cmins=5&rndval=LEARNERenau606")!=string:npos){
+        trace(DUMP, "======================================start==============================================\n");
+        trace(DUMP, "%s\n", m_rawstr.c_str());
+        trace(DUMP, "======================================end==============================================\n");
+      }
       //m_results.push_back(matches);
       //vector<namesaving_smatch>::iterator p = m_results.end();
       //m_results.insert(p, matches);

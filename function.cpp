@@ -376,7 +376,7 @@ bool FunctionC::runTimediff(vector<string>* fieldnames, vector<string>* fieldval
   string sTm1, sTm2, sFmt1, sFmt2; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sTm1) && isDate(sTm1, sFmt1) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sTm2) && isDate(sTm2, sFmt2)){
     struct tm tm1, tm2;
-    if (strptime(sTm1.c_str(), sFmt1.c_str(), &tm1) && strptime(sTm2.c_str(), sFmt2.c_str(), &tm2)){
+    if (strToDate(sTm1, tm1, sFmt1) && strToDate(sTm2, tm2, sFmt2)){
       time_t t1 = mktime(&tm1);
       time_t t2 = mktime(&tm2);
       sResult = doubleToStr(difftime(t1, t2));
@@ -435,7 +435,7 @@ bool FunctionC::runTruncdate(vector<string>* fieldnames, vector<string>* fieldva
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sTm) && isDate(sTm, sFmt) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sSeconds) && isInt(sSeconds)){
     struct tm tm;
     long iSeconds = atol(sSeconds.c_str());
-    if (strptime(sTm.c_str(), sFmt.c_str(), &tm)){
+    if (strToDate(sTm, tm, sFmt)){
       time_t t1 = ((long)((long)mktime(&tm)/iSeconds))*iSeconds;
       tm = *(localtime(&t1));
       sResult = dateToStr(tm, sFmt);
@@ -460,7 +460,7 @@ bool FunctionC::runDateformat(vector<string>* fieldnames, vector<string>* fieldv
   string sTm, sOrigFmt, sFmt; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sTm) && isDate(sTm, sOrigFmt) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sFmt)){
     struct tm tm;
-    if (strptime(sTm.c_str(), sOrigFmt.c_str(), &tm)){
+    if (strToDate(sTm, tm, sOrigFmt)){
       sResult = dateToStr(tm, sFmt);
       return !sResult.empty();
     }else{

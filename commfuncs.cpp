@@ -433,9 +433,9 @@ bool strToDate(string str, struct tm & tm, string fmt)
 {
   // accept %z at then of the time string only
   string sRaw = str, sFm = fmt;
-  int iOffSet = 0
+  int iOffSet = 0;
   if (sFm.substr(sFm.length()-2).compare("%z") == 0){
-    int iTZ = 0
+    int iTZ = 0;
     while (sRaw[iTZ]!='+' && iTZ<sRaw.length())
       iTZ++;
     if (iTZ>sRaw.length()) // at least one digit following +
@@ -483,23 +483,23 @@ bool isDate(const string& str, string& fmt)
   alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
   alltzfmt.insert(" %z");alltzfmt.insert(" %Z");alltzfmt.insert("%z");alltzfmt.insert("%Z");alltzfmt.insert("");
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
-    if (str.length()<=12 && strptime(str.c_str(), (*id).c_str(), &tm)){
+    if (str.length()<=12 && strToDate(str, tm, (*id))){
       fmt = (*id);
       return true;
     }else{
       for (std::set<string>::iterator it = alltimefmt.begin(); it != alltimefmt.end(); ++it) {
-        if (str.length()<=10 && strptime(str.c_str(), (*it).c_str(), &tm)){
+        if (str.length()<=10 && strToDate(str, tm, (*it))){
           fmt = (*it);
           return true;
         }else{ 
           for (std::set<string>::iterator ij = alljunction.begin(); ij != alljunction.end(); ++ij) {
             for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
-              if (strptime(str.c_str(), string((*id)+(*ij)+(*it)+(*iz)).c_str(), &tm)){
+              if (strToDate(str, tm, string((*id)+(*ij)+(*it)+(*iz)))){
                 //trace(DEBUG, "Trying date format: %s\n", fmt.c_str());
                 fmt = string((*id)+(*ij)+(*it)+(*iz));
                 //trace(DEBUG, "Got date format: %s", fmt.c_str());
                 return true;
-              }else if (strptime(str.c_str(), string((*it)+(*ij)+(*id)+(*iz)).c_str(), &tm)){
+              }else if (strToDate(str, tm, string((*it)+(*ij)+(*id)+(*iz)))){
                 fmt = string((*it)+(*ij)+(*id)+(*iz));
                 //trace(DEBUG, "Got date format: %s\n", fmt.c_str());
                 return true;
@@ -959,7 +959,7 @@ int anyDataCompare(string str1, string str2, int type){
     newstr1=trim_one(newstr1,'}');newstr2=trim_one(newstr2,'}');
     if (isDate(newstr1,fmt1) && isDate(newstr2,fmt2)){
       struct tm tm1, tm2;
-      if (strptime(newstr1.c_str(), fmt1.c_str(), &tm1) && strptime(newstr2.c_str(), fmt2.c_str(), &tm2)){
+      if (strToDate(newstr1, tm1, fmt1) && strToDate(newstr2, tm2, fmt2)){
         time_t t1 = mktime(&tm1);
         time_t t2 = mktime(&tm2);
         double diffs = difftime(t1, t2);
@@ -1074,7 +1074,7 @@ int anyDataCompare(string str1, int comparator, string str2, int type){
     newstr1=trim_one(newstr1,'}');newstr2=trim_one(newstr2,'}');
     if (isDate(newstr1,fmt1) && isDate(newstr2,fmt2)){
       struct tm tm1, tm2;
-      if (strptime(newstr1.c_str(), fmt1.c_str(), &tm1) && strptime(newstr2.c_str(), fmt2.c_str(), &tm2)){
+      if (strToDate(newstr1, tm1, fmt1) && strToDate(newstr2, tm2, fmt2)){
         time_t t1 = mktime(&tm1);
         time_t t2 = mktime(&tm2);
         double diffs = difftime(t1, t2);
@@ -1261,11 +1261,11 @@ bool evalDate(string str1, int operate, string str2, struct tm& result)
   string fmt;
   int seconds;
   if (isDate(str1, fmt) && isInt(str2)){
-    strptime(str1.c_str(), DATEFMT, &result);
+    strToDate(str1, result, fmt);
     t1 = mktime(&result);
     seconds = atoi(str2.c_str());
   }else if (isDate(str2, fmt) && isInt(str1)){
-    strptime(str2.c_str(), DATEFMT, &result);
+    strToDate(str2, result, fmt);
     t1 = mktime(&result);
     seconds = atoi(str1.c_str());
   }else{

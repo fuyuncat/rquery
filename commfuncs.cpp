@@ -454,13 +454,13 @@ bool strToDate(string str, struct tm & tm, string fmt)
       return false;
     }
     trace(DEBUG, "Trying %s : %s\n", str.c_str(), fmt.c_str());
-  }else(
+  }else{
     int iTZ = 0;
     while (sRaw[iTZ]!='+' && iTZ<sRaw.length()) // No %z, No +!
       iTZ++;
     if (iTZ<sRaw.length())
       return false;
-  )
+  }
   if (strptime(sRaw.c_str(), sFm.c_str(), &tm)){
     time_t t1 = mktime(&tm) - iOffSet*36;
     tm = *(localtime(&t1));

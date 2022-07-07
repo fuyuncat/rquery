@@ -333,7 +333,7 @@ int QuerierC::searchNext()
     static int suffix = 0;
     suffix++;
     ofstream myfile;
-    myfile.open("example."+intToStr(suffix));
+    myfile.open(("example."+intToStr(suffix)).c_str());
     myfile << m_rawstr;
     myfile.close();
 

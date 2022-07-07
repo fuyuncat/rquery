@@ -360,10 +360,10 @@ int QuerierC::searchNext()
       //matcheddata.push_back(m_filename);
       matcheddata.push_back(intToStr(m_line));
       matcheddata.push_back(intToStr(m_matchcount+1));
-      if (matchFilter(matcheddata, m_filter)){
-        m_matchcount++;
-      }
-      searchStart = matches.suffix().first;
+      m_matchcount++;
+      //if (matchFilter(matcheddata, m_filter))
+      //  m_matchcount++;
+      //searchStart = matches.suffix().first;
 
       m_rawstr = m_rawstr.substr(matcheddata[0].length());
       if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, skip until the next newline

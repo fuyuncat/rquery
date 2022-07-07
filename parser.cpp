@@ -189,8 +189,10 @@ map<string,string> ParserC::parseparam(string parameterstr)
 {
   //trace(DEBUG, "Original string: %s\n", parameterstr.c_str());
   vector<string> params = split(parameterstr,'|',"//''{}",'\\');
+  dumpVector(params);
   for (int i = 0; i < params.size(); ++i){
     string trimmedstr = boost::algorithm::trim_copy<string>(params[i]);
+    trace(DEBUG, "Param %d:%s;\n",i,trimmedstr.c_str());
     size_t found = params[i].find_first_of(" ");
     found = found==string::npos?params[i].find_first_of("\t"):found;
     //trace(DEBUG, "Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);

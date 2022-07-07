@@ -464,8 +464,6 @@ bool isDate(const string& str, string& fmt)
   alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%h:%M:%S");alltimefmt.insert("%H/%M/%S");alltimefmt.insert("%h/%M/%S");
   alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
   alltzfmt.insert("");alltzfmt.insert("%z");alltzfmt.insert(" %z");alltzfmt.insert("%Z");alltzfmt.insert(" %Z");
-  //alldatefmt = {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"};
-  //alltimefmt = {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"};
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
     if (str.length()<=12 && strptime(str.c_str(), (*id).c_str(), &tm)){
       fmt = (*id);
@@ -479,6 +477,7 @@ bool isDate(const string& str, string& fmt)
           for (std::set<string>::iterator ij = alljunction.begin(); ij != alljunction.end(); ++ij) {
             for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
               if (strptime(str.c_str(), string((*id)+(*ij)+(*it)+(*iz)).c_str(), &tm)){
+                trace(DEBUG, "Trying date format: %s", fmt.c_str());
                 fmt = string((*id)+(*ij)+(*it)+(*iz));
                 trace(DEBUG, "Got date format: %s", fmt.c_str());
                 return true;

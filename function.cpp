@@ -432,12 +432,12 @@ bool FunctionC::runTruncdate(vector<string>* fieldnames, vector<string>* fieldva
   string sTm, sFmt, sSeconds; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sTm) && isDate(sTm, sFmt) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sSeconds) && isInt(sSeconds)){
     struct tm tm;
-    int iSeconds = atoi(sSeconds.c_str());
+    long iSeconds = atol(sSeconds.c_str());
     if (strptime(sTm.c_str(), sFmt.c_str(), &tm)){
-      time_t t1 = (mktime(&tm)/iSeconds)*iSeconds;
+      time_t t1 = ((long)mktime(&tm)/iSeconds)*iSeconds;
       tm = *(localtime(&t1));
       sResult = dateToStr(tm, sFmt);
-      trace(DEBUG, "Truncating date '%s'(%d) to '%s'(%d), format:%s", sTm.c_str(), mktime(&tm), sResult.c_str(), t1, sFmt.c_str());
+      trace(DEBUG, "Truncating date '%s'(%d) to '%s'(%d), format:%s", sTm.c_str(), (long)mktime(&tm), sResult.c_str(), (long)t1, sFmt.c_str());
       return !sResult.empty();
     }else{
       trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());

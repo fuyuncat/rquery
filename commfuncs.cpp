@@ -453,6 +453,7 @@ bool strToDate(string str, struct tm & tm, string fmt)
       trace(DEBUG, "Trying It is not digit number : %s\n", sRaw.c_str());
       return false;
     }
+    trace(DEBUG, "Trying %s : %s\n", str.c_str(), fmt.c_str());
   }
   if (strptime(sRaw.c_str(), sFm.c_str(), &tm)){
     time_t t1 = mktime(&tm) - iOffSet*36;

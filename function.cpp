@@ -437,6 +437,7 @@ bool FunctionC::runTruncdate(vector<string>* fieldnames, vector<string>* fieldva
       time_t t1 = (mktime(&tm)/iSeconds)*iSeconds;
       tm = *(localtime(&t1));
       sResult = dateToStr(tm, sFmt);
+      trace(DEBUG, "Truncating date '%s'(%d) to '%s'(%d), format:%s", sTm.c_str(), mktime(&tm), sResult.c_str(), t1, sFmt.c_str());
       return !sResult.empty();
     }else{
       trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());

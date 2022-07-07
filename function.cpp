@@ -436,10 +436,11 @@ bool FunctionC::runTruncdate(vector<string>* fieldnames, vector<string>* fieldva
     struct tm tm;
     long iSeconds = atol(sSeconds.c_str());
     if (strToDate(sTm, tm, sFmt)){
-      time_t t1 = (trunc((long)mktime(&tm)/iSeconds))*iSeconds;
-      tm = *(localtime(&t1));
+      time_t t1 = mktime(&tm);
+      time_t t2 = (time_t)(trunc((long double)t1/iSeconds))*iSeconds;
+      tm = *(localtime(&t2));
       sResult = dateToStr(tm, sFmt);
-      trace(DEBUG, "Truncating date '%s'(%u) to '%s'(%u), format:%s\n", sTm.c_str(), (long)mktime(&tm), sResult.c_str(), (long)t1, sFmt.c_str());
+      trace(DEBUG, "Truncating date '%s'(%u) to '%s'(%u), format:%s\n", sTm.c_str(), (long)t1, sResult.c_str(), (long)t2, sFmt.c_str());
       return !sResult.empty();
     }else{
       trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());

@@ -463,7 +463,7 @@ bool isDate(const string& str, string& fmt)
   alldatefmt.insert("%Y-%m-%d");alldatefmt.insert("%Y/%m/%d");alldatefmt.insert("%d/%m/%Y");alldatefmt.insert("%m/%d/%Y");alldatefmt.insert("%m-%d-%Y");alldatefmt.insert("%d-%m-%Y");alldatefmt.insert("%d/%b/%Y");alldatefmt.insert("%b/%d/%Y");alldatefmt.insert("%Y-%b-%d");alldatefmt.insert("%Y/%b/%d");
   alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%h:%M:%S");alltimefmt.insert("%H/%M/%S");alltimefmt.insert("%h/%M/%S");
   alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
-  alltzfmt.insert("%z");alltzfmt.insert(" %z");alltzfmt.insert("%Z");alltzfmt.insert(" %Z");alltzfmt.insert("");
+  alltzfmt.insert(" %z");alltzfmt.insert(" %Z");alltzfmt.insert("%z");alltzfmt.insert("%Z");alltzfmt.insert("");
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
     if (str.length()<=12 && strptime(str.c_str(), (*id).c_str(), &tm)){
       fmt = (*id);

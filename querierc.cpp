@@ -477,6 +477,7 @@ bool QuerierC::group()
 {
   if (m_groups.size() == 0 || m_tmpResults.size() == 0)
     return true;
+  trace(DEBUG, "Grouping result...\n");
 
   for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
     vector<string> vResults;

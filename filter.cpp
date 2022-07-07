@@ -803,7 +803,7 @@ bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fiel
     else{
       string leftRst = "", rightRst = "";
       if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
-        // trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype).c_str());
+        trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype).c_str());
         return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
       }else
         return false;

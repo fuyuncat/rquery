@@ -329,6 +329,7 @@ int QuerierC::searchNext()
   //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
   //smatch matches;
   //m_line++;
+  int found = 0;
   try {
     static int suffix = 0;
     suffix++;
@@ -338,7 +339,6 @@ int QuerierC::searchNext()
     myfile.close();
 
     namesaving_smatch matches(m_regexstr);
-    int found = 0;
     while(regex_search(m_rawstr, matches, m_regexp)){
       //if (string(matches[0]).empty()){ // found an empty string means no more searching!
       //  m_rawstr = "";

@@ -372,7 +372,7 @@ int QuerierC::searchNext()
         m_matchcount++;
       }
       if (matcheddata[0].find("clmswidget.prMain?in_sessionid=A59858881A09J501&in_rptName=LMT_WIDGET_MY_ANNOUNCEMENTS&in_widget_rows=3&in_widget_start=1&in_use_template=Y&in_cmins=5&rndval=LEARNERenau606")!=string::npos){
-        trace(DUMP, "======================================start==============================================\n");
+        trace(DUMP, "======================================start(%d)==============================================\n", matcheddata[0].length());
         trace(DUMP, "%s\n", m_rawstr.c_str());
         trace(DUMP, "======================================end==============================================\n");
       }
@@ -392,7 +392,7 @@ int QuerierC::searchNext()
       //  printf("%s\t",m[i].str().c_str());
       //printf("\n");
 
-      m_rawstr = m_rawstr.substr(matcheddata[0].length());
+      m_rawstr = m_rawstr.substr(m_rawstr.find(matcheddata[0])+matcheddata[0].length());
       if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, skip until the next newline
         size_t newlnpos = m_rawstr.find("\n");
         if (newlnpos != string::npos)

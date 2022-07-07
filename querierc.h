@@ -68,15 +68,15 @@ class QuerierC
     long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
     
     //vector<namesaving_smatch> m_results;
+    FilterC* m_filter;
     vector<string> m_fieldnames;    // field names
     vector<int> m_fieldtypes;       // field datatype in sequence
     map<string, int> m_fieldntypes; // field datatype by names, set by setFieldDatatype
-    vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
-    FilterC* m_filter;
     vector<string>  m_selnames; // selection names
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions
     vector<ExpressionC> m_sorts;     // sorting expressions
+    vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
 

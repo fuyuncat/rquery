@@ -495,6 +495,7 @@ bool QuerierC::group()
         vResults.push_back(sResult);
       }
     }
+    m_results.push_back(vResults);
   }
 }
 

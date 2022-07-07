@@ -467,12 +467,12 @@ bool isDate(const string& str, string& fmt)
   //alldatefmt = {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"};
   //alltimefmt = {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"};
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
-    if (strptime(str.c_str(), (*id).c_str(), &tm)){
+    if (str.length()<=12 && strptime(str.c_str(), (*id).c_str(), &tm)){
       fmt = (*id);
       return true;
     }else{
       for (std::set<string>::iterator it = alldatefmt.begin(); it != alldatefmt.end(); ++it) {
-        if (strptime(str.c_str(), (*it).c_str(), &tm)){
+        if (str.length()<=10 && strptime(str.c_str(), (*it).c_str(), &tm)){
           fmt = (*it);
           return true;
         }else{ 

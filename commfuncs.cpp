@@ -18,6 +18,9 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <math.h> 
+#include <iostream>
+#include <sstream>
+#include <iomanip> 
 //#include <chrono>
 //#include <stdexcept.h>
 #include "commfuncs.h"
@@ -464,7 +467,14 @@ bool isDate(const string& str, string& fmt)
   alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%h:%M:%S");alltimefmt.insert("%H/%M/%S");alltimefmt.insert("%h/%M/%S");
   alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
   alltzfmt.insert(" %z");alltzfmt.insert(" %Z");alltzfmt.insert("%z");alltzfmt.insert("%Z");alltzfmt.insert("");
+  istringstream ss {str};
+  struct tm when;
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
+    fmt = (*id);
+    ss >> std::get_time(when, fmt);
+    if (!ss.fail()){
+      return true;
+    }
     if (str.length()<=12 && strptime(str.c_str(), (*id).c_str(), &tm)){
       fmt = (*id);
       return true;

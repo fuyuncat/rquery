@@ -321,8 +321,8 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   return matched;
 }
 
-//#include <iostream>
-//#include <fstream>
+#include <iostream>
+#include <fstream>
 
 int QuerierC::searchNext()
 {
@@ -331,12 +331,12 @@ int QuerierC::searchNext()
   //m_line++;
   int found = 0;
   try {
-    //static int suffix = 0;
-    //suffix++;
-    //ofstream myfile;
-    //myfile.open(("example."+intToStr(suffix)).c_str());
-    //myfile << m_rawstr;
-    //myfile.close();
+    static int suffix = 0;
+    suffix++;
+    ofstream myfile;
+    myfile.open(("example."+intToStr(suffix)).c_str());
+    myfile << m_rawstr;
+    myfile.close();
 
     namesaving_smatch matches(m_regexstr);
     while(regex_search(m_rawstr, matches, m_regexp)){
@@ -417,6 +417,7 @@ int QuerierC::searchNext()
     trace(ERROR, "Regular search exception: %s\n", e.what());
     return found;
   }
+  trace(DEBUG, "So far found: %d\n", found);
   return found;
 }
 

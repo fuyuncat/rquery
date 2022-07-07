@@ -284,6 +284,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         dateSet.nonAggSels.push_back(rowValue[0]); // nonAggSels store raw string in the first member.
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
+          trace(DEBUG, "Selection '%s': %d ",m_selections[i].getEntireExpstr().c_str(), m_selections[i].containGroupFunc());
           if (!m_selections[i].containGroupFunc()){ // non aggregation function selections
             m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
             dateSet.nonAggSels.push_back(sResult);

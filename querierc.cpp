@@ -329,9 +329,7 @@ int QuerierC::searchNext()
   int found = 0;
   //m_line++;
   try {
-    //string::const_iterator searchStart( m_rawstr.cbegin() );
-    //while ( regex_search( searchStart, m_rawstr.cend(), matches, m_regexp ) ){
-    if(regex_search(m_rawstr, matches, m_regexp)){
+    while(regex_search(m_rawstr, matches, m_regexp)){
       //if (string(matches[0]).empty()){ // found an empty string means no more searching!
       //  m_rawstr = "";
       //  return found;
@@ -360,10 +358,24 @@ int QuerierC::searchNext()
       //matcheddata.push_back(m_filename);
       matcheddata.push_back(intToStr(m_line));
       matcheddata.push_back(intToStr(m_matchcount+1));
-      m_matchcount++;
-      //if (matchFilter(matcheddata, m_filter))
-      //  m_matchcount++;
-      //searchStart = matches.suffix().first;
+      if (matchFilter(matcheddata, m_filter)){
+        m_matchcount++;
+      }
+      //m_results.push_back(matches);
+      //vector<namesaving_smatch>::iterator p = m_results.end();
+      //m_results.insert(p, matches);
+      //if(m_results.size()>0)
+      //  formatoutput(m_results[0]);
+      //formatoutput(m_results[m_results.size()-1]);
+      //printf("matched: %s; start pos: %d; len: %d\n",string(matches[0]).c_str(),m_rawstr.find(string(matches[0])),string(matches[0]).length());
+      //printf("orig: %s\n",m_rawstr.c_str());
+      //formatoutput(matches);
+
+      //smatch m;
+      //regex_search(m_rawstr, m, m_regexp);
+      //for (int i=1; i<m.size(); i++)
+      //  printf("%s\t",m[i].str().c_str());
+      //printf("\n");
 
       m_rawstr = m_rawstr.substr(matcheddata[0].length());
       if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, skip until the next newline
@@ -371,23 +383,24 @@ int QuerierC::searchNext()
         if (newlnpos != string::npos)
           m_rawstr = m_rawstr.substr(newlnpos+1);
       }
-
+      //printf("new: %s\n",m_rawstr.c_str());
+      //m_rawstr.emplace_back( start, matches[0].first );
+      //auto start = distance(m_rawstr.begin(),start);
+      //auto len   = distance(start, matches[0].first);
+      //auto sub_str = m_rawstr.substr(start,len);
       found++;
     }
-    /*// if didnt match any one, discard all until the last newline
-    if (found == 0){
-      int i = m_rawstr.size();
-      int newlnpos = -1;
-      while (i>=0){
-        if (m_rawstr[i] == '\n'){
-          newlnpos = i;
-          break;
-        }
-        i--;
+    // if didnt match any one, discard all until the last newline
+    int i = m_rawstr.size(), newlnpos = -1;
+    while (i>=0){
+      if (m_rawstr[i] == '\n'){
+        newlnpos = i;
+        break;
       }
-      if (newlnpos>=0)
-        m_rawstr = m_rawstr.substr(newlnpos+1);
-    }*/
+      i--;
+    }
+    if (newlnpos>=0)
+      m_rawstr = m_rawstr.substr(newlnpos+1);
     
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());

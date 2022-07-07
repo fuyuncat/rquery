@@ -471,7 +471,7 @@ bool isDate(const string& str, string& fmt)
   struct tm when;
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
     fmt = (*id);
-    ss >> std::get_time(when, fmt);
+    ss >> get_time(when, fmt);
     if (!ss.fail()){
       return true;
     }

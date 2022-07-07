@@ -940,6 +940,8 @@ bool ExpressionC::mergeConstNodes(string & sResult)
       trace(DEBUG,"Return CONST '%s'\n", m_expStr.c_str());
       return true;
     }else if (m_expType == FUNCTION){
+      if (containGroupFunc()) // skip aggregation functions
+        return false;
       FunctionC* func = new FunctionC(m_expStr);
       bool gotResult = false;
       if (func->isConst()){

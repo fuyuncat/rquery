@@ -504,6 +504,19 @@ bool QuerierC::group()
   if (m_groups.size() == 0 || m_tmpResults.size() == 0)
     return true;
   trace(DEBUG, "Grouping result...%d\n", m_tmpResults.size());
+  trace(DEBUG, "Dumping temp result sets ...\n");
+  for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
+    trace(DEBUG, "Dumping Keys ...\n");
+    dumpVector(it->first);
+    trace(DEBUG, "Dumping nonAggSels ...\n");
+    dumpVector(it->second.nonAggSels);
+    trace(DEBUG, "Dumping aggFuncTaget ...\n");
+    for (map< string,vector<string> >::iterator ttt=it->second.aggFuncTaget.begin();ttt!=ttt=it->second.aggFuncTaget.end(); ++ttt){
+      trace(DEBUG, "Dumping func_expr '%s' ...\n",ttt->first.c_str());
+      trace(DEBUG, "Dumping data set ...\n");
+      dumpVector(ttt->second);
+    }
+  }
 
   for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
     vector<string> vResults;
@@ -515,6 +528,12 @@ bool QuerierC::group()
         vResults.push_back(it->second.nonAggSels[iNonAggSelID]);
         iNonAggSelID++;
       }else{
+        // group expressions to the sorting keys
+        //for (int i=0; i<m_groups.size(); i++){
+        //  m_groups[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
+        //  groupExps.push_back(sResult);
+        //}
+        dumpMap();
         // eval agg function parameter expression and store in the temp data set
         string sResult;
         runAggFuncExp(&m_selections[i], &(it->second.aggFuncTaget), sResult);

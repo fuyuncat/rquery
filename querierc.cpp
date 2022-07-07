@@ -506,7 +506,7 @@ bool QuerierC::group()
 {
   if (m_groups.size() == 0 || m_tmpResults.size() == 0)
     return true;
-  trace(DEBUG, "Grouping result...\n");
+  trace(DEBUG, "Grouping result...%d\n", m_tmpResults.size());
 
   for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
     vector<string> vResults;

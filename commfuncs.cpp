@@ -459,9 +459,11 @@ struct tm now()
 bool isDate(const string& str, string& fmt)
 {
   struct tm tm;
-  std::set<string> alldatefmt, alltimefmt;
-  alldatefmt.insert("%Y-%m-%d");alldatefmt.insert("%Y/%m/%d");alldatefmt.insert("%d/%m/%Y");alldatefmt.insert("%d-%m-%Y");
+  std::set<string> alldatefmt, alltimefmt, alljunction, alltzfmt;
+  alldatefmt.insert("%Y-%m-%d");alldatefmt.insert("%Y/%m/%d");alldatefmt.insert("%d/%m/%Y");alldatefmt.insert("%m/%d/%Y");alldatefmt.insert("%m-%d-%Y");alldatefmt.insert("%d-%m-%Y");alldatefmt.insert("%d/%b/%Y");alldatefmt.insert("%b/%d/%Y");alldatefmt.insert("%Y-%b-%d");alldatefmt.insert("%Y/%b/%d");a
   alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%h:%M:%S");alltimefmt.insert("%H/%M/%S");alltimefmt.insert("%h/%M/%S");
+  alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
+  alltzfmt.insert("");alltzfmt.insert("%z");alltzfmt.insert(" %z");alltzfmt.insert("%Z");alltzfmt.insert(" %Z");
   //alldatefmt = {"%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"};
   //alltimefmt = {"%H:%M:%S", "%h:%M:%S", "%H/%M/%S", "%h/%M/%S"};
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
@@ -473,20 +475,20 @@ bool isDate(const string& str, string& fmt)
         if (strptime(str.c_str(), (*it).c_str(), &tm)){
           fmt = (*it);
           return true;
-        }else if (strptime(str.c_str(), ((*id)+":"+(*it)).c_str(), &tm)){
-          fmt = (*id)+":"+(*it);
-          return true;
-        }else if (strptime(str.c_str(), ((*it)+":"+(*id)).c_str(), &tm)){
-          fmt = (*it)+":"+*id;
-          return true;
-        }else if (strptime(str.c_str(), ((*id)+" "+(*it)).c_str(), &tm)){
-          fmt = (*id)+" "+(*it);
-          return true;
-        }else if (strptime(str.c_str(), ((*it)+" "+(*id)).c_str(), &tm)){
-          fmt = (*it)+" "+(*id);
-          return true;
-        }else
-          continue;
+        }else{ 
+          for (std::set<string>::iterator ij = alljunction.begin(); ij != alljunction.end(); ++ij) {
+            for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
+              if (strptime(str.c_str(), ((*id)+(*ij)+(*it)+(*iz)).c_str(), &tm)){
+                fmt = (*id)+(*ij)+(*it)+(*iz);
+                return true;
+              }else if (strptime(str.c_str(), ((*it)+(*ij)+(*id)+(*iz)).c_str(), &tm)){
+                fmt = (*it)+(*ij)+(*id)+(*iz);
+                return true;
+              }else
+                continue;
+            }
+          }
+        }
       }
     }
   }

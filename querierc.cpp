@@ -499,9 +499,9 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
 // group result
 bool QuerierC::group()
 {
+  trace(DEBUG, "Grouping result...%d:%d\n", m_groups.size(), m_tmpResults.size());
   if (m_groups.size() == 0 || m_tmpResults.size() == 0)
     return true;
-  trace(DEBUG, "Grouping result...%d\n", m_tmpResults.size());
 
   for (map<vector<string>, GroupDataSet>::iterator it=m_tmpResults.begin(); it!=m_tmpResults.end(); ++it){
     vector<string> vResults;

@@ -417,7 +417,7 @@ int QuerierC::searchNext()
     trace(ERROR, "Regular search exception: %s\n", e.what());
     return found;
   }
-  trace(DEBUG, "So far found: %d\n", found);
+  trace(DEBUG, "So far found: %d\n", m_matchcount);
   return found;
 }
 

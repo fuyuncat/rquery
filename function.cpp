@@ -107,7 +107,7 @@ bool FunctionC::analyzeExpStr()
     m_datatype = LONG;
   else if(m_funcName.compare("LOG")==0 || m_funcName.compare("AVERAGE")==0 || m_funcName.compare("SUM")==0)
     m_datatype = DOUBLE;
-  else if(m_funcName.compare("NOW")==0 || m_funcName.compare("DATEROUND")==0)
+  else if(m_funcName.compare("NOW")==0 || m_funcName.compare("TRUNCDATE")==0)
     m_datatype = DATE;
   else if(m_funcName.compare("MAX")==0 || m_funcName.compare("MIN")==0) // MAX and MIN could be any data type
     m_datatype = UNKNOWN;

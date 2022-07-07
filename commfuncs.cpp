@@ -460,7 +460,7 @@ bool strToDate(string str, struct tm & tm, string fmt)
     tm = *(localtime(&t1));
     return true;
   }else{
-    trace(ERROR, "Trying failed to format %s : %s\n", sRaw.c_str(), sFm.c_str());
+    trace(ERROR, "Trying failed to format %s : %s\n", str.c_str(), fmt.c_str());
     return false;
   }
 }

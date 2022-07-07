@@ -76,6 +76,7 @@ class QuerierC
     vector<string>  m_selnames; // selection names
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions
+    vector<ExpressionC> m_sorts;     // sorting expressions
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
 

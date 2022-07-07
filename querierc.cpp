@@ -349,6 +349,10 @@ int QuerierC::searchNext()
         }
         for (int i=0; i<m_selections.size(); i++)
           m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
+        for (int i=0; i<m_groups.size(); i++)
+          m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
+        for (int i=0; i<m_sorts.size(); i++)
+          m_sorts[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
       }
       // append variables
       //matcheddata.push_back(m_filename);
@@ -547,6 +551,7 @@ void QuerierC::outputAndClean()
   output();
   m_results.clear();
   m_groups.clear();
+  m_sorts.clear();
 }
 
 int QuerierC::boostmatch(vector<string> *result)

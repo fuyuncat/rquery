@@ -374,7 +374,7 @@ int QuerierC::searchNext()
 
       found++;
     }
-    // if didnt match any one, discard all until the last newline
+    /*// if didnt match any one, discard all until the last newline
     if (found == 0){
       int i = m_rawstr.size();
       int newlnpos = -1;
@@ -387,7 +387,7 @@ int QuerierC::searchNext()
       }
       if (newlnpos>=0)
         m_rawstr = m_rawstr.substr(newlnpos+1);
-    }
+    }*/
     
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());

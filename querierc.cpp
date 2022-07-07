@@ -19,9 +19,6 @@
 #include "function.h"
 #include "querierc.h"
 
-#include <iostream>
-#include <fstream>
-
 QuerierC::QuerierC()
 {
   init();
@@ -324,6 +321,9 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   return matched;
 }
 
+//#include <iostream>
+//#include <fstream>
+
 int QuerierC::searchNext()
 {
   //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
@@ -331,12 +331,12 @@ int QuerierC::searchNext()
   //m_line++;
   int found = 0;
   try {
-    static int suffix = 0;
-    suffix++;
-    ofstream myfile;
-    myfile.open(("example."+intToStr(suffix)).c_str());
-    myfile << m_rawstr;
-    myfile.close();
+    //static int suffix = 0;
+    //suffix++;
+    //ofstream myfile;
+    //myfile.open(("example."+intToStr(suffix)).c_str());
+    //myfile << m_rawstr;
+    //myfile.close();
 
     namesaving_smatch matches(m_regexstr);
     while(regex_search(m_rawstr, matches, m_regexp)){

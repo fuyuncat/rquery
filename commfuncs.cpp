@@ -467,7 +467,7 @@ bool isDate(const string& str, string& fmt)
   alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%h:%M:%S");alltimefmt.insert("%H/%M/%S");alltimefmt.insert("%h/%M/%S");
   alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
   alltzfmt.insert(" %z");alltzfmt.insert(" %Z");alltzfmt.insert("%z");alltzfmt.insert("%Z");alltzfmt.insert("");
-  istringstream ss {str};
+  istringstream ss(str);
   struct tm when;
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
     fmt = (*id);

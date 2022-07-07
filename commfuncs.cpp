@@ -435,7 +435,7 @@ bool strToDate(string str, struct tm & tm, string fmt)
   trace(DEBUG, "Trying date format: %s\n", fmt.c_str());
   string sRaw = str, sFm = fmt;
   int iOffSet = 0;
-  if (sFm.substr(sFm.length()-2).compare("%z") == 0){
+  if (sFm.length()>5 && sFm[sFm.length()-2]=='%' && sFm[sFm.length()-1]=='z'){
     int iTZ = 0;
     while (sRaw[iTZ]!='+' && iTZ<sRaw.length())
       iTZ++;

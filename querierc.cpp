@@ -331,7 +331,7 @@ int QuerierC::searchNext()
   try {
     //string::const_iterator searchStart( m_rawstr.cbegin() );
     //while ( regex_search( searchStart, m_rawstr.cend(), matches, m_regexp ) ){
-    while(regex_search(m_rawstr, matches, m_regexp)){
+    if(regex_search(m_rawstr, matches, m_regexp)){
       //if (string(matches[0]).empty()){ // found an empty string means no more searching!
       //  m_rawstr = "";
       //  return found;

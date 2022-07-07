@@ -436,6 +436,7 @@ bool strToDate(string str, struct tm & tm, string fmt)
   string sRaw = str, sFm = fmt;
   int iOffSet = 0;
   if (sFm.length()>5 && sFm[sFm.length()-2]=='%' && sFm[sFm.length()-1]=='z'){
+    trace(DEBUG, "Trying timezone : %s\n", sRaw.c_str());
     int iTZ = 0;
     while (sRaw[iTZ]!='+' && iTZ<sRaw.length())
       iTZ++;

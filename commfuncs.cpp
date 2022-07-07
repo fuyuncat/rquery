@@ -441,7 +441,7 @@ bool strToDate(string str, struct tm & tm, string fmt)
     while (sRaw[iTZ]!='+' && iTZ<sRaw.length())
       iTZ++;
     if (iTZ>sRaw.length()){ // at least one digit following +
-      trace(DEBUG, "Trying Missing digit number : %s\n", sRaw.c_str());
+      trace(ERROR, "Trying Missing digit number : %s\n", sRaw.c_str());
       return false;
     }
     string sTZ = sRaw.substr(iTZ);
@@ -450,7 +450,7 @@ bool strToDate(string str, struct tm & tm, string fmt)
       sRaw = boost::algorithm::trim_copy<string>(sRaw.substr(0,iTZ));
       sFm = boost::algorithm::trim_copy<string>(sFm.substr(0,sFm.size()-2));
     }else{
-      trace(DEBUG, "Trying It is not digit number : %s\n", sRaw.c_str());
+      trace(ERROR, "Trying It is not digit number : %s\n", sRaw.c_str());
       return false;
     }
     trace(DEBUG, "Trying %s : %s\n", str.c_str(), fmt.c_str());
@@ -459,8 +459,10 @@ bool strToDate(string str, struct tm & tm, string fmt)
     time_t t1 = mktime(&tm) - iOffSet*36;
     tm = *(localtime(&t1));
     return true;
-  }else
+  }else{
+    trace(ERROR, "Trying failed to format %s : %s\n", sRaw.c_str(), sFm.c_str());
     return false;
+  }
 }
 
 struct tm now()

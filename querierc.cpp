@@ -189,6 +189,8 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
 void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, GroupDataSet & dateSet)
 {
   if (node->m_type == LEAF){ // eval leaf and store
+    string sFuncStr = node->getEntireExpstr();
+    trace(DEBUG, "Eval: '%s'...\n", sFuncStr.c_str());
     if (node->m_expType == FUNCTION && node->groupFuncOnly()){
       string sResult;
       FunctionC* func = new FunctionC(node->m_expStr);
@@ -197,7 +199,6 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
       func->clear();
       delete func;
       if (gotResult){
-        string sFuncStr = node->getEntireExpstr();
         if (dateSet.aggFuncTaget.find(sFuncStr) != dateSet.aggFuncTaget.end())
           dateSet.aggFuncTaget[sFuncStr].push_back(sResult);
         else{

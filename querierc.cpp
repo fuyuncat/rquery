@@ -207,7 +207,7 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
           newdata.push_back(sResult);
           dateSet.aggFuncTaget.insert( pair< string,vector<string> >(sFuncStr,newdata));
         }
-        trace(DEBUG, "aggFuncTaget: '%s'(%d)!\n", sFuncStr.c_str(), dateSet.aggFuncTaget[sFuncStr].size());
+        //trace(DEBUG, "aggFuncTaget: '%s'(%d)!\n", sFuncStr.c_str(), dateSet.aggFuncTaget[sFuncStr].size());
       }else{
         trace(ERROR, "Failed to eval aggregation parameter!\n");
         return;
@@ -442,7 +442,7 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
   if (node->m_type == LEAF){ // eval leaf and store
     if (node->m_expType == FUNCTION && node->containGroupFunc()){
       string sFuncStr = node->getEntireExpstr();
-      trace(DEBUG,"Processing aggregation Function %s\n",sFuncStr.c_str());
+      //trace(DEBUG,"Processing aggregation Function %s\n",sFuncStr.c_str());
       if (dateSet->find(sFuncStr) != dateSet->end()){
         //trace(DEBUG,"Data size:%d\n", (*dateSet)[sFuncStr].size());
         if (sFuncStr.find("SUM(")!=string::npos){
@@ -529,6 +529,7 @@ bool QuerierC::group()
     for (int i=0; i<m_selections.size(); i++){
       string sResult;
       if (!m_selections[i].containGroupFunc()){ // non aggregation function selections
+        trace(DEBUG1, "None aggr func selection: %s\n", it->second.nonAggSels[iNonAggSelID]);
         vResults.push_back(it->second.nonAggSels[iNonAggSelID]);
         iNonAggSelID++;
       }else{

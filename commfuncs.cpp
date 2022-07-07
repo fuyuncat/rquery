@@ -86,6 +86,10 @@ string decodeTracelevel(int level)
     return "INFO";
   case DEBUG:
     return "DEBUG";
+  case DEBUG1:
+    return "DEBUG1";
+  case DEBUG2:
+    return "DEBUG2";
   case DUMP:
     return "";
   default:

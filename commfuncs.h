@@ -63,7 +63,9 @@ using namespace boost::xpressive;
 #define WARNING 3
 #define INFO 4
 #define DUMP 5
-#define DEBUG 9
+#define DEBUG2 98
+#define DEBUG1 99
+#define DEBUG 100
 #define DATEFMT "%Y-%m-%d %H:%M:%S"
 #define CONST 1
 #define COLUMN 2

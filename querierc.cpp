@@ -439,6 +439,7 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
     if (node->m_expType == FUNCTION && node->containGroupFunc()){
       string sFuncStr = node->getEntireExpstr();
       if (dateSet->find(sFuncStr) != dateSet->end()){
+        trace(DEBUG,"Aggregation Function %s:%d\n",sFuncStr.c_str(), (*dateSet)[sFuncStr].size());
         if (sFuncStr.find("SUM(")!=string::npos){
           double dSum=0;
           for (int i=0; i<(*dateSet)[sFuncStr].size(); i++){

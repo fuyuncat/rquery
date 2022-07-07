@@ -95,17 +95,17 @@ int main(int argc, char *argv[])
   }
   // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP
   if (query.find("group") != query.end()){
+    trace(INFO,"Setting group : %s \n", query["group"].c_str());
     rq.assignGroupStr(query["group"]);
     bGroup = true;
-    trace(INFO,"Setting group : %s \n", query["set"].c_str());
   }
   if (query.find("select") != query.end()){
-    rq.assignSelString(query["select"]);
     trace(INFO,"Assigning selections: %s \n", query["select"].c_str());
+    rq.assignSelString(query["select"]);
   }
   if (query.find("set") != query.end()){
-    rq.setFieldTypeFromStr(query["set"]);
     trace(INFO,"Setting fields data type: %s \n", query["set"].c_str());
+    rq.setFieldTypeFromStr(query["set"]);
   }
 
   if ( argc < 3 ){

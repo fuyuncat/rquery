@@ -432,16 +432,16 @@ string dateToStr(struct tm val, string fmt)
 bool strToDate(string str, struct tm & tm, string fmt)
 {
   // accept %z at then of the time string only
-  trace(DEBUG, "Trying date format: %s\n", fmt.c_str());
+  //trace(DEBUG, "Trying date format: %s\n", fmt.c_str());
   string sRaw = str, sFm = fmt;
   int iOffSet = 0;
   if (sFm.length()>5 && sFm[sFm.length()-2]=='%' && sFm[sFm.length()-1]=='z'){
-    trace(DEBUG, "Trying timezone : %s\n", sRaw.c_str());
+    //trace(DEBUG, "Trying timezone : %s\n", sRaw.c_str());
     int iTZ = 0;
     while (sRaw[iTZ]!='+' && iTZ<sRaw.length())
       iTZ++;
     if (iTZ>sRaw.length()){ // at least one digit following +
-      trace(ERROR, "Trying Missing digit number : %s\n", sRaw.c_str());
+      //trace(ERROR, "Trying Missing digit number : %s\n", sRaw.c_str());
       return false;
     }
     string sTZ = sRaw.substr(iTZ);
@@ -450,10 +450,10 @@ bool strToDate(string str, struct tm & tm, string fmt)
       sRaw = boost::algorithm::trim_copy<string>(sRaw.substr(0,iTZ));
       sFm = boost::algorithm::trim_copy<string>(sFm.substr(0,sFm.size()-2));
     }else{
-      trace(ERROR, "Trying It is not digit number : %s\n", sRaw.c_str());
+      //trace(ERROR, "Trying It is not digit number : %s\n", sRaw.c_str());
       return false;
     }
-    trace(DEBUG, "Trying %s : %s\n", str.c_str(), fmt.c_str());
+    //trace(DEBUG, "Trying %s : %s\n", str.c_str(), fmt.c_str());
   }else{
     int iTZ = 0;
     while (sRaw[iTZ]!='+' && iTZ<sRaw.length()) // No %z, No +!
@@ -466,10 +466,10 @@ bool strToDate(string str, struct tm & tm, string fmt)
       return false;
     time_t t1 = mktime(&tm) - iOffSet*36;
     tm = *(localtime(&t1));
-    trace(DEBUG, "Trying final get format %s : %s\n", str.c_str(), fmt.c_str());
+    //trace(DEBUG, "Trying final get format %s : %s\n", str.c_str(), fmt.c_str());
     return true;
   }else{
-    trace(ERROR, "Trying final failed to format %s : %s\n", str.c_str(), fmt.c_str());
+    //trace(ERROR, "Trying final failed to format %s : %s\n", str.c_str(), fmt.c_str());
     return false;
   }
 }

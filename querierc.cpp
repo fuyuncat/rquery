@@ -389,6 +389,18 @@ int QuerierC::searchNext()
       //auto len   = distance(start, matches[0].first);
       //auto sub_str = m_rawstr.substr(start,len);
       found++;
+    }else{
+      // if didnt match any one, discard all until the last newline
+      int i = m_rawstr.size(), newlnpos = -1;
+      while (i>=0){
+        if (m_rawstr[i] == '\n'){
+          newlnpos = i;
+          break;
+        }
+        i--;
+      }
+      if (newlnpos>=0)
+        m_rawstr = m_rawstr.substr(newlnpos+1);
     }
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());

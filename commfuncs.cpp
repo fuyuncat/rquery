@@ -1409,14 +1409,14 @@ void dumpVector(vector<string> v)
 {
   trace(DEBUG, "Dumping vector<string>...\n");
   for (int i=0; i<v.size(); i++)
-    trace(DEBUG, "%d:%s\t", i, v[i].c_str());
-  trace(DEBUG, "\n");
+    trace(DUMP, "%d:%s\t", i, v[i].c_str());
+  trace(DUMP, "\n");
 }
 
 void dumpMap(map<string, string> m)
 {
   trace(DEBUG, "Dumping map<string, string>...\n");
   for (map<string,string>::iterator it=m.begin(); it!=m.end(); ++it)
-    trace(DEBUG, "%s: %s\n", it->first.c_str(), it->second.c_str());
-  trace(DEBUG, "\n");
+    trace(DUMP, "%s: %s\n", it->first.c_str(), it->second.c_str());
+  trace(DUMP, "\n");
 }

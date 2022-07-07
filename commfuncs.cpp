@@ -432,6 +432,7 @@ string dateToStr(struct tm val, string fmt)
 bool strToDate(string str, struct tm & tm, string fmt)
 {
   // accept %z at then of the time string only
+  trace(DEBUG, "Trying date format: %s\n", fmt.c_str());
   string sRaw = str, sFm = fmt;
   int iOffSet = 0;
   if (sFm.substr(sFm.length()-2).compare("%z") == 0){
@@ -495,7 +496,6 @@ bool isDate(const string& str, string& fmt)
           for (std::set<string>::iterator ij = alljunction.begin(); ij != alljunction.end(); ++ij) {
             for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
               if (strToDate(str, tm, string((*id)+(*ij)+(*it)+(*iz)))){
-                trace(DEBUG, "Trying date format: %s\n", fmt.c_str());
                 fmt = string((*id)+(*ij)+(*it)+(*iz));
                 trace(DEBUG, "Got date format: %s\n", fmt.c_str());
                 return true;

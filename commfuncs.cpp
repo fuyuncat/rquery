@@ -477,13 +477,13 @@ bool isDate(const string& str, string& fmt)
           for (std::set<string>::iterator ij = alljunction.begin(); ij != alljunction.end(); ++ij) {
             for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
               if (strptime(str.c_str(), string((*id)+(*ij)+(*it)+(*iz)).c_str(), &tm)){
-                trace(DEBUG, "Trying date format: %s", fmt.c_str());
+                //trace(DEBUG, "Trying date format: %s\n", fmt.c_str());
                 fmt = string((*id)+(*ij)+(*it)+(*iz));
-                trace(DEBUG, "Got date format: %s", fmt.c_str());
+                //trace(DEBUG, "Got date format: %s", fmt.c_str());
                 return true;
               }else if (strptime(str.c_str(), string((*it)+(*ij)+(*id)+(*iz)).c_str(), &tm)){
                 fmt = string((*it)+(*ij)+(*id)+(*iz));
-                trace(DEBUG, "Got date format: %s", fmt.c_str());
+                //trace(DEBUG, "Got date format: %s\n", fmt.c_str());
                 return true;
               }else
                 continue;

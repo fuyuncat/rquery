@@ -469,7 +469,7 @@ bool isDate(const string& str, string& fmt)
       fmt = (*id);
       return true;
     }else{
-      for (std::set<string>::iterator it = alldatefmt.begin(); it != alldatefmt.end(); ++it) {
+      for (std::set<string>::iterator it = alltimefmt.begin(); it != alltimefmt.end(); ++it) {
         if (str.length()<=10 && strptime(str.c_str(), (*it).c_str(), &tm)){
           fmt = (*it);
           return true;

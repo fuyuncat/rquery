@@ -701,8 +701,10 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
 // sort result
 bool QuerierC::sort()
 {
-  if (m_sorts.size() == 0 || m_sortKeys.size() == 0)
+  if (m_sorts.size() == 0 || m_sortKeys.size() == 0){
+    trace(DEBUG1, "The sorting value number %d doesnot equal to the key number %d!\n",m_sortKeys[0].size(),m_sorts.size());
     return true;
+  }
   if (m_sortKeys[0].size() != m_sorts.size()){
     trace(ERROR, "The sorting value number %d doesnot equal to the key number %d!\n",m_sortKeys[0].size(),m_sorts.size());
     return false;

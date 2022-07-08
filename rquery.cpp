@@ -46,7 +46,7 @@ GlobalVars gv;
 
 void usage()
 {
-  printf("Program Name: RQuery AKA RQ\nContact Email: fuyuncat@gmail\nUsage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
+  printf("Program Name: RQuery AKA RQ\nContact Email: fuyuncat@gmail.com\nUsage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
 }
 
 int main(int argc, char *argv[])
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
   QuerierC rq;
 
   for (int i=1; i<argc; i++){
-    if (argv[i][0]=='-' && i>=argc && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")!=0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")!=0){
+    if (argv[i][0]=='-' && i>=argc && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")!=0 && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")!=0){
       usage();
       trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
       return 1;

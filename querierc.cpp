@@ -677,6 +677,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
     mergeSort(iMid+1, iMid+1+(int)floor(iRight-iMid-1)/2, iRight);
     int iLPos = iLeft, iRPos = iMid, iCheckPos = iMid;
     while (iLPos<iCheckPos && iRPos<=iRight){
+      trace(DEBUG1, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRight);
       bool exchanged = false;
       for (int i=0; i<m_sorts.size(); i++){
         if (m_sortKeys[iLPos][i]>m_sortKeys[iRPos][i]){

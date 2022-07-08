@@ -150,16 +150,16 @@ int main(int argc, char *argv[])
       howmany += std::cin.gcount();
     }
     thisTime = time(NULL);
-    trace(DEBUG2, "Reading and searching: %u", thisTime-lastTime);
+    trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
     lastTime = thisTime;
     if (bGroup){
       rq.group();
       thisTime = time(NULL);
-      trace(DEBUG2, "Grouping: %u", thisTime-lastTime);
+      trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
       lastTime = thisTime;
       rq.outputAndClean();
       thisTime = time(NULL);
-      trace(DEBUG2, "Printing: %u", thisTime-lastTime);
+      trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
       lastTime = thisTime;
     }
     trace(DEBUG1,"%d bytes read.\n", howmany);

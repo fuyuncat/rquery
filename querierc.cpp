@@ -155,7 +155,7 @@ bool QuerierC::assignSortStr(string sortstr)
     // discard non integer CONST
     // Any INTEGER number will be mapped to the correspond sequence of the selections.
     // Thus, m_selections should always be analyzed before m_sorts
-    if (vSorts.sortKey.m_type==BRANCH || vSorts.sortKey.m_expType != CONST || (!isInt(vSorts.sortKey.m_expStr) && !isLong(vSorts.sortKey.m_expStr)) || atoi(vSorts.sortKey.m_expStr.c_str())>=m_selections.size()){
+    if (keyProp.sortKey.m_type==BRANCH || keyProp.sortKey.m_expType != CONST || (!isInt(keyProp.sortKey.m_expStr) && !isLong(keyProp.sortKey.m_expStr)) || atoi(keyProp.sortKey.m_expStr.c_str())>=m_selections.size()){
       m_sorts.push_back(keyProp);
     }
   }

@@ -114,7 +114,6 @@ string decodeTracelevel(int level)
   }
 }
 
-GlobalVars gv;
 void trace(short level, const char *fmt, ...)
 {
   va_list args;

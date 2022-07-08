@@ -41,6 +41,8 @@
 
 //size_t g_inputbuffer;
 
+GlobalVars gv;
+
 string usage()
 {
   return string("Usage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
@@ -110,10 +112,8 @@ int main(int argc, char *argv[])
       i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-m")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--msglevel")==0){
       int iLevel=encodeTracelevel(string(argv[i+1]));
-      trace(DEBUG,"(1) set g_tracelevel to %s(%d:%d)\n",argv[i+1],iLevel,UNKNOWN);
       if (iLevel!=UNKNOWN){
         gv.g_tracelevel = iLevel;
-        printf("(2) set g_tracelevel to %d\n",gv.g_tracelevel);
       }else{
         trace(FATAL,"Unrecognized message level %s. It should be one of INFO, WARNING, ERROR, FATAL.\n", argv[i]);
         return 1;

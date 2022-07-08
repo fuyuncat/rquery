@@ -382,8 +382,6 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
               iSel = j;
               break;
             }
-          if (iSel >= 0)
-            sResult = m_results[m_results.size()-1][iSel + 1];
           // if the sort key is a integer, get the result from the result set at the same sequence number
           if (iSel >= 0 || (m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size()))
             continue;

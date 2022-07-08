@@ -23,7 +23,7 @@
 //#include <boost/regex.hpp>
 
 struct GroupDataSet{
-  vector<string> nonAggSels;  // all non-aggr selections values
+  vector< vector<string> > nonAggSels;  // all non-aggr selections values
   map< string,vector<string> > aggFuncTaget; // evaled func parameter expression. mapping func_expr:evaled parameter expressions
 };
 
@@ -78,10 +78,12 @@ class QuerierC
     vector<ExpressionC> m_sorts;     // sorting expressions
     vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
-    map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
+    //map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
+    map< vector<string>, vector<string> > m_nonAggSels;  // temp results for non aggregation functions selections. mapping func_expr:selections 
+    map< vector<string>, map< string,vector<string> > > m_aggFuncTaget;  // temp results for calculating aggregation functions. mapping func_expr:evaled parameter expressions
 
     bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
-    void evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, GroupDataSet & dateSet); // eval expression in aggregation paramter and store in a data set
+    void evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, map< string,vector<string> > & aggFuncTaget); // eval expression in aggregation paramter and store in a data set
     void runAggFuncExp(ExpressionC* node, map< string,vector<string> >* dateSet, string & sResult); // run aggregation function
 
   protected:

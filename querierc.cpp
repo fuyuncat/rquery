@@ -652,3 +652,8 @@ long QuerierC::getOutputCount()
 {
   return m_outputrow;
 }
+
+long QuerierC::getLines()
+{
+  return m_line;
+}

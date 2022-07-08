@@ -55,6 +55,7 @@ class QuerierC
     void setFieldDatatype(string field, int datetype);
     long getMatchedCount();
     long getOutputCount();
+    long getLines();
 
   private:
     string m_regexstr;

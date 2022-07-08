@@ -57,10 +57,6 @@ GlobalVars::~GlobalVars()
   
 }
 
-size_t GlobalVars::g_inputbuffer;
-short GlobalVars::g_tracelevel;
-bool GlobalVars::g_printheader;
-
 void GlobalVars::initVars(){
   g_inputbuffer = 16384;
   g_tracelevel = FATAL;
@@ -101,7 +97,8 @@ void trace(short level, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  if (GlobalVars::g_tracelevel>=level){
+  GlobalVars gv;
+  if (gv.g_tracelevel>=level){
     printf((decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
     vprintf(fmt, args);
     if (level == FATAL)

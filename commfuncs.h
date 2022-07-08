@@ -106,6 +106,8 @@ public:
   static bool g_printheader;
 };
 
+extern GlobalVars gv;
+
 void trace(short level, const char *fmt, ...);
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  

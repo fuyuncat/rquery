@@ -374,6 +374,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
             evalAggExpNode(&m_selections[i], &m_fieldnames, &fieldValues, &varValues, aggFuncTaget);
           }
         }
+        trace(DEBUG1, "Sorting keys %d!\n",m_sorts.size());
         for (int i=0; i<m_sorts.size(); i++){
           string sResult;
           //if it has the exact same expression as any selection, get the result from selection

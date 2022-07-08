@@ -513,25 +513,24 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
 // group result
 bool QuerierC::group()
 {
-  if (m_groups.size() == 0 || m_tmpResults.size() == 0)
+  if (m_groups.size() == 0 || m_nonAggSels.size() == 0)
     return true;
 
   for (map< vector<string>, vector<string> >::iterator it=m_nonAggSels.begin(); it!=m_nonAggSels.end(); ++it){
     vector<string> vResults;
-    map< string,vector<string> > aggFuncTaget = m_aggFuncTaget[it->first];
-    vResults.push_back(it->second.nonAggSels[0]);
+    vResults.push_back(it->second[0]);
     int iNonAggSelID = 1;
-    trace(DEBUG1, "Selection: %d:%d\n", m_selections.size(), it->second.nonAggSels.size());
+    trace(DEBUG1, "Selection: %d:%d\n", m_selections.size(), it->second.size());
     for (int i=0; i<m_selections.size(); i++){
       string sResult;
       if (!m_selections[i].containGroupFunc()){ // non aggregation function selections
-        trace(DEBUG1, "None aggr func selection: %s\n", it->second.nonAggSels[iNonAggSelID].c_str());
-        vResults.push_back(it->second.nonAggSels[iNonAggSelID]);
+        trace(DEBUG1, "None aggr func selection: %s\n", it->second[iNonAggSelID].c_str());
+        vResults.push_back(it->second[iNonAggSelID]);
         iNonAggSelID++;
       }else{
         // eval agg function parameter expression and store in the temp data set
         string sResult;
-        runAggFuncExp(&m_selections[i], &aggFuncTaget, sResult);
+        runAggFuncExp(&m_selections[i], &(m_aggFuncTaget[it->first]), sResult);
         vResults.push_back(sResult);
       }
     }

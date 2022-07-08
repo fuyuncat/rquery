@@ -669,12 +669,12 @@ bool QuerierC::group()
 // doing merging sort exchanging
 void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
 {
-  trace(DEBUG1, "Mergeing %d %d %d\n", iLeft, iMid, iRight);
   if (iLeft >= iRight)
     return;
   else{
     mergeSort(iLeft, (int)floor(iMid)/2, iMid);
     mergeSort(iMid+1, iMid+1+(int)floor(iRight-iMid-1)/2, iRight);
+    trace(DEBUG1, "Mergeing %d %d %d\n", iLeft, iMid, iRight);
     int iLPos = iLeft, iRPos = iMid, iCheckPos = iMid;
     while (iLPos<iCheckPos && iRPos<=iRight){
       //trace(DEBUG1, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRight);

@@ -31,6 +31,7 @@
 #include <iomanip>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
+#include <chrono>
 #include "commfuncs.h"
 //#include "regexc.h"
 #include "parser.h"
@@ -92,22 +93,22 @@ int main(int argc, char *argv[])
       rq.setregexp(rex);
 
       if (query.find("filter") != query.end()){
-        trace(INFO,"Assigning filter: %s \n", query["filter"].c_str());
+        trace(DEBUG,"Assigning filter: %s \n", query["filter"].c_str());
         FilterC* filter = new FilterC(query["filter"]);
         rq.assignFilter(filter);
       }
       // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP
       if (query.find("group") != query.end()){
-        trace(INFO,"Setting group : %s \n", query["group"].c_str());
+        trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
         rq.assignGroupStr(query["group"]);
         bGroup = true;
       }
       if (query.find("select") != query.end()){
-        trace(INFO,"Assigning selections: %s \n", query["select"].c_str());
+        trace(DEBUG,"Assigning selections: %s \n", query["select"].c_str());
         rq.assignSelString(query["select"]);
       }
       if (query.find("set") != query.end()){
-        trace(INFO,"Setting fields data type: %s \n", query["set"].c_str());
+        trace(DEBUG,"Setting fields data type: %s \n", query["set"].c_str());
         rq.setFieldTypeFromStr(query["set"]);
       }
       i++;
@@ -135,7 +136,8 @@ int main(int argc, char *argv[])
     rq.printFieldNames();
     rq.outputAndClean();
   }else{
-    time_t thisTime,lastTime = time(NULL);
+    using namespace std::chrono;
+    milliseconds thisTime,lastTime = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
     const size_t cache_length = gv.g_inputbuffer;
     char cachebuffer[cache_length];
     size_t howmany = 0, reads = 0;
@@ -149,16 +151,16 @@ int main(int argc, char *argv[])
         rq.outputAndClean();
       howmany += std::cin.gcount();
     }
-    thisTime = time(NULL);
+    thisTime = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
     trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
     lastTime = thisTime;
     if (bGroup){
       rq.group();
-      thisTime = time(NULL);
+      thisTime = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
       trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
       lastTime = thisTime;
       rq.outputAndClean();
-      thisTime = time(NULL);
+      thisTime = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
       trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
       lastTime = thisTime;
     }

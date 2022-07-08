@@ -294,7 +294,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           if (!m_selections[i].containGroupFunc() && !dataSetExist){ // non aggregation function selections
             m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
             nonAggVals.push_back(sResult);
-            trace(DEBUG1, "Got non-aggr selection '%s' \n",sResult.c_str());
+            //trace(DEBUG1, "Got non-aggr selection '%s' \n",sResult.c_str());
           }else{
             // eval agg function parameter expression and store in the temp data set
             evalAggExpNode(&m_selections[i], &m_fieldnames, &fieldValues, &varValues, aggFuncTaget);

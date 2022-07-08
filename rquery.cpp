@@ -135,6 +135,7 @@ int main(int argc, char *argv[])
     rq.printFieldNames();
     rq.outputAndClean();
   }else{
+    time_t thisTime,lastTime = time(NULL);
     const size_t cache_length = gv.g_inputbuffer;
     char cachebuffer[cache_length];
     size_t howmany = 0, reads = 0;
@@ -148,9 +149,18 @@ int main(int argc, char *argv[])
         rq.outputAndClean();
       howmany += std::cin.gcount();
     }
+    thisTime = time(NULL);
+    trace(DEBUG2, "Reading and searching: %u", thisTime-lastTime);
+    lastTime = thisTime;
     if (bGroup){
       rq.group();
+      thisTime = time(NULL);
+      trace(DEBUG2, "Grouping: %u", thisTime-lastTime);
+      lastTime = thisTime;
       rq.outputAndClean();
+      thisTime = time(NULL);
+      trace(DEBUG2, "Printing: %u", thisTime-lastTime);
+      lastTime = thisTime;
     }
     trace(DEBUG1,"%d bytes read.\n", howmany);
   }

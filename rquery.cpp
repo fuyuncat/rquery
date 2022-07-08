@@ -45,6 +45,8 @@ string usage()
   return string("Usage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
 }
 
+GlobalVars gv;
+
 int main(int argc, char *argv[])
 {
   /*for (int i = 1; i < argc; ++i){
@@ -60,7 +62,6 @@ int main(int argc, char *argv[])
     return 1;
   }
   
-  GlobalVars gv;
   gv.setVars(16384*2, DEBUG, true);
 
   ParserC ps;

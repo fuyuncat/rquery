@@ -93,11 +93,11 @@ string decodeTracelevel(int level)
   }
 }
 
+GlobalVars gv;
 void trace(short level, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  GlobalVars gv;
   if (gv.g_tracelevel>=level){
     printf((decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
     vprintf(fmt, args);

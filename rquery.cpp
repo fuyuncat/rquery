@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
   ParserC ps;
   bool bGroup = false;
   bool bContentProvided = false;
+  string sContent = "";
   QuerierC rq;
 
   for (int i=1; i<argc; i++){
@@ -121,39 +122,40 @@ int main(int argc, char *argv[])
       i++;
     }else{
       //trace(DEBUG1,"Content: %s.\n", argv[i]);
-      rq.setrawstr(argv[i]);
+      sContent = string(argv[i]);
       bContentProvided = true;
     }
-    
-    if (bContentProvided){
-      //rq.searchNext();
-      rq.searchAll();
-      rq.group();
-      rq.printFieldNames();
-      rq.outputAndClean();
-    }else{
-      const size_t cache_length = gv.g_inputbuffer;
-      char cachebuffer[cache_length];
-      size_t howmany = 0, reads = 0;
-      while(std::cin) {
-        memset( cachebuffer, '\0', sizeof(char)*cache_length );
-        std::cin.read(cachebuffer, cache_length);
-        rq.appendrawstr(string(cachebuffer));
-        rq.searchAll();
-        rq.printFieldNames();
-        if (!bGroup)
-          rq.outputAndClean();
-        howmany += std::cin.gcount();
-      }
-      if (bGroup){
-        rq.group();
-        rq.outputAndClean();
-      }
-      trace(DEBUG1,"%d bytes read.\n", howmany);
-    }
-    trace(DEBUG, "Found %d row(s).\n", rq.getOutputCount());
-    trace(DEBUG, "Processed %d line(s).\n", rq.getLines());
   }
+    
+  if (bContentProvided){
+    rq.setrawstr(sContent);
+    //rq.searchNext();
+    rq.searchAll();
+    rq.group();
+    rq.printFieldNames();
+    rq.outputAndClean();
+  }else{
+    const size_t cache_length = gv.g_inputbuffer;
+    char cachebuffer[cache_length];
+    size_t howmany = 0, reads = 0;
+    while(std::cin) {
+      memset( cachebuffer, '\0', sizeof(char)*cache_length );
+      std::cin.read(cachebuffer, cache_length);
+      rq.appendrawstr(string(cachebuffer));
+      rq.searchAll();
+      rq.printFieldNames();
+      if (!bGroup)
+        rq.outputAndClean();
+      howmany += std::cin.gcount();
+    }
+    if (bGroup){
+      rq.group();
+      rq.outputAndClean();
+    }
+    trace(DEBUG1,"%d bytes read.\n", howmany);
+  }
+  trace(DEBUG, "Found %d row(s).\n", rq.getOutputCount());
+  trace(DEBUG, "Processed %d line(s).\n", rq.getLines());
 
   /*
   ParserC ps;

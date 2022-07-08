@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
       }
       i++;
     }else{
-      //trace(DEBUG1,"Content: %s.\n", argv[i]);
+      trace(DEBUG1,"Content: %s.\n", argv[i]);
       rq.setrawstr(argv[i]);
       bContentProvided = true;
     }

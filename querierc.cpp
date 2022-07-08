@@ -149,7 +149,7 @@ bool QuerierC::assignSortStr(string sortstr)
     // discard non integer CONST
     // Any INTEGER number will be mapped to the correspond sequence of the selections.
     // Thus, m_selections should always be analyzed before m_sorts
-    if (eSort.m_type==BRANCH || eSort.m_expType != CONST || (!isInt(eSort.m_expStr) && !isLong(eSort.m_expStr)) || intToStr(eSort.m_expStr)>=m_selections.size())
+    if (eSort.m_type==BRANCH || eSort.m_expType != CONST || (!isInt(eSort.m_expStr) && !isLong(eSort.m_expStr)) || atoi(eSort.m_expStr.c_str())>=m_selections.size())
       m_sorts.push_back(eSort);
   }
   return true;
@@ -327,8 +327,8 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
             if (iSel >= 0)
               sResult = m_results[m_results.size()-1][iSel + 1];
             // if the sort key is a integer, get the result from the result set at the same sequence number
-            else if (m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && intToStr(m_sorts[i].m_expStr)<m_selections.size())
-              sResult = m_results[m_results.size()-1][intToStr(m_sorts[i].m_expStr) + 1];
+            else if (m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size())
+              sResult = m_results[m_results.size()-1][atoi(m_sorts[i].m_expStr.c_str()) + 1];
             else
               m_sorts[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
             //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].getEntireExpstr().c_str(), sResult.c_str());
@@ -385,7 +385,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           if (iSel >= 0)
             sResult = m_results[m_results.size()-1][iSel + 1]
           // if the sort key is a integer, get the result from the result set at the same sequence number
-          if (iSel >= 0 || (m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && intToStr(m_sorts[i].m_expStr)<m_selections.size()))
+          if (iSel >= 0 || (m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size()))
             continue;
           else if (!m_sorts[i].containGroupFunc() && !dataSetExist){ // non aggregation function selections
             m_sorts[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
@@ -650,8 +650,8 @@ bool QuerierC::group()
       if (iSel >= 0){
         vResults.push_back(m_results[m_results.size()-1][iSel + 1]);
       // if the sort key is a integer, get the result from the result set at the same sequence number
-      }else if ((m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && intToStr(m_sorts[i].m_expStr)<m_selections.size()) || ){
-        vResults.push_back(m_results[m_results.size()-1][intToStr(m_sorts[i].m_expStr) + 1]);
+      }else if ((m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size()) || ){
+        vResults.push_back(m_results[m_results.size()-1][atoi(m_sorts[i].m_expStr.c_str()) + 1]);
       }else if (!m_sorts[i].containGroupFunc()){ // non aggregation function selections
         //trace(DEBUG1, "None aggr func selection: %s\n", it->second[iNonAggSelID].c_str());
         vResults.push_back(it->second[iNonAggSelID]);

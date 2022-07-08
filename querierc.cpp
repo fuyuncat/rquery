@@ -413,7 +413,10 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
       }
     }else{
       m_results.push_back(rowValue);
-      if (!addResultToSet(&fieldValues, &varValues, rowValue, m_sorts.sortKey, m_sortKeys))
+      vector<ExpressionC> vKeys;
+      for (i=0;i<m_sorts.size();i++)
+        vKeys.push_back(m_sorts.sortKey);
+      if (!addResultToSet(&fieldValues, &varValues, rowValue, vKeys, m_sortKeys))
         return false;
     }
   }
@@ -690,7 +693,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
       //trace(DEBUG1, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRight);
       bool exchanged = false;
       for (int i=0; i<m_sorts.size(); i++){
-        if ((m_sorts.direction==ASC ? (*(m_sortKeys.begin()+iLPos))[i]>(*(m_sortKeys.begin()+iRPos))[i] : (*(m_sortKeys.begin()+iLPos))[i]<(*(m_sortKeys.begin()+iRPos))[i])){
+        if ((m_sorts[i].direction==ASC ? (*(m_sortKeys.begin()+iLPos))[i]>(*(m_sortKeys.begin()+iRPos))[i] : (*(m_sortKeys.begin()+iLPos))[i]<(*(m_sortKeys.begin()+iRPos))[i])){
           //vector<string> tmp;
           //tmp.insert(tmp.begin(), (*(m_results.begin()+iRPos)).begin(), (*(m_results.begin()+iRPos)).end());
           //trace(DEBUG1, "moving %s before %s\n", (*(m_sortKeys.begin()+iRPos))[i].c_str(), (*(m_sortKeys.begin()+iLPos))[i].c_str());

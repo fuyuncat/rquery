@@ -43,10 +43,12 @@ class QuerierC
     void assignFilter(FilterC* filter);
     bool assignSelString(string selstr);
     bool assignGroupStr(string groupstr);
+    bool assignSortStr(string sortstr);
     bool setFieldTypeFromStr(string setstr);
     int searchNext();
     int searchAll();
     bool group();
+    bool sort();
     void output();
     void outputAndClean();
     int boostmatch( vector<string> *result = NULL);
@@ -77,7 +79,8 @@ class QuerierC
     vector<string>  m_selnames; // selection names
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions
-    vector<ExpressionC> m_sorts;     // sorting expressions
+    vector<ExpressionC> m_sorts;     // sorting expressions. Any INTEGER number will be mapped to the correspond sequence of the selections.
+    vector< vector<string> > m_sortKeys;  // extra sorting keys. The sorting keys that are not a parts of selections, it could be aggregation functions
     vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     //map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
@@ -87,6 +90,8 @@ class QuerierC
     bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, map< string,vector<string> > & aggFuncTaget); // eval expression in aggregation paramter and store in a data set
     void runAggFuncExp(ExpressionC* node, map< string,vector<string> >* dateSet, string & sResult); // run aggregation function
+    bool addResultToSet(vector<string> rowValue, vector<ExpressionC> expressions, vector< vector<string> > & resultSet); // add a data row to a result set
+    void mergeSort(int iLeft, int iMid, int iRight);
 
   protected:
     void init();

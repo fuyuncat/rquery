@@ -44,9 +44,9 @@
 
 GlobalVars gv;
 
-string usage()
+void usage()
 {
-  return string("Usage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
+  pringf("Program Name: RQuery AKA RQ\nContact Email: fuyuncat@gmail\nUsage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
 }
 
 int main(int argc, char *argv[])
@@ -60,11 +60,11 @@ int main(int argc, char *argv[])
       printf("%s\n",(raw+": Cannot be converted!").c_str());
   }*/
   if ( argc < 2 ){
-    printf("%s\n",usage().c_str());
+    usage();
     return 1;
   }
   
-  gv.setVars(16384*2, DEBUG, true);
+  gv.setVars(16384*2, ERROR, true);
   ParserC ps;
   bool bGroup = false;
   bool bContentProvided = false;
@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
   QuerierC rq;
 
   for (int i=1; i<argc; i++){
-    if (argv[i][0]=='-' && i>=argc){
-      printf("%s\n",usage().c_str());
+    if (argv[i][0]=='-' && i>=argc && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")!=0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")!=0){
+      usage();
       trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
       return 1;
     }
@@ -112,6 +112,14 @@ int main(int argc, char *argv[])
         rq.setFieldTypeFromStr(query["set"]);
       }
       i++;
+    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")==0){
+      if (i==argc-1){
+        usage();
+        return 0;
+      }
+      string topic = string(argv[i+1]);
+      return 0;
+      i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-m")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--msglevel")==0){
       int iLevel=encodeTracelevel(string(argv[i+1]));
       if (iLevel!=UNKNOWN){
@@ -133,6 +141,7 @@ int main(int argc, char *argv[])
     //rq.searchNext();
     rq.searchAll();
     rq.group();
+    rq.sort();
     rq.printFieldNames();
     rq.outputAndClean();
   }else{
@@ -168,6 +177,11 @@ int main(int argc, char *argv[])
       trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
       lastTime = thisTime;
     }
+    rq.sort();
+    gettimeofday(&tp, NULL);
+    thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+    trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
+    lastTime = thisTime;
     trace(DEBUG1,"%d bytes read.\n", howmany);
   }
   trace(DEBUG, "Found %d row(s).\n", rq.getOutputCount());

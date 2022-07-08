@@ -118,7 +118,6 @@ void trace(short level, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  printf("g_tracelevel:%d|",gv.g_tracelevel);
   if (gv.g_tracelevel>=level){
     printf((decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
     vprintf(fmt, args);

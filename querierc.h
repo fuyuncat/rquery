@@ -49,6 +49,7 @@ class QuerierC
     bool assignSelString(string selstr);
     bool assignGroupStr(string groupstr);
     bool assignSortStr(string sortstr);
+    bool assignLimitStr(string limitstr);
     bool setFieldTypeFromStr(string setstr);
     int searchNext();
     int searchAll();
@@ -85,6 +86,8 @@ class QuerierC
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions
     vector<SortProp> m_sorts;     // sorting expressions. Any INTEGER number will be mapped to the correspond sequence of the selections.
+    int m_limitbottom;  // output limit start
+    int m_limittop;     // output limit top, -1 means no limit
     vector< vector<string> > m_sortKeys;  // extra sorting keys. The sorting keys that are not a parts of selections, it could be aggregation functions
     vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 

@@ -115,6 +115,10 @@ int main(int argc, char *argv[])
         trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
         rq.assignSortStr(query["sort"]);
       }
+      if (query.find("limit") != query.end()){
+        trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
+        rq.assignLimitStr(query["limit"]);
+      }
       i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")==0){
       if (i==argc-1){
@@ -137,6 +141,13 @@ int main(int argc, char *argv[])
       //trace(DEBUG1,"Content: %s.\n", argv[i]);
       sContent = string(argv[i]);
       bContentProvided = true;
+
+      //static int suffix = 0;
+      //suffix++;
+      //ofstream myfile;
+      //myfile.open(("example."+intToStr(suffix)).c_str());
+      //myfile << m_rawstr;
+      //myfile.close();
     }
   }
     

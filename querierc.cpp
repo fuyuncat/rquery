@@ -44,6 +44,8 @@ void QuerierC::init()
   m_line = 0;
   m_matchcount = 0; 
   m_outputrow = 0;
+  m_limitbottom = 0;
+  m_limittop = -1;
   m_bNamePrinted = false;
 }
 
@@ -82,6 +84,32 @@ bool QuerierC::assignGroupStr(string groupstr)
     ExpressionC eGroup(sGroup);
     m_groups.push_back(eGroup);
   }
+  return true;
+}
+
+bool QuerierC::assignLimitStr(string limitstr)
+{
+  vector<string> vLimits = split(limitstr,',',"''{}()",'\\');
+  string sFirst = boost::algorithm::trim_copy<string>(vLimits[0]);
+  int iFirst = 0;
+  if (isInt(sFirst))
+    iFirst = atoi(sFirst.c_str());
+  else{
+    trace(ERROR, "%s is not a valid limit number!\n", sFirst.c_str());
+    return false;
+  }
+  if (vLimits.size() > 1){
+    string sSecond = boost::algorithm::trim_copy<string>(vLimits[1]);
+    if (isInt(sSecond))
+      m_limitbottom = iFirst;
+      m_limittop = atoi(sSecond.c_str());
+    else{
+      trace(ERROR, "%s is not a valid limit number!\n", sSecond.c_str());
+      return false;
+    }
+  }else
+    m_limittop = iFirst;
+
   return true;
 }
 
@@ -453,13 +481,6 @@ int QuerierC::searchNext()
   //m_line++;
   int found = 0;
   try {
-    //static int suffix = 0;
-    //suffix++;
-    //ofstream myfile;
-    //myfile.open(("example."+intToStr(suffix)).c_str());
-    //myfile << m_rawstr;
-    //myfile.close();
-
     namesaving_smatch matches(m_regexstr);
     while(regex_search(m_rawstr, matches, m_regexp)){
       //if (string(matches[0]).empty()){ // found an empty string means no more searching!
@@ -754,6 +775,8 @@ bool QuerierC::sort()
 void QuerierC::formatoutput(vector<string> datas)
 {
   m_outputrow++;
+  if (m_outputrow<m_limitbottom || (m_limittop>=0 && m_outputrow>m_limittop))
+    return;
   //printf("%d: ", m_outputrow);
   if (m_selections.size()==0)
     printf("%s\n", datas[0].c_str());
@@ -861,4 +884,10 @@ void QuerierC::outputAndClean()
   m_aggFuncTaget.clear();
   m_sortKeys.clear();
   m_bNamePrinted = false;
+  m_filter.clear();
+  delete m_filter;
+  m_filter = NULL;
+  m_limitbottom = 0;
+  m_limittop = -1;
+  init();
 }

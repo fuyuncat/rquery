@@ -112,9 +112,9 @@ int main(int argc, char *argv[])
   if ( argc < 3 ){
     bool namePrinted = false;
 
-    trace(INFO, "g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);
-    //printf("g_inputbuffer:%d\n",GlobalVars::g_inputbuffer);
-    const size_t cache_length = GlobalVars::g_inputbuffer;
+    trace(INFO, "g_inputbuffer:%d\n",gv.g_inputbuffer);
+    //printf("g_inputbuffer:%d\n",gv.g_inputbuffer);
+    const size_t cache_length = gv.g_inputbuffer;
     char cachebuffer[cache_length];
     size_t howmany = 0, reads = 0;
     while(std::cin) {

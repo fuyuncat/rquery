@@ -669,7 +669,7 @@ bool QuerierC::group()
 // doing merging sort exchanging
 void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
 {
-  trace(DEBUG1, "Mergeing %d %d %d\n", iLeft, iMid, iRight);
+  //trace(DEBUG1, "Mergeing %d %d %d\n", iLeft, iMid, iRight);
   if (iLeft >= iRight)
     return;
   else{
@@ -677,7 +677,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
     mergeSort(iMid+1, iMid+1+(int)floor(iRight-iMid-1)/2, iRight);
     int iLPos = iLeft, iRPos = iMid, iCheckPos = iMid;
     while (iLPos<iCheckPos && iRPos<=iRight){
-      trace(DEBUG1, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRight);
+      //trace(DEBUG1, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRight);
       bool exchanged = false;
       for (int i=0; i<m_sorts.size(); i++){
         if (m_sortKeys[iLPos][i]>m_sortKeys[iRPos][i]){
@@ -702,7 +702,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
 // sort result
 bool QuerierC::sort()
 {
-  trace(DEBUG1, "Sorting begins \n");
+  //trace(DEBUG1, "Sorting begins \n");
   if (m_sorts.size() == 0 || m_sortKeys.size() == 0){
     //trace(DEBUG1, "No sorting keys %d %d!\n",m_sortKeys.size(),m_sorts.size());
     return true;
@@ -716,7 +716,7 @@ bool QuerierC::sort()
     return false;
   }
   mergeSort(0,(int)floor(m_sortKeys.size())/2,m_sortKeys.size()-1);
-  trace(DEBUG1, "Sorting completed \n");
+  //trace(DEBUG1, "Sorting completed \n");
 }
 
 //void QuerierC::formatoutput(namesaving_smatch matches)

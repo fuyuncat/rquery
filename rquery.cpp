@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
   bool bContentProvided = false;
   QuerierC rq;
 
-  for (int i=0; i<argc; i++){
+  for (int i=1; i<argc; i++){
     if (argv[i][0]=='-' && i>=argc){
       printf("%s\n",usage().c_str());
       trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);

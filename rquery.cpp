@@ -146,6 +146,7 @@ int main(int argc, char *argv[])
         rq.group();
         rq.outputAndClean();
       }
+      trace(DEBUG1,"%d bytes read.\n", howmany);
     }
     trace(DEBUG, "Found %d row(s).\n", rq.getOutputCount());
     trace(DEBUG, "Processed %d line(s).\n", rq.getLines());

@@ -715,6 +715,7 @@ bool QuerierC::sort()
     return false;
   }
   mergeSort(0,(int)floor(m_sortKeys.size())/2,m_sortKeys.size()-1);
+  trace(DEBUG1, "Sorting completed \n");
 }
 
 //void QuerierC::formatoutput(namesaving_smatch matches)

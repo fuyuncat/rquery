@@ -674,10 +674,10 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
   else{
     mergeSort(iLeft, (int)floor(iMid)/2, iMid-1);
     mergeSort(iMid, iMid+1+(int)floor(iRight-iMid-1)/2, iRight);
-    trace(DEBUG1, "Mergeing %d %d %d\n", iLeft, iMid, iRight);
-    for (int i=0; i<m_sortKeys.size(); i++)
-      printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
-    printf("\n");
+    //trace(DEBUG1, "Mergeing %d %d %d\n", iLeft, iMid, iRight);
+    //for (int i=0; i<m_sortKeys.size(); i++)
+    //  printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
+    //printf("\n");
     int iLPos = iLeft, iRPos = iMid, iCheckPos = iMid;
     while (iLPos<iCheckPos && iRPos<=iRight){
       //trace(DEBUG1, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRight);
@@ -687,12 +687,12 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
           //vector<string> tmp;
           //tmp.insert(tmp.begin(), (*(m_results.begin()+iRPos)).begin(), (*(m_results.begin()+iRPos)).end());
           //trace(DEBUG1, "moving %s before %s\n", (*(m_sortKeys.begin()+iRPos))[i].c_str(), (*(m_sortKeys.begin()+iLPos))[i].c_str());
-          trace(DEBUG1, "Before move: %s(%d) %s(%d)\n", (*(m_results.begin()+iLPos))[2].c_str(), iLPos, (*(m_results.begin()+iRPos))[2].c_str(), iRPos);
+          //trace(DEBUG1, "Before move: %s(%d) %s(%d)\n", (*(m_results.begin()+iLPos))[2].c_str(), iLPos, (*(m_results.begin()+iRPos))[2].c_str(), iRPos);
           m_results.insert(m_results.begin()+iLPos,*(m_results.begin()+iRPos));
           m_results.erase(m_results.begin()+iRPos+1);
           m_sortKeys.insert(m_sortKeys.begin()+iLPos,*(m_sortKeys.begin()+iRPos));
           m_sortKeys.erase(m_sortKeys.begin()+iRPos+1);
-          trace(DEBUG1, "After move: %s(%d) %s(%d)\n", (*(m_results.begin()+iLPos))[2].c_str(), iLPos, (*(m_results.begin()+iRPos))[2].c_str(), iRPos);
+          //trace(DEBUG1, "After move: %s(%d) %s(%d)\n", (*(m_results.begin()+iLPos))[2].c_str(), iLPos, (*(m_results.begin()+iRPos))[2].c_str(), iRPos);
           exchanged = true;
           break;
         }
@@ -705,10 +705,10 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
         iLPos++; // compare to the next left element
       }
     }
-    trace(DEBUG1, "Completed merging %d %d %d\n", iLeft, iMid, iRight);
-    for (int i=0; i<m_sortKeys.size(); i++)
-      printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
-    printf("\n");
+    //trace(DEBUG1, "Completed merging %d %d %d\n", iLeft, iMid, iRight);
+    //for (int i=0; i<m_sortKeys.size(); i++)
+    //  printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
+    //printf("\n");
   }
 }
 

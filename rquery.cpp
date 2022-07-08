@@ -169,17 +169,21 @@ int main(int argc, char *argv[])
       break;
     }
     case FILE:{
+      struct timeval tp;
+      gettimeofday(&tp, NULL);
+      long int thisTime,lastTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+
       ifstream ifile(sContent.c_str());
-      streamsize size = file.tellg();
-      file.seekg(0, ios::beg);
+      //streamsize size = ifile.tellg();
+      ifile.seekg(0, ios::beg);
 
       const size_t cache_length = gv.g_inputbuffer;
       char cachebuffer[cache_length];
       size_t pos = ios::beg, reads = 0;
 
       memset( cachebuffer, '\0', sizeof(char)*cache_length );
-      while (file.read(cachebuffer, cache_length)){
-        file.seekg(0, pos);
+      while (ifile.read(cachebuffer, cache_length)){
+        ifile.seekg(0, pos);
         rq.appendrawstr(string(cachebuffer));
         rq.searchAll();
         rq.printFieldNames();
@@ -209,7 +213,7 @@ int main(int argc, char *argv[])
         lastTime = thisTime;
       }
       lastTime = thisTime;
-      trace(DEBUG1,"%d bytes read.\n", howmany);
+      trace(DEBUG1,"%d bytes read.\n", pos);
       break;
     }
     case FOLDER:{

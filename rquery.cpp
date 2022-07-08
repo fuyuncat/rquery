@@ -97,6 +97,10 @@ int main(int argc, char *argv[])
         FilterC* filter = new FilterC(query["filter"]);
         rq.assignFilter(filter);
       }
+      if (query.find("set") != query.end()){
+        trace(DEBUG,"Setting fields data type: %s \n", query["set"].c_str());
+        rq.setFieldTypeFromStr(query["set"]);
+      }
       // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP
       if (query.find("group") != query.end()){
         trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
@@ -107,9 +111,9 @@ int main(int argc, char *argv[])
         trace(DEBUG,"Assigning selections: %s \n", query["select"].c_str());
         rq.assignSelString(query["select"]);
       }
-      if (query.find("set") != query.end()){
-        trace(DEBUG,"Setting fields data type: %s \n", query["set"].c_str());
-        rq.setFieldTypeFromStr(query["set"]);
+      if (query.find("sort") != query.end()){
+        trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
+        rq.assignSelString(query["sort"]);
       }
       i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")==0){

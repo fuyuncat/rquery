@@ -152,7 +152,7 @@ bool QuerierC::assignSortStr(string sortstr)
     if (eSort.m_type==BRANCH || eSort.m_expType != CONST || (!isInt(eSort.m_expStr) && !isLong(eSort.m_expStr)) || atoi(eSort.m_expStr.c_str())>=m_selections.size())
       m_sorts.push_back(eSort);
   }
-  trace(DEBUG1, "Got %d sorting keys!\n",m_sorts.size());
+  //trace(DEBUG1, "Got %d sorting keys!\n",m_sorts.size());
   return true;
 }
 
@@ -701,7 +701,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
 bool QuerierC::sort()
 {
   if (m_sorts.size() == 0 || m_sortKeys.size() == 0){
-    trace(DEBUG1, "No sorting keys %d %d!\n",m_sortKeys[0].size(),m_sorts.size());
+    trace(DEBUG1, "No sorting keys %d %d!\n",m_sortKeys.size(),m_sorts.size());
     return true;
   }
   if (m_sortKeys[0].size() != m_sorts.size()){

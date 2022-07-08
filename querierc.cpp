@@ -102,7 +102,7 @@ bool QuerierC::assignSelString(string selstr)
         m_groups[i].getAllColumnNames(allColNames);
       if (!eSel.groupFuncOnly() && !eSel.inColNamesRange(allColNames)){
         trace(ERROR, "Selection '%s' does not exist in Group or invalid using aggregation function \n", sSel.c_str());
-        continue;
+        //continue;
         //return false;
       }
     }else{

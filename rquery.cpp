@@ -46,7 +46,7 @@ GlobalVars gv;
 
 void usage()
 {
-  pringf("Program Name: RQuery AKA RQ\nContact Email: fuyuncat@gmail\nUsage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
+  printf("Program Name: RQuery AKA RQ\nContact Email: fuyuncat@gmail\nUsage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
 }
 
 int main(int argc, char *argv[])

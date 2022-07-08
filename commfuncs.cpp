@@ -69,6 +69,27 @@ void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader)
   g_printheader = printheader;
 }
 
+int encodeTracelevel(string str)
+{
+  string sUpper = boost::to_upper_copy<string>(str);
+  if (sUpper.compare("FATAL") == 0)
+    return FATAL;
+  else if (sUpper.compare("ERROR") == 0)
+    return ERROR;
+  else if (sUpper.compare("WARNING") == 0)
+    return WARNING;
+  else if (sUpper.compare("INFO") == 0)
+    return INFO;
+  else if (sUpper.compare("DEBUG") == 0)
+    return DEBUG;
+  else if (sUpper.compare("DEBUG1") == 0)
+    return DEBUG1;
+  else if (sUpper.compare("DEBUG2") == 0)
+    return DEBUG2;
+  else
+    return UNKNOWN;
+}
+
 string decodeTracelevel(int level)
 {
   switch (level){

@@ -44,6 +44,7 @@ void QuerierC::init()
   m_line = 0;
   m_matchcount = 0; 
   m_outputrow = 0;
+  m_bNamePrinted = false;
 }
 
 void QuerierC::setregexp(string regexstr)
@@ -565,7 +566,7 @@ void QuerierC::printFieldNames()
 {
   //for (int i=1; i<m_fieldnames.size(); i++)
   //  printf("%s\t",m_fieldnames[i].c_str());
-  if (!gv.g_printheader)
+  if (!gv.g_printheader && m_bNamePrinted)
     return;
   if (m_selnames.size()>0){
     for (int i=0; i<m_selnames.size(); i++)
@@ -578,6 +579,7 @@ void QuerierC::printFieldNames()
     printf("%s",string(58,'-').c_str());
   }
   printf("\n");
+  m_bNamePrinted = true;
 }
 
 void QuerierC::output()
@@ -593,6 +595,7 @@ void QuerierC::outputAndClean()
   m_results.clear();
   m_groups.clear();
   m_sorts.clear();
+  m_bNamePrinted = false;
 }
 
 int QuerierC::boostmatch(vector<string> *result)

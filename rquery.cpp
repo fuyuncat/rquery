@@ -61,15 +61,96 @@ int main(int argc, char *argv[])
   }
   
   gv.setVars(16384*2, DEBUG, true);
+  ParserC ps;
+  bool bGroup = false;
 
+  for (int i=0; i<argc; i++){
+    if (argv[i][0]=='-' && i>=argc){
+      printf("%s\n",usage().c_str());
+      trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+      return 1;
+    }
+    if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-q")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--query")==0){
+      map<string,string> query = ps.parseparam(argv[i+1]);
+      dumpMap(query);
+
+      int rst;
+      map<string,string> matches;
+      vector<string> cmatches;
+      bool bContentProvided = false;
+
+      string patternStr = "[^\n]*"; // if no PARSE passed, search each lines
+      if (query.find("parse") != query.end())
+        patternStr = query["parse"];
+
+      string rex = trim_one(patternStr, '/');
+      QuerierC rq(rex);
+
+      if (query.find("filter") != query.end()){
+        trace(INFO,"Assigning filter: %s \n", query["filter"].c_str());
+        FilterC* filter = new FilterC(query["filter"]);
+        rq.assignFilter(filter);
+      }
+      // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP
+      if (query.find("group") != query.end()){
+        trace(INFO,"Setting group : %s \n", query["group"].c_str());
+        rq.assignGroupStr(query["group"]);
+        bGroup = true;
+      }
+      if (query.find("select") != query.end()){
+        trace(INFO,"Assigning selections: %s \n", query["select"].c_str());
+        rq.assignSelString(query["select"]);
+      }
+      if (query.find("set") != query.end()){
+        trace(INFO,"Setting fields data type: %s \n", query["set"].c_str());
+        rq.setFieldTypeFromStr(query["set"]);
+      }
+    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-m")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--msglevel")==0){
+      if (encodeTracelevel(string(argv[i+1]))!=UNKNOWN){
+        gv.g_tracelevel = encodeTracelevel(string(argv[i+1]));
+      }else{
+        trace(FATAL,"Unrecognized message level %s. It should be one of INFO, WARNING, ERROR, FATAL.\n", argv[i]);
+        return 1;
+      }
+    }else{
+      rq.setrawstr(argv[i]);
+      bContentProvided = true;
+    }
+    
+    if (bContentProvided){
+      //rq.searchNext();
+      rq.searchAll();
+      rq.group();
+      rq.printFieldNames();
+      rq.outputAndClean();
+    }else{
+      const size_t cache_length = gv.g_inputbuffer;
+      char cachebuffer[cache_length];
+      size_t howmany = 0, reads = 0;
+      while(std::cin) {
+        memset( cachebuffer, '\0', sizeof(char)*cache_length );
+        std::cin.read(cachebuffer, cache_length);
+        rq.appendrawstr(string(cachebuffer));
+        rq.searchAll();
+        rq.printFieldNames();
+        if (!bGroup)
+          rq.outputAndClean();
+        howmany += std::cin.gcount();
+      }
+      if (bGroup){
+        rq.group();
+        rq.outputAndClean();
+      }
+    }
+  }
+
+  /*
   ParserC ps;
   map<string,string> query = ps.parseparam(argv[1]);
   dumpMap(query);
   //ps.dumpQueryparts();
-  /*
-  for (map<string,string>::iterator it=query.begin(); it!=query.end(); ++it)
+  //for (map<string,string>::iterator it=query.begin(); it!=query.end(); ++it)
     printf("%s: %s\n", it->first.c_str(), it->second.c_str());
-  */
 
   int rst;
   map<string,string> matches;
@@ -106,7 +187,7 @@ int main(int argc, char *argv[])
     trace(INFO,"Setting fields data type: %s \n", query["set"].c_str());
     rq.setFieldTypeFromStr(query["set"]);
   }
-
+  
   if ( argc < 3 ){
     bool namePrinted = false;
 
@@ -136,33 +217,32 @@ int main(int argc, char *argv[])
       rq.outputAndClean();
     }
 
-    /*
-    string lineInput;
-    int ln = 0;
-    //while (cin >> lineInput) {
-    while (getline(cin,lineInput)) {
-      //printf("%d:%s\n",ln,lineInput.c_str());
-      rq.setrawstr(lineInput);
-      rq.searchAll();
-      if (!namePrinted){
-        rq.printFieldNames();
-        namePrinted = true;
-      }
-      rq.outputAndClean();
+    //string lineInput;
+    //int ln = 0;
+    ////while (cin >> lineInput) {
+    //while (getline(cin,lineInput)) {
+    //  //printf("%d:%s\n",ln,lineInput.c_str());
+    //  rq.setrawstr(lineInput);
+    //  rq.searchAll();
+    //  if (!namePrinted){
+    //    rq.printFieldNames();
+    //    namePrinted = true;
+    //  }
+    //  rq.outputAndClean();
 
-      //rst = rq.boostmatch( matches );
-      //for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
-      //  printf("%s: %s\n", it->first.c_str(), it->second.c_str());
+    //  //rst = rq.boostmatch( matches );
+    //  //for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
+    //  //  printf("%s: %s\n", it->first.c_str(), it->second.c_str());
       
-      //rst = rq.boostmatch( &cmatches );
-      //for (int i=0; i<cmatches.size(); i++)
-      //  printf("%d: %s\n", i, cmatches[i].c_str());
-      ln++;
-    }
-    if ( ln < 1 ){
-      printf("%s\n",usage().c_str());
-      return 1;
-    }*/
+    //  //rst = rq.boostmatch( &cmatches );
+    //  //for (int i=0; i<cmatches.size(); i++)
+    //  //  printf("%d: %s\n", i, cmatches[i].c_str());
+    //  ln++;
+    //}
+    //if ( ln < 1 ){
+    //  printf("%s\n",usage().c_str());
+    //  return 1;
+    //}
   }else{
     rq.setrawstr(argv[2]);
     //rq.searchNext();
@@ -180,4 +260,5 @@ int main(int argc, char *argv[])
   //    printf("%s\t",string(match[i]).c_str());
   //  printf("%s\n",string(match["host"]).c_str());
   //}
+  */
 }

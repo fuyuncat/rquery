@@ -192,7 +192,7 @@ a  b   B3(*)   B5(^)
 **********************************************************/
 ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
 {
-  trace(DEBUG, "Building BTREE from '%s'\n", expStr.c_str());
+  trace(DEBUG1, "Building BTREE from '%s'\n", expStr.c_str());
   if (m_expStr.empty()){
     trace(ERROR, "Error: No statement found!\n");
     return NULL;

@@ -155,7 +155,7 @@ string decodeComparator(int comparator);
 string decodeDatatype(int datatype);
 string decodeOperator(int op);
 string decodeExptype(int exptype);
-string decodeTracelevel(int level);
+//string decodeTracelevel(int level);
 int encodeComparator(string str);
 int encodeDatatype(string str);
 int encodeJunction(string str);

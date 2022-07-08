@@ -147,6 +147,7 @@ int main(int argc, char *argv[])
         rq.outputAndClean();
       }
     }
+    trace(DEBUG, "Found %d row(s).\n", rq.getOutputCount());
   }
 
   /*

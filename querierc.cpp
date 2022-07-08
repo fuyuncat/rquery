@@ -884,7 +884,7 @@ void QuerierC::outputAndClean()
   m_aggFuncTaget.clear();
   m_sortKeys.clear();
   m_bNamePrinted = false;
-  m_filter.clear();
+  m_filter->clear();
   delete m_filter;
   m_filter = NULL;
   m_limitbottom = 0;

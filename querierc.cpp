@@ -681,7 +681,8 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
       bool exchanged = false;
       for (int i=0; i<m_sorts.size(); i++){
         if (m_sortKeys[iLPos][i]>m_sortKeys[iRPos][i]){
-          vector<string> tmp = m_sortKeys[iRPos];
+          vector<string> tmp;
+          tmp.insert(tmp.begin(), m_sortKeys[iRPos].begin(), , m_sortKeys[iRPos].end());
           m_results.erase(m_results.begin()+iRPos);
           m_results.insert(m_results.begin()+iLPos,tmp);
           exchanged = true;

@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
   gv.setVars(16384*2, DEBUG, true);
   ParserC ps;
   bool bGroup = false;
+  QuerierC rq;
 
   for (int i=0; i<argc; i++){
     if (argv[i][0]=='-' && i>=argc){
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
         patternStr = query["parse"];
 
       string rex = trim_one(patternStr, '/');
-      QuerierC rq(rex);
+      rq.setregexp(rex);
 
       if (query.find("filter") != query.end()){
         trace(INFO,"Assigning filter: %s \n", query["filter"].c_str());

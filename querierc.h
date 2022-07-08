@@ -30,7 +30,7 @@
 struct SortProp{
   ExpressionC sortKey;
   short int direction; //1 ASC; 2 DESC
-}
+};
 
 class ExpressionC;
 

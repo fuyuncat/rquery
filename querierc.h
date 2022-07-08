@@ -90,7 +90,7 @@ class QuerierC
     bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, map< string,vector<string> > & aggFuncTaget); // eval expression in aggregation paramter and store in a data set
     void runAggFuncExp(ExpressionC* node, map< string,vector<string> >* dateSet, string & sResult); // run aggregation function
-    bool addResultToSet(vector<string> rowValue, vector<ExpressionC> expressions, vector< vector<string> > & resultSet); // add a data row to a result set
+    bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, vector< vector<string> > & resultSet); // add a data row to a result set
     void mergeSort(int iLeft, int iMid, int iRight);
 
   protected:

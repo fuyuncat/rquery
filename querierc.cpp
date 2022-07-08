@@ -261,7 +261,7 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
 }
 
 // add a data row to a result set
-bool QuerierC::addResultToSet(vector<string> rowValue, vector<ExpressionC> expressions, vector< vector<string> > & resultSet)
+bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, vector< vector<string> > & resultSet)
 {
     vector<string> vResults;
     vResults.push_back(rowValue[0]);
@@ -277,7 +277,7 @@ bool QuerierC::addResultToSet(vector<string> rowValue, vector<ExpressionC> expre
       vResults.push_back(sResult);
     }
     resultSet.push_back(vResults);
-    return true
+    return true;
 }
 
 // filt a row data by filter. no predication mean true. comparasion failed means alway false
@@ -310,10 +310,10 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
     if (m_selections.size()>0){
       if (m_groups.size() == 0){
         //trace(DEBUG, " No group! \n");
-        if (!addResultToSet(rowValue, m_selections, m_results))
+        if (!addResultToSet(&fieldValues, &varValues, rowValue, m_selections, m_results))
           return false;
         
-        vResults.clear();
+        vector<string> vResults;
         for (int i=0; i<m_sorts.size(); i++){
           string sResult;
           if (!m_sorts[i].containGroupFunc()){
@@ -383,7 +383,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
               break;
             }
           if (iSel >= 0)
-            sResult = m_results[m_results.size()-1][iSel + 1]
+            sResult = m_results[m_results.size()-1][iSel + 1];
           // if the sort key is a integer, get the result from the result set at the same sequence number
           if (iSel >= 0 || (m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size()))
             continue;
@@ -407,7 +407,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
       }
     }else{
       m_results.push_back(rowValue);
-      if (!addResultToSet(rowValue, m_sorts, m_sortKeys))
+      if (!addResultToSet(&fieldValues, &varValues, rowValue, m_sorts, m_sortKeys))
         return false;
     }
   }
@@ -650,7 +650,7 @@ bool QuerierC::group()
       if (iSel >= 0){
         vResults.push_back(m_results[m_results.size()-1][iSel + 1]);
       // if the sort key is a integer, get the result from the result set at the same sequence number
-      }else if ((m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size()) || ){
+      }else if ((m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size())){
         vResults.push_back(m_results[m_results.size()-1][atoi(m_sorts[i].m_expStr.c_str()) + 1]);
       }else if (!m_sorts[i].containGroupFunc()){ // non aggregation function selections
         //trace(DEBUG1, "None aggr func selection: %s\n", it->second[iNonAggSelID].c_str());
@@ -672,7 +672,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
 {
   if (iLeft >= iRight)
     return;
-  }else{
+  else{
     mergeSort(iLeft, (int)floor(iMid)/2, iMid);
     mergeSort(iMid, (int)floor(iRight)/2, iRight);
     int iLPos = iLeft, iRPos = iMid, iCheckPos = iMid;

@@ -687,13 +687,13 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
           exchanged = true;
           break;
         }
-        if (exchanged){
-          iCheckPos++; // one element from right side insert to left side, check point needs to be moved 1 step to right.
-          iLPos++; // old left element moved 1 step to right. 
-          iRPos++; // compare the next right element
-        }else{
-          iLPos++; // compare to the next left element
-        }
+      }
+      if (exchanged){
+        iCheckPos++; // one element from right side insert to left side, check point needs to be moved 1 step to right.
+        iLPos++; // old left element moved 1 step to right. 
+        iRPos++; // compare the next right element
+      }else{
+        iLPos++; // compare to the next left element
       }
     }
   }

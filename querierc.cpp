@@ -673,7 +673,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
     return;
   else{
     mergeSort(iLeft, (int)floor(iMid)/2, iMid);
-    mergeSort(iMid, (int)floor(iRight)/2, iRight);
+    mergeSort(iMid+1, iMid+1+(int)floor(iRight-iMid-1)/2, iRight);
     int iLPos = iLeft, iRPos = iMid, iCheckPos = iMid;
     while (iLPos<iCheckPos && iRPos<=iRight){
       bool exchanged = false;

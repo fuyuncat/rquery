@@ -129,18 +129,24 @@ bool QuerierC::assignSortStr(string sortstr)
       trace(ERROR, "Empty sorting key!\n");
       return false;
     }
-    ExpressionC eSort(sSort);
+    SortProp keyProp;
+    vector<string> vKP = split(sSort,' ',"''{}()",'\\');
+    if (vKP.size()<=1 || boost::algorithm::to_upper_copy<string>(boost::algorithm::trim_copy<string>(vKP[1])).compare("DESC")!=0)
+      keyProp.direction = ASC;
+    else
+      keyProp.direction = DESC;
+    vSorts.sortKey.setExpstr(boost::algorithm::trim_copy<string>(vKP[0]));
     if (m_groups.size() > 0) {// checking if compatible with GROUP
       vector<string> allColNames;
       for (int i=0; i<m_groups.size(); i++)
         m_groups[i].getAllColumnNames(allColNames);
-      if (!eSort.groupFuncOnly() && !eSort.inColNamesRange(allColNames)){
+      if (!vSorts.sortKey.groupFuncOnly() && !vSorts.sortKey.inColNamesRange(allColNames)){
         trace(ERROR, "Sorting key '%s' does not exist in Group or invalid using aggregation function \n", sSort.c_str());
         //continue;
         //return false;
       }
     }else{
-      if (eSort.containGroupFunc()){
+      if (vSorts.sortKey.containGroupFunc()){
         trace(FATAL, "Invalid using aggregation function in sorting key '%s', no group involved!\n", sSort.c_str());
         return false;
       }
@@ -149,8 +155,9 @@ bool QuerierC::assignSortStr(string sortstr)
     // discard non integer CONST
     // Any INTEGER number will be mapped to the correspond sequence of the selections.
     // Thus, m_selections should always be analyzed before m_sorts
-    if (eSort.m_type==BRANCH || eSort.m_expType != CONST || (!isInt(eSort.m_expStr) && !isLong(eSort.m_expStr)) || atoi(eSort.m_expStr.c_str())>=m_selections.size())
-      m_sorts.push_back(eSort);
+    if (vSorts.sortKey.m_type==BRANCH || vSorts.sortKey.m_expType != CONST || (!isInt(vSorts.sortKey.m_expStr) && !isLong(vSorts.sortKey.m_expStr)) || atoi(vSorts.sortKey.m_expStr.c_str())>=m_selections.size()){
+      m_sorts.push_back(keyProp);
+    }
   }
   //trace(DEBUG1, "Got %d sorting keys!\n",m_sorts.size());
   return true;
@@ -317,24 +324,24 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         vector<string> vResults;
         for (int i=0; i<m_sorts.size(); i++){
           string sResult;
-          if (!m_sorts[i].containGroupFunc()){
+          if (!m_sorts[i].sortKey.containGroupFunc()){
             //if it has the exact same expression as any selection, get the result from selection
             int iSel = -1;
             for (int j=0; j<m_selections.size(); j++)
-              if (m_selections[j].getEntireExpstr().compare(m_sorts[i].getEntireExpstr())==0){
+              if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
                 iSel = j;
                 break;
               }
             if (iSel >= 0)
               sResult = m_results[m_results.size()-1][iSel + 1];
             // if the sort key is a integer, get the result from the result set at the same sequence number
-            else if (m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size())
-              sResult = m_results[m_results.size()-1][atoi(m_sorts[i].m_expStr.c_str()) + 1];
+            else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size())
+              sResult = m_results[m_results.size()-1][atoi(m_sorts[i].sortKey.m_expStr.c_str()) + 1];
             else
-              m_sorts[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
-            //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].getEntireExpstr().c_str(), sResult.c_str());
+              m_sorts[i].sortKey.evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
+            //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
           }else{
-            trace(ERROR, "(3)Invalid using aggregation function in '%s', no group involved!\n", m_sorts[i].getEntireExpstr().c_str());
+            trace(ERROR, "(3)Invalid using aggregation function in '%s', no group involved!\n", m_sorts[i].sortKey.getEntireExpstr().c_str());
             return false;
           }
           vResults.push_back(sResult);
@@ -379,20 +386,20 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           //if it has the exact same expression as any selection, get the result from selection
           int iSel = -1;
           for (int j=0; j<m_selections.size(); j++)
-            if (m_selections[j].getEntireExpstr().compare(m_sorts[i].getEntireExpstr())==0){
+            if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
               iSel = j;
               break;
             }
           // if the sort key is a integer, get the result from the result set at the same sequence number
-          if (iSel >= 0 || (m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size()))
+          if (iSel >= 0 || (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()))
             continue;
-          else if (!m_sorts[i].containGroupFunc() && !dataSetExist){ // non aggregation function selections
-            m_sorts[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
+          else if (!m_sorts[i].sortKey.containGroupFunc() && !dataSetExist){ // non aggregation function selections
+            m_sorts[i].sortKey.evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
             nonAggVals.push_back(sResult);
             //trace(DEBUG1, "Got non-aggr selection '%s' \n",sResult.c_str());
           }else{
             // eval agg function parameter expression and store in the temp data set
-            evalAggExpNode(&m_sorts[i], &m_fieldnames, &fieldValues, &varValues, aggFuncTaget);
+            evalAggExpNode(&(m_sorts[i].sortKey), &m_fieldnames, &fieldValues, &varValues, aggFuncTaget);
           }
         }
         // dateSet.nonAggSels.push_back(nonAggVals);
@@ -406,7 +413,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
       }
     }else{
       m_results.push_back(rowValue);
-      if (!addResultToSet(&fieldValues, &varValues, rowValue, m_sorts, m_sortKeys))
+      if (!addResultToSet(&fieldValues, &varValues, rowValue, m_sorts.sortKey, m_sortKeys))
         return false;
     }
   }
@@ -474,7 +481,7 @@ int QuerierC::searchNext()
         for (int i=0; i<m_groups.size(); i++)
           m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
         for (int i=0; i<m_sorts.size(); i++)
-          m_sorts[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
+          m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes);
       }
       // append variables
       //matcheddata.push_back(m_filename);
@@ -642,23 +649,23 @@ bool QuerierC::group()
       //if it has the exact same expression as any selection, get the result from selection
       int iSel = -1;
       for (int j=0; j<m_selections.size(); j++)
-        if (m_selections[j].getEntireExpstr().compare(m_sorts[i].getEntireExpstr())==0){
+        if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
           iSel = j;
           break;
         }
       if (iSel >= 0){
         vResults.push_back(m_results[m_results.size()-1][iSel + 1]);
       // if the sort key is a integer, get the result from the result set at the same sequence number
-      }else if ((m_sorts[i].m_type==LEAF && m_sorts[i].m_expType==CONST && isInt(m_sorts[i].m_expStr) && atoi(m_sorts[i].m_expStr.c_str())<m_selections.size())){
-        vResults.push_back(m_results[m_results.size()-1][atoi(m_sorts[i].m_expStr.c_str()) + 1]);
-      }else if (!m_sorts[i].containGroupFunc()){ // non aggregation function selections
+      }else if ((m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size())){
+        vResults.push_back(m_results[m_results.size()-1][atoi(m_sorts[i].sortKey.m_expStr.c_str()) + 1]);
+      }else if (!m_sorts[i].sortKey.containGroupFunc()){ // non aggregation function selections
         //trace(DEBUG1, "None aggr func selection: %s\n", it->second[iNonAggSelID].c_str());
         vResults.push_back(it->second[iNonAggSelID]);
         iNonAggSelID++;
       }else{
         // eval agg function parameter expression and store in the temp data set
         string sResult;
-        runAggFuncExp(&m_sorts[i], &(m_aggFuncTaget[it->first]), sResult);
+        runAggFuncExp(&(m_sorts[i].sortKey), &(m_aggFuncTaget[it->first]), sResult);
         vResults.push_back(sResult);
       }
     }
@@ -683,7 +690,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
       //trace(DEBUG1, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRight);
       bool exchanged = false;
       for (int i=0; i<m_sorts.size(); i++){
-        if ((*(m_sortKeys.begin()+iLPos))[i]>(*(m_sortKeys.begin()+iRPos))[i]){
+        if ((m_sorts.direction==ASC ? (*(m_sortKeys.begin()+iLPos))[i]>(*(m_sortKeys.begin()+iRPos))[i] : (*(m_sortKeys.begin()+iLPos))[i]<(*(m_sortKeys.begin()+iRPos))[i])){
           //vector<string> tmp;
           //tmp.insert(tmp.begin(), (*(m_results.begin()+iRPos)).begin(), (*(m_results.begin()+iRPos)).end());
           //trace(DEBUG1, "moving %s before %s\n", (*(m_sortKeys.begin()+iRPos))[i].c_str(), (*(m_sortKeys.begin()+iLPos))[i].c_str());

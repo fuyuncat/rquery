@@ -71,6 +71,8 @@ using namespace boost::xpressive;
 #define COLUMN 2
 #define VARIABLE 3
 #define FUNCTION 4
+#define ASC 1
+#define DESC 2
 
 class namesaving_smatch : public smatch
 {

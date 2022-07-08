@@ -22,10 +22,15 @@
 #include "filter.h"
 //#include <boost/regex.hpp>
 
-struct GroupDataSet{
-  vector< vector<string> > nonAggSels;  // all non-aggr selections values
-  map< string,vector<string> > aggFuncTaget; // evaled func parameter expression. mapping func_expr:evaled parameter expressions
-};
+//struct GroupDataSet{
+//  vector< vector<string> > nonAggSels;  // all non-aggr selections values
+//  map< string,vector<string> > aggFuncTaget; // evaled func parameter expression. mapping func_expr:evaled parameter expressions
+//};
+
+struct SortProp{
+  ExpressionC sortKey;
+  short int direction; //1 ASC; 2 DESC
+}
 
 class ExpressionC;
 
@@ -79,7 +84,7 @@ class QuerierC
     vector<string>  m_selnames; // selection names
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions
-    vector<ExpressionC> m_sorts;     // sorting expressions. Any INTEGER number will be mapped to the correspond sequence of the selections.
+    vector<SortProp> m_sorts;     // sorting expressions. Any INTEGER number will be mapped to the correspond sequence of the selections.
     vector< vector<string> > m_sortKeys;  // extra sorting keys. The sorting keys that are not a parts of selections, it could be aggregation functions
     vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 

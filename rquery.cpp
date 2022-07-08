@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
   gv.setVars(16384*2, DEBUG, true);
   ParserC ps;
   bool bGroup = false;
+  bool bContentProvided = false;
   QuerierC rq;
 
   for (int i=0; i<argc; i++){
@@ -79,7 +80,6 @@ int main(int argc, char *argv[])
       int rst;
       map<string,string> matches;
       vector<string> cmatches;
-      bool bContentProvided = false;
 
       string patternStr = "[^\n]*"; // if no PARSE passed, search each lines
       if (query.find("parse") != query.end())

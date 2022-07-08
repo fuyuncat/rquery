@@ -414,8 +414,8 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
     }else{
       m_results.push_back(rowValue);
       vector<ExpressionC> vKeys;
-      for (i=0;i<m_sorts.size();i++)
-        vKeys.push_back(m_sorts.sortKey);
+      for (int i=0;i<m_sorts.size();i++)
+        vKeys.push_back(m_sorts[i].sortKey);
       if (!addResultToSet(&fieldValues, &varValues, rowValue, vKeys, m_sortKeys))
         return false;
     }

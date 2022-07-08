@@ -100,10 +100,10 @@ bool QuerierC::assignLimitStr(string limitstr)
   }
   if (vLimits.size() > 1){
     string sSecond = boost::algorithm::trim_copy<string>(vLimits[1]);
-    if (isInt(sSecond))
+    if (isInt(sSecond)){
       m_limitbottom = iFirst;
       m_limittop = atoi(sSecond.c_str());
-    else{
+    }else{
       trace(ERROR, "%s is not a valid limit number!\n", sSecond.c_str());
       return false;
     }

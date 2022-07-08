@@ -31,7 +31,7 @@
 #include <iomanip>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
-#include <chrono>
+#include <sys/time.h>
 #include "commfuncs.h"
 //#include "regexc.h"
 #include "parser.h"
@@ -136,8 +136,9 @@ int main(int argc, char *argv[])
     rq.printFieldNames();
     rq.outputAndClean();
   }else{
-    using namespace std::chrono;
-    milliseconds thisTime,lastTime = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    long int thisTime,lastTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
     const size_t cache_length = gv.g_inputbuffer;
     char cachebuffer[cache_length];
     size_t howmany = 0, reads = 0;
@@ -151,16 +152,19 @@ int main(int argc, char *argv[])
         rq.outputAndClean();
       howmany += std::cin.gcount();
     }
-    thisTime = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
+    gettimeofday(&tp, NULL);
+    thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
     trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
     lastTime = thisTime;
     if (bGroup){
       rq.group();
-      thisTime = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
+      gettimeofday(&tp, NULL);
+      thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
       trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
       lastTime = thisTime;
       rq.outputAndClean();
-      thisTime = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
+      gettimeofday(&tp, NULL);
+      thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
       trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
       lastTime = thisTime;
     }

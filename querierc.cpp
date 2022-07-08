@@ -268,7 +268,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
     for (int i=0; i<expressions.size(); i++){
       string sResult;
       if (!expressions[i].containGroupFunc()){
-        expressions[i].evalExpression(&m_fieldnames, fieldValues, varValues, sResult);
+        expressions[i].evalExpression(&m_fieldnames, fieldvalues, varvalues, sResult);
         //trace(DEBUG, "eval '%s' => '%s'\n", expressions[i].getEntireExpstr().c_str(), sResult.c_str());
       }else{
         trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", expressions[i].getEntireExpstr().c_str());

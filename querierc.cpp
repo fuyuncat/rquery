@@ -135,18 +135,18 @@ bool QuerierC::assignSortStr(string sortstr)
       keyProp.direction = ASC;
     else
       keyProp.direction = DESC;
-    vSorts.sortKey.setExpstr(boost::algorithm::trim_copy<string>(vKP[0]));
+    keyProp.sortKey.setExpstr(boost::algorithm::trim_copy<string>(vKP[0]));
     if (m_groups.size() > 0) {// checking if compatible with GROUP
       vector<string> allColNames;
       for (int i=0; i<m_groups.size(); i++)
         m_groups[i].getAllColumnNames(allColNames);
-      if (!vSorts.sortKey.groupFuncOnly() && !vSorts.sortKey.inColNamesRange(allColNames)){
+      if (!keyProp.sortKey.groupFuncOnly() && !keyProp.sortKey.inColNamesRange(allColNames)){
         trace(ERROR, "Sorting key '%s' does not exist in Group or invalid using aggregation function \n", sSort.c_str());
         //continue;
         //return false;
       }
     }else{
-      if (vSorts.sortKey.containGroupFunc()){
+      if (keyProp.sortKey.containGroupFunc()){
         trace(FATAL, "Invalid using aggregation function in sorting key '%s', no group involved!\n", sSort.c_str());
         return false;
       }

@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <map>
 #include <iomanip>
+#include <fstream>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <sys/time.h>
@@ -67,7 +68,7 @@ int main(int argc, char *argv[])
   gv.setVars(16384*2, ERROR, true);
   ParserC ps;
   bool bGroup = false;
-  bool bContentProvided = false;
+  short int readMode = PROMPT;
   string sContent = "";
   QuerierC rq;
 
@@ -140,64 +141,125 @@ int main(int argc, char *argv[])
     }else{
       //trace(DEBUG1,"Content: %s.\n", argv[i]);
       sContent = string(argv[i]);
-      bContentProvided = true;
+      readMode = PARAMETER;
 
-      //static int suffix = 0;
-      //suffix++;
-      //ofstream myfile;
-      //myfile.open(("example."+intToStr(suffix)).c_str());
-      //myfile << m_rawstr;
-      //myfile.close();
+      struct stat s;
+      if( stat(argv[i],&s) == 0 ){
+        if( s.st_mode & S_IFDIR )
+          readMode = FOLDER;
+        else if( s.st_mode & S_IFREG )
+          readMode = FILE;
+        else
+          readMode = PARAMETER;
+      }else
+        readMode = PARAMETER;
     }
   }
     
-  if (bContentProvided){
-    rq.setrawstr(sContent);
-    //rq.searchNext();
-    rq.searchAll();
-    rq.group();
-    rq.sort();
-    rq.printFieldNames();
-    rq.outputAndClean();
-  }else{
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    long int thisTime,lastTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    const size_t cache_length = gv.g_inputbuffer;
-    char cachebuffer[cache_length];
-    size_t howmany = 0, reads = 0;
-    while(std::cin) {
-      memset( cachebuffer, '\0', sizeof(char)*cache_length );
-      std::cin.read(cachebuffer, cache_length);
-      rq.appendrawstr(string(cachebuffer));
+  switch (readMode){
+    case PROMPT:{
+      rq.setrawstr(sContent);
+      //rq.searchNext();
       rq.searchAll();
-      rq.printFieldNames();
-      if (!bGroup)
-        rq.outputAndClean();
-      howmany += std::cin.gcount();
-    }
-    gettimeofday(&tp, NULL);
-    thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
-    lastTime = thisTime;
-    if (bGroup){
       rq.group();
-      gettimeofday(&tp, NULL);
-      thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-      trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
-      lastTime = thisTime;
       rq.sort();
-      gettimeofday(&tp, NULL);
-      thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-      trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
+      rq.printFieldNames();
       rq.outputAndClean();
+      break;
+    }
+    case FILE:{
+      ifstream ifile(sContent.c_str());
+      streamsize size = file.tellg();
+      file.seekg(0, ios::beg);
+
+      const size_t cache_length = gv.g_inputbuffer;
+      char cachebuffer[cache_length];
+      size_t pos = ios::beg, reads = 0;
+
+      memset( cachebuffer, '\0', sizeof(char)*cache_length );
+      while (file.read(cachebuffer, cache_length)){
+        file.seekg(0, pos);
+        rq.appendrawstr(string(cachebuffer));
+        rq.searchAll();
+        rq.printFieldNames();
+        if (!bGroup)
+          rq.outputAndClean();
+        pos += cache_length;
+        memset( cachebuffer, '\0', sizeof(char)*cache_length );
+      }
       gettimeofday(&tp, NULL);
       thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-      trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
+      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
       lastTime = thisTime;
+      if (bGroup){
+        rq.group();
+        gettimeofday(&tp, NULL);
+        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+        rq.sort();
+        gettimeofday(&tp, NULL);
+        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
+        rq.outputAndClean();
+        gettimeofday(&tp, NULL);
+        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+      }
+      lastTime = thisTime;
+      trace(DEBUG1,"%d bytes read.\n", howmany);
+      break;
     }
-    lastTime = thisTime;
-    trace(DEBUG1,"%d bytes read.\n", howmany);
+    case FOLDER:{
+      break;
+    }
+    case PROMPT:{
+      struct timeval tp;
+      gettimeofday(&tp, NULL);
+      long int thisTime,lastTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+      const size_t cache_length = gv.g_inputbuffer;
+      char cachebuffer[cache_length];
+      size_t howmany = 0, reads = 0;
+      while(std::cin) {
+        memset( cachebuffer, '\0', sizeof(char)*cache_length );
+        std::cin.read(cachebuffer, cache_length);
+        rq.appendrawstr(string(cachebuffer));
+        rq.searchAll();
+        rq.printFieldNames();
+        if (!bGroup)
+          rq.outputAndClean();
+        howmany += std::cin.gcount();
+      }
+      gettimeofday(&tp, NULL);
+      thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
+      lastTime = thisTime;
+      if (bGroup){
+        rq.group();
+        gettimeofday(&tp, NULL);
+        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+        rq.sort();
+        gettimeofday(&tp, NULL);
+        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
+        rq.outputAndClean();
+        gettimeofday(&tp, NULL);
+        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+      }
+      lastTime = thisTime;
+      trace(DEBUG1,"%d bytes read.\n", howmany);
+      break;
+    }
+    default:{
+      usage();
+      trace(FATAL,"Please provide content to be queried!\n");
+      return 1;
+    }
   }
   trace(DEBUG, "Found %d row(s).\n", rq.getOutputCount());
   trace(DEBUG, "Processed %d line(s).\n", rq.getLines());

@@ -27,10 +27,13 @@ using namespace std;
 using namespace boost::xpressive;
 
 #define UNKNOWN 0
+
 #define BRANCH 1
 #define LEAF 2
+
 #define AND 1
 #define OR 2
+
 #define EQ 1
 #define LT 2
 #define ST 3
@@ -43,13 +46,16 @@ using namespace boost::xpressive;
 #define NOREGLIKE 10
 #define IN 11
 #define NOIN 12
+
 #define LEFT 1
 #define RIGHT 2
+
 #define PLUS 1
 #define SUBTRACT 2
 #define TIMES 3
 #define DIVIDE 4
 #define POWER 5
+
 #define STRING 1
 #define LONG 2
 #define INTEGER 3
@@ -58,6 +64,7 @@ using namespace boost::xpressive;
 #define TIMESTAMP 6
 #define BOOLEAN 7
 #define ANY 99
+
 #define FATAL 1
 #define ERROR 2
 #define WARNING 3
@@ -66,13 +73,21 @@ using namespace boost::xpressive;
 #define DEBUG2 98
 #define DEBUG1 99
 #define DEBUG 100
+
 #define DATEFMT "%Y-%m-%d %H:%M:%S"
+
 #define CONST 1
 #define COLUMN 2
 #define VARIABLE 3
 #define FUNCTION 4
+
 #define ASC 1
 #define DESC 2
+
+#define PROMPT 1
+#define PARAMETER 2
+#define FILE 3
+#define FOLDER 4
 
 class namesaving_smatch : public smatch
 {

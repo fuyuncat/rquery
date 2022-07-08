@@ -110,7 +110,7 @@ bool QuerierC::assignLimitStr(string limitstr)
   }else
     m_limittop = iFirst;
 
-  trace(DEBUG1, "Limits is from %d to %d\n", m_limitbottom, m_limittop);
+  //trace(DEBUG1, "Limits is from %d to %d\n", m_limitbottom, m_limittop);
   return true;
 }
 
@@ -471,9 +471,6 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   //}
   return matched;
 }
-
-//#include <iostream>
-//#include <fstream>
 
 int QuerierC::searchNext()
 {

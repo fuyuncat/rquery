@@ -672,8 +672,8 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
   if (iLeft >= iRight)
     return;
   else{
-    mergeSort(iLeft, (int)floor(iMid)/2, iMid);
-    mergeSort(iMid+1, iMid+1+(int)floor(iRight-iMid-1)/2, iRight);
+    mergeSort(iLeft, (int)floor(iMid)/2, iMid-1);
+    mergeSort(iMid, iMid+1+(int)floor(iRight-iMid-1)/2, iRight);
     trace(DEBUG1, "Mergeing %d %d %d\n", iLeft, iMid, iRight);
     for (int i=0; i<m_sortKeys.size(); i++)
       printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);

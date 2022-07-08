@@ -374,7 +374,6 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
             evalAggExpNode(&m_selections[i], &m_fieldnames, &fieldValues, &varValues, aggFuncTaget);
           }
         }
-        trace(DEBUG1, "Sorting keys %d!\n",m_sorts.size());
         for (int i=0; i<m_sorts.size(); i++){
           string sResult;
           //if it has the exact same expression as any selection, get the result from selection
@@ -702,7 +701,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
 bool QuerierC::sort()
 {
   if (m_sorts.size() == 0 || m_sortKeys.size() == 0){
-    trace(DEBUG1, "No sorting keys %d %d!\n",m_sortKeys.size(),m_sorts.size());
+    //trace(DEBUG1, "No sorting keys %d %d!\n",m_sortKeys.size(),m_sorts.size());
     return true;
   }
   if (m_sortKeys[0].size() != m_sorts.size()){

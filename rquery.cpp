@@ -175,16 +175,16 @@ int main(int argc, char *argv[])
       thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
       trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
       lastTime = thisTime;
+      rq.sort();
+      gettimeofday(&tp, NULL);
+      thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+      trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
       rq.outputAndClean();
       gettimeofday(&tp, NULL);
       thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
       trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
       lastTime = thisTime;
     }
-    rq.sort();
-    gettimeofday(&tp, NULL);
-    thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
     lastTime = thisTime;
     trace(DEBUG1,"%d bytes read.\n", howmany);
   }

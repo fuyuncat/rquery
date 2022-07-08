@@ -268,7 +268,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
     for (int i=0; i<expressions.size(); i++){
       string sResult;
       if (!expressions[i].containGroupFunc()){
-        expressions[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
+        expressions[i].evalExpression(&m_fieldnames, fieldValues, varValues, sResult);
         //trace(DEBUG, "eval '%s' => '%s'\n", expressions[i].getEntireExpstr().c_str(), sResult.c_str());
       }else{
         trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", expressions[i].getEntireExpstr().c_str());
@@ -338,7 +338,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           }
           vResults.push_back(sResult);
         }
-        m_sortKeys(vResults);
+        m_sortKeys.push_back(vResults);
       }else{ // need to do group. store evaled data in a temp date set
         //trace(DEBUG, " Grouping! \n");
         vector<string> groupExps;  // the group expressions. as the key of following hash map
@@ -704,7 +704,7 @@ bool QuerierC::sort()
   if (m_sorts.size() == 0 || m_sortKeys.size() == 0)
     return true;
   if (m_sortKeys[0].size() != m_sorts.size()){
-    trace(ERROR, "The sorting value number %d doesnot equal to the key number %d!\n",m_sortKeys[iLeft].size(),m_sorts.size());
+    trace(ERROR, "The sorting value number %d doesnot equal to the key number %d!\n",m_sortKeys[0].size(),m_sorts.size());
     return false;
   }
   if (m_sortKeys.size() != m_results.size()){
@@ -831,6 +831,6 @@ void QuerierC::outputAndClean()
   m_sorts.clear();
   m_nonAggSels.clear();
   m_aggFuncTaget.clear();
-  m_extraSortKeys.clear();
+  m_sortKeys.clear();
   m_bNamePrinted = false;
 }

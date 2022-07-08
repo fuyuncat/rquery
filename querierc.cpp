@@ -522,11 +522,11 @@ bool QuerierC::group()
     vector<string> vResults;
     vResults.push_back(it->second[0]);
     int iNonAggSelID = 1;
-    trace(DEBUG1, "Selection: %d:%d\n", m_selections.size(), it->second.size());
+    //trace(DEBUG1, "Selection: %d:%d\n", m_selections.size(), it->second.size());
     for (int i=0; i<m_selections.size(); i++){
       string sResult;
       if (!m_selections[i].containGroupFunc()){ // non aggregation function selections
-        trace(DEBUG1, "None aggr func selection: %s\n", it->second[iNonAggSelID].c_str());
+        //trace(DEBUG1, "None aggr func selection: %s\n", it->second[iNonAggSelID].c_str());
         vResults.push_back(it->second[iNonAggSelID]);
         iNonAggSelID++;
       }else{
@@ -566,7 +566,7 @@ void QuerierC::printFieldNames()
 {
   //for (int i=1; i<m_fieldnames.size(); i++)
   //  printf("%s\t",m_fieldnames[i].c_str());
-  if (!gv.g_printheader && m_bNamePrinted)
+  if (!gv.g_printheader || m_bNamePrinted)
     return;
   if (m_selnames.size()>0){
     for (int i=0; i<m_selnames.size(); i++)

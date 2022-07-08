@@ -33,6 +33,7 @@
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include "commfuncs.h"
 //#include "regexc.h"
 #include "parser.h"

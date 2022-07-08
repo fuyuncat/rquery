@@ -107,6 +107,7 @@ int main(int argc, char *argv[])
         trace(INFO,"Setting fields data type: %s \n", query["set"].c_str());
         rq.setFieldTypeFromStr(query["set"]);
       }
+      i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-m")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--msglevel")==0){
       if (encodeTracelevel(string(argv[i+1]))!=UNKNOWN){
         gv.g_tracelevel = encodeTracelevel(string(argv[i+1]));
@@ -114,8 +115,9 @@ int main(int argc, char *argv[])
         trace(FATAL,"Unrecognized message level %s. It should be one of INFO, WARNING, ERROR, FATAL.\n", argv[i]);
         return 1;
       }
+      i++;
     }else{
-      trace(DEBUG1,"Content: %s.\n", argv[i]);
+      //trace(DEBUG1,"Content: %s.\n", argv[i]);
       rq.setrawstr(argv[i]);
       bContentProvided = true;
     }

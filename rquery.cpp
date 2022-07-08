@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
       }
       i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-m")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--msglevel")==0){
+      trace(DEBUG,"set g_tracelevel to %s(%d)\n",argv[i+1],encodeTracelevel(string(argv[i+1])));
       if (encodeTracelevel(string(argv[i+1]))!=UNKNOWN){
         gv.g_tracelevel = encodeTracelevel(string(argv[i+1]));
         trace(DEBUG,"set g_tracelevel to %d\n",gv.g_tracelevel);

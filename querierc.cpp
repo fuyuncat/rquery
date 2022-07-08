@@ -187,7 +187,7 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
   }
 }
 
-void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, , map< string,vector<string> > & aggFuncTaget)
+void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, map< string,vector<string> > & aggFuncTaget)
 {
   if (node->m_type == LEAF){ // eval leaf and store
     if (node->m_expType == FUNCTION && node->groupFuncOnly()){

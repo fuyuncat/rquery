@@ -669,7 +669,7 @@ bool QuerierC::group()
 // doing merging sort exchanging
 void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
 {
-  trace(DEBUG1, "Mergeing %d %d %d", iLeft, iMid, iRight);
+  trace(DEBUG1, "Mergeing %d %d %d\n", iLeft, iMid, iRight);
   if (iLeft >= iRight)
     return;
   else{
@@ -701,6 +701,7 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
 // sort result
 bool QuerierC::sort()
 {
+  trace(DEBUG1, "Sorting begins \n");
   if (m_sorts.size() == 0 || m_sortKeys.size() == 0){
     //trace(DEBUG1, "No sorting keys %d %d!\n",m_sortKeys.size(),m_sorts.size());
     return true;

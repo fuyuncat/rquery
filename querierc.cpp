@@ -675,6 +675,9 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
     mergeSort(iLeft, (int)floor(iMid)/2, iMid);
     mergeSort(iMid+1, iMid+1+(int)floor(iRight-iMid-1)/2, iRight);
     trace(DEBUG1, "Mergeing %d %d %d\n", iLeft, iMid, iRight);
+    for (int i=0; i<m_sortKeys.size(); i++)
+      printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
+    printf("\n");
     int iLPos = iLeft, iRPos = iMid, iCheckPos = iMid;
     while (iLPos<iCheckPos && iRPos<=iRight){
       //trace(DEBUG1, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRight);
@@ -702,6 +705,10 @@ void QuerierC::mergeSort(int iLeft, int iMid, int iRight)
         iLPos++; // compare to the next left element
       }
     }
+    trace(DEBUG1, "Completed merging %d %d %d\n", iLeft, iMid, iRight);
+    for (int i=0; i<m_sortKeys.size(); i++)
+      printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
+    printf("\n");
   }
 }
 

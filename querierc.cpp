@@ -289,7 +289,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           nonAggVals.push_back(rowValue[0]); // nonAggSels store raw string in the first member. This is kinda meaningless.
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
-          // trace(DEBUG, "Selection '%s': %d \n",m_selections[i].getEntireExpstr().c_str(), m_selections[i].containGroupFunc());
+          trace(DEBUG1, "Selection '%s': %d \n",m_selections[i].getEntireExpstr().c_str(), m_selections[i].containGroupFunc());
           if (!m_selections[i].containGroupFunc() && !dataSetExist){ // non aggregation function selections
             m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
             nonAggVals.push_back(sResult);

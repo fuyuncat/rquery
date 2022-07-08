@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
       }
       if (query.find("sort") != query.end()){
         trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
-        rq.assignSelString(query["sort"]);
+        rq.assignSortStr(query["sort"]);
       }
       i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")==0){

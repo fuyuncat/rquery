@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
         rq.printFieldNames();
         if (!bGroupOrSort)
           rq.outputAndClean();
-        howmany += ifile.count();
+        howmany += ifile.gcount();
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
       }
       thisTime = curtime();

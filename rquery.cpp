@@ -187,6 +187,7 @@ int main(int argc, char *argv[])
         rq.printFieldNames();
         if (!bGroup)
           rq.outputAndClean();
+        trace(DEBUG2, "Staring from %d, read %d\n", pos, strbuf.size());
         pos += strbuf.size();
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
       }

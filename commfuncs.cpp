@@ -514,6 +514,13 @@ struct tm now()
   //std::cout << "tomorrow will be: " << ctime(&tt);
 }
 
+long int curtime()
+{
+  struct timeval tp;
+  gettimeofday(&tp, NULL);
+  return tp.tv_sec * 1000 + tp.tv_usec / 1000;
+}
+
 bool isDate(const string& str, string& fmt)
 {
   struct tm tm;

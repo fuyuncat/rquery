@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
   }
     
   switch (readMode){
-    case PROMPT:{
+    case PARAMETER:{
       rq.setrawstr(sContent);
       //rq.searchNext();
       rq.searchAll();
@@ -169,9 +169,7 @@ int main(int argc, char *argv[])
       break;
     }
     case FILE:{
-      struct timeval tp;
-      gettimeofday(&tp, NULL);
-      long int thisTime,lastTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+      long int thisTime,lastTime = curtime();
 
       ifstream ifile(sContent.c_str());
       //streamsize size = ifile.tellg();
@@ -183,7 +181,7 @@ int main(int argc, char *argv[])
 
       memset( cachebuffer, '\0', sizeof(char)*cache_length );
       while (ifile.read(cachebuffer, cache_length)){
-        ifile.seekg(0, pos);
+        ifile.seekg(pos, ios::beg);
         rq.appendrawstr(string(cachebuffer));
         rq.searchAll();
         rq.printFieldNames();
@@ -192,23 +190,19 @@ int main(int argc, char *argv[])
         pos += cache_length;
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
       }
-      gettimeofday(&tp, NULL);
-      thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+      thisTime = curtime();
       trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
       lastTime = thisTime;
       if (bGroup){
         rq.group();
-        gettimeofday(&tp, NULL);
-        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        thisTime = curtime();
         trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
         lastTime = thisTime;
         rq.sort();
-        gettimeofday(&tp, NULL);
-        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        thisTime = curtime();
         trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
         rq.outputAndClean();
-        gettimeofday(&tp, NULL);
-        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        thisTime = curtime();
         trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
         lastTime = thisTime;
       }
@@ -220,9 +214,7 @@ int main(int argc, char *argv[])
       break;
     }
     case PROMPT:{
-      struct timeval tp;
-      gettimeofday(&tp, NULL);
-      long int thisTime,lastTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+      long int thisTime,lastTime = curtime();
       const size_t cache_length = gv.g_inputbuffer;
       char cachebuffer[cache_length];
       size_t howmany = 0, reads = 0;
@@ -236,23 +228,19 @@ int main(int argc, char *argv[])
           rq.outputAndClean();
         howmany += std::cin.gcount();
       }
-      gettimeofday(&tp, NULL);
-      thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+      thisTime = curtime();
       trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
       lastTime = thisTime;
       if (bGroup){
         rq.group();
-        gettimeofday(&tp, NULL);
-        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        thisTime = curtime();
         trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
         lastTime = thisTime;
         rq.sort();
-        gettimeofday(&tp, NULL);
-        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        thisTime = curtime();
         trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
         rq.outputAndClean();
-        gettimeofday(&tp, NULL);
-        thisTime = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        thisTime = curtime();
         trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
         lastTime = thisTime;
       }

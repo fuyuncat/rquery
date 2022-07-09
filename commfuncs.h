@@ -160,6 +160,7 @@ string dateToStr(struct tm val, string fmt = DATEFMT);
 
 bool strToDate(string str, struct tm & tm, string fmt=DATEFMT);
 struct tm now();
+long int curtime();
 
 bool like(string str1, string str2); 
 bool reglike(string str, string regstr); 

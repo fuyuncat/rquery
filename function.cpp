@@ -103,7 +103,7 @@ bool FunctionC::analyzeExpStr()
   }
   if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0 || m_funcName.compare("REPLACE")==0 || m_funcName.compare("DATEFORMAT")==0)
     m_datatype = STRING;
-  else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("ROUND")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0 || m_funcName.compare("COUNT")==0 || m_funcName.compare("UNIQUECOUNT")==0)
+  else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("ROUND")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0 || m_funcName.compare("STRLEN")==0 || m_funcName.compare("COUNT")==0 || m_funcName.compare("UNIQUECOUNT")==0)
     m_datatype = LONG;
   else if(m_funcName.compare("LOG")==0 || m_funcName.compare("AVERAGE")==0 || m_funcName.compare("SUM")==0)
     m_datatype = DOUBLE;
@@ -280,6 +280,22 @@ bool FunctionC::runInstr(vector<string>* fieldnames, vector<string>* fieldvalues
     return true;
   }else{
     trace(ERROR, "Failed to run instr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runStrlen(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "strlen() function accepts only one parameter.\n");
+    return false;
+  }
+  bool gotResult = m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult);
+  if (gotResult){
+    sResult = intToStr(sResult.length());
+    return true;
+  }else{
+    trace(ERROR, "Failed to run strlen(%s)\n", m_params[0].m_expStr.c_str());
     return false;
   }
 }
@@ -503,6 +519,8 @@ bool FunctionC::runFunction(vector<string>* fieldnames, vector<string>* fieldval
     getResult = runTimediff(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("INSTR")==0)
     getResult = runInstr(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("STRLEN")==0)
+    getResult = runStrlen(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("COMPARESTR")==0)
     getResult = runComparestr(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("NOCASECOMPARESTR")==0)

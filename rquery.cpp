@@ -32,7 +32,6 @@
 #include <fstream>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include "commfuncs.h"
 //#include "regexc.h"
@@ -182,12 +181,13 @@ int main(int argc, char *argv[])
       memset( cachebuffer, '\0', sizeof(char)*cache_length );
       while (ifile.read(cachebuffer, cache_length)){
         ifile.seekg(pos, ios::beg);
-        rq.appendrawstr(string(cachebuffer));
+        string strbuf = string(cachebuffer);
+        rq.appendrawstr(strbuf);
         rq.searchAll();
         rq.printFieldNames();
         if (!bGroup)
           rq.outputAndClean();
-        pos += cache_length;
+        pos += strbuf.size();
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
       }
       thisTime = curtime();

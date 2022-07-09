@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
         if (!bGroup)
           rq.outputAndClean();
         trace(DEBUG2, "Staring from %d, read %d\n", pos, sizeof(cachebuffer));
-        pos += sizeof(cachebuffer);
+        pos += sizeof(cachebuffer)+1;
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
       }
       thisTime = curtime();

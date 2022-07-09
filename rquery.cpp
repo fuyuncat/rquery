@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
   
   gv.setVars(16384*2, ERROR, true);
   ParserC ps;
-  bool bGroup = false;
+  bool bGroupOrSort = false;
   short int readMode = PROMPT;
   string sContent = "";
   QuerierC rq;
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
       if (query.find("group") != query.end()){
         trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
         rq.assignGroupStr(query["group"]);
-        bGroup = true;
+        bGroupOrSort = true;
       }
       if (query.find("select") != query.end()){
         trace(DEBUG,"Assigning selections: %s \n", query["select"].c_str());
@@ -115,6 +115,7 @@ int main(int argc, char *argv[])
       if (query.find("sort") != query.end()){
         trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
         rq.assignSortStr(query["sort"]);
+        bGroupOrSort = true;
       }
       if (query.find("limit") != query.end()){
         trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
@@ -176,25 +177,24 @@ int main(int argc, char *argv[])
 
       const size_t cache_length = gv.g_inputbuffer;
       char cachebuffer[cache_length];
-      size_t pos = 0;
+      size_t howmany = 0;
 
       memset( cachebuffer, '\0', sizeof(char)*cache_length );
-      while (ifile.read(cachebuffer, cache_length)){
-        ifile.seekg(pos, ios::beg);
-        string strbuf = string(cachebuffer);
-        rq.appendrawstr(strbuf);
+      while(!ifile.eof()) {
+        ifile.read(cachebuffer, cache_length);
+        //ifile.seekg(pos, ios::beg);
+        rq.appendrawstr(string(cachebuffer));
         rq.searchAll();
         rq.printFieldNames();
-        if (!bGroup)
+        if (!bGroupOrSort)
           rq.outputAndClean();
-        trace(DEBUG2, "Staring from %d, read %d\n", pos, sizeof(cachebuffer));
-        pos += sizeof(cachebuffer)+1;
+        howmany += ifile.count();
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
       }
       thisTime = curtime();
       trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
       lastTime = thisTime;
-      if (bGroup){
+      if (bGroupOrSort){
         rq.group();
         thisTime = curtime();
         trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
         lastTime = thisTime;
       }
       lastTime = thisTime;
-      trace(DEBUG1,"%d bytes read.\n", pos);
+      trace(DEBUG1,"%d bytes read.\n", howmany);
       break;
     }
     case FOLDER:{
@@ -225,14 +225,14 @@ int main(int argc, char *argv[])
         rq.appendrawstr(string(cachebuffer));
         rq.searchAll();
         rq.printFieldNames();
-        if (!bGroup)
+        if (!bGroupOrSort)
           rq.outputAndClean();
         howmany += std::cin.gcount();
       }
       thisTime = curtime();
       trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
       lastTime = thisTime;
-      if (bGroup){
+      if (bGroupOrSort){
         rq.group();
         thisTime = curtime();
         trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);

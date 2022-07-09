@@ -17,6 +17,7 @@
 #include <boost/algorithm/string.hpp>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <sys/time.h>
 #include <math.h> 
 //#include <chrono>
 //#include <stdexcept.h>

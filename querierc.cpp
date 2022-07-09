@@ -47,6 +47,10 @@ void QuerierC::init()
   m_limitbottom = 0;
   m_limittop = -1;
   m_bNamePrinted = false;
+#ifdef __DEBUG__
+  m_searchtime = 0;
+  m_filtertime = 0;
+#endif // __DEBUG__
 }
 
 void QuerierC::setregexp(string regexstr)
@@ -324,6 +328,9 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   //  //trace(INFO, "No filter defined\n");
   //  return true;
   //}
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   if (rowValue.size() != m_fieldnames.size() + 3){ // field name number + 3 variables (@raw @line @row)
     trace(ERROR, "Filed number %d and value number %d dont match!\n", m_fieldnames.size(), rowValue.size());
     dumpVector(m_fieldnames);
@@ -331,7 +338,6 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
     return false;
   }
   //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
-  bool matched = false; 
   vector<string> fieldValues;
   map<string, string> varValues;
   for (int i=0; i<m_fieldnames.size(); i++)
@@ -341,9 +347,9 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   varValues.insert( pair<string,string>("@FILE",m_filename));
   varValues.insert( pair<string,string>("@LINE",rowValue[m_fieldnames.size()+1]));
   varValues.insert( pair<string,string>("@ROW",rowValue[m_fieldnames.size()+2]));
-  bool bMatchedbMatched = (!filter || filter->compareExpression(&m_fieldnames, &fieldValues, &varValues));
-  //trace(DEBUG, " selected:%d (%d)! \n", bMatchedbMatched, m_selections.size());
-  if (bMatchedbMatched){
+  bool matched = (!filter || filter->compareExpression(&m_fieldnames, &fieldValues, &varValues));
+  //trace(DEBUG, " selected:%d (%d)! \n", matched, m_selections.size());
+  if (matched){
     if (m_selections.size()>0){
       if (m_groups.size() == 0){
         //trace(DEBUG, " No group! \n");
@@ -449,31 +455,17 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         return false;
     }
   }
-  return bMatchedbMatched;
-
-  //if (filter->m_type == BRANCH){
-  //  if (!filter->m_leftNode || !filter->m_rightNode){
-  //    return false;
-  //  }
-  //  if (filter->m_junction == AND)  // and
-  //    matched = matchFilter(rowValue, filter->m_leftNode) && matchFilter(rowValue, filter->m_rightNode);
-  //  else // or
-  //    matched = matchFilter(rowValue, filter->m_leftNode) || matchFilter(rowValue, filter->m_rightNode);
-  //}else if (filter->m_type == LEAF){
-  //  if (filter->m_leftColId < 0) // filter is expression
-  //    return !filter->m_leftExpStr.empty()?!filter->m_rightExpStr.empty():filter->m_leftExpStr.compare(filter->m_rightExpStr)==0;
-  //  if (rowValue.size() == 0 || filter->m_leftColId > rowValue.size()-1)
-  //    return false;
-  //  //printf("left:%s %s right:%s (%s)\n",rowValue[filter->m_leftColId].c_str(),decodeComparator(filter->m_comparator).c_str(),filter->m_rightExpStr.c_str(),decodeDatatype(filter->m_datatype).c_str());
-  //  return anyDataCompare(rowValue[filter->m_leftColId], filter->m_comparator, filter->m_rightExpStr, filter->m_datatype) == 1;
-  //}else{ // no predication means alway true
-  //  return false;
-  //}
+#ifdef __DEBUG__
+  m_filtertime += (curtime()-thistime);
+#endif // __DEBUG__
   return matched;
 }
 
 int QuerierC::searchNext()
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
   //smatch matches;
   //m_line++;
@@ -559,6 +551,9 @@ int QuerierC::searchNext()
     return found;
   }
   //trace(DEBUG, "So far found: %d\n", m_matchcount);
+#ifdef __DEBUG__
+  m_searchtime += (curtime()-thistime);
+#endif // __DEBUG__
   return found;
 }
 
@@ -570,6 +565,9 @@ int QuerierC::searchAll()
     found = searchNext();
     totalfound+=found;
   }
+#ifdef __DEBUG__
+  trace(DEBUG1, "Searching time: %d, filtering time: %d\n", m_searchtime, m_filtertime);
+#endif // __DEBUG__
   return totalfound;
 }
 

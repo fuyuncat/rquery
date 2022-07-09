@@ -101,6 +101,11 @@ class QuerierC
     bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, vector< vector<string> > & resultSet); // add a data row to a result set
     void mergeSort(int iLeft, int iMid, int iRight);
 
+#ifdef __DEBUG__
+    long int m_searchtime;
+    long int m_filtertime;
+#endif // __DEBUG__
+
   protected:
     void init();
     //void formatoutput(namesaving_smatch matches);

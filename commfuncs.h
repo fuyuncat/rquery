@@ -12,6 +12,8 @@
 //
 *******************************************************************************/
 //#pragma once
+#define __DEBUG__
+
 #ifndef __COMMFUNCS_H
 #define __COMMFUNCS_H
 

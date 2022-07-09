@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 
       const size_t cache_length = gv.g_inputbuffer;
       char cachebuffer[cache_length];
-      size_t pos = ios::beg, reads = 0;
+      size_t pos = 0;
 
       memset( cachebuffer, '\0', sizeof(char)*cache_length );
       while (ifile.read(cachebuffer, cache_length)){

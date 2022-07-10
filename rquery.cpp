@@ -39,7 +39,12 @@
 #include "querierc.h"
 //#include <boost/regex.hpp>
 
-//#define BOOST_REGEX_MATCH_EXTRA
+#if defined _WIN32 || defined _WIN64
+#include <windows.h>
+#include <tchar.h>
+#elif __unix || __unix__ || __linux__
+#include <dirent.h>
+#endif
 
 //size_t g_inputbuffer;
 
@@ -48,6 +53,276 @@ GlobalVars gv;
 void usage()
 {
   printf("Program Name: RQuery AKA RQ\nContact Email: fuyuncat@gmail.com\nUsage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
+}
+
+short int checkReadMode(string sContent)
+{
+  short int readMode = PARAMETER;
+
+  struct stat s;
+  if( stat(sContent.c_str(),&s) == 0 ){
+    if( s.st_mode & S_IFDIR )
+      readMode = FOLDER;
+    else if( s.st_mode & S_IFREG )
+      readMode = FILE;
+    else
+      readMode = PARAMETER;
+  }else
+    readMode = PARAMETER;
+  
+  return readMode;
+}
+
+vector<string> listFilesInFolder(string foldername)
+{
+  vector<string> filelist;
+#if defined _WIN32 || defined _WIN64
+  WIN32_FIND_DATA fd; 
+  HANDLE hFind = ::FindFirstFile(foldername.c_str(), &fd); 
+  if(hFind != INVALID_HANDLE_VALUE) { 
+    do { 
+      // read all (real) files in current folder
+      // , delete '!' read other 2 default folder . and ..
+      if(! (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ) {
+        filelist.push_back(fd.cFileName);
+      }
+    }while(::FindNextFile(hFind, &fd)); 
+    ::FindClose(hFind); 
+  } 
+#elif __unix || __unix__ || __linux__
+  struct dirent *pDirent;
+  DIR *pDir = opendir(foldername.c_str());
+  while ((pDirent = readdir(pDir)) != NULL)
+    if (strcmp(pDirent->d_name,".")!=0 && strcmp(pDirent->d_name,"..")!=0)
+      filelist.push_back(string(pDirent->d_name));
+  (void)closedir(pDir);
+#endif 
+  return filelist;
+}
+
+void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, int iSkip=0)
+{
+  long int thisTime,lastTime = curtime();
+
+  rq.setFileName(filename);
+  ifstream ifile(filename.c_str());
+  if (!ifile){
+    trace(ERROR, "Failed to open file '%s'.\n", filename.c_str());
+    return;
+  }
+  
+  switch (fileMode){
+    case READLINE:{
+      string strline;
+      int readLines = 0;
+      while (std::getline(ifile, strline)){
+        if (readLines<iSkip){
+          readLines++;
+          continue;
+        }
+        if (rq.searchStopped())
+          break;
+        rq.appendrawstr(strline);
+        rq.searchAll();
+        rq.printFieldNames();
+        if (!rq.toGroupOrSort())
+          rq.outputAndClean();
+        rq.setrawstr("");
+        readLines++;
+      }
+      thisTime = curtime();
+      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
+      lastTime = thisTime;
+      if (rq.toGroupOrSort()){
+        rq.group();
+        thisTime = curtime();
+        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+        rq.sort();
+        thisTime = curtime();
+        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
+        rq.outputAndClean();
+        thisTime = curtime();
+        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+      }
+      trace(DEBUG2,"%d lines read. (%d lines skipped)\n", readLines, iSkip);
+      trace(DEBUG2, "Found %d row(s).\n", rq.getOutputCount());
+      trace(DEBUG2, "Parsed %d line(s).\n", rq.getLines());
+      break;
+    }case READBUFF:
+    default:{
+      //streamsize size = ifile.tellg();
+      ifile.seekg(iSkip, ios::beg);
+
+      const size_t cache_length = gv.g_inputbuffer;
+      //char cachebuffer[cache_length];
+      char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
+      size_t howmany = 0;
+
+      memset( cachebuffer, '\0', sizeof(char)*cache_length );
+      while(!ifile.eof()) {
+        if (rq.searchStopped())
+          break;
+        ifile.read(cachebuffer, cache_length);
+        //ifile.seekg(pos, ios::beg);
+        rq.appendrawstr(string(cachebuffer));
+        rq.searchAll();
+        rq.printFieldNames();
+        if (!rq.toGroupOrSort())
+          rq.outputAndClean();
+        howmany += ifile.gcount();
+        memset( cachebuffer, '\0', sizeof(char)*cache_length );
+      }
+      free(cachebuffer);
+      thisTime = curtime();
+      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
+      lastTime = thisTime;
+      if (rq.toGroupOrSort()){
+        rq.group();
+        thisTime = curtime();
+        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+        rq.sort();
+        thisTime = curtime();
+        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
+        rq.outputAndClean();
+        thisTime = curtime();
+        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+      }
+      trace(DEBUG2,"%d bytes read. (%d bytes skipped)\n", howmany, iSkip);
+      trace(DEBUG2, "Found %d row(s).\n", rq.getOutputCount());
+      trace(DEBUG2, "Parsed %d line(s).\n", rq.getLines());
+      break;
+    }
+  }
+}
+
+void processQuery(string sQuery, QuerierC & rq)
+{
+  ParserC ps;
+  map<string,string> query = ps.parseparam(sQuery);
+  dumpMap(query);
+
+  int rst;
+  map<string,string> matches;
+  vector<string> cmatches;
+
+  string patternStr = "[^\n]*"; // if no PARSE passed, search each lines
+  if (query.find("parse") != query.end())
+    patternStr = query["parse"];
+
+  string rex = trim_one(patternStr, '/');
+  rq.setregexp(rex);
+
+  if (query.find("filter") != query.end()){
+    //trace(DEBUG,"Assigning filter: %s \n", query["filter"].c_str());
+    FilterC* filter = new FilterC(query["filter"]);
+    rq.assignFilter(filter);
+  }
+  if (query.find("set") != query.end()){
+    //trace(DEBUG,"Setting fields data type: %s \n", query["set"].c_str());
+    rq.setFieldTypeFromStr(query["set"]);
+  }
+  // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP
+  if (query.find("group") != query.end()){
+    //trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
+    rq.assignGroupStr(query["group"]);
+  }
+  if (query.find("select") != query.end()){
+    //trace(DEBUG,"Assigning selections: %s \n", query["select"].c_str());
+    rq.assignSelString(query["select"]);
+  }
+  if (query.find("sort") != query.end()){
+    //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
+    rq.assignSortStr(query["sort"]);
+  }
+  if (query.find("limit") != query.end()){
+    //trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
+    rq.assignLimitStr(query["limit"]);
+  }
+}
+
+void runQuery(string sContent, short int readMode, QuerierC & rq, short int fileMode=READBUFF, int iSkip=0)
+{
+  switch (readMode){
+    case PARAMETER:{
+      //trace(DEBUG1,"Processing content from parameter \n");
+      rq.setrawstr(sContent);
+      //rq.searchNext();
+      rq.searchAll();
+      rq.group();
+      rq.sort();
+      rq.printFieldNames();
+      rq.outputAndClean();
+      rq.clear();
+      break;
+    }
+    case FILE:{
+      //trace(DEBUG1,"Processing content from file \n");
+      processFile(sContent, rq, fileMode, iSkip);
+      rq.clear();
+      break;
+    }
+    case FOLDER:{
+      //trace(DEBUG1,"Processing content from folder \n");
+      vector<string> filelist = listFilesInFolder(sContent);
+      for (int i=0; i<filelist.size(); i++){
+        trace(DEBUG1,"Processing file: %s \n", (sContent+"/"+filelist[i]).c_str());
+        processFile(sContent+"/"+filelist[i], rq, fileMode, iSkip);
+      }
+      rq.clear();
+      break;
+    }
+    case PROMPT:{
+      //trace(DEBUG1,"Processing content from input or pipe \n");
+      long int thisTime,lastTime = curtime();
+      const size_t cache_length = gv.g_inputbuffer;
+      //char cachebuffer[cache_length];
+      char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
+      size_t howmany = 0, reads = 0;
+      while(std::cin) {
+        if (rq.searchStopped())
+          break;
+        memset( cachebuffer, '\0', sizeof(char)*cache_length );
+        std::cin.read(cachebuffer, cache_length);
+        rq.appendrawstr(string(cachebuffer));
+        rq.searchAll();
+        rq.printFieldNames();
+        if (!rq.toGroupOrSort())
+          rq.outputAndClean();
+        howmany += std::cin.gcount();
+      }
+      free(cachebuffer);
+      thisTime = curtime();
+      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
+      lastTime = thisTime;
+      if (rq.toGroupOrSort()){
+        rq.group();
+        thisTime = curtime();
+        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+        rq.sort();
+        thisTime = curtime();
+        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
+        rq.outputAndClean();
+        thisTime = curtime();
+        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+      }
+      trace(DEBUG2, "Found %d row(s).\n", rq.getOutputCount());
+      trace(DEBUG2, "Processed %d line(s).\n", rq.getLines());
+      rq.clear();
+      trace(DEBUG2,"%d bytes read.\n", howmany);
+      break;
+    }
+    default:{
+      usage();
+      trace(FATAL,"Please provide content to be queried!\n");
+      return;
+    }
+  }
 }
 
 int main(int argc, char *argv[])
@@ -66,14 +341,14 @@ int main(int argc, char *argv[])
   }
   
   gv.setVars(16384*2, ERROR, true);
-  ParserC ps;
-  bool bGroupOrSort = false;
-  short int readMode = PROMPT;
-  string sContent = "";
+  bool bConsoleMode = false;
+  short int readMode = PROMPT, fileMode = READBUFF;
+  int iSkip = 0;
+  string sQuery = "", sContent = "";
   QuerierC rq;
 
   for (int i=1; i<argc; i++){
-    if (argv[i][0]=='-' && i>=argc && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")!=0 && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")!=0){
+    if (argv[i][0]=='-' && i>=argc && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")!=0 && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")!=0 && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--console")!=0){
       usage();
       trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
       return 1;
@@ -86,8 +361,20 @@ int main(int argc, char *argv[])
       string topic = string(argv[i+1]);
       return 0;
       i++;
+    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--console")==0){
+      bConsoleMode = true;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-f")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--fieldheader")==0){
       gv.g_printheader = (boost::algorithm::to_lower_copy<string>(string(argv[i+1])).compare("off")!=0);
+      i++;
+    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-r")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--readmode")==0){
+      fileMode = (boost::algorithm::to_lower_copy<string>(string(argv[i+1])).compare("line")!=0?READBUFF:READLINE);
+      i++;
+    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-s")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--skip")==0){
+      if (!isInt(argv[i+1])){
+        trace(FATAL,"%s is not a correct skip size number.\n", argv[i]);
+        return 1;
+      }
+      iSkip = atoi((argv[i+1]));
       i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-b")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--buffsize")==0){
       if (!isInt(argv[i+1])){
@@ -106,292 +393,129 @@ int main(int argc, char *argv[])
       }
       i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-q")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--query")==0){
-      map<string,string> query = ps.parseparam(argv[i+1]);
-      dumpMap(query);
-
-      int rst;
-      map<string,string> matches;
-      vector<string> cmatches;
-
-      string patternStr = "[^\n]*"; // if no PARSE passed, search each lines
-      if (query.find("parse") != query.end())
-        patternStr = query["parse"];
-
-      string rex = trim_one(patternStr, '/');
-      rq.setregexp(rex);
-
-      if (query.find("filter") != query.end()){
-        trace(DEBUG,"Assigning filter: %s \n", query["filter"].c_str());
-        FilterC* filter = new FilterC(query["filter"]);
-        rq.assignFilter(filter);
-      }
-      if (query.find("set") != query.end()){
-        trace(DEBUG,"Setting fields data type: %s \n", query["set"].c_str());
-        rq.setFieldTypeFromStr(query["set"]);
-      }
-      // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP
-      if (query.find("group") != query.end()){
-        trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
-        rq.assignGroupStr(query["group"]);
-        bGroupOrSort = true;
-      }
-      if (query.find("select") != query.end()){
-        trace(DEBUG,"Assigning selections: %s \n", query["select"].c_str());
-        rq.assignSelString(query["select"]);
-      }
-      if (query.find("sort") != query.end()){
-        trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
-        rq.assignSortStr(query["sort"]);
-        bGroupOrSort = true;
-      }
-      if (query.find("limit") != query.end()){
-        trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
-        rq.assignLimitStr(query["limit"]);
-      }
+      sQuery = argv[i+1];
       i++;
     }else{
       //trace(DEBUG1,"Content: %s.\n", argv[i]);
       sContent = string(argv[i]);
-      readMode = PARAMETER;
-
-      struct stat s;
-      if( stat(argv[i],&s) == 0 ){
-        if( s.st_mode & S_IFDIR )
-          readMode = FOLDER;
-        else if( s.st_mode & S_IFREG )
-          readMode = FILE;
-        else
-          readMode = PARAMETER;
-      }else
-        readMode = PARAMETER;
+      readMode = checkReadMode(sContent);
     }
   }
-    
-  switch (readMode){
-    case PARAMETER:{
-      rq.setrawstr(sContent);
-      //rq.searchNext();
-      rq.searchAll();
-      rq.group();
-      rq.sort();
-      rq.printFieldNames();
-      rq.outputAndClean();
-      rq.clear();
-      break;
-    }
-    case FILE:{
-      long int thisTime,lastTime = curtime();
 
-      ifstream ifile(sContent.c_str());
-      //streamsize size = ifile.tellg();
-      ifile.seekg(0, ios::beg);
-
-      const size_t cache_length = gv.g_inputbuffer;
-      //char cachebuffer[cache_length];
-      char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
-      size_t howmany = 0;
-
-      memset( cachebuffer, '\0', sizeof(char)*cache_length );
-      while(!ifile.eof()) {
-        if (rq.searchStopped())
-          break;
-        ifile.read(cachebuffer, cache_length);
-        //ifile.seekg(pos, ios::beg);
-        rq.appendrawstr(string(cachebuffer));
-        rq.searchAll();
-        rq.printFieldNames();
-        if (!bGroupOrSort)
-          rq.outputAndClean();
-        howmany += ifile.gcount();
-        memset( cachebuffer, '\0', sizeof(char)*cache_length );
+  if (bConsoleMode){
+    cout << "Welcome to RQuery ";
+    cout << VERSION;
+    cout << "\n";
+    cout << "Author: Wei Huang; Contact Email: fuyuncat@gmail.com\n";
+    cout << "\n";
+    cout << "rquery >";
+    string lineInput;
+    FilterC* filter = NULL;
+    while (getline(cin,lineInput)) {
+      if (boost::algorithm::trim_copy<string>(lineInput).empty())
+        cout << "rquery >";
+      else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).compare("q")==0 || boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).compare("quit")==0){
+        break;
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("h ")==0 || boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("help")==0){
+        cout << "load <file/folder> -- Provide a file or folder to be queried.\n";
+        cout << "parse /<regular expression string>/ -- Provide a regular express string quoted by \"//\" to parse the content.\n";
+        cout << "set <field datatype [date format],...> -- Set the date type of the fields.\n";
+        cout << "filter <filter conditions> -- Provide filter conditions to filt the content.\n";
+        cout << "select <field or expression,...> -- Provide a field name/variables/expressions to be selected.\n";
+        cout << "group <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n";
+        cout << "sort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n";
+        cout << "limt <n | bottomN,topN> -- Provide output limit range.\n";
+        cout << "filemode <buffer|line> -- Provide file read mode, default is buffer.\n";
+        cout << "skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n";
+        cout << "run [query string] -- Run the query (either preprocessed or provide as a parameter).\n";
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("load ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("load ").size());
+        readMode = checkReadMode(strParam);
+        if (readMode != FILE && readMode != FOLDER){
+          cout << "Error: Cannot find the file or folder.\n";
+        }else{
+          sContent = strParam;
+          cout << readMode==FILE?"File":"Folder";
+          cout << " is loaded.\n";
+        }
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("filemode ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("filemode ").size());
+        if (boost::algorithm::to_lower_copy<string>(strParam).compare("line")!=0)
+          fileMode=READBUFF;
+        cout << "File read mode is set to ";
+        cout << fileMode==READBUFF?"buffer.\n":"line.\n";
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("skip ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("skip ").size());
+        if (!isInt(strParam)){
+          cout << "Error: Please provide a valid number.\n";
+        }else{
+          iSkip = atoi(strParam.c_str());
+          cout << strParam.c_str();
+          cout << fileMode==READBUFF?"bytes":"lines";
+          cout << " will be skipped.\n";
+        }
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("parse ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("parse ").size());
+        rq.setregexp(trim_one(strParam, '/'));
+        cout << "Regular expression string is provided.\n";
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("set ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("set ").size());
+        rq.setFieldTypeFromStr(strParam);
+        cout << "Fileds data type has been set up.\n";
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("filter ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("filter ").size());
+        //if (filter) // assignFilter will clear the existing filter
+        //  delete filter;
+        cout << "Filter condition is provided.\n";
+        filter = new FilterC(strParam);
+        rq.assignFilter(filter);
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("group ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("group ").size());
+        rq.assignGroupStr(strParam);
+        cout << "Group expressions are provided.\n";
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("select ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("select ").size());
+        rq.assignSelString(strParam);
+        cout << "Selection is provided.\n";
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("sort ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("sort ").size());
+        rq.assignSortStr(strParam);
+        cout << "Sorting keys are provided.\n";
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("limit ")==0){
+        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("limit ").size());
+        rq.assignLimitStr(strParam);
+        cout << "Output limit has been set up.\n";
+        cout << "rquery >";
+      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).compare("run")==0 || boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("run ")==0){
+        if (boost::algorithm::trim_copy<string>(lineInput).length() == 3){
+          if (readMode == FILE || readMode == FOLDER)
+            runQuery(sContent, readMode, rq, fileMode, iSkip);
+        }else{
+          string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("run ").size());
+          processQuery(strParam, rq);
+          if (readMode == FILE || readMode == FOLDER)
+            runQuery(sContent, readMode, rq, fileMode, iSkip);
+        }
+        cout << "rquery >";
+      }else{
+        cout << "Error: unrecognized command. Input (H)elp or (H)elp command to get more details.\n";
+        cout << "rquery >";
       }
-      free(cachebuffer);
-      thisTime = curtime();
-      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
-      lastTime = thisTime;
-      if (bGroupOrSort){
-        rq.group();
-        thisTime = curtime();
-        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-        rq.sort();
-        thisTime = curtime();
-        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
-        rq.outputAndClean();
-        thisTime = curtime();
-        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-      }
-      rq.clear();
-      trace(DEBUG1,"%d bytes read.\n", howmany);
-      break;
-    }
-    case FOLDER:{
-      break;
-    }
-    case PROMPT:{
-      long int thisTime,lastTime = curtime();
-      const size_t cache_length = gv.g_inputbuffer;
-      //char cachebuffer[cache_length];
-      char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
-      size_t howmany = 0, reads = 0;
-      while(std::cin) {
-        if (rq.searchStopped())
-          break;
-        memset( cachebuffer, '\0', sizeof(char)*cache_length );
-        std::cin.read(cachebuffer, cache_length);
-        rq.appendrawstr(string(cachebuffer));
-        rq.searchAll();
-        rq.printFieldNames();
-        if (!bGroupOrSort)
-          rq.outputAndClean();
-        howmany += std::cin.gcount();
-      }
-      free(cachebuffer);
-      thisTime = curtime();
-      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
-      lastTime = thisTime;
-      if (bGroupOrSort){
-        rq.group();
-        thisTime = curtime();
-        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-        rq.sort();
-        thisTime = curtime();
-        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
-        rq.outputAndClean();
-        thisTime = curtime();
-        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-      }
-      rq.clear();
-      trace(DEBUG2,"%d bytes read.\n", howmany);
-      break;
-    }
-    default:{
-      usage();
-      trace(FATAL,"Please provide content to be queried!\n");
-      return 1;
-    }
-  }
-  trace(DEBUG2, "Found %d row(s).\n", rq.getOutputCount());
-  trace(DEBUG2, "Processed %d line(s).\n", rq.getLines());
-
-  /*
-  ParserC ps;
-  map<string,string> query = ps.parseparam(argv[1]);
-  dumpMap(query);
-  //ps.dumpQueryparts();
-  //for (map<string,string>::iterator it=query.begin(); it!=query.end(); ++it)
-    printf("%s: %s\n", it->first.c_str(), it->second.c_str());
-
-  int rst;
-  map<string,string> matches;
-  vector<string> cmatches;
-  bool bGroup = false;
-  //vector<string> fields = ps.parsereg(argv[2],query["parse"], rst);
-  //for (int i = 0; i < fields.size(); ++i){
-  //  printf("field %d: %s\n", i+1, fields[i].c_str());
-  //}
-
-  string patternStr = "[^\n]*"; // if no PARSE passed, search each lines
-  if (query.find("parse") != query.end())
-    patternStr = query["parse"];
-
-  string rex = trim_one(patternStr, '/');
-  QuerierC rq(rex);
-
-  if (query.find("filter") != query.end()){
-    trace(INFO,"Assigning filter: %s \n", query["filter"].c_str());
-    FilterC* filter = new FilterC(query["filter"]);
-    rq.assignFilter(filter);
-  }
-  // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP
-  if (query.find("group") != query.end()){
-    trace(INFO,"Setting group : %s \n", query["group"].c_str());
-    rq.assignGroupStr(query["group"]);
-    bGroup = true;
-  }
-  if (query.find("select") != query.end()){
-    trace(INFO,"Assigning selections: %s \n", query["select"].c_str());
-    rq.assignSelString(query["select"]);
-  }
-  if (query.find("set") != query.end()){
-    trace(INFO,"Setting fields data type: %s \n", query["set"].c_str());
-    rq.setFieldTypeFromStr(query["set"]);
-  }
-  
-  if ( argc < 3 ){
-    bool namePrinted = false;
-
-    trace(INFO, "g_inputbuffer:%d\n",gv.g_inputbuffer);
-    //printf("g_inputbuffer:%d\n",gv.g_inputbuffer);
-    const size_t cache_length = gv.g_inputbuffer;
-    char cachebuffer[cache_length];
-    size_t howmany = 0, reads = 0;
-    while(std::cin) {
-      memset( cachebuffer, '\0', sizeof(char)*cache_length );
-      std::cin.read(cachebuffer, cache_length);
-      //reads = getstr(cachebuffer, cache_length);
-      //if (reads < 1)
-      //  break;
-      rq.appendrawstr(string(cachebuffer));
-      rq.searchAll();
-      if (!namePrinted){
-        rq.printFieldNames();
-        namePrinted = true;
-      }
-      if (!bGroup)
-        rq.outputAndClean();
-      howmany += std::cin.gcount();
-    }
-    if (bGroup){
-      rq.group();
-      rq.outputAndClean();
     }
 
-    //string lineInput;
-    //int ln = 0;
-    ////while (cin >> lineInput) {
-    //while (getline(cin,lineInput)) {
-    //  //printf("%d:%s\n",ln,lineInput.c_str());
-    //  rq.setrawstr(lineInput);
-    //  rq.searchAll();
-    //  if (!namePrinted){
-    //    rq.printFieldNames();
-    //    namePrinted = true;
-    //  }
-    //  rq.outputAndClean();
-
-    //  //rst = rq.boostmatch( matches );
-    //  //for (map<string,string>::iterator it=matches.begin(); it!=matches.end(); ++it)
-    //  //  printf("%s: %s\n", it->first.c_str(), it->second.c_str());
-      
-    //  //rst = rq.boostmatch( &cmatches );
-    //  //for (int i=0; i<cmatches.size(); i++)
-    //  //  printf("%d: %s\n", i, cmatches[i].c_str());
-    //  ln++;
-    //}
-    //if ( ln < 1 ){
-    //  printf("%s\n",usage().c_str());
-    //  return 1;
-    //}
   }else{
-    rq.setrawstr(argv[2]);
-    //rq.searchNext();
-    rq.searchAll();
-    rq.group();
-    rq.printFieldNames();
-    rq.outputAndClean();
+    if (!sQuery.empty())
+      processQuery(sQuery, rq);
+    runQuery(sContent, readMode, rq, fileMode, iSkip);
   }
-  trace(DEBUG, "Found %d row(s).\n", rq.getOutputCount());
-
-  //boost::regex reg(rex);
-  //boost::smatch match;
-  //if (boost::regex_search(string(argv[2]), match, reg, boost::match_extra)){
-  //  for (int i=1; i<match.size(); i++)
-  //    printf("%s\t",string(match[i]).c_str());
-  //  printf("%s\n",string(match["host"]).c_str());
-  //}
-  */
 }

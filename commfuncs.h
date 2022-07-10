@@ -28,6 +28,8 @@
 using namespace std;
 using namespace boost::xpressive;
 
+#define VERSION "v0.88a"
+
 #define UNKNOWN 0
 
 #define BRANCH 1
@@ -90,6 +92,9 @@ using namespace boost::xpressive;
 #define PARAMETER 2
 #define FILE 3
 #define FOLDER 4
+
+#define READBUFF 1
+#define READLINE 2
 
 class namesaving_smatch : public smatch
 {

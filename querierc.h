@@ -51,8 +51,10 @@ class QuerierC
     bool assignSortStr(string sortstr);
     bool assignLimitStr(string limitstr);
     bool setFieldTypeFromStr(string setstr);
+    void setFileName(string filename);
     int searchNext();
     int searchAll();
+    bool toGroupOrSort();
     bool group();
     bool sort();
     bool searchStopped();

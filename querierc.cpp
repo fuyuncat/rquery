@@ -61,6 +61,10 @@ void QuerierC::setregexp(string regexstr)
 
 void QuerierC::assignFilter(FilterC* filter)
 {
+  if (m_filter){
+    m_filter->clear();
+    delete m_filter;
+  }
   m_filter = filter;
   m_filter->dump();
 }
@@ -210,10 +214,22 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
     if (iType == UNKNOWN){
       trace(ERROR, "Unknown data type %s!\n", vField[1].c_str());
       return false;
+    }else if(iType == DATE && vField.size() >= 2){
+      setFieldDatatype(vField[0], iType, vField[2]);
     }else
-      setFieldDatatype(vField[0], encodeDatatype(vField[1]));
+      setFieldDatatype(vField[0], iType);
   }
   return true;
+}
+
+void QuerierC::setFileName(string filename)
+{
+  m_filename = filename;
+}
+
+bool QuerierC::toGroupOrSort()
+{
+  return (m_groups.size()>0 || m_sorts.size()>0);
 }
 
 void QuerierC::pairFiledNames(namesaving_smatch matches)
@@ -900,5 +916,6 @@ void QuerierC::clear()
   m_filter = NULL;
   m_limitbottom = 0;
   m_limittop = -1;
+  m_filename = "";
   init();
 }

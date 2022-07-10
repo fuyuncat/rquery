@@ -64,18 +64,18 @@ Where the parameter could be any of below ones.<br />
 
 # Example and scenarios
 &nbsp;&nbsp;&nbsp;-- Query an apache or nginx access log, to get the number of hits from different clients, and the browser is Chrome or Firefox<br />
-&nbsp;&nbsp;&nbsp;`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '*(Chrome|Firefox)*' | select host, count(1) | group host | sort count(1) desc" < access.log<br />`
+&nbsp;&nbsp;&nbsp;`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '*(Chrome|Firefox)*' | select host, count(1) | group host | sort count(1) desc" < access.log`
 
 &nbsp;&nbsp;&nbsp;-- Searching folder logs, to get all access log from 127.0.0.1
-&nbsp;&nbsp;&nbsp;`./rq -m debug1 -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter origip like '127.0.0.1*' | select truncdate(time,3600) " logs<br />`
+&nbsp;&nbsp;&nbsp;`./rq -m debug1 -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter origip like '127.0.0.1*' | select truncdate(time,3600) " logs`
   
 &nbsp;&nbsp;&nbsp;-- Login console, customize the query
    ```
-   ./rq --console<br />
-   load /var/log/httpd/access_logs<br />
-   parse /\"(?P<origip>[^\n]*)\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \"(?P<request>[^\n]*)\" (?P<status>[0-9]+) (?P<size>\S+) \"(?P<referrer>[^\n]*)\" \"(?P<agent>[^\n]*)\"/<br />
-   filter origip like '192.168.0.8*'<br />
-   select truncdate(time,3600)<br />
+   ./rq --console
+   load /var/log/httpd/access_logs
+   parse /\"(?P<origip>[^\n]*)\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \"(?P<request>[^\n]*)\" (?P<status>[0-9]+) (?P<size>\S+) \"(?P<referrer>[^\n]*)\" \"(?P<agent>[^\n]*)\"/
+   filter origip like '192.168.0.8*'
+   select truncdate(time,3600)
    run<br />
    ```
   

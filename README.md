@@ -90,10 +90,10 @@ Where the parameter could be any of below ones.<br />
 # Example and scenarios
 &nbsp;&nbsp;&nbsp;-- Query an apache or nginx access log, to get the number of hits from different clients, and the browser is Chrome or Firefox<br />
 &nbsp;&nbsp;&nbsp;`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '*(Chrome|Firefox)*' | select host, count(1) | group host | sort count(1) desc" < access.log`
-<br />
+
 &nbsp;&nbsp;&nbsp;-- Searching folder logs, to get all access log from 127.0.0.1
 &nbsp;&nbsp;&nbsp;`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter origip like '127.0.0.1*' | select truncdate(time,3600) " logs`
-<br />
+
 &nbsp;&nbsp;&nbsp;-- Login console, customize the query
    ```
    ./rq --console
@@ -103,7 +103,7 @@ Where the parameter could be any of below ones.<br />
    select truncdate(time,3600)
    run
    ```
-<br />
+
 &nbsp;&nbsp;&nbsp;-- Get the hourly hits from nginx log
    ```
     rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/| select truncdate(time,3600), count(1) | group truncdate(time,3600)" /var/log/nginx/access.log-20220629         ERROR:Selection 'truncdate(time,3600)' does not exist in Group or invalid using aggregation function
@@ -127,7 +127,7 @@ Where the parameter could be any of below ones.<br />
     29/Jun/2022:01:00:00 +1000      76
     29/Jun/2022:02:00:00 +1000      32
    ```
-<br />
+
 # Dependencies
 &nbsp;&nbsp;&nbsp;This engine currently depends on boost, we are planning to remove this dependency in the near future.<br />
 <br />

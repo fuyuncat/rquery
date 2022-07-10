@@ -1,12 +1,12 @@
 # rquery
 &nbsp;&nbsp;&nbsp;RQuery is a regular expression (Capturing Group and Named Group supported) based text searching engine.<br />
 &nbsp;&nbsp;&nbsp;Contact Email: fuyuncat@gmail.com<br />
-
+<br />
 # Install
 &nbsp;&nbsp;&nbsp; Download source code zip<br />
 &nbsp;&nbsp;&nbsp; Unzip the downloaded file<br />
 &nbsp;&nbsp;&nbsp; make<br />
-
+<br />
 # Usage & Help Doc
 Command line mode:<br />
 &nbsp;&nbsp;&nbsp;./rq [parameters] "Text to be parsed and queried"<br />
@@ -18,7 +18,7 @@ Command line mode:<br />
 &nbsp;&nbsp;&nbsp;./rq [parameters] file<br />
 &nbsp;&nbsp;&nbsp;or<br />
 &nbsp;&nbsp;&nbsp;./rq [parameters] folder<br />
-
+<br />
 Console mode:
 &nbsp;&nbsp;&nbsp;./rq [parameters] --console<br />
 &nbsp;&nbsp;&nbsp;Input any of below commands in the console mode.<br />
@@ -33,7 +33,7 @@ Console mode:
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sort <field or expression [asc|desc],...> : Sorting keys to decide order of the output records<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;limt <n | bottomN,topN> : Limited number records to be printed<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run [query] : Run the preprocessed query of a provided query (refering to below part)<br />
-
+<br />
 Where the parameter could be any of below ones.<br />
 &nbsp;&nbsp;&nbsp;--help|-h<br />
 &nbsp;&nbsp;&nbsp;--query | -q <qeury string> : The query string to be used to parse and query the text content.<br />
@@ -63,37 +63,37 @@ Where the parameter could be any of below ones.<br />
 &nbsp;&nbsp;&nbsp;--buffsize | -b size : The buffer size when read mode is buffer, default is 16384<br />
 &nbsp;&nbsp;&nbsp;--skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0<br />
 &nbsp;&nbsp;&nbsp;--msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is ERROR<br />
-
+<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Functions:<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Functions can be used in the expression. We current provide some essential normal functions and aggregation functions.
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upper(str) : Normal function. Convert a string to upper case.
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lower(str) : Normal function. Convert a string to lower case.
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;strlen(str) : Normal function. Return the length of a string.
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instr(str,sub) : Normal function. Return the position of a sub string in a string. Return -1 if caannot find the sub string
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;substr(str,pos,len) : Normal function. Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string.
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace(str,sub1,sub2) : Normal function. Replace all sub1 in a string with sub2
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Comparestr(str1,str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;floor(num) : Normal function. Get the floor integer number of a given float number
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ceil(num) : Normal function. Get the ceil integer number of a given float number
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;round(num) : Normal function. Round a given float number
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;log(num) : Normal function. Get the log result of a given float number
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dateformat(date) : Normal function. Convert a date data to a string with the given format
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;now() : Normal function. Get current date time
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count(expr) : Aggregation function. Count the number of expr
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sum(expr) : Aggregation function. Sum the number of expr
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Max(expr) : Aggregation function. Get the maximum value of expr
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Min(expr) : Aggregation function. Get the minimum value of expr
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average(expr) : Aggregation function. Get the average value of expr
-
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upper(str) : Normal function. Convert a string to upper case.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lower(str) : Normal function. Convert a string to lower case.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;strlen(str) : Normal function. Return the length of a string.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instr(str,sub) : Normal function. Return the position of a sub string in a string. Return -1 if caannot find the sub string<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;substr(str,pos,len) : Normal function. Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace(str,sub1,sub2) : Normal function. Replace all sub1 in a string with sub2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Comparestr(str1,str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;floor(num) : Normal function. Get the floor integer number of a given float number.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;round(num) : Normal function. Round a given float number.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;log(num) : Normal function. Get the log result of a given float number.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;now() : Normal function. Get current date time.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count(expr) : Aggregation function. Count the number of expr.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sum(expr) : Aggregation function. Sum the number of expr.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Max(expr) : Aggregation function. Get the maximum value of expr.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Min(expr) : Aggregation function. Get the minimum value of expr.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average(expr) : Aggregation function. Get the average value of expr.<br />
+<br />
 # Example and scenarios
 &nbsp;&nbsp;&nbsp;-- Query an apache or nginx access log, to get the number of hits from different clients, and the browser is Chrome or Firefox<br />
 &nbsp;&nbsp;&nbsp;`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '*(Chrome|Firefox)*' | select host, count(1) | group host | sort count(1) desc" < access.log`
-
+<br />
 &nbsp;&nbsp;&nbsp;-- Searching folder logs, to get all access log from 127.0.0.1
 &nbsp;&nbsp;&nbsp;`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter origip like '127.0.0.1*' | select truncdate(time,3600) " logs`
-  
+<br />
 &nbsp;&nbsp;&nbsp;-- Login console, customize the query
    ```
    ./rq --console
@@ -103,7 +103,7 @@ Where the parameter could be any of below ones.<br />
    select truncdate(time,3600)
    run
    ```
-
+<br />
 &nbsp;&nbsp;&nbsp;-- Get the hourly hits from nginx log
    ```
   rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/| select truncdate(time,3600), count(1) | group truncdate(time,3600)" /var/log/nginx/access.log-20220629         ERROR:Selection 'truncdate(time,3600)' does not exist in Group or invalid using aggregation function
@@ -127,14 +127,14 @@ Where the parameter could be any of below ones.<br />
   29/Jun/2022:01:00:00 +1000      76
   29/Jun/2022:02:00:00 +1000      32
    ```
-  
+<br />
 # Dependencies
 &nbsp;&nbsp;&nbsp;This engine currently depends on boost, we are planning to remove this dependency in the near future.<br />
-
+<br />
 # Compile Environment
 &nbsp;&nbsp;&nbsp;The alpha version has been compiled in CentOS 7.<br />
 &nbsp;&nbsp;&nbsp;The g++ version is 4.8.5 20150623<br />
-
+<br />
 # License
 &nbsp;&nbsp;&nbsp;Our source code is available under the GNU GPLv3 license.<br />
-  
+<br />

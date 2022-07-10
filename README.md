@@ -2,6 +2,11 @@
 &nbsp;&nbsp;&nbsp;RQuery is a regular expression (Capturing Group and Named Group supported) based text searching engine.<br />
 &nbsp;&nbsp;&nbsp;Contact Email: fuyuncat@gmail.com<br />
 
+# Install
+&nbsp;&nbsp;&nbsp; Download source code zip<br />
+&nbsp;&nbsp;&nbsp; Unzip the downloaded file<br />
+&nbsp;&nbsp;&nbsp; make<br />
+
 # Usage & Help Doc
 Command line mode:<br />
 &nbsp;&nbsp;&nbsp;./rq [parameters] "Text to be parsed and queried"<br />

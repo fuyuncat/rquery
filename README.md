@@ -78,6 +78,30 @@ Where the parameter could be any of below ones.<br />
    select truncdate(time,3600)
    run<br />
    ```
+
+&nbsp;&nbsp;&nbsp;-- Get the hourly hits from nginx log
+   ```
+  rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/| select truncdate(time,3600), count(1) | group truncdate(time,3600)" /var/log/nginx/access.log-20220629         ERROR:Selection 'truncdate(time,3600)' does not exist in Group or invalid using aggregation function
+  truncdate(time,3600)    count(1)
+  --------------------    --------
+  28/Jun/2022:10:00:00 +1000      261
+  28/Jun/2022:11:00:00 +1000      77
+  28/Jun/2022:12:00:00 +1000      250
+  28/Jun/2022:13:00:00 +1000      165
+  28/Jun/2022:14:00:00 +1000      42
+  28/Jun/2022:15:00:00 +1000      121
+  28/Jun/2022:16:00:00 +1000      238
+  28/Jun/2022:17:00:00 +1000      118
+  28/Jun/2022:18:00:00 +1000      81
+  28/Jun/2022:19:00:00 +1000      106
+  28/Jun/2022:20:00:00 +1000      311
+  28/Jun/2022:21:00:00 +1000      86
+  28/Jun/2022:22:00:00 +1000      64
+  28/Jun/2022:23:00:00 +1000      63
+  29/Jun/2022:00:00:00 +1000      51
+  29/Jun/2022:01:00:00 +1000      76
+  29/Jun/2022:02:00:00 +1000      32
+   ```
   
 # Dependencies
 &nbsp;&nbsp;&nbsp;This engine currently depends on boost, we are planning to remove this dependency in the near future.<br />

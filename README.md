@@ -26,7 +26,7 @@ Console mode:
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filemode buffer|line : Provide file read mode, default is buffer.<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;skip <N> : How many bytes or lines (depends on the filemode) to be skipped.<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parse /regular string/ : Parse a regular expression string quoted by //<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set <field datatype [date format],...> : Set field data type<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter <filter conditions> : Filter the parsed records<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select <field or expression,...> : Fields or expressions to be selected<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;group <field or expression,...> : Fields or expressions to be groupd for aggregation selections<br />
@@ -41,12 +41,13 @@ Where the parameter could be any of below ones.<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parse /regular string/|set field datatype [date format],...|filter <ilter conditions|select field or expression,...|group field or expression,...|sort field or expression [asc|desc],...|limt n | bottomN,topN<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  The query parts are separated by |, they could be put in any order. You can provide one or more of them in a query, none of them is mandatary<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  parse /regular string/ : Parse a regular expression string quoted by //<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  set field datatype [date format],... : Set field data type<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  set field datatype [date format],... : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  filter filter conditions : Filter the parsed records<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  select field or expression,... : Fields or expressions to be selected<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  group field or expression,... : Fields or expressions to be groupd for aggregation selections<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  sort field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  limt n | bottomN,topN : Limited number records to be printed<br />
+<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Variables:<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In any expression of select, filter, group, sort, variables can be used. The variables are in a @Var format. Currently, the variables can be used are,<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@raw : The raw string of a parsed line<br />
@@ -54,6 +55,7 @@ Where the parameter could be any of below ones.<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@line : The line sequence number of (regular expression) matched lines<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@row : The sequence number of output records<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@filedN : The field of a parsed line, N is the sequence number of the field. It matches to the Capturing Group in the regular expression.<br />
+<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Fields:<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Fields are the Capturing Group or Named Capturing Group in the regular expression. If it's a Named Capturing Group, the name can be used as the field name, or a variable @fieldN can be mapped to a Capturing Group. <br />
 &nbsp;&nbsp;&nbsp;--fieldheader | -f on|off : Wheather print fields header(default) or not<br />
@@ -61,6 +63,29 @@ Where the parameter could be any of below ones.<br />
 &nbsp;&nbsp;&nbsp;--buffsize | -b size : The buffer size when read mode is buffer, default is 16384<br />
 &nbsp;&nbsp;&nbsp;--skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0<br />
 &nbsp;&nbsp;&nbsp;--msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is ERROR<br />
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Functions:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Functions can be used in the expression. We current provide some essential normal functions and aggregation functions.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upper(str) : Normal function. Convert a string to upper case.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lower(str) : Normal function. Convert a string to lower case.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;strlen(str) : Normal function. Return the length of a string.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instr(str,sub) : Normal function. Return the position of a sub string in a string. Return -1 if caannot find the sub string
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;substr(str,pos,len) : Normal function. Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;replace(str,sub1,sub2) : Normal function. Replace all sub1 in a string with sub2
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Comparestr(str1,str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;floor(num) : Normal function. Get the floor integer number of a given float number
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ceil(num) : Normal function. Get the ceil integer number of a given float number
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;round(num) : Normal function. Round a given float number
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;log(num) : Normal function. Get the log result of a given float number
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dateformat(date) : Normal function. Convert a date data to a string with the given format
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;now() : Normal function. Get current date time
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Count(expr) : Aggregation function. Count the number of expr
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sum(expr) : Aggregation function. Sum the number of expr
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Max(expr) : Aggregation function. Get the maximum value of expr
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Min(expr) : Aggregation function. Get the minimum value of expr
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average(expr) : Aggregation function. Get the average value of expr
 
 # Example and scenarios
 &nbsp;&nbsp;&nbsp;-- Query an apache or nginx access log, to get the number of hits from different clients, and the browser is Chrome or Firefox<br />
@@ -76,7 +101,7 @@ Where the parameter could be any of below ones.<br />
    parse /\"(?P<origip>[^\n]*)\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \"(?P<request>[^\n]*)\" (?P<status>[0-9]+) (?P<size>\S+) \"(?P<referrer>[^\n]*)\" \"(?P<agent>[^\n]*)\"/
    filter origip like '192.168.0.8*'
    select truncdate(time,3600)
-   run<br />
+   run
    ```
 
 &nbsp;&nbsp;&nbsp;-- Get the hourly hits from nginx log

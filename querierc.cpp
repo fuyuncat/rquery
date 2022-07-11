@@ -188,7 +188,7 @@ bool QuerierC::assignSortStr(string sortstr)
         return false;
       }
     }
-    
+
     // discard non integer CONST
     // Any INTEGER number will be mapped to the correspond sequence of the selections.
     // Thus, m_selections should always be analyzed before m_sorts

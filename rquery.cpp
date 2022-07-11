@@ -133,19 +133,6 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
       thisTime = curtime();
       trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
       lastTime = thisTime;
-      if (rq.toGroupOrSort()){
-        rq.group();
-        thisTime = curtime();
-        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-        rq.sort();
-        thisTime = curtime();
-        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
-        rq.outputAndClean();
-        thisTime = curtime();
-        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-      }
       trace(DEBUG2,"%d lines read. (%d lines skipped)\n", readLines, iSkip);
       trace(DEBUG2, "Found %d row(s).\n", rq.getOutputCount());
       trace(DEBUG2, "Parsed %d line(s).\n", rq.getLines());
@@ -178,25 +165,31 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
       thisTime = curtime();
       trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
       lastTime = thisTime;
-      if (rq.toGroupOrSort()){
-        rq.group();
-        thisTime = curtime();
-        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-        rq.sort();
-        thisTime = curtime();
-        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
-        rq.outputAndClean();
-        thisTime = curtime();
-        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-      }
       trace(DEBUG2,"%d bytes read. (%d bytes skipped)\n", howmany, iSkip);
       trace(DEBUG2, "Found %d row(s).\n", rq.getOutputCount());
       trace(DEBUG2, "Parsed %d line(s).\n", rq.getLines());
       break;
     }
   }
+}
+
+void printResult(QuerierC rq)
+{
+  long int thisTime,lastTime = curtime();
+  if (rq.toGroupOrSort()){
+    rq.group();
+    thisTime = curtime();
+    trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
+    lastTime = thisTime;
+    rq.sort();
+    thisTime = curtime();
+    trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
+    rq.outputAndClean();
+    thisTime = curtime();
+    trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
+    lastTime = thisTime;
+  }
+  rq.clear();
 }
 
 void processQuery(string sQuery, QuerierC & rq)
@@ -262,7 +255,7 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
     case FILE:{
       //trace(DEBUG1,"Processing content from file \n");
       processFile(sContent, rq, fileMode, iSkip);
-      rq.clear();
+      printResult(rq);
       break;
     }
     case FOLDER:{
@@ -272,7 +265,7 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
         trace(DEBUG1,"Processing file: %s \n", (sContent+"/"+filelist[i]).c_str());
         processFile(sContent+"/"+filelist[i], rq, fileMode, iSkip);
       }
-      rq.clear();
+      printResult(rq);
       break;
     }
     case PROMPT:{

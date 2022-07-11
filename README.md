@@ -87,15 +87,33 @@ Functions can be used in the expression. We current provide some essential norma
 - Login console, customize the query
    ```
    ./rq --console
-   load /var/log/httpd/access_logs
-   parse /\"(?P<origip>[^\n]*)\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \"(?P<request>[^\n]*)\" (?P<status>[0-9]+) (?P<size>\S+) \"(?P<referrer>[^\n]*)\" \"(?P<agent>[^\n]*)\"/
-   filter origip like '192.168.0.8*'
-   select truncdate(time,3600)
-   run
+   Welcome to RQuery v0.88a
+   Author: Wei Huang; Contact Email: fuyuncat@gmail.com
+
+   rquery >load access.log
+   File is loaded.
+   rquery >parse /\"(?P<origip>[^\n]*)\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \"(?P<request>[^\n]*)\" (?P<status>[0-9]+) (?P<size>\S+) \"(?P<referrer>[^\n]*)\" \"(?P<agent>[^\n]*)\"/
+   Regular expression string is provided.
+   rquery >group status
+   Group expressions are provided.
+   rquery >select status, count(1)
+   Selection is provided.
+   rquery >sort count(1) desc
+   Sorting keys are provided.
+   rquery >limit 5
+   Output limit has been set up.
+   rquery >run
+   status  count(1)
+   ------  --------
+   200     450
+   304     149
+   302     20
+   303     6
+   500     5
    ```
 - Get the hourly hits from nginx log
    ```
-    rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/| select truncdate(time,3600), count(1) | group truncdate(time,3600)" /var/log/nginx/access.log-20220629         ERROR:Selection 'truncdate(time,3600)' does not exist in Group or invalid using aggregation function
+    rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/| select truncdate(time,3600), count(1) | group truncdate(time,3600)" /var/log/nginx/access.log-20220629
     truncdate(time,3600)    count(1)
     --------------------    --------
     28/Jun/2022:10:00:00 +1000      261

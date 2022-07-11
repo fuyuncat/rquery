@@ -436,7 +436,7 @@ int main(int argc, char *argv[])
           cout << "Error: Cannot find the file or folder.\n";
         }else{
           sContent = strParam;
-          cout << readMode==FILE?"File":"Folder";
+          cout << (readMode==FILE?"File":"Folder");
           cout << " is loaded.\n";
         }
         cout << "rquery >";
@@ -445,7 +445,7 @@ int main(int argc, char *argv[])
         if (boost::algorithm::to_lower_copy<string>(strParam).compare("line")!=0)
           fileMode=READBUFF;
         cout << "File read mode is set to ";
-        cout << fileMode==READBUFF?"buffer.\n":"line.\n";
+        cout << (fileMode==READBUFF?"buffer.\n":"line.\n");
         cout << "rquery >";
       }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("skip ")==0){
         string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("skip ").size());
@@ -454,7 +454,7 @@ int main(int argc, char *argv[])
         }else{
           iSkip = atoi(strParam.c_str());
           cout << strParam.c_str();
-          cout << fileMode==READBUFF?"bytes":"lines";
+          cout << (fileMode==READBUFF?"bytes":"lines");
           cout << " will be skipped.\n";
         }
         cout << "rquery >";

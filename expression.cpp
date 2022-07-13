@@ -26,6 +26,7 @@ void ExpressionC::init()
   m_datatype.datatype = UNKNOWN;   // 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
   m_datatype.extrainfo = "";
   m_expType = UNKNOWN;    // if type is LEAF, the expression string type. 1: CONST, 2: COLUMN, 3: FUNCTION
+  m_funcID = UNKNOWN;
   m_colId = -1;      // if type is LEAF, and the expression string type is COLUMN. it's id of column. Otherwise, it's meaningless
   m_expStr = "";    // if type is LEAF, the expression string, either be a CONST, COLUMN or FUNCTION
   m_leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
@@ -77,6 +78,7 @@ ExpressionC::ExpressionC(ExpressionC* node)
   m_colId = node->m_colId;
   m_datatype = node->m_datatype;
   m_expType = node->m_expType;
+  m_funcID = node->m_funcID;
   m_expStr = node->m_expStr;
   m_leftNode = node->m_leftNode;
   m_rightNode = node->m_rightNode;
@@ -356,6 +358,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
       node->m_expStr = sFuncName+sParams;
       FunctionC* func = new FunctionC(m_expStr);
       node->m_datatype = func->m_datatype;
+      node->m_funcID = func->m_funcID;
       func->clear();
       delete func;
       m_expstrAnalyzed = true;
@@ -613,6 +616,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         m_expType = FUNCTION;
         FunctionC* func = new FunctionC(m_expStr);
         m_datatype = func->m_datatype;
+        m_funcID = func->m_funcID;
         //m_expStr = boost::to_upper_copy<string>(boost::trim_copy<string>(func->m_expStr)); -- should NOT turn the parameters to UPPER case.
         m_expStr = func->m_expStr;
         func->clear();
@@ -664,6 +668,7 @@ ExpressionC* ExpressionC::cloneMe(){
   node->m_colId = m_colId;
   node->m_datatype = m_datatype;
   node->m_expType = m_expType;
+  node->m_funcID = m_funcID;
   node->m_expStr = m_expStr;
   node->m_fieldnames = m_fieldnames;
   node->m_fieldtypes = m_fieldtypes;
@@ -693,6 +698,7 @@ void ExpressionC::copyTo(ExpressionC* node){
     node->m_colId = m_colId;
     node->m_datatype = m_datatype;
     node->m_expType = m_expType;
+    node->m_funcID = m_funcID;
     node->m_expStr = m_expStr;
     node->m_fieldnames = m_fieldnames;
     node->m_fieldtypes = m_fieldtypes;
@@ -788,6 +794,7 @@ void ExpressionC::clear(){
   m_datatype.extrainfo = "";
   m_operate = UNKNOWN;
   m_expType = UNKNOWN;
+  m_funcID = UNKNOWN;
   m_colId = -1;
   m_expStr = "";
 }

@@ -32,6 +32,7 @@ class FunctionC
     DataTypeStruct m_datatype;   // 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
     string m_expStr;  // it's the full function string, including function name and parameters
     string m_funcName; // analyzed function name, upper case
+    short int m_funcID; // function ID
     vector<ExpressionC> m_params; // parameter expressions.
     
     bool runFunction(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);

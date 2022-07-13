@@ -96,6 +96,29 @@ using namespace boost::xpressive;
 #define READBUFF 1
 #define READLINE 2
 
+#define UPPER 1
+#define LOWER 2
+#define SUBSTR 3
+#define INSTR 4
+#define STRLEN 5
+#define COMPARESTR 6
+#define NOCASECOMPARESTR 7
+#define REPLACE 8
+#define FLOOR 9
+#define CEIL 10
+#define ROUND 11
+#define LOG 12
+#define TIMEDIFF 13
+#define DATEFORMAT 14
+#define TRUNCDATE 15
+#define NOW 16
+#define SUM 101
+#define COUNT 102
+#define UNIQUECOUNT 103
+#define MAX 104
+#define MIN 105
+#define AVERAGE 106
+
 class namesaving_smatch : public smatch
 {
 public:
@@ -140,18 +163,13 @@ inline void hash_combine(std::size_t& seed, const T& v)
 }
 
 template <typename Container> // we can make this generic for any container [1]
-struct container_hash 
+struct hash_container 
 {
   size_t operator()(Container const& V) const 
   {
-    //return boost::hash_range(V.begin(), V.end());
     std::size_t hash = V.size();
-    //for(auto& i : V) {
-    for (auto i = V.begin(); i != V.end(); ++i){
+    for (auto i = V.begin(); i != V.end(); ++i)
       hash_combine(hash, *i);
-      //hash_combine(hash, i->second);
-      //hash ^= h + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-    }
     return hash;
   }
 
@@ -208,13 +226,14 @@ string decodeDatatype(int datatype);
 string decodeOperator(int op);
 string decodeExptype(int exptype);
 string decodeTracelevel(int level);
-int encodeComparator(string str);
-int encodeDatatype(string str);
-int encodeJunction(string str);
-int encodeOperator(string str);
-int encodeTracelevel(string str);
+short int encodeComparator(string str);
+short int encodeDatatype(string str);
+short int encodeJunction(string str);
+short int encodeOperator(string str);
+short int encodeTracelevel(string str);
+short int encodeFunction(string str);
+short int operatorPriority(int iOperator);
 int findStrArrayId(const vector<string> array, const string member);
-int operatorPriority(int iOperator);
 
 int anyDataCompare(string str1, string str2, DataTypeStruct dts);
 int anyDataCompare(string str1, int comparator, string str2, DataTypeStruct dts);

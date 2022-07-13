@@ -212,7 +212,7 @@ void processQuery(string sQuery, QuerierC & rq)
     patternStr = query["parse"];
 
   string rex = trim_one(patternStr, '/');
-  trace(DEBUG2,"Searching pattern: %s \n", rex.c_str());
+  //trace(DEBUG2,"Searching pattern: %s \n", rex.c_str());
   rq.setregexp(rex);
 
   if (query.find("filter") != query.end()){

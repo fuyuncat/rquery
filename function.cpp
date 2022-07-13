@@ -23,6 +23,7 @@ void FunctionC::init()
   m_datatype.extrainfo = "";
   m_expStr = "";          // it's the full function string, including function name and parameters
   m_funcName = "";        // analyzed function name, upper case
+  m_funcID = UNKNOWN;
   m_params.clear();       // parameter expressions
   m_expstrAnalyzed = false;
   m_fieldnames = NULL;
@@ -53,8 +54,10 @@ void FunctionC::setExpStr(string expStr)
   m_expStr = expStr;
   if (!analyzeExpStr()){
     m_funcName = "";
+    m_funcID = UNKNOWN;
     m_params.clear();
   }
+  m_funcID = encodeFunction(m_funcName);
 }
 
 bool FunctionC::isConst()
@@ -158,6 +161,7 @@ FunctionC* FunctionC::cloneMe(){
   node->m_datatype = m_datatype;
   node->m_expStr = m_expStr;
   node->m_funcName = m_funcName;
+  node->m_funcID = m_funcID;
   node->m_params = m_params;
   node->m_fieldnames = m_fieldnames;
   node->m_fieldtypes = m_fieldtypes;
@@ -174,6 +178,7 @@ void FunctionC::copyTo(FunctionC* node){
     node->m_datatype = m_datatype;
     node->m_expStr = m_expStr;
     node->m_funcName = m_funcName;
+    node->m_funcID = m_funcID;
     node->m_params = m_params;
     node->m_fieldnames = m_fieldnames;
     node->m_fieldtypes = m_fieldtypes;
@@ -186,6 +191,7 @@ void FunctionC::clear(){
   m_datatype.extrainfo = "";
   m_expStr = "";
   m_funcName = "";
+  m_funcID = UNKNOWN;
   m_params.clear();
   m_metaDataAnzlyzed = false;
   m_expstrAnalyzed = false;

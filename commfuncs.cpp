@@ -58,19 +58,21 @@ GlobalVars::~GlobalVars()
   
 }
 
-void GlobalVars::initVars(){
+void GlobalVars::initVars()
+{
   g_inputbuffer = 16384;
   g_tracelevel = FATAL;
   g_printheader = true;
 }
 
-void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader){
+void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader)
+{
   g_inputbuffer = inputbuffer;
   g_tracelevel = tracelevel;
   g_printheader = printheader;
 }
 
-int encodeTracelevel(string str)
+short int encodeTracelevel(string str)
 {
   string sUpper = boost::to_upper_copy<string>(str);
   if (sUpper.compare("FATAL") == 0)
@@ -834,7 +836,7 @@ string decodeOperator(int op)
   }
 }
 
-int encodeComparator(string str)
+short int encodeComparator(string str)
 {
   //printf("encode comparator: %s\n",str.c_str());
   string sUpper = boost::to_upper_copy<string>(str);
@@ -866,7 +868,7 @@ int encodeComparator(string str)
     return UNKNOWN;
 }
 
-int encodeDatatype(string str)
+short int encodeDatatype(string str)
 {
   string sUpper = boost::to_upper_copy<string>(str);
   if (sUpper.compare("STRING") == 0)
@@ -887,7 +889,7 @@ int encodeDatatype(string str)
     return UNKNOWN;
 }
 
-int encodeJunction(string str)
+short int encodeJunction(string str)
 {
   string sUpper = boost::to_upper_copy<string>(str);
   if (sUpper.compare("AND") == 0)
@@ -898,7 +900,7 @@ int encodeJunction(string str)
     return UNKNOWN;
 }
 
-int encodeOperator(string str)
+short int encodeOperator(string str)
 {
   if (str.compare("+") == 0)
     return PLUS;
@@ -914,7 +916,58 @@ int encodeOperator(string str)
     return UNKNOWN;
 }
 
-int operatorPriority(int iOperator)
+short int encodeFunction(string str)
+{
+  string sUpper = boost::to_upper_copy<string>(str);
+  if(sUpper.compare("UPPER")==0)
+    return UPPER;
+  else if(sUpper.compare("LOWER")==0)
+    return LOWER;
+  else if(sUpper.compare("SUBSTR")==0)
+    return SUBSTR;
+  else if(sUpper.compare("FLOOR")==0)
+    return FLOOR;
+  else if(sUpper.compare("CEIL")==0)
+    return CEIL;
+  else if(sUpper.compare("TIMEDIFF")==0)
+    return TIMEDIFF;
+  else if(sUpper.compare("INSTR")==0)
+    return INSTR;
+  else if(sUpper.compare("STRLEN")==0)
+    return STRLEN;
+  else if(sUpper.compare("COMPARESTR")==0)
+    return COMPARESTR;
+  else if(sUpper.compare("NOCASECOMPARESTR")==0)
+    return NOCASECOMPARESTR;
+  else if(sUpper.compare("REPLACE")==0)
+    return REPLACE;
+  else if(sUpper.compare("ROUND")==0)
+    return ROUND;
+  else if(sUpper.compare("LOG")==0)
+    return LOG;
+  else if(sUpper.compare("DATEFORMAT")==0)
+    return DATEFORMAT;
+  else if(sUpper.compare("TRUNCDATE")==0)
+    return TRUNCDATE;
+  else if(sUpper.compare("NOW")==0)
+    return NOW;
+  else if(sUpper.compare("SUM")==0)
+    return SUM;
+  else if(sUpper.compare("COUNT")==0)
+    return COUNT;
+  else if(sUpper.compare("UNIQUECOUNT")==0)
+    return UNIQUECOUNT;
+  else if(sUpper.compare("MAX")==0)
+    return MAX;
+  else if(sUpper.compare("MIN")==0)
+    return MIN;
+  else if(sUpper.compare("AVERAGE")==0)
+    return AVERAGE;
+  else
+    return UNKNOWN;
+}
+
+short int operatorPriority(int iOperator)
 {
   switch (iOperator){
   case PLUS:

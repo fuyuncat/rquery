@@ -288,7 +288,7 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
   }
 }
 
-void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, map< string,vector<string> > & aggFuncTaget)
+void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,vector<string> > & aggFuncTaget)
 {
   if (node->m_type == LEAF){ // eval leaf and store
     if (node->m_expType == FUNCTION && node->groupFuncOnly()){
@@ -301,13 +301,22 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
       if (gotResult){
         string sFuncStr = node->getEntireExpstr();
         //trace(DEBUG, "Eval: '%s'...\n", sFuncStr.c_str());
-        if (aggFuncTaget.find(sFuncStr) != aggFuncTaget.end())
+        vector<string> newdata = aggFuncTaget[sFuncStr];
+        if (newdata.size() == 0)
           aggFuncTaget[sFuncStr].push_back(sResult);
         else{
-          vector<string> newdata;
           newdata.push_back(sResult);
-          aggFuncTaget.insert( pair< string,vector<string> >(sFuncStr,newdata));
+          aggFuncTaget[sFuncStr] = newdata;
+          //aggFuncTaget.erase(sFuncStr);
+          //aggFuncTaget.insert( pair< string,vector<string> >(sFuncStr,newdata));
         }
+        //if (aggFuncTaget.find(sFuncStr) != aggFuncTaget.end())
+        //  aggFuncTaget[sFuncStr].push_back(sResult);
+        //else{
+        //  vector<string> newdata;
+        //  newdata.push_back(sResult);
+        //  aggFuncTaget.insert( pair< string,vector<string> >(sFuncStr,newdata));
+        //}
         //trace(DEBUG, "aggFuncTaget: '%s'(%d)!\n", sFuncStr.c_str(), aggFuncTaget[sFuncStr].size());
       }else{
         trace(ERROR, "Failed to eval aggregation parameter!\n");
@@ -326,7 +335,8 @@ void QuerierC::evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vec
 bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, vector< vector<string> > & resultSet)
 {
     vector<string> vResults;
-    vResults.push_back(rowValue[0]);
+    //vResults.push_back(rowValue[0]);
+    vResults.push_back(""); // save memory
     for (int i=0; i<expressions.size(); i++){
       string sResult;
       if (!expressions[i].containGroupFunc()){
@@ -407,7 +417,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         //trace(DEBUG, " Grouping! \n");
         vector<string> groupExps;  // the group expressions. as the key of following hash map
         vector<string> nonAggVals;
-        map< string,vector<string> > aggFuncTaget;
+        unordered_map< string,vector<string> > aggFuncTaget;
         //GroupDataSet dateSet;
         string sResult;
         bool dataSetExist = false;
@@ -416,19 +426,25 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           m_groups[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
           groupExps.push_back(sResult);
         }
-        if (m_aggFuncTaget.find(groupExps) != m_aggFuncTaget.end()){
-          nonAggVals = m_nonAggSels[groupExps]; // only need keep one nonAggVals for each groupExps
-          aggFuncTaget = m_aggFuncTaget[groupExps];
+        unordered_map< vector<string>, vector<string>, container_hash< vector<string> > >::iterator it1 = m_nonAggSels.find(groupExps);
+        unordered_map< vector<string>, unordered_map< string,vector<string> >, container_hash< vector<string> > >::iterator it2 = m_aggFuncTaget.find(groupExps);
+        if (it1 != m_nonAggSels.end() && it2 != m_aggFuncTaget.end()){
+          nonAggVals = it1->second; // only need keep one nonAggVals for each groupExps
+          for (unordered_map< string,vector<string> >::iterator it=it2->second.begin(); it!=it2->second.end(); ++it)
+            aggFuncTaget.insert(pair< string,vector<string> >(it->first,it->second));
           dataSetExist = true;
         }
 
         // get data sets
         if (!dataSetExist) // only need keep one nonAggVals for each groupExps
-          nonAggVals.push_back(rowValue[0]); // nonAggSels store raw string in the first member. This is kinda meaningless.
+        //if (nonAggVals.size()==0) // only need keep one nonAggVals for each groupExps
+          //nonAggVals.push_back(rowValue[0]); // nonAggSels store raw string in the first member. This is kinda meaningless.
+          nonAggVals.push_back(""); // save memory!!
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
           //trace(DEBUG1, "Selection '%s': %d \n",m_selections[i].getEntireExpstr().c_str(), m_selections[i].containGroupFunc());
           if (!m_selections[i].containGroupFunc() && !dataSetExist){ // non aggregation function selections
+          //if (nonAggVals.size()==0 && !m_selections[i].containGroupFunc()){ // non aggregation function selections
             m_selections[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
             nonAggVals.push_back(sResult);
             //trace(DEBUG1, "Got non-aggr selection '%s' \n",sResult.c_str());
@@ -450,6 +466,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           if (iSel >= 0 || (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()))
             continue;
           else if (!m_sorts[i].sortKey.containGroupFunc() && !dataSetExist){ // non aggregation function selections
+          //else if (nonAggVals.size()==0 && !m_sorts[i].sortKey.containGroupFunc()){ // non aggregation function selections
             m_sorts[i].sortKey.evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
             nonAggVals.push_back(sResult);
             //trace(DEBUG1, "Got non-aggr selection '%s' \n",sResult.c_str());
@@ -459,13 +476,15 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
           }
         }
         // dateSet.nonAggSels.push_back(nonAggVals);
+        //m_aggFuncTaget[groupExps] = aggFuncTaget;
         if (dataSetExist){
           // m_nonAggSels[groupExps] = nonAggVals; // only need keep one nonAggVals for each groupExps
-          m_aggFuncTaget[groupExps] = aggFuncTaget;
+          // m_aggFuncTaget[groupExps] = aggFuncTaget;
+          m_aggFuncTaget.erase(groupExps);
         }else{
           m_nonAggSels.insert( pair<vector<string>, vector<string> >(groupExps,nonAggVals));
-          m_aggFuncTaget.insert( pair<vector<string>, map< string,vector<string> > >(groupExps,aggFuncTaget));
         }
+        m_aggFuncTaget.insert( pair<vector<string>, unordered_map< string,vector<string> > >(groupExps,aggFuncTaget));
       }
     }else{
       m_results.push_back(rowValue);
@@ -491,7 +510,7 @@ bool QuerierC::searchStopped()
     return false;
 }
 
-int QuerierC::searchNext()
+int QuerierC::searchNext(namesaving_smatch & matches)
 {
   if (searchStopped()){
     //trace(DEBUG1, "stopped searching!\n");
@@ -505,7 +524,6 @@ int QuerierC::searchNext()
   //m_line++;
   int found = 0;
   try {
-    namesaving_smatch matches(m_regexstr);
     while(regex_search(m_rawstr, matches, m_regexp)){
       m_line++;
       vector<string> matcheddata;
@@ -568,19 +586,21 @@ int QuerierC::searchNext()
 int QuerierC::searchAll()
 {
   int totalfound = 0;
-  int found = searchNext();
+  //trace(DEBUG2, "Searching pattern: %s\n", m_regexstr.c_str());
+  namesaving_smatch matches(m_regexstr);
+  int found = searchNext(matches);
   while (found>0 && !m_rawstr.empty()){
-    found = searchNext();
+    found = searchNext(matches);
     totalfound+=found;
   }
 #ifdef __DEBUG__
-  trace(DEBUG1, "Searching time: %d, filtering time: %d\n", m_searchtime, m_filtertime);
+  trace(DEBUG1, "Searching time: %d, filtering time: %d, matched lines: %d, found: %d\n", m_searchtime, m_filtertime, m_line, totalfound);
 #endif // __DEBUG__
   return totalfound;
 }
 
 // run the aggregation functions in an expression 
-void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* dateSet, string & sResult)
+void QuerierC::runAggFuncExp(ExpressionC* node, unordered_map< string,vector<string> >* dateSet, string & sResult)
 {
   if (node->m_type == LEAF){ // eval leaf and store
     if (node->m_expType == FUNCTION && node->containGroupFunc()){
@@ -618,7 +638,7 @@ void QuerierC::runAggFuncExp(ExpressionC* node, map< string,vector<string> >* da
           for (int i=1; i<(*dateSet)[sFuncStr].size(); i++)
             if (sResult.compare((*dateSet)[sFuncStr][i])<0)
               sResult = (*dateSet)[sFuncStr][i];
-        }else if (sFuncStr.find("MAX(")!=string::npos){
+        }else if (sFuncStr.find("MIN(")!=string::npos){
           sResult=(*dateSet)[sFuncStr][0];
           for (int i=1; i<(*dateSet)[sFuncStr].size(); i++)
             if (sResult.compare((*dateSet)[sFuncStr][i])>0)
@@ -651,7 +671,7 @@ bool QuerierC::group()
   if (m_groups.size() == 0 || m_nonAggSels.size() == 0)
     return true;
 
-  for (map< vector<string>, vector<string> >::iterator it=m_nonAggSels.begin(); it!=m_nonAggSels.end(); ++it){
+  for (unordered_map< vector<string>, vector<string>, container_hash< vector<string> > >::iterator it=m_nonAggSels.begin(); it!=m_nonAggSels.end(); ++it){
     vector<string> vResults;
     vResults.push_back(it->second[0]);
     int iNonAggSelID = 1;
@@ -893,6 +913,11 @@ long QuerierC::getOutputCount()
 long QuerierC::getLines()
 {
   return m_line;
+}
+
+size_t QuerierC::getRawStrSize()
+{
+  return m_rawstr.size();
 }
 
 void QuerierC::outputAndClean()

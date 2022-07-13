@@ -129,7 +129,10 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
           rq.outputAndClean();
         rq.setrawstr("");
         readLines++;
+        thisTime = curtime();
+        trace(DEBUG2, "\r%d lines read in %f seconds, Raw string size is %d bytes.", readLines, (double)(thisTime-lastTime)/1000, rq.getRawStrSize());
       }
+      trace(DEBUG2, "\n");
       thisTime = curtime();
       trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
       lastTime = thisTime;
@@ -160,6 +163,8 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
           rq.outputAndClean();
         howmany += ifile.gcount();
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
+        thisTime = curtime();
+        trace(DEBUG2, "\r%d bytes read in %f seconds, Raw string size is %d bytes.", howmany, (double)(thisTime-lastTime)/1000, rq.getRawStrSize());
       }
       free(cachebuffer);
       thisTime = curtime();
@@ -173,7 +178,7 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
   }
 }
 
-void printResult(QuerierC rq)
+void printResult(QuerierC & rq)
 {
   long int thisTime,lastTime = curtime();
   if (rq.toGroupOrSort()){
@@ -207,6 +212,7 @@ void processQuery(string sQuery, QuerierC & rq)
     patternStr = query["parse"];
 
   string rex = trim_one(patternStr, '/');
+  trace(DEBUG2,"Searching pattern: %s \n", rex.c_str());
   rq.setregexp(rex);
 
   if (query.find("filter") != query.end()){
@@ -333,7 +339,7 @@ int main(int argc, char *argv[])
     return 1;
   }
   
-  gv.setVars(16384*2, ERROR, true);
+  gv.setVars(16384*2, FATAL, true);
   bool bConsoleMode = false;
   short int readMode = PROMPT, fileMode = READBUFF;
   int iSkip = 0;
@@ -386,7 +392,8 @@ int main(int argc, char *argv[])
       }
       i++;
     }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-q")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--query")==0){
-      sQuery = argv[i+1];
+      sQuery = string(argv[i+1]);
+      //trace(DEBUG2,"Query string: %s.\n", sQuery.c_str());
       i++;
     }else{
       //trace(DEBUG1,"Content: %s.\n", argv[i]);
@@ -505,7 +512,6 @@ int main(int argc, char *argv[])
         cout << "rquery >";
       }
     }
-
   }else{
     if (!sQuery.empty())
       processQuery(sQuery, rq);

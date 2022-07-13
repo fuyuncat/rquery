@@ -133,6 +133,30 @@ public:
   bool g_printheader;
 };
 
+template <class T>
+inline void hash_combine(std::size_t& seed, const T& v)
+{
+    seed ^= hash<T>{}(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
+
+template <typename Container> // we can make this generic for any container [1]
+struct container_hash 
+{
+  size_t operator()(Container const& V) const 
+  {
+    //return boost::hash_range(V.begin(), V.end());
+    std::size_t hash = V.size();
+    //for(auto& i : V) {
+    for (auto i = V.begin(); i != V.end(); ++i){
+      hash_combine(hash, *i);
+      //hash_combine(hash, i->second);
+      //hash ^= h + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+    }
+    return hash;
+  }
+
+};
+
 extern GlobalVars gv;
 
 void trace(short level, const char *fmt, ...);

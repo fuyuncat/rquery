@@ -13,7 +13,6 @@
 *******************************************************************************/
 #include <stdio.h>
 #include <string.h>
-#include <boost/algorithm/string.hpp>
 #include "expression.h"
 #include "function.h"
 
@@ -200,7 +199,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
     trace(ERROR, "Error: No statement found!\n");
     return NULL;
   }else
-    m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
+    m_expStr = trim_copy(m_expStr);
   int nextPos=0,strStart=0;
   try{
     ExpressionC* newNode = new ExpressionC();
@@ -259,7 +258,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
     trace(ERROR, "Error: No statement found!\n");
     return false;
   }else
-    expStr = boost::algorithm::trim_copy<string>(expStr);
+    expStr = trim_copy(expStr);
   int nextPos=0,strStart=0;
   try{
     node->m_type = LEAF;
@@ -278,7 +277,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_datatype.datatype = UNKNOWN;
         node->m_expType = VARIABLE;
         node->m_expstrAnalyzed = true;
-        node->m_expStr = boost::to_upper_copy<string>(expStr);
+        node->m_expStr = upper_copy(expStr);
         if (node->m_expStr.compare("@RAW") == 0 || node->m_expStr.compare("@FILE") == 0)
           m_datatype.datatype = STRING;
         else if (node->m_expStr.compare("@LINE") == 0 || node->m_expStr.compare("@ROW") == 0 || node->m_expStr.compare("@ROWSORTED") == 0)
@@ -352,8 +351,8 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
       return true;
     }else if (expStr.find("(")>0 && expStr[expStr.size()-1]==')') { // checking FUNCTION
       int iQuoteStart = expStr.find("(");
-      string sFuncName = boost::to_upper_copy<string>(boost::trim_copy<string>(expStr.substr(0,iQuoteStart)));
-      string sParams = boost::trim_copy<string>(expStr.substr(iQuoteStart));
+      string sFuncName = upper_copy(trim_copy(expStr.substr(0,iQuoteStart)));
+      string sParams = trim_copy(expStr.substr(iQuoteStart));
       node->m_expType = FUNCTION;
       node->m_expStr = sFuncName+sParams;
       FunctionC* func = new FunctionC(m_expStr);
@@ -550,12 +549,12 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
       dts.datatype = UNKNOWN;
       return dts;
     }
-    m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
+    m_expStr = trim_copy(m_expStr);
     // check if it is a variable
     if (m_expStr.size()>0 && m_expStr[0]=='@'){
       m_expType = VARIABLE;
-      m_expStr = boost::to_upper_copy<string>(boost::trim_copy<string>(m_expStr));
-      //string strVarName = boost::to_upper_copy<string>(m_expStr);
+      m_expStr = upper_copy(trim_copy(m_expStr));
+      //string strVarName = upper_copy(m_expStr);
       if (m_expStr.compare("@RAW") == 0 || m_expStr.compare("@FILE") == 0)
         m_datatype.datatype = STRING;
       else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0)
@@ -617,7 +616,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         FunctionC* func = new FunctionC(m_expStr);
         m_datatype = func->m_datatype;
         m_funcID = func->m_funcID;
-        //m_expStr = boost::to_upper_copy<string>(boost::trim_copy<string>(func->m_expStr)); -- should NOT turn the parameters to UPPER case.
+        //m_expStr = upper_copy(trim_copy(func->m_expStr)); -- should NOT turn the parameters to UPPER case.
         m_expStr = func->m_expStr;
         func->clear();
         delete func;
@@ -626,8 +625,8 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
       }
       // check if it is a column
       for (int i=0; i<fieldnames->size(); i++){
-        if (boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>((*fieldnames)[i])) == 0){
-          m_expStr = boost::trim_copy<string>(boost::to_upper_copy<string>(m_expStr));
+        if (upper_copy(m_expStr).compare(upper_copy((*fieldnames)[i])) == 0){
+          m_expStr = trim_copy(upper_copy(m_expStr));
           m_expType = COLUMN;
           m_colId = i;
           m_datatype = (*fieldtypes)[i];
@@ -1017,7 +1016,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
 void ExpressionC::getAllColumnNames(vector<string> & fieldnames)
 {
   if (m_type == LEAF && (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN))
-    fieldnames.push_back(boost::trim_copy<string>(boost::to_upper_copy<string>(m_expStr)));
+    fieldnames.push_back(trim_copy(upper_copy(m_expStr)));
   if (m_leftNode)
     m_leftNode->getAllColumnNames(fieldnames);
   if (m_rightNode)
@@ -1031,7 +1030,7 @@ bool ExpressionC::containGroupFunc()
       size_t nPos = m_expStr.find("(");
       if (nPos == string::npos)
         return false;
-      string sFuncName=boost::trim_copy<string>(boost::to_upper_copy<string>(m_expStr.substr(0,nPos)));
+      string sFuncName=trim_copy(upper_copy(m_expStr.substr(0,nPos)));
       if (sFuncName.compare("SUM")==0 || sFuncName.compare("COUNT")==0 || sFuncName.compare("UNIQUECOUNT")==0 || sFuncName.compare("AVERAGE")==0 || sFuncName.compare("MAX")==0 || sFuncName.compare("MIN")==0)
         return true;
     }
@@ -1070,7 +1069,7 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
     return false;
   }
   if (m_type == LEAF){
-    if (m_expType == node->m_expType && boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(node->m_expStr)) == 0){
+    if (m_expType == node->m_expType && upper_copy(m_expStr).compare(upper_copy(node->m_expStr)) == 0){
       //trace(DEBUG,"222222 '%s' '%s'\n", m_expStr.c_str(), node->m_expStr.c_str());
       return true;
     }else{
@@ -1100,7 +1099,7 @@ bool ExpressionC::inColNamesRange(vector<string> fieldnames)
     }
     else if (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN){
       for (int i=0;i<fieldnames.size();i++)
-        if (boost::to_upper_copy<string>(m_expStr).compare(boost::to_upper_copy<string>(fieldnames[i])) == 0){
+        if (upper_copy(m_expStr).compare(upper_copy(fieldnames[i])) == 0){
           trace(DEBUG,"777777 '%s' \n", m_expStr.c_str());
           return true;
         }

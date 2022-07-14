@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <boost/algorithm/string.hpp>
 #include "parser.h"
 
 ParserC::ParserC()
@@ -47,7 +46,7 @@ void ParserC::init()
 bool ParserC::isJunctionWord(string word)
 {
   for (int i=0;i<m_junctionWords.size();i++)
-    if (boost::iequals(m_junctionWords[i], word))
+    if (upper_copy(m_junctionWords[i]).compare(upper_copy(word))==0)
       return true;
   return false;
 }
@@ -69,8 +68,8 @@ void ParserC::buildLeafNodeFromStr(FilterC* node, string str)
       string compStr = comparators[startsWithWords(str.substr(i), comparators)];
       node->m_comparator = encodeComparator(compStr);
       node->m_type = LEAF;
-      node->m_leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
-      node->m_rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
+      node->m_leftExpStr =  trim_copy(str.substr(0,i));
+      node->m_rightExpStr = trim_one( trim_copy(str.substr(i+compStr.length())),'"');
       node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
       node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
       return;
@@ -91,7 +90,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
     printf("\n");
     return false;
   }else
-    initialString = boost::algorithm::trim_copy<string>(initialString);
+    initialString = trim_copy(initialString);
   //initialString = initialString.trim();
   //node.predStr = new String(initialString);
   char stringQuoter = '"';
@@ -127,9 +126,9 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
       i++; // skip escaped " \"
       initialString = initialString.substr(0, i-1)+initialString.substr(i);
     }else if(quoteDeep == 0 && initialString[i] == ' '){ // splitor that not between quato are the real splitor
-      if ( boost::to_upper_copy<string>(initialString.substr(i)).find(splitor) == 0){
+      if ( upper_copy(initialString.substr(i)).find(splitor) == 0){
         node->m_type = BRANCH;
-        node->m_junction = encodeJunction(boost::algorithm::trim_copy<string>(splitor));
+        node->m_junction = encodeJunction(trim_copy(splitor));
         node->m_leftNode = new FilterC();
         node->m_leftNode->m_parentNode = node;
         //printf("Building leftNode\n");
@@ -161,7 +160,7 @@ bool ParserC::buildFilter(FilterC* node, string initialString, string splitor, s
   if (quoteStart == 0 && quoteEnd == initialString.length()-1){ // sub expression quoted 
     initialString = initialString.substr(1,initialString.length()-2);  // trim the quoters
     return buildFilter(node, initialString," OR ",quoters);
-  }else if (boost::to_upper_copy<string>(splitor).compare(" OR ") == 0){
+  }else if (upper_copy(splitor).compare(" OR ") == 0){
     return buildFilter(node, initialString," AND ",quoters);
   }else
     buildLeafNodeFromStr(node, initialString);
@@ -191,14 +190,14 @@ map<string,string> ParserC::parseparam(string parameterstr)
   vector<string> params = split(parameterstr,'|',"//''{}",'\\');
   //dumpVector(params);
   for (int i = 0; i < params.size(); ++i){
-    string trimmedstr = boost::algorithm::trim_copy<string>(params[i]);
+    string trimmedstr = trim_copy(params[i]);
     //trace(DEBUG, "Param %d:%s;\n",i,trimmedstr.c_str());
     size_t found = trimmedstr.find_first_of(" ");
     found = found==string::npos?trimmedstr.find_first_of("\t"):found;
     //trace(DEBUG, "Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);
     if  (found!=string::npos){
-      //trace(DEBUG, "Operation %s: %s\n", boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(params[i].substr(0,found))).c_str(), boost::algorithm::trim_copy<string>(params[i].substr(found+1)).c_str());
-      m_queryparts.insert( pair<string,string>(boost::algorithm::to_lower_copy<string>(trimmedstr.substr(0,found)),trimmedstr.substr(found+1)) );
+      //trace(DEBUG, "Operation %s: %s\n", lower_copy(trim_copy(params[i].substr(0,found))).c_str(), trim_copy(params[i].substr(found+1)).c_str());
+      m_queryparts.insert( pair<string,string>(lower_copy(trimmedstr.substr(0,found)),trimmedstr.substr(found+1)) );
     }
   }
 

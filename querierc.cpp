@@ -15,9 +15,42 @@
 #include <stdlib.h>
 #include <string.h>
 #include "expression.h"
-#include <boost/algorithm/string.hpp>
 #include "function.h"
 #include "querierc.h"
+
+namesaving_smatch::namesaving_smatch()
+{
+}
+
+namesaving_smatch::namesaving_smatch(const string pattern)
+{
+  init(pattern);
+}
+
+namesaving_smatch::~namesaving_smatch() { }
+
+void namesaving_smatch::init(const string pattern)
+{
+  string pattern_str = pattern;
+  sregex capture_pattern = sregex::compile("\\?P?<(\\w+)>");
+  sregex_iterator words_begin = sregex_iterator(pattern_str.begin(), pattern_str.end(), capture_pattern);
+  sregex_iterator words_end = sregex_iterator();
+
+  for (sregex_iterator i = words_begin; i != words_end; i++){
+    string name = (*i)[1].str();
+    m_names.push_back(name);
+  }
+}
+
+vector<string>::const_iterator namesaving_smatch::names_begin() const
+{
+    return m_names.begin();
+}
+
+vector<string>::const_iterator namesaving_smatch::names_end() const
+{
+    return m_names.end();
+}
 
 QuerierC::QuerierC()
 {
@@ -66,7 +99,7 @@ void QuerierC::assignFilter(FilterC* filter)
     delete m_filter;
   }
   m_filter = filter;
-  m_filter->dump();
+  //m_filter->dump();
 }
 
 void QuerierC::appendrawstr(string rawstr)
@@ -84,7 +117,7 @@ bool QuerierC::assignGroupStr(string groupstr)
   vector<string> vGroups = split(groupstr,',',"''{}()",'\\');
   for (int i=0; i<vGroups.size(); i++){
     trace(DEBUG, "Processing group (%d) '%s'!\n", i, vGroups[i].c_str());
-    string sGroup = boost::algorithm::trim_copy<string>(vGroups[i]);
+    string sGroup = trim_copy(vGroups[i]);
     if (sGroup.empty()){
       trace(ERROR, "Empty group string!\n");
       return false;
@@ -98,7 +131,7 @@ bool QuerierC::assignGroupStr(string groupstr)
 bool QuerierC::assignLimitStr(string limitstr)
 {
   vector<string> vLimits = split(limitstr,',',"''{}()",'\\');
-  string sFirst = boost::algorithm::trim_copy<string>(vLimits[0]);
+  string sFirst = trim_copy(vLimits[0]);
   int iFirst = 0;
   if (isInt(sFirst))
     iFirst = atoi(sFirst.c_str());
@@ -107,7 +140,7 @@ bool QuerierC::assignLimitStr(string limitstr)
     return false;
   }
   if (vLimits.size() > 1){
-    string sSecond = boost::algorithm::trim_copy<string>(vLimits[1]);
+    string sSecond = trim_copy(vLimits[1]);
     if (isInt(sSecond)){
       m_limitbottom = iFirst;
       m_limittop = atoi(sSecond.c_str());
@@ -128,7 +161,7 @@ bool QuerierC::assignSelString(string selstr)
   vector<string> vSelections = split(selstr,',',"''{}()",'\\');
   for (int i=0; i<vSelections.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
-    string sSel = boost::algorithm::trim_copy<string>(vSelections[i]);
+    string sSel = trim_copy(vSelections[i]);
     if (sSel.empty()){
       trace(ERROR, "Empty selection string!\n");
       return false;
@@ -161,18 +194,18 @@ bool QuerierC::assignSortStr(string sortstr)
   vector<string> vSorts = split(sortstr,',',"''{}()",'\\');
   for (int i=0; i<vSorts.size(); i++){
     trace(DEBUG, "Processing sorting keys (%d) '%s'!\n", i, vSorts[i].c_str());
-    string sSort = boost::algorithm::trim_copy<string>(vSorts[i]);
+    string sSort = trim_copy(vSorts[i]);
     if (sSort.empty()){
       trace(ERROR, "Empty sorting key!\n");
       return false;
     }
     SortProp keyProp;
     vector<string> vKP = split(sSort,' ',"''{}()",'\\');
-    if (vKP.size()<=1 || boost::algorithm::to_upper_copy<string>(boost::algorithm::trim_copy<string>(vKP[1])).compare("DESC")!=0)
+    if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
       keyProp.direction = ASC;
     else
       keyProp.direction = DESC;
-    keyProp.sortKey.setExpstr(boost::algorithm::trim_copy<string>(vKP[0]));
+    keyProp.sortKey.setExpstr(trim_copy(vKP[0]));
     if (m_groups.size() > 0) {// checking if compatible with GROUP
       vector<string> allColNames;
       for (int i=0; i<m_groups.size(); i++)
@@ -241,7 +274,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
     bool foundName = false;
     for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
       if (&(matches[i]) == &(matches[*it])){
-        m_fieldnames.push_back(boost::to_upper_copy<string>(string(*it)));
+        m_fieldnames.push_back(upper_copy(string(*it)));
         foundName = true;
       }
     if (!foundName){
@@ -256,7 +289,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
 
 void QuerierC::setFieldDatatype(string field, int datetype, string extrainfo)
 {
-  string fname = boost::to_upper_copy<string>(field);
+  string fname = upper_copy(field);
   DataTypeStruct dts;
   dts.datatype = datetype;
   dts.extrainfo = extrainfo;
@@ -453,7 +486,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   map<string, string> varValues;
   for (int i=0; i<m_fieldnames.size(); i++)
     fieldValues.push_back(rowValue[i+1]);
-    //fieldValues.insert( pair<string,string>(boost::algorithm::to_upper_copy<string>(m_fieldnames[i]),rowValue[i+1]));
+    //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
   varValues.insert( pair<string,string>("@RAW",rowValue[0]));
   varValues.insert( pair<string,string>("@FILE",m_filename));
   varValues.insert( pair<string,string>("@LINE",rowValue[m_fieldnames.size()+1]));

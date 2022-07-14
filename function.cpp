@@ -13,7 +13,7 @@
 *******************************************************************************/
 #include <stdio.h>
 #include <string.h>
-#include <boost/algorithm/string.hpp>
+#include <math.h>
 #include "expression.h"
 #include "function.h"
 
@@ -76,7 +76,7 @@ bool FunctionC::isConst()
 bool FunctionC::analyzeExpStr()
 {
   trace(DEBUG, "Analyzing function from '%s'\n", m_expStr.c_str());
-  m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
+  m_expStr = trim_copy(m_expStr);
   if (m_expStr.empty()){
     trace(ERROR, "Empty function expression string!\n");
     m_expstrAnalyzed = false;
@@ -89,13 +89,13 @@ bool FunctionC::analyzeExpStr()
     m_expstrAnalyzed = false;
     return false;
   }
-  m_funcName = boost::trim_copy<string>(boost::to_upper_copy<string>(m_expStr.substr(0, m_expStr.find("("))));
+  m_funcName = trim_copy(upper_copy(m_expStr.substr(0, m_expStr.find("("))));
   m_expStr = m_funcName+strParams;
   strParams = trim_pair(strParams, "()");
   vector<string> vParams = split(strParams,',',"//''{}",'\\');
   for (int i=0; i<vParams.size(); i++){
     trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
-    string sParam = boost::algorithm::trim_copy<string>(vParams[i]);
+    string sParam = trim_copy(vParams[i]);
     if (sParam.empty()){
       trace(ERROR, "Empty parameter string!\n");
       m_expstrAnalyzed = false;
@@ -220,7 +220,7 @@ bool FunctionC::runUpper(vector<string>* fieldnames, vector<string>* fieldvalues
   }
   bool gotResult = m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult);
   if (gotResult){
-    sResult = boost::to_upper_copy<string>(sResult);
+    sResult = upper_copy(sResult);
     return true;
   }else
     return false;
@@ -234,7 +234,7 @@ bool FunctionC::runLower(vector<string>* fieldnames, vector<string>* fieldvalues
   }
   bool gotResult = m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult);
   if (gotResult){
-    sResult = boost::to_lower_copy<string>(sResult);
+    sResult = lower_copy(sResult);
     return true;
   }else{
     trace(ERROR, "Failed to run lower(%s)\n", m_params[0].m_expStr.c_str());
@@ -334,8 +334,8 @@ bool FunctionC::runNoCaseComparestr(vector<string>* fieldnames, vector<string>* 
   }
   string str1, str2; 
   if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, str1) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, str2)){
-    str1=boost::to_upper_copy<string>(str1);
-    str2=boost::to_upper_copy<string>(str2);
+    str1=upper_copy(str1);
+    str2=upper_copy(str2);
     sResult = intToStr(str1.compare(str2));
     return true;
   }else{

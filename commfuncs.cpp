@@ -14,39 +14,19 @@
 #include <stdio.h>
 //#include <unistd.h>
 //#include <termios.h>
-#include <boost/algorithm/string.hpp>
 #include <stdbool.h>
 #include <stdarg.h>
 #include <sys/time.h>
 #include <math.h> 
+//#include <cstdlib>
 //#include <chrono>
 //#include <stdexcept.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/xpressive/xpressive.hpp>
+#include <boost/xpressive/regex_actions.hpp>
 #include "commfuncs.h"
 
-namesaving_smatch::namesaving_smatch()
-{
-}
-
-namesaving_smatch::namesaving_smatch(const string pattern)
-{
-  init(pattern);
-}
-
-namesaving_smatch::~namesaving_smatch() { }
-
-void namesaving_smatch::init(const string pattern)
-{
-  string pattern_str = pattern;
-  sregex capture_pattern = sregex::compile("\\?P?<(\\w+)>");
-  sregex_iterator words_begin = sregex_iterator(pattern_str.begin(), pattern_str.end(), capture_pattern);
-  sregex_iterator words_end = sregex_iterator();
-
-  for (sregex_iterator i = words_begin; i != words_end; i++){
-    string name = (*i)[1].str();
-    m_names.push_back(name);
-  }
-}
-
+using namespace boost::xpressive;
 
 GlobalVars::GlobalVars()
 {
@@ -63,6 +43,8 @@ void GlobalVars::initVars()
   g_inputbuffer = 16384;
   g_tracelevel = FATAL;
   g_printheader = true;
+  g_showprogress = false;
+  g_logfile = NULL;
 }
 
 void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader)
@@ -74,7 +56,7 @@ void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader)
 
 short int encodeTracelevel(string str)
 {
-  string sUpper = boost::to_upper_copy<string>(str);
+  string sUpper = upper_copy(str);
   if (sUpper.compare("FATAL") == 0)
     return FATAL;
   else if (sUpper.compare("ERROR") == 0)
@@ -117,27 +99,37 @@ string decodeTracelevel(int level)
   }
 }
 
+void exitProgram(short int code)
+{
+  if (gv.g_logfile){
+    gv.g_logfile->close();
+    delete gv.g_logfile;
+  }
+  exit(code);
+}
+
 void trace(short level, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
   if (gv.g_tracelevel>=level){
-    printf((decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
-    vprintf(fmt, args);
+    if (gv.g_logfile){
+      char buf[1024];
+      int bsize = 0;
+      //memset( buf, '\0', sizeof(char)*1024 );
+      bsize = sprintf(buf, (decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
+      gv.g_logfile->write(buf, bsize);
+      //memset( buf, '\0', sizeof(char)*1024 );
+      bsize = vsprintf(buf, fmt, args);
+      gv.g_logfile->write(buf, bsize);
+    }else{
+      printf((decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
+      vprintf(fmt, args);
+    }
     if (level == FATAL)
-      exit(EXIT_FAILURE);
+      exitProgram(EXIT_FAILURE);
   }
   va_end(args);
-}
-
-vector<string>::const_iterator namesaving_smatch::names_begin() const
-{
-    return m_names.begin();
-}
-
-vector<string>::const_iterator namesaving_smatch::names_end() const
-{
-    return m_names.end();
 }
 
 //string string_format( const string& format, Args ... args )
@@ -209,7 +201,7 @@ int findFirstCharacter(string str, std::set<char> lookfor, int pos, string quote
 }
 
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-vector<string> split(string str, char delim, string quoters, char escape) 
+vector<string> split(const string & str, char delim, string quoters, char escape) 
 {
   vector<string> v;
   size_t i = 0, j = 0, begin = 0;
@@ -265,7 +257,7 @@ vector<string> split(string str, char delim, string quoters, char escape)
   return v;
 }
 
-string trim_pair(string str, string pair)
+string trim_pair(const string & str, const string & pair)
 {
   if(str.size() > 1 && pair.size() == 2 && str[0] == pair[0] && str[str.size()-1] == pair[1])
     return str.substr(1,str.size()-2);
@@ -273,7 +265,7 @@ string trim_pair(string str, string pair)
     return str;
 }
 
-string trim(string str, char c)
+string trim(const string & str, char c)
 {
   string newstr = trim_one(str, c);
   while (newstr.length() != str.length())
@@ -281,7 +273,7 @@ string trim(string str, char c)
   return newstr;
 }
 
-string trim_right(string str, char c)
+string trim_right(const string & str, char c)
 {
   string newstr = str;
   if (newstr[newstr.size()-1] == c)
@@ -289,7 +281,7 @@ string trim_right(string str, char c)
   return newstr;
 }
 
-string trim_left(string str, char c)
+string trim_left(const string & str, char c)
 {
   string newstr = str;
   if (newstr[0] == c)
@@ -297,7 +289,7 @@ string trim_left(string str, char c)
   return newstr;
 }
 
-string trim_one(string str, char c)
+string trim_one(const string & str, char c)
 {
   string newstr = str;
   if (newstr[0] == c)
@@ -309,13 +301,28 @@ string trim_one(string str, char c)
   return newstr;
 }
 
-void replacestr(string & sRaw, string sReplace, string sNew)
+void replacestr(string & sRaw, const string & sReplace, const string & sNew)
 {
   int pos=0;
   while (sRaw.find(sReplace, pos) != string::npos){
     sRaw.replace(pos, sReplace.length(), sNew);
     pos+=sReplace.length();
   }
+}
+
+string trim_copy(const string & str)
+{
+  return boost::algorithm::trim_copy<string>(str);
+}
+
+string upper_copy(const string & str)
+{
+  return boost::to_upper_copy<string>(str);
+}
+
+string lower_copy(const string & str)
+{
+  return boost::to_lower_copy<string>(str);
 }
 
 bool isNumber(const string& str)
@@ -471,8 +478,8 @@ bool strToDate(string str, struct tm & tm, string fmt)
     string sTZ = sRaw.substr(iTZ);
     if (isInt(sTZ)){
       iOffSet = atoi(sTZ.c_str());
-      sRaw = boost::algorithm::trim_copy<string>(sRaw.substr(0,iTZ));
-      sFm = boost::algorithm::trim_copy<string>(sFm.substr(0,sFm.size()-2));
+      sRaw = trim_copy(sRaw.substr(0,iTZ));
+      sFm = trim_copy(sFm.substr(0,sFm.size()-2));
     }else{
       //trace(ERROR, "Trying It is not digit number : %s\n", sRaw.c_str());
       return false;
@@ -627,7 +634,7 @@ DataTypeStruct getCompatibleDataType(DataTypeStruct ldatatype, DataTypeStruct rd
 // Double: digits + .
 int detectDataType(string str, string & extrainfo)
 {
-  string trimmedStr = boost::algorithm::trim_copy<string>(str);
+  string trimmedStr = trim_copy(str);
   if (matchQuoters(trimmedStr, 0, "''") || matchQuoters(trimmedStr, 0, "//"))
     return STRING;
   //else if (matchQuoters(trimmedStr, 0, "{}"))
@@ -680,7 +687,7 @@ bool reglike(string str, string regstr)
 
 bool in(string str1, string str2)
 {
-  //return boost::to_upper_copy<string>(str2).find(boost::to_upper_copy<string>(str1))!=string::npos;
+  //return upper_copy(str2).find(upper_copy(str1))!=string::npos;
   return str2.find(str1)!=string::npos;
 }
 
@@ -839,7 +846,7 @@ string decodeOperator(int op)
 short int encodeComparator(string str)
 {
   //printf("encode comparator: %s\n",str.c_str());
-  string sUpper = boost::to_upper_copy<string>(str);
+  string sUpper = upper_copy(str);
   if (sUpper.compare("=") == 0)
     return EQ;
   else if (sUpper.compare(">") == 0)
@@ -870,7 +877,7 @@ short int encodeComparator(string str)
 
 short int encodeDatatype(string str)
 {
-  string sUpper = boost::to_upper_copy<string>(str);
+  string sUpper = upper_copy(str);
   if (sUpper.compare("STRING") == 0)
     return STRING;
   else if (sUpper.compare("LONG") == 0)
@@ -891,7 +898,7 @@ short int encodeDatatype(string str)
 
 short int encodeJunction(string str)
 {
-  string sUpper = boost::to_upper_copy<string>(str);
+  string sUpper = upper_copy(str);
   if (sUpper.compare("AND") == 0)
     return AND;
   else if (sUpper.compare("OR") == 0)
@@ -918,7 +925,7 @@ short int encodeOperator(string str)
 
 short int encodeFunction(string str)
 {
-  string sUpper = boost::to_upper_copy<string>(str);
+  string sUpper = upper_copy(str);
   if(sUpper.compare("UPPER")==0)
     return UPPER;
   else if(sUpper.compare("LOWER")==0)
@@ -1496,7 +1503,7 @@ bool anyDataOperate(string str1, int operate, string str2, DataTypeStruct dts, s
 // detect if string start with special words
 int startsWithWords(string str, vector<string> words, int offset)
 {
-  string upperstr = boost::to_upper_copy<string>(str);
+  string upperstr = upper_copy(str);
   for (int i=0;i<words.size();i++){
     if (upperstr.find(words[i], offset) == 0)
       return i;
@@ -1525,7 +1532,7 @@ string removeSpace(string originalStr, string keepPattern)
   //Pattern keeper = Pattern.compile(keepPattern);
   //Matcher matcher = keeper.matcher(originalStr.substring(i).toUpperCase());
   while (i < originalStr.length()) {
-    int matchedWordId = startsWithWords(boost::to_upper_copy<string>(originalStr.substr(i)), keepWords);
+    int matchedWordId = startsWithWords(upper_copy(originalStr.substr(i)), keepWords);
     if (originalStr[i] != ' ') {// ' ' to be removed
       cleanedStr = cleanedStr+originalStr[i];
       i++;

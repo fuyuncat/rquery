@@ -21,7 +21,30 @@
 #include <unordered_map>
 #include "commfuncs.h"
 #include "filter.h"
+#include <boost/xpressive/xpressive.hpp>
+#include <boost/xpressive/regex_actions.hpp>
 //#include <boost/regex.hpp>
+
+using namespace boost::xpressive;
+
+class namesaving_smatch : public smatch
+{
+public:
+  namesaving_smatch();
+
+  namesaving_smatch(const string pattern);
+
+  ~namesaving_smatch();
+  
+  void init(const string pattern);
+
+  vector<string>::const_iterator names_begin() const;
+
+  vector<string>::const_iterator names_end() const;
+
+private:
+  vector<string> m_names;
+};
 
 //struct GroupDataSet{
 //  vector< vector<string> > nonAggSels;  // all non-aggr selections values

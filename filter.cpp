@@ -13,7 +13,6 @@
 *******************************************************************************/
 #include <stdio.h>
 #include <string.h>
-#include <boost/algorithm/string.hpp>
 #include "filter.h"
 
 vector<string> FilterC::m_comparators;
@@ -124,8 +123,8 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
       string compStr = m_comparators[startsWithWords(str.substr(i), m_comparators)];
       node->m_comparator = encodeComparator(compStr);
       node->m_type = LEAF;
-      node->m_leftExpStr =  boost::algorithm::trim_copy<string>(str.substr(0,i));
-      node->m_rightExpStr = trim_one( boost::algorithm::trim_copy<string>(str.substr(i+compStr.length())),'"');
+      node->m_leftExpStr =  trim_copy(str.substr(0,i));
+      node->m_rightExpStr = trim_one( trim_copy(str.substr(i+compStr.length())),'"');
       trace(DEBUG, "Found comparator '%s' in '%s'. left:%s;comp:%s;right:%s\n",compStr.c_str(),str.c_str(),node->m_leftExpStr.c_str(),compStr.c_str(),node->m_rightExpStr.c_str());
       node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
       if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
@@ -141,7 +140,7 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
         string sElements = node->m_rightExpStr.substr(1,node->m_rightExpStr.size()-2);
         vector<string> vElements = split(sElements,',',"//''{}",'\\');
         for (int i=0;i<vElements.size();i++){
-          string sResult, sElement = boost::algorithm::trim_copy<string>(vElements[i]);
+          string sResult, sElement = trim_copy(vElements[i]);
           if (sElement.empty()){
             trace(ERROR, "Empty IN element string!\n");
             return;
@@ -170,7 +169,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
     printf("\n");
     return false;
   }else
-    m_expStr = boost::algorithm::trim_copy<string>(m_expStr);
+    m_expStr = trim_copy(m_expStr);
   //m_expStr = m_expStr.trim();
   char stringQuoter = '"';
   if (quoters.empty() || quoters.length() != 2)
@@ -205,9 +204,9 @@ bool FilterC::buildFilter(string splitor, string quoters)
       i++; // skip escaped " \"
       m_expStr = m_expStr.substr(0, i-1)+m_expStr.substr(i);
     }else if(quoteDeep == 0 && m_expStr[i] == ' '){ // splitor that not between quato are the real splitor
-      if ( boost::to_upper_copy<string>(m_expStr.substr(i)).find(splitor) == 0){
+      if ( upper_copy(m_expStr.substr(i)).find(splitor) == 0){
         m_type = BRANCH;
-        m_junction = encodeJunction(boost::algorithm::trim_copy<string>(splitor));
+        m_junction = encodeJunction(trim_copy(splitor));
         m_leftNode = new FilterC(m_expStr.substr(0, i));
         m_leftNode->m_parentNode = this;
         //printf("Building leftNode\n");
@@ -239,7 +238,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
   if (quoteStart == 0 && quoteEnd == m_expStr.length()-1){ // sub expression quoted 
     m_expStr = m_expStr.substr(1,m_expStr.length()-2);  // trim the quoters
     return buildFilter(" OR ",quoters);
-  }else if (boost::to_upper_copy<string>(splitor).compare(" OR ") == 0){
+  }else if (upper_copy(splitor).compare(" OR ") == 0){
     return buildFilter(" AND ",quoters);
   }else
     buildLeafNodeFromStr(this, m_expStr);

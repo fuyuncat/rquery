@@ -21,12 +21,11 @@
 #include <vector>
 #include <string>
 #include <set>
+#include <map>
 #include <ctime>
-#include <boost/xpressive/xpressive.hpp>
-#include <boost/xpressive/regex_actions.hpp>
+#include <fstream>
 
 using namespace std;
-using namespace boost::xpressive;
 
 #define VERSION "v0.88a"
 
@@ -90,7 +89,7 @@ using namespace boost::xpressive;
 
 #define PROMPT 1
 #define PARAMETER 2
-#define FILE 3
+#define SINGLEFILE 3
 #define FOLDER 4
 
 #define READBUFF 1
@@ -119,25 +118,6 @@ using namespace boost::xpressive;
 #define MIN 105
 #define AVERAGE 106
 
-class namesaving_smatch : public smatch
-{
-public:
-  namesaving_smatch();
-
-  namesaving_smatch(const string pattern);
-
-  ~namesaving_smatch();
-  
-  void init(const string pattern);
-
-  vector<string>::const_iterator names_begin() const;
-
-  vector<string>::const_iterator names_end() const;
-
-private:
-  vector<string> m_names;
-};
-
 struct DataTypeStruct{
   int datatype;
   string extrainfo;  // for DATE type only so far, the format of the DATE 
@@ -154,6 +134,8 @@ public:
   size_t g_inputbuffer;
   short g_tracelevel;
   bool g_printheader;
+  bool g_showprogress;
+  ofstream* g_logfile;
 };
 
 template <class T>
@@ -178,10 +160,11 @@ struct hash_container
 extern GlobalVars gv;
 
 void trace(short level, const char *fmt, ...);
+void exitProgram(short int code);
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
-vector<string> split(string str, char delim = ' ', string quoters = "''", char escape = '\\'); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\'); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 int findFirstCharacter(string str, std::set<char> lookfor, int pos=0, string quoters = "''{}()",  char escape = '\\'); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
@@ -191,12 +174,15 @@ string getFirstToken(string str, string token); //get the first matched regelar 
 vector <string> getAllTokens(string str, string token); //get all matched regelar token from a string
 bool matchToken(string str, string token); // check if matched regelar token
 
-string trim_pair(string str, string pair);
-string trim_left(string str, char c = ' ');
-string trim_right(string str, char c = ' ');
-string trim_one(string str, char c = ' ');
-string trim(string str, char c = ' ');
-void replacestr(string & sRaw, string sReplace, string sNew);
+string trim_pair(const string & str, const string & pair);
+string trim_left(const string & str, char c = ' ');
+string trim_right(const string & str, char c = ' ');
+string trim_one(const string & str, char c = ' ');
+string trim(const string & str, char c = ' ');
+string trim_copy(const string & str);
+string upper_copy(const string & str);
+string lower_copy(const string & str);
+void replacestr(string & sRaw, const string & sReplace, const string & sNew);
 
 bool isNumber(const string& str);
 bool isInt(const string& str);

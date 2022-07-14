@@ -29,9 +29,7 @@
 #include <stdlib.h>
 #include <map>
 #include <iomanip>
-#include <fstream>
 #include <iostream>
-#include <boost/algorithm/string.hpp>
 #include <sys/stat.h>
 #include "commfuncs.h"
 //#include "regexc.h"
@@ -42,7 +40,8 @@
 #if defined _WIN32 || defined _WIN64
 #include <windows.h>
 #include <tchar.h>
-#elif __unix || __unix__ || __linux__
+//#elif __unix || __unix__ || __linux__
+#else
 #include <dirent.h>
 #endif
 
@@ -64,13 +63,22 @@ short int checkReadMode(string sContent)
     if( s.st_mode & S_IFDIR )
       readMode = FOLDER;
     else if( s.st_mode & S_IFREG )
-      readMode = FILE;
+      readMode = SINGLEFILE;
     else
       readMode = PARAMETER;
   }else
     readMode = PARAMETER;
   
   return readMode;
+}
+
+size_t getFileSize(string filepath)
+{
+  struct stat s;
+  if( stat(filepath.c_str(),&s) == 0 && s.st_mode & S_IFREG )
+    return s.st_size;
+  
+  return 0;
 }
 
 vector<string> listFilesInFolder(string foldername)
@@ -89,7 +97,8 @@ vector<string> listFilesInFolder(string foldername)
     }while(::FindNextFile(hFind, &fd)); 
     ::FindClose(hFind); 
   } 
-#elif __unix || __unix__ || __linux__
+//#elif __unix || __unix__ || __linux__
+#else
   struct dirent *pDirent;
   DIR *pDir = opendir(foldername.c_str());
   while ((pDirent = readdir(pDir)) != NULL)
@@ -110,12 +119,17 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
     trace(ERROR, "Failed to open file '%s'.\n", filename.c_str());
     return;
   }
-  
+  // size_t filesize = ifile.tellg();
+  size_t filesize = getFileSize(filename);
+  trace(DEBUG2, "File size '%d'.\n", filesize);
+  size_t howmany = 0;
+
   switch (fileMode){
     case READLINE:{
       string strline;
       int readLines = 0;
       while (std::getline(ifile, strline)){
+        howmany += (strline.size()+1);
         if (readLines<iSkip){
           readLines++;
           continue;
@@ -130,25 +144,28 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
         rq.setrawstr("");
         readLines++;
         thisTime = curtime();
-        trace(DEBUG2, "\r%d lines read in %f seconds, Raw string size is %d bytes.", readLines, (double)(thisTime-lastTime)/1000, rq.getRawStrSize());
+        if (gv.g_showprogress)
+          printf("\r%d lines(%.2f%%) read in %f seconds.", readLines, round(((double)howmany)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
       }
-      trace(DEBUG2, "\n");
+      if (gv.g_showprogress)
+        printf("\n");
       thisTime = curtime();
-      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
+      trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
       lastTime = thisTime;
       trace(DEBUG2,"%d lines read. (%d lines skipped)\n", readLines, iSkip);
-      trace(DEBUG2, "Found %d row(s).\n", rq.getOutputCount());
-      trace(DEBUG2, "Parsed %d line(s).\n", rq.getLines());
+      if (gv.g_printheader){
+        printf("Found %d row(s).\n", rq.getOutputCount());
+        printf("Parsed %d line(s).\n", rq.getLines());
+      }
       break;
     }case READBUFF:
     default:{
-      //streamsize size = ifile.tellg();
       ifile.seekg(iSkip, ios::beg);
+      howmany = iSkip;
 
       const size_t cache_length = gv.g_inputbuffer;
       //char cachebuffer[cache_length];
       char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
-      size_t howmany = 0;
 
       memset( cachebuffer, '\0', sizeof(char)*cache_length );
       while(!ifile.eof()) {
@@ -164,15 +181,20 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
         howmany += ifile.gcount();
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
         thisTime = curtime();
-        trace(DEBUG2, "\r%d bytes read in %f seconds, Raw string size is %d bytes.", howmany, (double)(thisTime-lastTime)/1000, rq.getRawStrSize());
+        if (gv.g_showprogress)
+          printf("\r%d bytes(%.2f%%) read in %f seconds.", howmany, round(((double)howmany)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
       }
+      if (gv.g_showprogress)
+        printf("\n");
       free(cachebuffer);
       thisTime = curtime();
-      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
+      trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
       lastTime = thisTime;
       trace(DEBUG2,"%d bytes read. (%d bytes skipped)\n", howmany, iSkip);
-      trace(DEBUG2, "Found %d row(s).\n", rq.getOutputCount());
-      trace(DEBUG2, "Parsed %d line(s).\n", rq.getLines());
+      if (gv.g_printheader){
+        printf("Found %d row(s).\n", rq.getOutputCount());
+        printf("Parsed %d line(s).\n", rq.getLines());
+      }
       break;
     }
   }
@@ -201,7 +223,7 @@ void processQuery(string sQuery, QuerierC & rq)
 {
   ParserC ps;
   map<string,string> query = ps.parseparam(sQuery);
-  dumpMap(query);
+  //dumpMap(query);
 
   int rst;
   map<string,string> matches;
@@ -258,7 +280,7 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
       rq.clear();
       break;
     }
-    case FILE:{
+    case SINGLEFILE:{
       //trace(DEBUG1,"Processing content from file \n");
       processFile(sContent, rq, fileMode, iSkip);
       printResult(rq);
@@ -336,7 +358,7 @@ int main(int argc, char *argv[])
   }*/
   if ( argc < 2 ){
     usage();
-    return 1;
+    exitProgram(1);
   }
   
   gv.setVars(16384*2, FATAL, true);
@@ -347,51 +369,93 @@ int main(int argc, char *argv[])
   QuerierC rq;
 
   for (int i=1; i<argc; i++){
-    if (argv[i][0]=='-' && i>=argc && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")!=0 && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")!=0 && boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--console")!=0){
+    if (argv[i][0]=='-' && i>=argc && lower_copy(string(argv[i])).compare("-h")!=0 && lower_copy(string(argv[i])).compare("--help")!=0 && lower_copy(string(argv[i])).compare("--console")!=0){
       usage();
       trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
-      return 1;
+      exitProgram(1);
     }
-    if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-h")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--help")==0){
+    if (lower_copy(string(argv[i])).compare("-h")==0 || lower_copy(string(argv[i])).compare("--help")==0){
       if (i==argc-1){
         usage();
-        return 0;
+        exitProgram(0);
       }
       string topic = string(argv[i+1]);
-      return 0;
+      exitProgram(0);
       i++;
-    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--console")==0){
+    }else if (lower_copy(string(argv[i])).compare("--console")==0){
       bConsoleMode = true;
-    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-f")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--fieldheader")==0){
-      gv.g_printheader = (boost::algorithm::to_lower_copy<string>(string(argv[i+1])).compare("off")!=0);
+    }else if (lower_copy(string(argv[i])).compare("-l")==0 || lower_copy(string(argv[i])).compare("--logfile")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      ofstream* logfile = new ofstream(string(argv[i+1]));
+      if (!(*logfile))
+        delete logfile;
+      else
+        gv.g_logfile = logfile;
       i++;
-    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-r")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--readmode")==0){
-      fileMode = (boost::algorithm::to_lower_copy<string>(string(argv[i+1])).compare("line")!=0?READBUFF:READLINE);
+    }else if (lower_copy(string(argv[i])).compare("-f")==0 || lower_copy(string(argv[i])).compare("--fieldheader")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      gv.g_printheader = (lower_copy(string(argv[i+1])).compare("off")!=0);
       i++;
-    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-s")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--skip")==0){
+    }else if (lower_copy(string(argv[i])).compare("-p")==0 || lower_copy(string(argv[i])).compare("--progress")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      gv.g_showprogress = (lower_copy(string(argv[i+1])).compare("on")==0);
+      i++;
+    }else if (lower_copy(string(argv[i])).compare("-r")==0 || lower_copy(string(argv[i])).compare("--readmode")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      fileMode = (lower_copy(string(argv[i+1])).compare("line")!=0?READBUFF:READLINE);
+      i++;
+    }else if (lower_copy(string(argv[i])).compare("-s")==0 || lower_copy(string(argv[i])).compare("--skip")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
       if (!isInt(argv[i+1])){
         trace(FATAL,"%s is not a correct skip size number.\n", argv[i]);
-        return 1;
+        exitProgram(1);
       }
       iSkip = atoi((argv[i+1]));
       i++;
-    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-b")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--buffsize")==0){
+    }else if (lower_copy(string(argv[i])).compare("-b")==0 || lower_copy(string(argv[i])).compare("--buffsize")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
       if (!isInt(argv[i+1])){
         trace(FATAL,"%s is not a correct buffer size number.\n", argv[i]);
-        return 1;
+        exitProgram(1);
       }
       gv.g_inputbuffer = atoi((argv[i+1]));
       i++;
-    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-m")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--msglevel")==0){
+    }else if (lower_copy(string(argv[i])).compare("-m")==0 || lower_copy(string(argv[i])).compare("--msglevel")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
       int iLevel=encodeTracelevel(string(argv[i+1]));
       if (iLevel!=UNKNOWN){
         gv.g_tracelevel = iLevel;
       }else{
         trace(FATAL,"Unrecognized message level %s. It should be one of INFO, WARNING, ERROR, FATAL.\n", argv[i]);
-        return 1;
+        exitProgram(1);
       }
       i++;
-    }else if (boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("-q")==0 || boost::algorithm::to_lower_copy<string>(string(argv[i])).compare("--query")==0){
+    }else if (lower_copy(string(argv[i])).compare("-q")==0 || lower_copy(string(argv[i])).compare("--query")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
       sQuery = string(argv[i+1]);
       //trace(DEBUG2,"Query string: %s.\n", sQuery.c_str());
       i++;
@@ -412,11 +476,11 @@ int main(int argc, char *argv[])
     string lineInput;
     FilterC* filter = NULL;
     while (getline(cin,lineInput)) {
-      if (boost::algorithm::trim_copy<string>(lineInput).empty())
+      if (trim_copy(lineInput).empty())
         cout << "rquery >";
-      else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).compare("q")==0 || boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).compare("quit")==0){
+      else if (lower_copy(trim_copy(lineInput)).compare("q")==0 || lower_copy(trim_copy(lineInput)).compare("quit")==0){
         break;
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("h ")==0 || boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("help")==0){
+      }else if (lower_copy(trim_copy(lineInput)).find("h ")==0 || lower_copy(trim_copy(lineInput)).find("help")==0){
         cout << "load <file/folder> -- Provide a file or folder to be queried.\n";
         cout << "parse /<regular expression string>/ -- Provide a regular express string quoted by \"//\" to parse the content.\n";
         cout << "set <field datatype [date format],...> -- Set the date type of the fields.\n";
@@ -429,26 +493,26 @@ int main(int argc, char *argv[])
         cout << "skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n";
         cout << "run [query string] -- Run the query (either preprocessed or provide as a parameter).\n";
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("load ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("load ").size());
+      }else if (lower_copy(trim_copy(lineInput)).find("load ")==0){
+        string strParam = trim_copy(lineInput).substr(string("load ").size());
         readMode = checkReadMode(strParam);
-        if (readMode != FILE && readMode != FOLDER){
+        if (readMode != SINGLEFILE && readMode != FOLDER){
           cout << "Error: Cannot find the file or folder.\n";
         }else{
           sContent = strParam;
-          cout << (readMode==FILE?"File":"Folder");
+          cout << (readMode==SINGLEFILE?"File":"Folder");
           cout << " is loaded.\n";
         }
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("filemode ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("filemode ").size());
-        if (boost::algorithm::to_lower_copy<string>(strParam).compare("line")!=0)
+      }else if (lower_copy(trim_copy(lineInput)).find("filemode ")==0){
+        string strParam = trim_copy(lineInput).substr(string("filemode ").size());
+        if (lower_copy(strParam).compare("line")!=0)
           fileMode=READBUFF;
         cout << "File read mode is set to ";
         cout << (fileMode==READBUFF?"buffer.\n":"line.\n");
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("skip ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("skip ").size());
+      }else if (lower_copy(trim_copy(lineInput)).find("skip ")==0){
+        string strParam = trim_copy(lineInput).substr(string("skip ").size());
         if (!isInt(strParam)){
           cout << "Error: Please provide a valid number.\n";
         }else{
@@ -458,52 +522,52 @@ int main(int argc, char *argv[])
           cout << " will be skipped.\n";
         }
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("parse ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("parse ").size());
+      }else if (lower_copy(trim_copy(lineInput)).find("parse ")==0){
+        string strParam = trim_copy(lineInput).substr(string("parse ").size());
         rq.setregexp(trim_one(strParam, '/'));
         cout << "Regular expression string is provided.\n";
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("set ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("set ").size());
+      }else if (lower_copy(trim_copy(lineInput)).find("set ")==0){
+        string strParam = trim_copy(lineInput).substr(string("set ").size());
         rq.setFieldTypeFromStr(strParam);
         cout << "Fileds data type has been set up.\n";
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("filter ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("filter ").size());
+      }else if (lower_copy(trim_copy(lineInput)).find("filter ")==0){
+        string strParam = trim_copy(lineInput).substr(string("filter ").size());
         //if (filter) // assignFilter will clear the existing filter
         //  delete filter;
         cout << "Filter condition is provided.\n";
         filter = new FilterC(strParam);
         rq.assignFilter(filter);
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("group ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("group ").size());
+      }else if (lower_copy(trim_copy(lineInput)).find("group ")==0){
+        string strParam = trim_copy(lineInput).substr(string("group ").size());
         rq.assignGroupStr(strParam);
         cout << "Group expressions are provided.\n";
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("select ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("select ").size());
+      }else if (lower_copy(trim_copy(lineInput)).find("select ")==0){
+        string strParam = trim_copy(lineInput).substr(string("select ").size());
         rq.assignSelString(strParam);
         cout << "Selection is provided.\n";
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("sort ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("sort ").size());
+      }else if (lower_copy(trim_copy(lineInput)).find("sort ")==0){
+        string strParam = trim_copy(lineInput).substr(string("sort ").size());
         rq.assignSortStr(strParam);
         cout << "Sorting keys are provided.\n";
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("limit ")==0){
-        string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("limit ").size());
+      }else if (lower_copy(trim_copy(lineInput)).find("limit ")==0){
+        string strParam = trim_copy(lineInput).substr(string("limit ").size());
         rq.assignLimitStr(strParam);
         cout << "Output limit has been set up.\n";
         cout << "rquery >";
-      }else if (boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).compare("run")==0 || boost::algorithm::to_lower_copy<string>(boost::algorithm::trim_copy<string>(lineInput)).find("run ")==0){
-        if (boost::algorithm::trim_copy<string>(lineInput).length() == 3){
-          if (readMode == FILE || readMode == FOLDER)
+      }else if (lower_copy(trim_copy(lineInput)).compare("run")==0 || lower_copy(trim_copy(lineInput)).find("run ")==0){
+        if (trim_copy(lineInput).length() == 3){
+          if (readMode == SINGLEFILE || readMode == FOLDER)
             runQuery(sContent, readMode, rq, fileMode, iSkip);
         }else{
-          string strParam = boost::algorithm::trim_copy<string>(lineInput).substr(string("run ").size());
+          string strParam = trim_copy(lineInput).substr(string("run ").size());
           processQuery(strParam, rq);
-          if (readMode == FILE || readMode == FOLDER)
+          if (readMode == SINGLEFILE || readMode == FOLDER)
             runQuery(sContent, readMode, rq, fileMode, iSkip);
         }
         cout << "rquery >";
@@ -517,4 +581,5 @@ int main(int argc, char *argv[])
       processQuery(sQuery, rq);
     runQuery(sContent, readMode, rq, fileMode, iSkip);
   }
+  exitProgram(0);
 }

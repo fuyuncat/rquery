@@ -5,6 +5,7 @@
 # Install
 &nbsp;&nbsp;&nbsp; Download source code zip<br />
 &nbsp;&nbsp;&nbsp; Unzip the downloaded file<br />
+&nbsp;&nbsp;&nbsp; sudo yum -y install boost-devel
 &nbsp;&nbsp;&nbsp; make<br />
 <br />
 # Usage & Help Doc

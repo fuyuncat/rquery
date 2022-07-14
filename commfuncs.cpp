@@ -44,6 +44,7 @@ void GlobalVars::initVars()
   g_tracelevel = FATAL;
   g_printheader = true;
   g_showprogress = false;
+  g_ouputformat = TEXT;
   g_logfile = NULL;
 }
 

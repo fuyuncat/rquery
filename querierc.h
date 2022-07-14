@@ -84,6 +84,7 @@ class QuerierC
     bool assignLimitStr(string limitstr);
     bool setFieldTypeFromStr(string setstr);
     void setFileName(string filename);
+    void setOutputFormat(short int format=TEXT);
     int searchNext(namesaving_smatch & matches);
     int searchAll();
     bool toGroupOrSort();
@@ -92,6 +93,7 @@ class QuerierC
     bool searchStopped();
     void output();
     void clear();
+    void outputExtraInfo(size_t total, short int mode, bool bPrintHeader);
     void outputAndClean();
     int boostmatch( vector<string> *result = NULL);
     int boostmatch( map<string,string> & result);
@@ -113,6 +115,7 @@ class QuerierC
     long m_line;        // data line number matched searching pattern in the file or in a stream input
     long m_matchcount;  // number of matched rows. Can be used to match @row
     long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
+    short int m_outputformat; // TEXT or JSON
     
     //vector<namesaving_smatch> m_results;
     FilterC* m_filter;

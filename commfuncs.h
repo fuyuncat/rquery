@@ -118,6 +118,9 @@ using namespace std;
 #define MIN 105
 #define AVERAGE 106
 
+#define TEXT 1
+#define JSON 2
+
 struct DataTypeStruct{
   int datatype;
   string extrainfo;  // for DATE type only so far, the format of the DATE 
@@ -132,9 +135,10 @@ public:
   void setVars(size_t inputbuffer = 16384, short tracelevel=FATAL, bool printheader=true);
 
   size_t g_inputbuffer;
-  short g_tracelevel;
+  short int g_tracelevel;
   bool g_printheader;
   bool g_showprogress;
+  short int g_ouputformat;
   ofstream* g_logfile;
 };
 

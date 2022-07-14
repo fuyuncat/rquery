@@ -51,7 +51,25 @@ GlobalVars gv;
 
 void usage()
 {
-  printf("Program Name: RQuery AKA RQ\nContact Email: fuyuncat@gmail.com\nUsage: rquery \"parse <regular expression> | select | set | filter <filters> | group | sort \" \"file or string to be queried\"\nquery string/file using regular expression\n");
+  printf("\nProgram Name: RQuery AKA RQ\n");
+  printf("Contact Email: fuyuncat@gmail.com\n");
+  printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q \"parse /<regular expression>/ | select | set | filter <filters> | group | sort | limit \" \"file or string to be queried\"\nquery string/file using regular expression\n\n");
+  printf("\t-q|--query <query string> -- The query string indicates how to query the content, valid query commands include parse,select,set,filter,group,sort,limit. One or more commands can be provide in the query, multiple commands are separated by |. They can be in any order. \n");
+  printf("\t\tparse /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n");
+  printf("\t\tset <field datatype [date format],...> -- Set the date type of the fields.\n");
+  printf("\t\tfilter <filter conditions> -- Provide filter conditions to filt the content.\n");
+  printf("\t\tselect <field or expression,...> -- Provide a field name/variables/expressions to be selected.\n");
+  printf("\t\tgroup <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n");
+  printf("\t\tsort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
+  printf("\t\tlimt <n | bottomN,topN> -- Provide output limit range.\n");
+  printf("\t-r|--readmode <buffer|line> -- Provide file read mode, default is buffer.\n");
+  printf("\t-s|--skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n");
+  printf("\t-b|--buffsize <N> -- The read buffer size when read mode is buffer.\n");
+  printf("\t-m|--msglevel <fatal|error|warning|info> -- Logging messages output level, default is fatal.\n");
+  printf("\t-l|--logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n");
+  printf("\t-p|--progress <on|off> -- Wheather show the processing progress or not(default).\n");
+  printf("\t-o|--outputformat <text|json> -- Provide output format, default is text.\n");
+  printf("More information can be found at https://github.com/fuyuncat/rquery .\n");
 }
 
 short int checkReadMode(string sContent)
@@ -138,7 +156,8 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
           break;
         rq.appendrawstr(strline);
         rq.searchAll();
-        rq.printFieldNames();
+        if (gv.g_printheader && gv.g_ouputformat==TEXT)
+          rq.printFieldNames();
         if (!rq.toGroupOrSort())
           rq.outputAndClean();
         rq.setrawstr("");
@@ -153,10 +172,6 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
       trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
       lastTime = thisTime;
       trace(DEBUG2,"%d lines read. (%d lines skipped)\n", readLines, iSkip);
-      if (gv.g_printheader){
-        printf("Found %d row(s).\n", rq.getOutputCount());
-        printf("Parsed %d line(s).\n", rq.getLines());
-      }
       break;
     }case READBUFF:
     default:{
@@ -175,7 +190,8 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
         //ifile.seekg(pos, ios::beg);
         rq.appendrawstr(string(cachebuffer));
         rq.searchAll();
-        rq.printFieldNames();
+        if (gv.g_printheader && gv.g_ouputformat==TEXT)
+          rq.printFieldNames();
         if (!rq.toGroupOrSort())
           rq.outputAndClean();
         howmany += ifile.gcount();
@@ -191,10 +207,6 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
       trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
       lastTime = thisTime;
       trace(DEBUG2,"%d bytes read. (%d bytes skipped)\n", howmany, iSkip);
-      if (gv.g_printheader){
-        printf("Found %d row(s).\n", rq.getOutputCount());
-        printf("Parsed %d line(s).\n", rq.getLines());
-      }
       break;
     }
   }
@@ -211,11 +223,13 @@ void printResult(QuerierC & rq)
     rq.sort();
     thisTime = curtime();
     trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
+    rq.setOutputFormat(gv.g_ouputformat);
     rq.outputAndClean();
     thisTime = curtime();
     trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
     lastTime = thisTime;
   }
+  rq.outputExtraInfo(0, READBUFF, gv.g_printheader);
   rq.clear();
 }
 
@@ -275,19 +289,23 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
       rq.searchAll();
       rq.group();
       rq.sort();
-      rq.printFieldNames();
+      rq.setOutputFormat(gv.g_ouputformat);
+      if (gv.g_printheader && gv.g_ouputformat==TEXT)
+        rq.printFieldNames();
       rq.outputAndClean();
       rq.clear();
       break;
     }
     case SINGLEFILE:{
       //trace(DEBUG1,"Processing content from file \n");
+      rq.setOutputFormat(gv.g_ouputformat);
       processFile(sContent, rq, fileMode, iSkip);
       printResult(rq);
       break;
     }
     case FOLDER:{
       //trace(DEBUG1,"Processing content from folder \n");
+      rq.setOutputFormat(gv.g_ouputformat);
       vector<string> filelist = listFilesInFolder(sContent);
       for (int i=0; i<filelist.size(); i++){
         trace(DEBUG1,"Processing file: %s \n", (sContent+"/"+filelist[i]).c_str());
@@ -301,6 +319,7 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
       long int thisTime,lastTime = curtime();
       const size_t cache_length = gv.g_inputbuffer;
       //char cachebuffer[cache_length];
+      rq.setOutputFormat(gv.g_ouputformat);
       char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
       size_t howmany = 0, reads = 0;
       while(std::cin) {
@@ -310,7 +329,8 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
         std::cin.read(cachebuffer, cache_length);
         rq.appendrawstr(string(cachebuffer));
         rq.searchAll();
-        rq.printFieldNames();
+        if (gv.g_printheader && gv.g_ouputformat==TEXT)
+          rq.printFieldNames();
         if (!rq.toGroupOrSort())
           rq.outputAndClean();
         howmany += std::cin.gcount();
@@ -318,23 +338,7 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
       free(cachebuffer);
       thisTime = curtime();
       trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
-      lastTime = thisTime;
-      if (rq.toGroupOrSort()){
-        rq.group();
-        thisTime = curtime();
-        trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-        rq.sort();
-        thisTime = curtime();
-        trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
-        rq.outputAndClean();
-        thisTime = curtime();
-        trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
-      }
-      trace(DEBUG2, "Found %d row(s).\n", rq.getOutputCount());
-      trace(DEBUG2, "Processed %d line(s).\n", rq.getLines());
-      rq.clear();
+      printResult(rq);
       trace(DEBUG2,"%d bytes read.\n", howmany);
       break;
     }
@@ -392,8 +396,14 @@ int main(int argc, char *argv[])
       ofstream* logfile = new ofstream(string(argv[i+1]));
       if (!(*logfile))
         delete logfile;
-      else
+      else{
+        if (gv.g_logfile){
+          if ((*gv.g_logfile))
+            gv.g_logfile->close();
+          delete gv.g_logfile;
+        }
         gv.g_logfile = logfile;
+      }
       i++;
     }else if (lower_copy(string(argv[i])).compare("-f")==0 || lower_copy(string(argv[i])).compare("--fieldheader")==0){
       if (argv[i+1][0] == '-'){
@@ -415,6 +425,13 @@ int main(int argc, char *argv[])
         exitProgram(1);
       }
       fileMode = (lower_copy(string(argv[i+1])).compare("line")!=0?READBUFF:READLINE);
+      i++;
+    }else if (lower_copy(string(argv[i])).compare("-o")==0 || lower_copy(string(argv[i])).compare("--outputformat")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      gv.g_ouputformat = (lower_copy(string(argv[i+1])).compare("json")!=0?TEXT:JSON);
       i++;
     }else if (lower_copy(string(argv[i])).compare("-s")==0 || lower_copy(string(argv[i])).compare("--skip")==0){
       if (argv[i+1][0] == '-'){
@@ -482,7 +499,7 @@ int main(int argc, char *argv[])
         break;
       }else if (lower_copy(trim_copy(lineInput)).find("h ")==0 || lower_copy(trim_copy(lineInput)).find("help")==0){
         cout << "load <file/folder> -- Provide a file or folder to be queried.\n";
-        cout << "parse /<regular expression string>/ -- Provide a regular express string quoted by \"//\" to parse the content.\n";
+        cout << "parse /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n";
         cout << "set <field datatype [date format],...> -- Set the date type of the fields.\n";
         cout << "filter <filter conditions> -- Provide filter conditions to filt the content.\n";
         cout << "select <field or expression,...> -- Provide a field name/variables/expressions to be selected.\n";
@@ -491,7 +508,12 @@ int main(int argc, char *argv[])
         cout << "limt <n | bottomN,topN> -- Provide output limit range.\n";
         cout << "filemode <buffer|line> -- Provide file read mode, default is buffer.\n";
         cout << "skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n";
+        cout << "buffsize <N> -- The read buffer size when read mode is buffer.\n";
         cout << "run [query string] -- Run the query (either preprocessed or provide as a parameter).\n";
+        cout << "msglevel <fatal|error|warning|info> -- Logging messages output level, default is fatal.\n";
+        cout << "logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n";
+        cout << "progress <on|off> -- Wheather show the processing progress or not(default).\n";
+        cout << "format <text|json> -- Provide output format, default is text.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("load ")==0){
         string strParam = trim_copy(lineInput).substr(string("load ").size());
@@ -504,6 +526,46 @@ int main(int argc, char *argv[])
           cout << " is loaded.\n";
         }
         cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("msglevel ")==0){
+        string strParam = trim_copy(lineInput).substr(string("msglevel ").size());
+        int iLevel=encodeTracelevel(strParam);
+        if (iLevel!=UNKNOWN){
+          gv.g_tracelevel = iLevel;
+        }else{
+          trace(FATAL,"Unrecognized message level %s. It should be one of INFO, WARNING, ERROR, FATAL.\n", strParam.c_str());
+          exitProgram(1);
+        }
+        cout << "Message level has been set to ";
+        cout << decodeTracelevel(gv.g_tracelevel).c_str();
+        cout << "\nrquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("logfile ")==0){
+        string strParam = trim_copy(lineInput).substr(string("logfile ").size());
+        ofstream* logfile = new ofstream(strParam);
+        if (!(*logfile))
+          delete logfile;
+        else{
+          if (gv.g_logfile){
+            if ((*gv.g_logfile))
+              gv.g_logfile->close();
+            delete gv.g_logfile;
+          }
+          gv.g_logfile = logfile;
+        }
+        cout << "Logfile has been set to ";
+        cout << strParam.c_str();
+        cout << "\nrquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("progress ")==0){
+        string strParam = trim_copy(lineInput).substr(string("progress ").size());
+        gv.g_showprogress = (lower_copy(strParam).compare("on")==0);
+        cout << "Process progress has been turned ";
+        cout << strParam.c_str();
+        cout << "\nrquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("format ")==0){
+        string strParam = trim_copy(lineInput).substr(string("format ").size());
+        gv.g_ouputformat = (strParam.compare("json")!=0?TEXT:JSON);
+        cout << "Output format has been set to ";
+        cout << strParam.c_str();
+        cout << "\nrquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("filemode ")==0){
         string strParam = trim_copy(lineInput).substr(string("filemode ").size());
         if (lower_copy(strParam).compare("line")!=0)
@@ -518,8 +580,19 @@ int main(int argc, char *argv[])
         }else{
           iSkip = atoi(strParam.c_str());
           cout << strParam.c_str();
-          cout << (fileMode==READBUFF?"bytes":"lines");
+          cout << (fileMode==READBUFF?" bytes":" lines");
           cout << " will be skipped.\n";
+        }
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("buffsize ")==0){
+        string strParam = trim_copy(lineInput).substr(string("buffsize ").size());
+        if (!isInt(strParam)){
+          cout << "Error: Please provide a valid number.\n";
+        }else{
+          gv.g_inputbuffer = atoi(strParam.c_str());
+          cout << "Buffer size has been set to ";
+          cout << strParam.c_str();
+          cout << " bytes.\n";
         }
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("parse ")==0){

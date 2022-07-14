@@ -75,6 +75,7 @@ void QuerierC::init()
   m_searchflags = regex_constants::match_default;
   m_filename = "";
   m_line = 0;
+  m_outputformat = TEXT;
   m_matchcount = 0; 
   m_outputrow = 0;
   m_limitbottom = 0;
@@ -258,6 +259,11 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
 void QuerierC::setFileName(string filename)
 {
   m_filename = filename;
+}
+
+void QuerierC::setOutputFormat(short int format)
+{
+  m_outputformat = format;
 }
 
 bool QuerierC::toGroupOrSort()
@@ -983,16 +989,43 @@ bool QuerierC::sort()
 
 void QuerierC::formatoutput(vector<string> datas)
 {
+  if (m_outputformat == JSON){
+    if (m_outputrow==0){
+      printf("{\n");
+      printf("\t\"records\": [\n");
+    }else{
+      printf(",\n");
+    }
+  }
   m_outputrow++;
   if (m_outputrow<m_limitbottom || (m_limittop>=0 && m_outputrow>m_limittop))
     return;
   //printf("%d: ", m_outputrow);
-  if (m_selections.size()==0)
-    printf("%s\n", datas[0].c_str());
-  else{
-    for (int i=1; i<datas.size(); i++)
-      printf("%s\t", datas[i].c_str());
-    printf("\n");
+  if (m_outputformat == JSON){
+    printf("\t\t{\n");
+    if (m_selections.size()==0){
+      printf("\t\t\t\"%s\": \"%s\"\n","RAW",datas[0].c_str());
+    }else{
+      for (int i=1; i<datas.size(); i++){
+        if (m_selections[i-1].m_datatype.datatype == INTEGER || m_selections[i-1].m_datatype.datatype == LONG || m_selections[i-1].m_datatype.datatype == DOUBLE || m_selections[i-1].m_datatype.datatype == BOOLEAN)
+          printf("\t\t\t\"%s\": %s",m_selnames[i-1].c_str(),datas[i].c_str());
+        else
+          printf("\t\t\t\"%s\": \"%s\"",m_selnames[i-1].c_str(),datas[i].c_str());
+        if (i == datas.size()-1)
+          printf("\n");
+        else
+          printf(",\n");
+      }
+    }
+    printf("\t\t}");
+  }else{
+    if (m_selections.size()==0)
+      printf("%s\n", datas[0].c_str());
+    else{
+      for (int i=1; i<datas.size(); i++)
+        printf("%s\t", datas[i].c_str());
+      printf("\n");
+    }
   }
 }
 
@@ -1000,7 +1033,7 @@ void QuerierC::printFieldNames()
 {
   //for (int i=1; i<m_fieldnames.size(); i++)
   //  printf("%s\t",m_fieldnames[i].c_str());
-  if (!gv.g_printheader || m_bNamePrinted)
+  if (m_bNamePrinted)
     return;
   if (m_selnames.size()>0){
     for (int i=0; i<m_selnames.size(); i++)
@@ -1094,6 +1127,29 @@ void QuerierC::outputAndClean()
   m_results.clear();
 }
 
+void QuerierC::outputExtraInfo(size_t total, short int mode, bool bPrintHeader)
+{
+  if (m_outputformat == JSON){
+    if (m_outputrow>0)
+      printf("\n");
+    printf("\t],\n");
+    //if (mode == READLINE)
+    //  printf("\"ReadLines\": %d,\n", total);
+    //else
+    //  printf("\"ReadBytes\": %d,\n", m_line);
+    printf("\t\"MatchedLines\": %d,\n", total);
+    printf("\t\"SelectedRows\": %d\n", m_outputrow);
+    printf("}\n");
+  }else if (bPrintHeader){
+    //if (mode == READLINE)
+    //  printf("Read %d lines(s).\n", total);
+    //else
+    //  printf("Read %d byte(s).\n", total);
+    printf("Pattern matched %d line(s).\n", m_line);
+    printf("Selected %d row(s).\n", m_outputrow);
+  }
+}
+
 void QuerierC::clear()
 {
   m_groups.clear();
@@ -1103,6 +1159,7 @@ void QuerierC::clear()
   m_aggGroupProp.clear();
   m_sortKeys.clear();
   m_bNamePrinted = false;
+  m_outputformat = TEXT;
   if (m_filter){
     m_filter->clear();
     delete m_filter;

@@ -572,7 +572,7 @@ bool isDate(const string& str, string& fmt)
 }
 
 // get the compatible data type from two data types
-DataTypeStruct getCompatibleDataType(DataTypeStruct ldatatype, DataTypeStruct rdatatype) 
+DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const DataTypeStruct & rdatatype) 
 {
   DataTypeStruct dts;
   dts.extrainfo = "";

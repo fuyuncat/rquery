@@ -527,129 +527,135 @@ ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
 DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes)
 {
   DataTypeStruct dts;
-  trace(DEBUG, "Analyzing columns in expression '%s'\n", m_expStr.c_str());
-  if (!fieldnames || !fieldtypes){
-    trace(ERROR, "(Expression)fieldnames or fieldtypes is NULL!\n");
-    dts.datatype = UNKNOWN;
-    return dts;
-  }
-  m_metaDataAnzlyzed = true;
-  m_fieldnames = fieldnames;
-  m_fieldtypes = fieldtypes;
-  if (m_type == BRANCH){
-    dts.datatype=UNKNOWN;
-    DataTypeStruct rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes):dts;
-    DataTypeStruct ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes):dts;
-    m_datatype = getCompatibleDataType(ldatatype, rdatatype);
-    m_metaDataAnzlyzed = m_datatype.datatype!=UNKNOWN;
-  }else{
-    if (fieldnames->size() != fieldtypes->size()){
-      trace(ERROR,"Field name number %d does not match field type number %d.\n", fieldnames->size(), fieldtypes->size());
-      m_metaDataAnzlyzed = false;
+  try{
+    trace(DEBUG, "Analyzing columns in expression '%s'\n", m_expStr.c_str());
+    if (!fieldnames || !fieldtypes){
+      trace(ERROR, "(Expression)fieldnames or fieldtypes is NULL!\n");
       dts.datatype = UNKNOWN;
       return dts;
     }
-    m_expStr = trim_copy(m_expStr);
-    // check if it is a variable
-    if (m_expStr.size()>0 && m_expStr[0]=='@'){
-      m_expType = VARIABLE;
-      m_expStr = upper_copy(trim_copy(m_expStr));
-      //string strVarName = upper_copy(m_expStr);
-      if (m_expStr.compare("@RAW") == 0 || m_expStr.compare("@FILE") == 0)
-        m_datatype.datatype = STRING;
-      else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0)
-        m_datatype.datatype = LONG;
-      else if (m_expStr.find("@FIELD") == 0){
-        string sColId = m_expStr.substr(string("@FIELD").size());
-        int iColID = isInt(sColId)?atoi(sColId.c_str())-1:-1;
-        if (!sColId.empty() && iColID < fieldtypes->size()){
-          m_expType = COLUMN;
-          //m_datatype = (*fieldtypes)[atoi(sColId.c_str())];
-          m_colId = iColID;
-          m_datatype = (*fieldtypes)[m_colId];
-          trace(DEBUG, "Tuning '%s' from VARIABLE to COLUMN(%d).\n", m_expStr.c_str(), m_colId);
+    m_metaDataAnzlyzed = true;
+    m_fieldnames = fieldnames;
+    m_fieldtypes = fieldtypes;
+    if (m_type == BRANCH){
+      dts.datatype=UNKNOWN;
+      DataTypeStruct rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes):dts;
+      DataTypeStruct ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes):dts;
+      m_datatype = getCompatibleDataType(ldatatype, rdatatype);
+      m_metaDataAnzlyzed = m_datatype.datatype!=UNKNOWN;
+    }else{
+      if (fieldnames->size() != fieldtypes->size()){
+        trace(ERROR,"Field name number %d does not match field type number %d.\n", fieldnames->size(), fieldtypes->size());
+        m_metaDataAnzlyzed = false;
+        dts.datatype = UNKNOWN;
+        return dts;
+      }
+      m_expStr = trim_copy(m_expStr);
+      // check if it is a variable
+      if (m_expStr.size()>0 && m_expStr[0]=='@'){
+        m_expType = VARIABLE;
+        m_expStr = upper_copy(trim_copy(m_expStr));
+        //string strVarName = upper_copy(m_expStr);
+        if (m_expStr.compare("@RAW") == 0 || m_expStr.compare("@FILE") == 0)
+          m_datatype.datatype = STRING;
+        else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0)
+          m_datatype.datatype = LONG;
+        else if (m_expStr.find("@FIELD") == 0){
+          string sColId = m_expStr.substr(string("@FIELD").size());
+          int iColID = isInt(sColId)?atoi(sColId.c_str())-1:-1;
+          if (!sColId.empty() && iColID < fieldtypes->size()){
+            m_expType = COLUMN;
+            //m_datatype = (*fieldtypes)[atoi(sColId.c_str())];
+            m_colId = iColID;
+            m_datatype = (*fieldtypes)[m_colId];
+            trace(DEBUG, "Tuning '%s' from VARIABLE to COLUMN(%d).\n", m_expStr.c_str(), m_colId);
+          }else{
+            trace(ERROR, "Unrecognized variable(1) %s, Extracted COL ID: %d, number of fields: %d.\n", sColId.c_str(), iColID, fieldtypes->size());
+            m_expType = UNKNOWN;
+            m_datatype.datatype = UNKNOWN;
+          }
         }else{
-          trace(ERROR, "Unrecognized variable(1) %s, Extracted COL ID: %d, number of fields: %d.\n", sColId.c_str(), iColID, fieldtypes->size());
+          trace(ERROR, "Unrecognized variable(2) %s .\n", m_expStr.c_str());
           m_expType = UNKNOWN;
           m_datatype.datatype = UNKNOWN;
         }
-      }else{
-        trace(ERROR, "Unrecognized variable(2) %s .\n", m_expStr.c_str());
-        m_expType = UNKNOWN;
-        m_datatype.datatype = UNKNOWN;
-      }
-      trace(DEBUG, "Expression '%s' type is %s, data type is UNKNOWN\n", m_expStr.c_str(), decodeExptype(m_expType).c_str());
-      return m_datatype;
-    }
-    if (m_datatype.datatype == UNKNOWN){
-      // check if it is a time, quoted by {}
-      if (m_expStr.size()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.size()-1]=='}'){
-        m_expType = CONST;
-        if (isDate(m_expStr.substr(1,m_expStr.size()-2),m_datatype.extrainfo)){
-          m_datatype.datatype = DATE;
-        }else{
-          trace(ERROR,"Failed to get the date format from '%s'.\n", m_expStr.c_str());
-          m_metaDataAnzlyzed = false;
-          dts.datatype = UNKNOWN;
-          return dts;
-        }
-        trace(DEBUG, "Expression '%s' type is CONST, data type is DATE\n", m_expStr.c_str());
+        trace(DEBUG, "Expression '%s' type is %s, data type is UNKNOWN\n", m_expStr.c_str(), decodeExptype(m_expType).c_str());
         return m_datatype;
       }
-      // check if it is a string, quoted by ''
-      if (m_expStr.size()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.size()-1]=='\''){
-        m_expType = CONST;
-        m_datatype.datatype = STRING;
-        return m_datatype;
-      }
-      // check if it is a regular expression string, quoted by //
-      if (m_expStr.size()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.size()-1]=='/'){
-        m_expType = CONST;
-        m_datatype.datatype = STRING;
-        trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
-        return m_datatype;
-      }
-      // check if it is a function FUNCNAME(...)
-      int lefParPos = m_expStr.find("(");
-      if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
-        m_expType = FUNCTION;
-        FunctionC* func = new FunctionC(m_expStr);
-        m_datatype = func->m_datatype;
-        m_funcID = func->m_funcID;
-        //m_expStr = upper_copy(trim_copy(func->m_expStr)); -- should NOT turn the parameters to UPPER case.
-        m_expStr = func->m_expStr;
-        func->clear();
-        delete func;
-        trace(DEBUG, "Expression '%s' type is FUNCTION, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
-        return m_datatype;
-      }
-      // check if it is a column
-      for (int i=0; i<fieldnames->size(); i++){
-        if (upper_copy(m_expStr).compare(upper_copy((*fieldnames)[i])) == 0){
-          m_expStr = trim_copy(upper_copy(m_expStr));
-          m_expType = COLUMN;
-          m_colId = i;
-          m_datatype = (*fieldtypes)[i];
-          trace(DEBUG, "Expression '%s' type is COLUMN, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
+      if (m_datatype.datatype == UNKNOWN){
+        // check if it is a time, quoted by {}
+        if (m_expStr.size()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.size()-1]=='}'){
+          m_expType = CONST;
+          if (isDate(m_expStr.substr(1,m_expStr.size()-2),m_datatype.extrainfo)){
+            m_datatype.datatype = DATE;
+          }else{
+            trace(ERROR,"Failed to get the date format from '%s'.\n", m_expStr.c_str());
+            m_metaDataAnzlyzed = false;
+            dts.datatype = UNKNOWN;
+            return dts;
+          }
+          trace(DEBUG, "Expression '%s' type is CONST, data type is DATE\n", m_expStr.c_str());
           return m_datatype;
         }
+        // check if it is a string, quoted by ''
+        if (m_expStr.size()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.size()-1]=='\''){
+          m_expType = CONST;
+          m_datatype.datatype = STRING;
+          return m_datatype;
+        }
+        // check if it is a regular expression string, quoted by //
+        if (m_expStr.size()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.size()-1]=='/'){
+          m_expType = CONST;
+          m_datatype.datatype = STRING;
+          trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
+          return m_datatype;
+        }
+        // check if it is a function FUNCNAME(...)
+        int lefParPos = m_expStr.find("(");
+        if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
+          m_expType = FUNCTION;
+          FunctionC* func = new FunctionC(m_expStr);
+          m_datatype = func->m_datatype;
+          m_funcID = func->m_funcID;
+          //m_expStr = upper_copy(trim_copy(func->m_expStr)); -- should NOT turn the parameters to UPPER case.
+          m_expStr = func->m_expStr;
+          func->clear();
+          delete func;
+          trace(DEBUG, "Expression '%s' type is FUNCTION, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
+          return m_datatype;
+        }
+        // check if it is a column
+        for (int i=0; i<fieldnames->size(); i++){
+          if (upper_copy(m_expStr).compare(upper_copy((*fieldnames)[i])) == 0){
+            m_expStr = trim_copy(upper_copy(m_expStr));
+            m_expType = COLUMN;
+            m_colId = i;
+            m_datatype = (*fieldtypes)[i];
+            trace(DEBUG, "Expression '%s' type is COLUMN, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
+            return m_datatype;
+          }
+        }
+        if (isInt(m_expStr)){
+          m_expType = CONST;
+          m_datatype.datatype = INTEGER;
+        }else if (isLong(m_expStr)){
+          m_expType = CONST;
+          m_datatype.datatype = LONG;
+        }else if (isDouble(m_expStr)){
+          m_expType = CONST;
+          m_datatype.datatype = DOUBLE;
+        }else{
+          m_expType = UNKNOWN;
+          m_datatype.datatype = UNKNOWN;
+        }
       }
-      if (isInt(m_expStr)){
-        m_expType = CONST;
-        m_datatype.datatype = INTEGER;
-      }else if (isLong(m_expStr)){
-        m_expType = CONST;
-        m_datatype.datatype = LONG;
-      }else if (isDouble(m_expStr)){
-        m_expType = CONST;
-        m_datatype.datatype = DOUBLE;
-      }else{
-        m_expType = UNKNOWN;
-        m_datatype.datatype = UNKNOWN;
-      }
+      trace(DEBUG, "Expression '%s' type is %s, data type is %s\n", m_expStr.c_str(), decodeExptype(m_expType).c_str(), decodeDatatype(m_datatype.datatype).c_str());
+      return m_datatype;
     }
-    trace(DEBUG, "Expression '%s' type is %s, data type is %s\n", m_expStr.c_str(), decodeExptype(m_expType).c_str(), decodeDatatype(m_datatype.datatype).c_str());
-    return m_datatype;
+  }catch (exception& e) {
+    trace(ERROR, "Unhandled exception: %s\n", e.what());
+    dts.datatype = UNKNOWN;
+    return dts;
   }
 }
 

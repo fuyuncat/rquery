@@ -237,7 +237,7 @@ bool evalDate(string str1, int operate, string str2, string fmt, struct tm& resu
 bool anyDataOperate(string str1, int operate, string str2, DataTypeStruct dts, string& result); // return true if operated successfully, result returns result
 
 int detectDataType(string str, string & extrainfo); // detect the data type of an expression string
-DataTypeStruct getCompatibleDataType(DataTypeStruct ldatatype, DataTypeStruct rdatatype); // get the compatible data type from two data types
+DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const DataTypeStruct & rdatatype); // get the compatible data type from two data types
 
 void dumpVector(vector<string> v);
 void dumpMap(map<string, string> m);

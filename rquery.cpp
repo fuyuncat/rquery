@@ -127,7 +127,7 @@ vector<string> listFilesInFolder(string foldername)
   return filelist;
 }
 
-void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, int iSkip=0)
+void processFile(string filename, QuerierC & rq, size_t& total, short int fileMode=READBUFF, int iSkip=0)
 {
   long int thisTime,lastTime = curtime();
 
@@ -140,14 +140,14 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
   // size_t filesize = ifile.tellg();
   size_t filesize = getFileSize(filename);
   trace(DEBUG2, "File size '%d'.\n", filesize);
-  size_t howmany = 0;
+  total = 0;
 
   switch (fileMode){
     case READLINE:{
       string strline;
       int readLines = 0;
       while (std::getline(ifile, strline)){
-        howmany += (strline.size()+1);
+        total += (strline.size()+1);
         if (readLines<iSkip){
           readLines++;
           continue;
@@ -164,19 +164,19 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
         readLines++;
         thisTime = curtime();
         if (gv.g_showprogress)
-          printf("\r%d lines(%.2f%%) read in %f seconds.", readLines, round(((double)howmany)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+          printf("\r%d lines(%.2f%%) read in %f seconds.", readLines, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
       }
       if (gv.g_showprogress)
         printf("\n");
+      total = readLines;
       thisTime = curtime();
       trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
       lastTime = thisTime;
-      trace(DEBUG2,"%d lines read. (%d lines skipped)\n", readLines, iSkip);
       break;
     }case READBUFF:
     default:{
       ifile.seekg(iSkip, ios::beg);
-      howmany = iSkip;
+      total = iSkip;
 
       const size_t cache_length = gv.g_inputbuffer;
       //char cachebuffer[cache_length];
@@ -194,11 +194,11 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
           rq.printFieldNames();
         if (!rq.toGroupOrSort())
           rq.outputAndClean();
-        howmany += ifile.gcount();
+        total += ifile.gcount();
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
         thisTime = curtime();
         if (gv.g_showprogress)
-          printf("\r%d bytes(%.2f%%) read in %f seconds.", howmany, round(((double)howmany)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+          printf("\r%d bytes(%.2f%%) read in %f seconds.", total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
       }
       if (gv.g_showprogress)
         printf("\n");
@@ -206,13 +206,12 @@ void processFile(string filename, QuerierC & rq, short int fileMode=READBUFF, in
       thisTime = curtime();
       trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
       lastTime = thisTime;
-      trace(DEBUG2,"%d bytes read. (%d bytes skipped)\n", howmany, iSkip);
       break;
     }
   }
 }
 
-void printResult(QuerierC & rq)
+void printResult(QuerierC & rq, size_t total, short int fileMode)
 {
   long int thisTime,lastTime = curtime();
   if (rq.toGroupOrSort()){
@@ -229,7 +228,7 @@ void printResult(QuerierC & rq)
     trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
     lastTime = thisTime;
   }
-  rq.outputExtraInfo(0, READBUFF, gv.g_printheader);
+  rq.outputExtraInfo(total, fileMode, gv.g_printheader);
   rq.clear();
 }
 
@@ -299,19 +298,23 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
     case SINGLEFILE:{
       //trace(DEBUG1,"Processing content from file \n");
       rq.setOutputFormat(gv.g_ouputformat);
-      processFile(sContent, rq, fileMode, iSkip);
-      printResult(rq);
+      size_t total = 0;
+      processFile(sContent, rq, total, fileMode, iSkip);
+      printResult(rq, total, fileMode);
       break;
     }
     case FOLDER:{
       //trace(DEBUG1,"Processing content from folder \n");
       rq.setOutputFormat(gv.g_ouputformat);
       vector<string> filelist = listFilesInFolder(sContent);
+      size_t total = 0, singlesize = 0;
       for (int i=0; i<filelist.size(); i++){
         trace(DEBUG1,"Processing file: %s \n", (sContent+"/"+filelist[i]).c_str());
-        processFile(sContent+"/"+filelist[i], rq, fileMode, iSkip);
+        processFile(sContent+"/"+filelist[i], rq, singlesize, fileMode, iSkip);
+        total += singlesize;
+        singlesize = 0;
       }
-      printResult(rq);
+      printResult(rq, total, fileMode);
       break;
     }
     case PROMPT:{
@@ -338,8 +341,7 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
       free(cachebuffer);
       thisTime = curtime();
       trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
-      printResult(rq);
-      trace(DEBUG2,"%d bytes read.\n", howmany);
+      printResult(rq, howmany, READBUFF);
       break;
     }
     default:{

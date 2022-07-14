@@ -1136,8 +1136,8 @@ void QuerierC::outputExtraInfo(size_t total, short int mode, bool bPrintHeader)
     //if (mode == READLINE)
     //  printf("\"ReadLines\": %d,\n", total);
     //else
-    //  printf("\"ReadBytes\": %d,\n", m_line);
-    printf("\t\"MatchedLines\": %d,\n", total);
+    //  printf("\"ReadBytes\": %d,\n", total);
+    printf("\t\"MatchedLines\": %d,\n", m_line);
     printf("\t\"SelectedRows\": %d\n", m_outputrow);
     printf("}\n");
   }else if (bPrintHeader){

@@ -38,7 +38,7 @@ void FilterC::init()
   m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;
 
-  m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back("=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back("LIKE");m_comparators.push_back("REGLIKE");m_comparators.push_back("NOLIKE");m_comparators.push_back("NOREGLIKE");m_comparators.push_back("IN");m_comparators.push_back("NOIN"); // "=", "<", ">" should be put after "<=" ">=" "!="
+  m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back("=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back(" LIKE ");m_comparators.push_back(" REGLIKE ");m_comparators.push_back(" NOLIKE ");m_comparators.push_back(" NOREGLIKE ");m_comparators.push_back(" IN ");m_comparators.push_back(" NOIN "); // "=", "<", ">" should be put after "<=" ">=" "!="
 }
 
 void FilterC::setExpstr(string expStr)
@@ -121,11 +121,12 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
       str = str.substr(0, i-1)+str.substr(i);
     }else if(!quoteStarted && startsWithWords(str.substr(i), m_comparators) >= 0){ // splitor that not between quato are the real splitor
       string compStr = m_comparators[startsWithWords(str.substr(i), m_comparators)];
-      node->m_comparator = encodeComparator(compStr);
+      node->m_comparator = encodeComparator(trim_copy(compStr));
       node->m_type = LEAF;
       node->m_leftExpStr =  trim_copy(str.substr(0,i));
       node->m_rightExpStr = trim_one( trim_copy(str.substr(i+compStr.length())),'"');
-      trace(DEBUG, "Found comparator '%s' in '%s'. left:%s;comp:%s;right:%s\n",compStr.c_str(),str.c_str(),node->m_leftExpStr.c_str(),compStr.c_str(),node->m_rightExpStr.c_str());
+      //trace(DEBUG, "Converted '%s' to '%s'. \n",str.substr(i+compStr.length()).c_str(),node->m_rightExpStr.c_str());
+      trace(DEBUG, "Found comparator '%s' in '%s'. '%s' %s '%s'\n",compStr.c_str(),str.c_str(),node->m_leftExpStr.c_str(),compStr.c_str(),node->m_rightExpStr.c_str());
       node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
       if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
         if (node->m_rightExpression){
@@ -754,7 +755,7 @@ bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fiel
     else{
       string leftRst = "", rightRst = "";
       if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
-        // trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype.datatype).c_str());
+        trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype.datatype).c_str());
         return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
       }else
         return false;

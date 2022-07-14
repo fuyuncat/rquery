@@ -302,6 +302,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
       if (expStr.size()>1 && expStr[expStr.size()-1] == '/'){ // whole string is a regular expression string
         node->m_datatype.datatype = STRING;
         node->m_expType = CONST;
+        node->m_expStr = trim_pair(expStr,"//");
         node->m_expstrAnalyzed = true;
         return true;
       }else{
@@ -318,6 +319,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         }
         node->m_expType = CONST;
         node->m_expstrAnalyzed = true;
+        node->m_expStr = trim_pair(expStr,"{}");
         return true;
       }else{
         trace(ERROR, "DATE string '%s' is not closed. \n", expStr.c_str());
@@ -329,6 +331,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_datatype.datatype = STRING;
         node->m_expType = CONST;
         node->m_expstrAnalyzed = true;
+        node->m_expStr = trim_pair(expStr,"''");
         return true;
       }else{
         trace(ERROR, "STRING '%s' is not closed. \n", expStr.c_str());

@@ -140,6 +140,8 @@ public:
   bool g_showprogress;
   short int g_ouputformat;
   ofstream* g_logfile;
+  
+  bool g_consolemode;
 };
 
 template <class T>

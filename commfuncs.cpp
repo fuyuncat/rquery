@@ -42,10 +42,12 @@ void GlobalVars::initVars()
 {
   g_inputbuffer = 16384;
   g_tracelevel = FATAL;
-  g_printheader = true;
+  g_printheader = false;
   g_showprogress = false;
   g_ouputformat = TEXT;
   g_logfile = NULL;
+  
+  g_consolemode = false;
 }
 
 void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader)
@@ -127,7 +129,7 @@ void trace(short level, const char *fmt, ...)
       printf((decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
       vprintf(fmt, args);
     }
-    if (level == FATAL)
+    if (level == FATAL && !gv.g_consolemode)
       exitProgram(EXIT_FAILURE);
   }
   va_end(args);
@@ -678,6 +680,7 @@ bool reglike(string str, string regstr)
 {
   sregex regexp = sregex::compile(regstr);
   smatch matches;
+  //trace(DEBUG, "Matching: '%s' => %s\n", str.c_str(), regstr.c_str());
   try{
     return regex_search(str, matches, regexp);
   }catch (exception& e) {

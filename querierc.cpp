@@ -185,6 +185,8 @@ bool QuerierC::assignSelString(string selstr)
       }
     }
     m_selections.push_back(eSel);
+    eSel.dump();
+    //trace(DEBUG, "Selection: '%s'!\n", eSel.getEntireExpstr().c_str());
   }
   return true;
 }

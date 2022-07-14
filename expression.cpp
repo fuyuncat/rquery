@@ -226,6 +226,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
       }
       newNode->m_type = BRANCH;
       newNode->m_operate = encodeOperator(expStr.substr(iPos,1));
+      newNode->m_expStr = expStr.substr(iPos,1);
       if (!parentNode || operatorPriority(newNode->m_operate)>operatorPriority(parentNode->m_operate)){
         if (parentNode){
           parentNode->m_rightNode = newNode;
@@ -527,6 +528,7 @@ ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
 DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes)
 {
   DataTypeStruct dts;
+  dts.extrainfo="";
   try{
     trace(DEBUG, "Analyzing columns in expression '%s'\n", m_expStr.c_str());
     if (!fieldnames || !fieldtypes){
@@ -541,7 +543,10 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
       dts.datatype=UNKNOWN;
       DataTypeStruct rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes):dts;
       DataTypeStruct ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes):dts;
+      //trace(DEBUG, "Left node: %s (%d); Right node: %s (%d)\n", m_leftNode->m_expStr.c_str(),m_leftNode->m_type, m_rightNode->m_expStr.c_str(),m_rightNode->m_type);
+      //trace(DEBUG, "Getting compatible type from %s and %s\n", decodeDatatype(ldatatype.datatype).c_str(), decodeDatatype(rdatatype.datatype).c_str());
       m_datatype = getCompatibleDataType(ldatatype, rdatatype);
+      //trace(DEBUG, "Getting compatible type %s\n", decodeDatatype(m_datatype.datatype).c_str());
       m_metaDataAnzlyzed = m_datatype.datatype!=UNKNOWN;
     }else{
       if (fieldnames->size() != fieldtypes->size()){
@@ -650,8 +655,9 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         }
       }
       trace(DEBUG, "Expression '%s' type is %s, data type is %s\n", m_expStr.c_str(), decodeExptype(m_expType).c_str(), decodeDatatype(m_datatype.datatype).c_str());
-      return m_datatype;
     }
+    dts = m_datatype;
+    return dts;
   }catch (exception& e) {
     trace(ERROR, "Unhandled exception: %s\n", e.what());
     dts.datatype = UNKNOWN;

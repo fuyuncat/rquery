@@ -123,7 +123,7 @@ using namespace std;
 
 struct DataTypeStruct{
   int datatype;
-  string extrainfo;  // for DATE type only so far, the format of the DATE 
+  string extrainfo="";  // for DATE type only so far, the format of the DATE 
 };
 
 class GlobalVars{

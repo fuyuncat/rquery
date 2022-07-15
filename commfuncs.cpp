@@ -284,9 +284,10 @@ void replacestr(string & sRaw, const string & sReplace, const string & sNew)
 {
   int pos=0;
   //trace(DEBUG, "replacing '%s','%s','%s' ...",sRaw.c_str(),sReplace.c_str(),sNew.c_str());
-  while (sRaw.find(sReplace, pos) != string::npos){
+  pos = sRaw.find(sReplace, pos);
+  while (pos != string::npos){
     sRaw.replace(pos, sReplace.length(), sNew);
-    pos+=sReplace.length();
+    pos = sRaw.find(sReplace, pos+sNew.length());
   }
   //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
 }
@@ -659,7 +660,9 @@ bool wildmatch(const char *candidate, const char *pattern, int p, int c, char mu
 
 bool like(string str1, string str2)
 {
-  return wildmatch(str1.c_str(), str2.c_str(), 0, 0);
+  bool matched = wildmatch(str1.c_str(), str2.c_str(), 0, 0);
+  //trace(DEBUG, "'%s' matching '%s': %d\n",str1.c_str(), str2.c_str(), matched);
+  return matched;
 }
 
 bool reglike(string str, string regstr)

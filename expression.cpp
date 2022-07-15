@@ -559,7 +559,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         dts.datatype = UNKNOWN;
         return dts;
       }
-      m_expStr = trim_copy(m_expStr);
+      //m_expStr = trim_copy(m_expStr);
       // check if it is a variable
       if (m_expStr.size()>0 && m_expStr[0]=='@'){
         m_expType = VARIABLE;
@@ -610,6 +610,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         if (m_expStr.size()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.size()-1]=='\''){
           m_expType = CONST;
           m_datatype.datatype = STRING;
+          trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
           return m_datatype;
         }
         // check if it is a regular expression string, quoted by //

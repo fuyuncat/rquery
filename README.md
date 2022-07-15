@@ -11,13 +11,13 @@
 # Usage & Help Doc
 - run modes
    - Command line mode:<br />
-      - ./rq [parameters] "Text to be parsed and queried"<br />
+      - ./rq [options] "Text to be parsed and queried"<br />
       - echo "Text to be parsed and queried" | ./rq [parameters]<br />
-      - ./rq [parameters] < file<br />
-      - ./rq [parameters] file<br />
-      - ./rq [parameters] folder<br />
+      - ./rq [options] < file<br />
+      - ./rq [options] file<br />
+      - ./rq [options] folder<br />
    - Console mode:
-      - ./rq [parameters] --console<br />
+      - ./rq [options] --console<br />
    &nbsp;&nbsp;&nbsp;Input any of below commands in the console mode.<br />
          - load file|folder : load a file or a folder<br />
          - filemode buffer|line : Provide file read mode, default is buffer.<br />
@@ -30,13 +30,15 @@
          - sort <field or expression [asc|desc],...> : Sorting keys to decide order of the output records<br />
          - limt <n | bottomN,topN> : Limited number records to be printed<br />
          - run [query] : Run the preprocessed query of a provided query (refering to below part)<br />
--Parameters
+- options
    - --help|-h<br />
-   - --fieldheader | -f on|off : Wheather print fields header(default) or not<br />
-   - --readmode | -r buffer|line : File read mode, buffer(default) or line<br />
-   - --buffsize | -b size : The buffer size when read mode is buffer, default is 16384<br />
-   - --skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0<br />
-   - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is ERROR<br />
+   - --fieldheader | -f on|off : Wheather print fields header or not(default).<br />
+   - --progress | -p <on|off> -- Wheather show the processing progress or not(default).<br />
+   - --outputformat | -o <text|json> -- Provide output format, default is text.<br />
+   - --readmode | -r buffer|line : File read mode, buffer(default) or line.<br />
+   - --buffsize | -b size : The buffer size when read mode is buffer, default is 16384.<br />
+   - --skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0.<br />
+   - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
    - --query | -q <qeury string> : The query string to be used to parse and query the text content.<br />
 - Syntax of query string:
    - parse /regular string/|set field datatype [date format],...|filter <ilter conditions|select field or expression,...|group field or expression,...|sort field or expression [asc|desc],...|limt n | bottomN,topN<br />
@@ -48,6 +50,9 @@
       - group field or expression,... : Fields or expressions to be groupd for aggregation selections<br />
       - sort field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
       - limt n | bottomN,topN : Limited number records to be printed<br />
+      - msglevel : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
+      - progress <on|off> -- Wheather show the processing progress or not(default).<br />
+      - format <text|json> -- Provide output format, default is text.<br />
 - Variables:
 In any expression of select, filter, group, sort, variables can be used. The variables are in a @Var format. Currently, the variables can be used are,<br />
    - @raw : The raw string of a parsed line<br />
@@ -65,6 +70,7 @@ Functions can be used in the expression. We current provide some essential norma
    - instr(str,sub) : Normal function. Return the position of a sub string in a string. Return -1 if caannot find the sub string<br />
    - substr(str,pos,len) : Normal function. Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string.<br />
    - replace(str,sub1,sub2) : Normal function. Replace all sub1 in a string with sub2.<br />
+   - regreplace(str,sub1,sub2) : Normal function. Replace all regular pattern in a string with sub2 (capturing group supported).<br />
    - Comparestr(str1,str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - NocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - floor(num) : Normal function. Get the floor integer number of a given float number.<br />

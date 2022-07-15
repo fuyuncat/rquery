@@ -90,7 +90,11 @@ void QuerierC::init()
 void QuerierC::setregexp(string regexstr)
 {
   m_regexstr = regexstr;
-  m_regexp = sregex::compile(m_regexstr);
+  try{
+    m_regexp = sregex::compile(m_regexstr);
+  }catch (exception& e) {
+    trace(FATAL, "Regular pattern compile exception: %s\n", e.what());
+  }
 }
 
 void QuerierC::assignFilter(FilterC* filter)
@@ -488,8 +492,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
     dumpVector(m_fieldnames);
     dumpVector(rowValue);
     return false;
-  }
-  //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
+  }  
   vector<string> fieldValues;
   map<string, string> varValues;
   for (int i=0; i<m_fieldnames.size(); i++)
@@ -499,6 +502,8 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   varValues.insert( pair<string,string>("@FILE",m_filename));
   varValues.insert( pair<string,string>("@LINE",rowValue[m_fieldnames.size()+1]));
   varValues.insert( pair<string,string>("@ROW",rowValue[m_fieldnames.size()+2]));
+  //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
+  //dumpMap(varValues);
   bool matched = (!filter || filter->compareExpression(&m_fieldnames, &fieldValues, &varValues));
   //trace(DEBUG, " selected:%d (%d)! \n", matched, m_selections.size());
   if (matched){
@@ -648,7 +653,7 @@ int QuerierC::searchNext(namesaving_smatch & matches)
   //m_line++;
   int found = 0;
   try {
-    while(regex_search(m_rawstr, matches, m_regexp)){
+    while(!m_rawstr.empty() && regex_search(m_rawstr, matches, m_regexp)){
       m_line++;
       vector<string> matcheddata;
       for (int i=0; i<matches.size(); i++)
@@ -660,8 +665,10 @@ int QuerierC::searchNext(namesaving_smatch & matches)
           m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes);
           //m_filter->mergeExprConstNodes();
         }
-        for (int i=0; i<m_selections.size(); i++)
+        for (int i=0; i<m_selections.size(); i++){
+          //trace(DEBUG, "Analyzing selection '%s' (%d), found %d\n", m_selections[i].m_expStr.c_str(), i, found);
           m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
+        }
         for (int i=0; i<m_groups.size(); i++)
           m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
         for (int i=0; i<m_sorts.size(); i++)
@@ -675,12 +682,14 @@ int QuerierC::searchNext(namesaving_smatch & matches)
         m_matchcount++;
       }
 
+      //trace(DEBUG, "Old m_expStr: '%s'\n", m_rawstr.c_str());
       m_rawstr = m_rawstr.substr(m_rawstr.find(matcheddata[0])+matcheddata[0].length());
       if (matcheddata[0].find("\n") == string::npos){ // if not matched a newline, skip until the next newline
         size_t newlnpos = m_rawstr.find("\n");
         if (newlnpos != string::npos)
           m_rawstr = m_rawstr.substr(newlnpos+1);
       }
+      //trace(DEBUG, "Matched '%s', new m_expStr: '%s'\n", matcheddata[0].c_str(), m_rawstr.c_str());
       found++;
     }
     if (found == 0){
@@ -714,6 +723,7 @@ int QuerierC::searchAll()
   namesaving_smatch matches(m_regexstr);
   int found = searchNext(matches);
   while (found>0 && !m_rawstr.empty()){
+    //trace(DEBUG, "Searching pattern: '%s' in '%s', found %d\n", m_regexstr.c_str(), m_rawstr.c_str(), totalfound);
     found = searchNext(matches);
     totalfound+=found;
   }

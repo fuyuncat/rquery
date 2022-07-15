@@ -937,6 +937,8 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
       //  return true;
       //}
       if (varvalues->find(m_expStr) != varvalues->end()){
+        //trace(DEBUG, "Assigning '%s' to '%s' ... \n", (*varvalues)[m_expStr].c_str(), m_expStr.c_str());
+        //dumpMap(*varvalues);
         sResult = (*varvalues)[m_expStr];
         return true;
       }else{

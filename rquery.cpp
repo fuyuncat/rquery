@@ -367,7 +367,7 @@ int main(int argc, char *argv[])
     exitProgram(1);
   }
   
-  gv.setVars(16384*2, FATAL, false);
+  gv.setVars(16384, FATAL, false);
   gv.g_consolemode = false;
   short int readMode = PROMPT, fileMode = READBUFF;
   int iSkip = 0;

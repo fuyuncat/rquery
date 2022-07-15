@@ -92,7 +92,7 @@ bool FunctionC::analyzeExpStr()
   m_funcName = trim_copy(upper_copy(m_expStr.substr(0, m_expStr.find("("))));
   m_expStr = m_funcName+strParams;
   strParams = trim_pair(strParams, "()");
-  vector<string> vParams = split(strParams,',',"//''{}",'\\');
+  vector<string> vParams = split(strParams,',',"//''{}",'\\',{'(',')'});
   for (int i=0; i<vParams.size(); i++){
     trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
     string sParam = trim_copy(vParams[i]);
@@ -105,7 +105,7 @@ bool FunctionC::analyzeExpStr()
     //eParam.analyzeColumns(m_fieldnames, m_fieldtypes);
     m_params.push_back(eParam);
   }
-  if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0 || m_funcName.compare("REPLACE")==0 || m_funcName.compare("DATEFORMAT")==0)
+  if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0 || m_funcName.compare("REPLACE")==0 || m_funcName.compare("REGREPLACE")==0 || m_funcName.compare("DATEFORMAT")==0)
     m_datatype.datatype = STRING;
   else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("ROUND")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0 || m_funcName.compare("STRLEN")==0 || m_funcName.compare("COUNT")==0 || m_funcName.compare("UNIQUECOUNT")==0)
     m_datatype.datatype = LONG;
@@ -347,16 +347,31 @@ bool FunctionC::runNoCaseComparestr(vector<string>* fieldnames, vector<string>* 
 bool FunctionC::runReplace(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
   if (m_params.size() != 3){
-    trace(ERROR, "replace(str, tobereplaced, newstr) function accepts only two parameters.\n");
+    trace(ERROR, "replace(str, tobereplaced, newstr) function accepts only three parameters.\n");
     return false;
   }
-  string sRaw, sReplace, sNew; 
-  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sRaw) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sReplace) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sNew)){
-    replacestr(sRaw, sReplace, sNew);
-    sResult=sRaw;
+  string sReplace, sNew; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sReplace) && m_params[2].evalExpression(fieldnames, fieldvalues, varvalues, sNew)){
+    replacestr(sResult, sReplace, sNew);
     return true;
   }else{
     trace(ERROR, "Failed to run replace(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runRegreplace(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  if (m_params.size() != 3){
+    trace(ERROR, "regreplace(str, regex_pattern, newstr) function accepts only three parameters.\n");
+    return false;
+  }
+  string sReplace, sNew; 
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sReplace) && m_params[2].evalExpression(fieldnames, fieldvalues, varvalues, sNew)){
+    regreplacestr(sResult, sReplace, sNew);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run regreplace(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
     return false;
   }
 }
@@ -537,6 +552,8 @@ bool FunctionC::runFunction(vector<string>* fieldnames, vector<string>* fieldval
     getResult = runNoCaseComparestr(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("REPLACE")==0)
     getResult = runReplace(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("REGREPLACE")==0)
+    getResult = runRegreplace(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("ROUND")==0)
     getResult = runRound(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("LOG")==0)

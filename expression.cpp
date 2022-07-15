@@ -208,7 +208,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
       buildLeafNode(expStr, newNode);
       return newNode->getTopParent();
     }
-    int iPos = findFirstCharacter(expStr, m_operators, 0, "''{}()", '\\');
+    int iPos = findFirstCharacter(expStr, m_operators, 0, "''{}()", '\\',{'(',')'});
     if (iPos<0) { // didnt find any operator, reached the end
       if (expStr.size()>1 && expStr[0]=='(' && expStr[expStr.size()-1]==')') { // quoted expression
         newNode->clear();
@@ -218,6 +218,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
         buildLeafNode(expStr, newNode);
       }
     }else{ // got an operator, building a branch
+      //trace(DEBUG, "Found '%s'(%d) in '%s'\n",expStr.substr(iPos,1).c_str(),iPos,expStr.c_str());
       if (iPos == expStr.size() - 1){ // operator should NOT be the end
         newNode->clear();
         delete newNode;

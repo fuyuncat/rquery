@@ -111,6 +111,7 @@ using namespace std;
 #define DATEFORMAT 14
 #define TRUNCDATE 15
 #define NOW 16
+#define REGREPLACE 17
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103
@@ -170,8 +171,8 @@ void exitProgram(short int code);
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
-vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\'); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-int findFirstCharacter(string str, std::set<char> lookfor, int pos=0, string quoters = "''{}()",  char escape = '\\'); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+int findFirstCharacter(string str, std::set<char> lookfor, int pos=0, string quoters = "''{}()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
 int startsWithWords(string str, vector<string> words); // detect if string start with special words
@@ -189,6 +190,7 @@ string trim_copy(const string & str);
 string upper_copy(const string & str);
 string lower_copy(const string & str);
 void replacestr(string & sRaw, const string & sReplace, const string & sNew);
+void regreplacestr(string & sRaw, const string & sPattern, const string & sNew);
 
 bool isNumber(const string& str);
 bool isInt(const string& str);

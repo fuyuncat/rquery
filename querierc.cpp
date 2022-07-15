@@ -115,7 +115,7 @@ void QuerierC::setrawstr(string rawstr)
 
 bool QuerierC::assignGroupStr(string groupstr)
 {
-  vector<string> vGroups = split(groupstr,',',"''{}()",'\\');
+  vector<string> vGroups = split(groupstr,',',"''{}()",'\\',{'(',')'});
   for (int i=0; i<vGroups.size(); i++){
     trace(DEBUG, "Processing group (%d) '%s'!\n", i, vGroups[i].c_str());
     string sGroup = trim_copy(vGroups[i]);
@@ -131,7 +131,7 @@ bool QuerierC::assignGroupStr(string groupstr)
 
 bool QuerierC::assignLimitStr(string limitstr)
 {
-  vector<string> vLimits = split(limitstr,',',"''{}()",'\\');
+  vector<string> vLimits = split(limitstr,',',"''{}()",'\\',{'(',')'});
   string sFirst = trim_copy(vLimits[0]);
   int iFirst = 0;
   if (isInt(sFirst))
@@ -159,7 +159,7 @@ bool QuerierC::assignLimitStr(string limitstr)
 // m_groups should always be analyzed before m_selections
 bool QuerierC::assignSelString(string selstr)
 {
-  vector<string> vSelections = split(selstr,',',"''{}()",'\\');
+  vector<string> vSelections = split(selstr,',',"''{}()",'\\',{'(',')'});
   for (int i=0; i<vSelections.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
     string sSel = trim_copy(vSelections[i]);
@@ -194,7 +194,7 @@ bool QuerierC::assignSelString(string selstr)
 // m_groups, m_selections should always be analyzed before m_sorts
 bool QuerierC::assignSortStr(string sortstr)
 {
-  vector<string> vSorts = split(sortstr,',',"''{}()",'\\');
+  vector<string> vSorts = split(sortstr,',',"''{}()",'\\',{'(',')'});
   for (int i=0; i<vSorts.size(); i++){
     trace(DEBUG, "Processing sorting keys (%d) '%s'!\n", i, vSorts[i].c_str());
     string sSort = trim_copy(vSorts[i]);
@@ -203,7 +203,7 @@ bool QuerierC::assignSortStr(string sortstr)
       return false;
     }
     SortProp keyProp;
-    vector<string> vKP = split(sSort,' ',"''{}()",'\\');
+    vector<string> vKP = split(sSort,' ',"''{}()",'\\',{'(',')'});
     if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
       keyProp.direction = ASC;
     else
@@ -238,10 +238,10 @@ bool QuerierC::assignSortStr(string sortstr)
 
 bool QuerierC::setFieldTypeFromStr(string setstr)
 {
-  vector<string> vSetFields = split(setstr,',',"//''{}",'\\');
+  vector<string> vSetFields = split(setstr,',',"//''{}",'\\',{'(',')'});
   for (int i=0; i<vSetFields.size(); i++){
-    vector<string> vField = split(vSetFields[i],' ',"//''{}",'\\');
-    vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"//''{}",'\\');
+    vector<string> vField = split(vSetFields[i],' ',"//''{}",'\\',{'(',')'});
+    vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"//''{}",'\\',{'(',')'});
     if (vField.size()<2){
       trace(ERROR, "SET field type failed! Correct format is SET <FIELD> <TYPE>!\n");
       return false;

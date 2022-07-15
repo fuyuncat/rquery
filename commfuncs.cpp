@@ -42,10 +42,12 @@ void GlobalVars::initVars()
 {
   g_inputbuffer = 16384;
   g_tracelevel = FATAL;
-  g_printheader = true;
+  g_printheader = false;
   g_showprogress = false;
   g_ouputformat = TEXT;
   g_logfile = NULL;
+  
+  g_consolemode = false;
 }
 
 void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader)
@@ -127,21 +129,11 @@ void trace(short level, const char *fmt, ...)
       printf((decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
       vprintf(fmt, args);
     }
-    if (level == FATAL)
+    if (level == FATAL && !gv.g_consolemode)
       exitProgram(EXIT_FAILURE);
   }
   va_end(args);
 }
-
-//string string_format( const string& format, Args ... args )
-//{
-//  int size_s = snprintf( nullptr, 0, format.c_str(), args ... ) + 1; // Extra space for '\0'
-//  if( size_s <= 0 ){ throw sruntime_error( "Error during formatting." ); }
-//  size_t size = static_cast<size_t>( size_s );
-//  unique_ptr<char[]> buf( new char[ size ] );
-//  snprintf( buf.get(), size, format.c_str(), args ... );
-//  return string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
-//}
 
 // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 string readQuotedStr(string str, int& pos, string quoters, char escape)
@@ -172,88 +164,74 @@ string readQuotedStr(string str, int& pos, string quoters, char escape)
   return "";
 }
 
-// find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-int findFirstCharacter(string str, std::set<char> lookfor, int pos, string quoters,  char escape)
+// find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
+int findFirstCharacter(string str, std::set<char> lookfor, int pos, string quoters,  char escape, std::set<char> nestedQuoters)
 {
+  //trace(DEBUG, "findFirstCharacter '%s', quoters: '%s' !\n",str.c_str(),quoters.c_str());
   size_t i = 0, j = 0;
-  bool quoted = false;
-  int quoterId = -1;
+  vector<int> q;
   while(i < str.size()) {
-    if (lookfor.find(str[i]) != lookfor.end() && i>0 && !quoted) 
+    if (lookfor.find(str[i]) != lookfor.end() && i>0 && q.size()==0) 
       return i;
-    if (!quoted){
+    if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+      if (i>0 && str[i-1]!=escape){
+        q.pop_back();
+        //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+        ++i;
+        continue;
+      }
+    if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
       for (int k=0; k<(int)(quoters.size()/2); k++){
         if (str[i] == quoters[k*2])
           if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
-            quoted = !quoted;
-            quoterId=k*2;
+            //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+            q.push_back(k*2+1); // quoted start, need to pair the right quoter
+            break;
           }
       }
-    }else{
-      if (str[i] == quoters[quoterId+1])
-        if (i>0 && str[i-1]!=escape){
-          quoted = !quoted;
-          quoterId = -1;
-        }
-    }
     ++i;
   }
+  if (q.size() > 0)
+    trace(ERROR, "(1)Quoters in '%s' are not paired!\n",str.c_str());
   return -1;
 }
 
-// split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-vector<string> split(const string & str, char delim, string quoters, char escape) 
+// split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
+vector<string> split(const string & str, char delim, string quoters, char escape, std::set<char> nestedQuoters) 
 {
   vector<string> v;
   size_t i = 0, j = 0, begin = 0;
-  bool quoted = false;
-  int quoterId = -1;
+  vector<int> q;
   while(i < str.size()) {
-    if (str[i] == delim && i>0 && !quoted) {
-      //trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
+    if (str[i] == delim && i>0 && q.size()==0) {
+      trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       //v.push_back(string(str, begin, i));
       v.push_back(str.substr(begin, i-begin));
       begin = i+1;
     }
-    if (!quoted){
+    if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+      if (i>0 && str[i-1]!=escape){
+        //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+        q.pop_back();
+        ++i;
+        continue;
+      }
+    if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
       for (int k=0; k<(int)(quoters.size()/2); k++){
         if (str[i] == quoters[k*2])
           if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
-            quoted = !quoted;
-            quoterId=k*2;
+            //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+            q.push_back(k*2+1); // quoted start, need to pair the right quoter
+            break;
           }
       }
-    }else{
-      if (str[i] == quoters[quoterId+1])
-        if (i>0 && str[i-1]!=escape){
-          quoted = !quoted;
-          quoterId = -1;
-        }
-    }
     ++i;
   }
   if (begin<str.size())
-    //v.push_back(string(str, begin, str.size()));
     v.push_back(str.substr(begin, str.size()-begin));
 
-  /*while(i < str.size()) {
-    if(str[i] == delim || i == 0) {
-      if(i + 1 < str.size() && str[i + 1] == escape) {
-        j = begin + 1;
-        while(j < str.size() && str[j++] != escape);
-          v.push_back(string(str, begin, j - 1 - i));
-        begin = j - 1;
-        i = j - 1;
-        continue;
-      }
-
-      j = begin + 1;
-      while(j < str.size() && str[j++] != delim);
-      v.push_back(string(str, begin, j - 1 - i - (i ? 1 : 0) ));
-      begin = j;
-    }
-    ++i;
-  }*/
+  if (q.size() > 0)
+    trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
 
   return v;
 }
@@ -305,10 +283,20 @@ string trim_one(const string & str, char c)
 void replacestr(string & sRaw, const string & sReplace, const string & sNew)
 {
   int pos=0;
+  //trace(DEBUG, "replacing '%s','%s','%s' ...",sRaw.c_str(),sReplace.c_str(),sNew.c_str());
   while (sRaw.find(sReplace, pos) != string::npos){
     sRaw.replace(pos, sReplace.length(), sNew);
     pos+=sReplace.length();
   }
+  //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
+}
+
+void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
+{
+  //trace(DEBUG, "replacing '%s','%s','%s' ...",sRaw.c_str(),sPattern.c_str(),sNew.c_str());
+  sregex regexp = sregex::compile(sPattern);
+  sRaw = regex_replace(sRaw,regexp,sNew.c_str());
+  //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
 }
 
 string trim_copy(const string & str)
@@ -678,6 +666,7 @@ bool reglike(string str, string regstr)
 {
   sregex regexp = sregex::compile(regstr);
   smatch matches;
+  //trace(DEBUG, "Matching: '%s' => %s\n", str.c_str(), regstr.c_str());
   try{
     return regex_search(str, matches, regexp);
   }catch (exception& e) {
@@ -949,6 +938,8 @@ short int encodeFunction(string str)
     return NOCASECOMPARESTR;
   else if(sUpper.compare("REPLACE")==0)
     return REPLACE;
+  else if(sUpper.compare("REGREPLACE")==0)
+    return REGREPLACE;
   else if(sUpper.compare("ROUND")==0)
     return ROUND;
   else if(sUpper.compare("LOG")==0)

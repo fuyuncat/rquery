@@ -367,8 +367,8 @@ int main(int argc, char *argv[])
     exitProgram(1);
   }
   
-  gv.setVars(16384*2, FATAL, true);
-  bool bConsoleMode = false;
+  gv.setVars(16384, FATAL, false);
+  gv.g_consolemode = false;
   short int readMode = PROMPT, fileMode = READBUFF;
   int iSkip = 0;
   string sQuery = "", sContent = "";
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
       exitProgram(0);
       i++;
     }else if (lower_copy(string(argv[i])).compare("--console")==0){
-      bConsoleMode = true;
+      gv.g_consolemode = true;
     }else if (lower_copy(string(argv[i])).compare("-l")==0 || lower_copy(string(argv[i])).compare("--logfile")==0){
       if (argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
@@ -485,7 +485,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (bConsoleMode){
+  if (gv.g_consolemode){
     cout << "Welcome to RQuery ";
     cout << VERSION;
     cout << "\n";

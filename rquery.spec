@@ -23,7 +23,6 @@ RQuery is a regular expression (Capturing Group and Named Group supported) based
 
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" ./configure --sysconfdir=/etc
 make %{?_smp_mflags}
 
 

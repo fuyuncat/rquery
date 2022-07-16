@@ -47,22 +47,19 @@ jobs:
           draft: false
           prerelease: false
 
-    - name: set path
-      id: set_path
+    - name: build RPM package
+      id: rpm_build
       run: |
         echo "/usr/bin" >> $GITHUB_PATH
         ls
         pwd
         /usr/bin/mkdir -pv ~/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS}
-        /usr/bin/cp rquery.spec /github/home/rpmbuild/SPECS/rquery.spec
-        /usr/bin/git archive --output=/github/home/rpmbuild/SOURCES/rquery-main.tar.gz --prefix=rquery-main/ HEAD
-        /usr/bin/rpmbuild -ba /github/home/rpmbuild/SPECS/rquery.spec
-
-    - name: build RPM package
-      id: rpm_build
-      uses: naveenrajm7/rpmbuild@master
-      with:
-        spec_file: "rquery.spec"
+        /usr/bin/cp rquery.spec /home/runner/rpmbuild/SPECS/rquery.spec
+        /usr/bin/git archive --output=/home/runner/rpmbuild/SOURCES/rquery-main.tar.gz --prefix=rquery-main/ HEAD
+        /usr/bin/rpmbuild -ba /home/runner/rpmbuild/SPECS/rquery.spec
+        echo "::set-output name=source_rpm_path::/home/runner/rpmbuild/RPMS/x86_64/rquery-latest-1.el7.x86_64.rpm"
+        echo "::set-output name=source_rpm_name::rquery-latest-1.el7.x86_64.rpm"
+        echo "::set-output name=rpm_content_type::application/rpm"
 
     - name: Upload artifact
       id: upload-release-asset 

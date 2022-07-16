@@ -16,7 +16,7 @@ jobs:
     - shell: bash # git must be present before checkout
       run: |
         sudo apt-get update
-        sudo apt-get -y install gcc make libboost-all-dev git
+        sudo apt-get -y install gcc g++ make libboost-all-dev git
 
     - name: Checkout code
       uses: actions/checkout@main

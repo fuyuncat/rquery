@@ -51,6 +51,11 @@ jobs:
       id: set_path
       run: |
         echo "/usr/bin" >> $GITHUB_PATH
+        which g++
+        /usr/bin/rpmdev-setuptree
+        /usr/bin/cp /github/workspace/rquery.spec /github/home/rpmbuild/SPECS/rquery.spec
+        /usr/bin/git archive --output=/github/home/rpmbuild/SOURCES/rquery-main.tar.gz --prefix=rquery-main/ HEAD
+        /usr/bin/rpmbuild -ba /github/home/rpmbuild/SPECS/rquery.spec
 
     - name: build RPM package
       id: rpm_build

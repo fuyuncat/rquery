@@ -11,9 +11,8 @@ Source0:        https://github.com/fuyuncat/rquery/archive/refs/tags/%{name}-%{v
 Packager:       fuyuncat
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-BuildRequires:  gcc-c++
+BuildRequires:  gcc
 BuildRequires:  make
-BuildRequires:  boost-devel
 Requires:       bash
 
 %description

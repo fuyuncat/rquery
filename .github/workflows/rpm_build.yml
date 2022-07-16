@@ -51,11 +51,11 @@ jobs:
         echo "/usr/bin" >> $GITHUB_PATH
         ls
         pwd
-        /usr/bin/mkdir -pv ~/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS}
+        /usr/bin/mkdir -pv ~/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS,BUILDROOT}
         /usr/bin/cp rquery.spec /home/runner/rpmbuild/SPECS/rquery.spec
         /usr/bin/git archive --output=/home/runner/rpmbuild/SOURCES/rquery-main.tar.gz --prefix=rquery-main/ HEAD
         /usr/bin/rpmbuild -ba /home/runner/rpmbuild/SPECS/rquery.spec
-        echo "::set-output name=source_rpm_path::/home/runner/rpmbuild/RPMS/x86_64/rquery-latest-1.el7.x86_64.rpm"
+        echo "::set-output name=source_rpm_path::/home/runner/rpmbuild/RPMS/x86_64/rquery-main-1.x86_64.rpm"
         echo "::set-output name=source_rpm_name::rquery-latest-1.el7.x86_64.rpm"
         echo "::set-output name=rpm_content_type::application/rpm"
 

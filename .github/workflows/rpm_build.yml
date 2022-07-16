@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - shell: bash # git must be present before checkout
-      run: sudo yum -y install gcc gcc-c++ make boost-devel rpm-build git which rpmdevtools
+      run: yum -y install gcc gcc-c++ make boost-devel rpm-build git which rpmdevtools
 
     - name: Checkout code
       uses: actions/checkout@main

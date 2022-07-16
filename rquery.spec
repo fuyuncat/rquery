@@ -11,10 +11,6 @@ Source0:        https://github.com/fuyuncat/rquery/archive/refs/tags/%{name}-%{v
 Packager:       fuyuncat
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-BuildRequires:  gcc
-BuildRequires:  make
-Requires:       bash
-
 %description
 RQuery is a regular expression (Capturing Group and Named Group supported) based text searching engine.
 

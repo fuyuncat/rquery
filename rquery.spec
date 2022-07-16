@@ -13,6 +13,7 @@ BuildRoot:      %{_tmppath}/%{name}-root
 
 BuildRequires:  gcc
 BuildRequires:  make
+BuildRequires:  boost-devel
 Requires:       bash
 
 %description

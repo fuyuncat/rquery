@@ -1,17 +1,17 @@
 Name:           rquery
-Version:        0.891
+Version:        main
 Release:        1%{?dist}
 Summary:        RQuery is a regular expression (Capturing Group and Named Group supported) based text searching engine.
 
 Group:          fuyuncat
 License:        GPL-3.0
 URL:            https://www.hellodba.com
-Source0:        https://github.com/fuyuncat/rquery/archive/refs/tags/%{name}_%{version}.tar.gz
+Source0:        https://github.com/fuyuncat/rquery/archive/refs/tags/main.tar.gz
 
 Packager:       fuyuncat
-BuildRoot:      %{_tmppath}/%{name}-root
+BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-BuildRequires:  gcc
+BuildRequires:  gcc-c++
 BuildRequires:  make
 BuildRequires:  boost-devel
 Requires:       bash

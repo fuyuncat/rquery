@@ -6,7 +6,7 @@ Summary:        RQuery is a regular expression (Capturing Group and Named Group 
 Group:          fuyuncat
 License:        GPL-3.0
 URL:            https://www.hellodba.com
-Source0:        https://github.com/fuyuncat/rquery/archive/refs/tags/main.tar.gz
+Source0:        https://github.com/fuyuncat/rquery/archive/refs/tags/%{version}.tar.gz
 
 Packager:       fuyuncat
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)

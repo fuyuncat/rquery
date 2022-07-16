@@ -56,7 +56,7 @@ jobs:
         /usr/bin/git archive --output=/home/runner/rpmbuild/SOURCES/rquery-main.tar.gz --prefix=rquery-main/ HEAD
         /usr/bin/rpmbuild -ba /home/runner/rpmbuild/SPECS/rquery.spec
         echo "::set-output name=source_rpm_path::/home/runner/rpmbuild/RPMS/x86_64/rquery-main-1.x86_64.rpm"
-        echo "::set-output name=source_rpm_name::rquery-latest-1.el7.x86_64.rpm"
+        echo "::set-output name=source_rpm_name::rquery-main-1.x86_64.rpm"
         echo "::set-output name=rpm_content_type::application/rpm"
 
     - name: Upload artifact
@@ -66,6 +66,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.rpm_build.outputs.source_rpm_path }}
-          asset_name: ${{ steps.rpm_build.outputs.source_rpm_name }}
-          asset_content_type: ${{ steps.rpm_build.outputs.rpm_content_type }}
+          path: ${{ steps.rpm_build.outputs.source_rpm_path }}
+          name: ${{ steps.rpm_build.outputs.source_rpm_name }}
+          content_type: ${{ steps.rpm_build.outputs.rpm_content_type }}

@@ -24,7 +24,7 @@ jobs:
         #/usr/bin/git describe --tags --abbrev=0
         echo "latest tage"
         /usr/bin/git tag|tail -1
-        echo "RELEASE_VERSION=$(/usr/bin/git tag|tail -1)" >> $GITHUB_ENV
+        echo "RELEASE_VERSION=$(/usr/bin/git tag --sort=creatordate|tail -1)" >> $GITHUB_ENV
 
     - name: Delete Release
       id: delete_release

@@ -16,9 +16,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@main
     - name: Set env
-      run: echo "RELEASE_VERSION=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
-    - name: Get Release Version
-      shell: bash
+      run: echo "RELEASE_VERSION=`echo $(/usr/bin/git describe --tags --abbrev=0)`" >> $GITHUB_ENV
+    - name: Chekc Release Version
       run: |
         #echo ${GITHUB_REF}
         #echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV

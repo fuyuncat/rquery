@@ -20,7 +20,9 @@ jobs:
       run: |
         echo ${GITHUB_REF}
         echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-        git tag
+        echo $RELEASE_VERSION
+        echo ${{ env.RELEASE_VERSION }}
+        /usr/bin/git tag
         echo "RELEASE_VERSION=$(git tag|tail -1)" >> $GITHUB_ENV
         echo $RELEASE_VERSION
         echo ${{ env.RELEASE_VERSION }}

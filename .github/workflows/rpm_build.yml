@@ -16,6 +16,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@main
     - name: Get Release Version
+      shell: bash
       run: |
         echo ${GITHUB_REF}
         echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV

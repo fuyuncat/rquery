@@ -31,10 +31,16 @@ jobs:
       uses: dev-drprasad/delete-tag-and-release@v0.2.0
       with:
         delete_release: true # default: false
-        #tag_name: ${{ env.RELEASE_VERSION }}
-        tag_name: latest
+        tag_name: ${{ env.RELEASE_VERSION }}
+        # tag_name: latest
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Delete Tag
+      shell: bash
+      run: |
+        /usr/bin/git tag -d ${{ env.RELEASE_VERSION }}
+        /usr/bin/git push --tags
 
     - name: Create Release
       id: create_release

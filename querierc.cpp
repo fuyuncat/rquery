@@ -81,6 +81,7 @@ void QuerierC::init()
   m_limitbottom = 0;
   m_limittop = -1;
   m_bNamePrinted = false;
+  m_aggrOnly = false;
 #ifdef __DEBUG__
   m_searchtime = 0;
   m_filtertime = 0;
@@ -164,6 +165,7 @@ bool QuerierC::assignLimitStr(string limitstr)
 bool QuerierC::assignSelString(string selstr)
 {
   vector<string> vSelections = split(selstr,',',"''{}()",'\\',{'(',')'});
+  bool bGroupFunc = false, bNonGroupFuncSel = false;
   for (int i=0; i<vSelections.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
     string sSel = trim_copy(vSelections[i]);
@@ -173,24 +175,28 @@ bool QuerierC::assignSelString(string selstr)
     }
     m_selnames.push_back(sSel);
     ExpressionC eSel(sSel);
-    if (m_groups.size() > 0) {// checking if compatible with GROUP
-      vector<string> allColNames;
-      for (int i=0; i<m_groups.size(); i++)
-        m_groups[i].getAllColumnNames(allColNames);
-      if (!eSel.groupFuncOnly() && !eSel.inColNamesRange(allColNames)){
-        trace(ERROR, "Selection '%s' does not exist in Group or invalid using aggregation function \n", sSel.c_str());
-        //continue;
-        //return false;
-      }
-    }else{
-      if (eSel.containGroupFunc()){
-        trace(FATAL, "Invalid using aggregation function in selection '%s', no group involved!\n", sSel.c_str());
-        return false;
-      }
+    vector<string> allColNames;
+    for (int i=0; i<m_groups.size(); i++)
+      m_groups[i].getAllColumnNames(allColNames);
+    if (!eSel.groupFuncOnly() && !eSel.inColNamesRange(allColNames)){
+      trace(ERROR, "Selection '%s' does not exist in Group or invalid using aggregation function \n", sSel.c_str());
+      //continue;
+      //return false;
     }
+
+    if (eSel.containGroupFunc())
+      bGroupFunc = true;
+    else
+      bNonGroupFuncSel = true;
+
     m_selections.push_back(eSel);
     eSel.dump();
     //trace(DEBUG, "Selection: '%s'!\n", eSel.getEntireExpstr().c_str());
+  }
+  m_aggrOnly = (bGroupFunc && !bNonGroupFuncSel);
+  if (!m_aggrOnly && m_groups.size() == 0){ // selection has non-aggregation function but non group field.
+    trace(FATAL, "Invalid using aggregation function in selection, no group involved!\n");
+    return false;
   }
   return true;
 }
@@ -274,7 +280,7 @@ void QuerierC::setOutputFormat(short int format)
 
 bool QuerierC::toGroupOrSort()
 {
-  return (m_groups.size()>0 || m_sorts.size()>0);
+  return (m_groups.size()>0 || m_sorts.size()>0 || m_aggrOnly);
 }
 
 void QuerierC::pairFiledNames(namesaving_smatch matches)
@@ -508,7 +514,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   //trace(DEBUG, " selected:%d (%d)! \n", matched, m_selections.size());
   if (matched){
     if (m_selections.size()>0){
-      if (m_groups.size() == 0){
+      if (m_groups.size() == 0 && !m_aggrOnly){
         //trace(DEBUG, " No group! \n");
         if (!addResultToSet(&fieldValues, &varValues, rowValue, m_selections, m_results))
           return false;
@@ -548,11 +554,13 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         //GroupDataSet dateSet;
         string sResult;
         bool dataSetExist = false;
-        // group expressions to the sorting keys
-        for (int i=0; i<m_groups.size(); i++){
-          m_groups[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
-          groupExps.push_back(sResult);
-        }
+        if (m_aggrOnly) // has aggregation function without any group, give an empty string as the key
+          groupExps.push_back("");
+        else // group expressions to the sorting keys
+          for (int i=0; i<m_groups.size(); i++){
+            m_groups[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
+            groupExps.push_back(sResult);
+          }
         unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it1 = m_nonAggSels.find(groupExps);
         unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > >::iterator it2 = m_aggGroupProp.find(groupExps);
         //unordered_map< vector<string>, unordered_map< string,vector<string> >, hash_container< vector<string> > >::iterator it2 = m_aggFuncTaget.find(groupExps);
@@ -569,7 +577,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         // get data sets
         if (!dataSetExist) // only need keep one nonAggVals for each groupExps
           //nonAggVals.push_back(rowValue[0]); // nonAggSels store raw string in the first member. This is kinda meaningless.
-          nonAggVals.push_back(""); // save memory!!
+          nonAggVals.push_back(""); // save memory!! no point to store a whole raw string any more
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
           //trace(DEBUG1, "Selection '%s': %d \n",m_selections[i].getEntireExpstr().c_str(), m_selections[i].containGroupFunc());
@@ -633,7 +641,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
 bool QuerierC::searchStopped()
 {
   //trace(DEBUG1, "Limit checking. m_groups:%d, m_sorts:%d, m_limittop:%d, m_outputrow:%d!\n",m_groups.size(),m_sorts.size(),m_limittop,m_outputrow);
-  if (m_groups.size()==0 && m_sorts.size()==0 && m_limittop>=0 && m_outputrow>m_limittop)
+  if (m_groups.size()==0 && !m_aggrOnly && m_sorts.size()==0 && m_limittop>=0 && m_outputrow>m_limittop)
     return true;
   else
     return false;
@@ -852,7 +860,7 @@ void QuerierC::runAggFuncExp(ExpressionC* node, unordered_map< string,GroupProp 
 // group result
 bool QuerierC::group()
 {
-  if (m_groups.size() == 0 || m_nonAggSels.size() == 0)
+  if ((m_groups.size() == 0 && !m_aggrOnly) || m_nonAggSels.size() == 0)
     return true;
 
   for (unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it=m_nonAggSels.begin(); it!=m_nonAggSels.end(); ++it){

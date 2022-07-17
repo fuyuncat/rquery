@@ -138,6 +138,7 @@ class QuerierC
     //unordered_map< vector<string>, unordered_map< string,vector<string> >, hash_container< vector<string> > > m_aggFuncTaget;  // temp results for calculating aggregation functions. mapping group keys: <func_expr:evaled parameter expressions>
     //std::set < vector<string> > m_nonAggSelSet; // the vector is: group keys + non aggregation selections
     unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > > m_aggGroupProp; // mapping group keys: group properties
+    bool m_aggrOnly; // the selection has aggregation functions only, no matter if there is any group field.
 
     bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,vector<string> > & aggFuncTaget); // eval expression in aggregation paramter and store in a data set

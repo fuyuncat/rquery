@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.
+   # [0.892] 2022-07-17
+   Fix defect: Unable to handle aggregation function (only) without group field
    # [0.892] 2022-07-15
    Hot fix: replace bug; nested function calls
    Hot fix: infinite loop

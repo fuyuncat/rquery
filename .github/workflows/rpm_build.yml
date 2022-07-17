@@ -20,11 +20,15 @@ jobs:
         #echo ${GITHUB_REF}
         #echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
         /usr/bin/git pull
-        /usr/bin/git tag
+        /usr/bin/git tag --sort=creatordate
         #/usr/bin/git describe --tags --abbrev=0
         echo "latest tage"
-        /usr/bin/git tag|tail -1
+        /usr/bin/git tag --sort=creatordate|tail -1
         echo "RELEASE_VERSION=$(/usr/bin/git tag --sort=creatordate|tail -1)" >> $GITHUB_ENV
+        echo ${{ env.RELEASE_VERSION }}
+
+    - name: Cancel job
+      uses: andymckay/cancel-action@0.2
 
     - name: Delete Release
       id: delete_release

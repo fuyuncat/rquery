@@ -1,5 +1,5 @@
 Name:           rquery
-Version:        main
+#Version:        main
 Release:        1%{?dist}
 Summary:        RQuery is a regular expression (Capturing Group and Named Group supported) based text searching engine.
 

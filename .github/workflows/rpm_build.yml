@@ -1,9 +1,9 @@
 on: 
     push:
         branches: [ main ]
-      # Sequence of patterns matched against refs/tags
-      # tags:
-      #  - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+        # Sequence of patterns matched against refs/tags
+        tags:
+          - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
   
 name: Create RPM Release
 
@@ -15,13 +15,19 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@main
+    - name: Set env
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Get Release Version
+      run: |
+        echo $RELEASE_VERSION
+        echo ${{ env.RELEASE_VERSION }}
 
     - name: Delete Release
       id: delete_release
       uses: dev-drprasad/delete-tag-and-release@v0.2.0
       with:
         delete_release: true # default: false
-        tag_name: latest
+        tag_name: ${{ env.RELEASE_VERSION }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -31,8 +37,8 @@ jobs:
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
       with:
-          tag_name: latest
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ env.RELEASE_VERSION }}
+          release_name: Release ${{ env.RELEASE_VERSION }}
           allowUpdates: true
           body: |
             Changes in this Release
@@ -52,18 +58,20 @@ jobs:
         ls
         pwd
         /usr/bin/mkdir -pv ~/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS,BUILDROOT}
-        /usr/bin/cp rquery.spec /home/runner/rpmbuild/SPECS/rquery.spec
-        /usr/bin/git archive --output=/home/runner/rpmbuild/SOURCES/rquery-main.tar.gz --prefix=rquery-main/ HEAD
+        /usr/bin/cp rquery.spec --define "Version ${{ env.RELEASE_VERSION }}" /home/runner/rpmbuild/SPECS/rquery.spec
+        /usr/bin/git archive --output=/home/runner/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
         /usr/bin/rpmbuild -ba /home/runner/rpmbuild/SPECS/rquery.spec
-        echo "::set-output name=source_rpm_path::/home/runner/rpmbuild/RPMS/x86_64/rquery-main-1.x86_64.rpm"
-        echo "::set-output name=source_rpm_name::rquery-latest.el7.x86_64.rpm"
-        echo "::set-output name=rpm_content_type::application/rpm"
+        echo "::set-output name=source_rpm_path::/home/runner/rpmbuild/RPMS/x86_64/rquery-${{ env.RELEASE_VERSION }}-1.x86_64.rpm"
+        echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.rpm"
+        echo "::set-output name=rpm_content_type::application/octet-stream"
 
     - name: Upload artifact
       id: upload-release-asset 
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-release-asset@v1
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-          path: ${{ steps.rpm_build.outputs.source_rpm_path }}
-          name: ${{ steps.rpm_build.outputs.source_rpm_name }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.rpm_build.outputs.source_rpm_path }}
+          asset_name: ${{ steps.rpm_build.outputs.source_rpm_name }}
+          asset_content_type: ${{ steps.rpm_build.outputs.rpm_content_type }}

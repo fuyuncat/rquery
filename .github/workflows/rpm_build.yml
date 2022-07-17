@@ -15,8 +15,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@main
-    #- name: Set env
-    #  run: echo "RELEASE_VERSION=`echo $(/usr/bin/git describe --tags --abbrev=0)`" >> $GITHUB_ENV
     - name: Chekc Release Version
       run: |
         #echo ${GITHUB_REF}

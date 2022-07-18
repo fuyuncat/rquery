@@ -22,7 +22,7 @@ jobs:
         /usr/bin/git pull
         /usr/bin/git pull --tags
         echo "All tags"
-        /usr/bin/git for-each-ref --sort=creatordate --format "%(refname)" refs/tags
+        /usr/bin/git for-each-ref --sort=creatordate --format "%(refname) %(creatordate)" refs/tags
         #/usr/bin/git tag --sort=creatordate
         #/usr/bin/git describe --tags --abbrev=0
         echo "latest tag"

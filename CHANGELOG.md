@@ -1,8 +1,11 @@
 # Change Log
 All change logs will be documented here.
+   # [0.901] 2022-07-18
+   Fixed compile warnings
+   # [0.90] 2022-07-18
+   New feature: added isnull(arg) function 
    # [0.893] 2022-07-18
    New feature: Select can have a alias name. Syntax: select <expression> as <alias> ...
-   New feature: added isnull(arg) function 
    # [0.892] 2022-07-17
    Fix defect: Unable to handle aggregation function (only) without group field
    # [0.892] 2022-07-15

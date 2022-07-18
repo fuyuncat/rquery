@@ -198,7 +198,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
         thisTime = curtime();
         if (gv.g_showprogress)
-          printf("\r%d bytes(%.2f%%) read in %f seconds.", total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+          printf("\r%ld bytes(%.2f%%) read in %f seconds.", total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
       }
       if (gv.g_showprogress)
         printf("\n");

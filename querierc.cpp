@@ -917,6 +917,7 @@ bool QuerierC::group()
     }
     m_sortKeys.push_back(vResults);
   }
+  return true;
 }
 
 // doing merging sort exchanging
@@ -1000,6 +1001,7 @@ bool QuerierC::sort()
   }
   mergeSort(0,(int)floor(m_sortKeys.size())/2, (int)floor(m_sortKeys.size())/2+1,m_sortKeys.size()-1);
   //trace(DEBUG1, "Sorting completed \n");
+  return true;
 }
 
 //void QuerierC::formatoutput(namesaving_smatch matches)
@@ -1161,16 +1163,16 @@ void QuerierC::outputExtraInfo(size_t total, short int mode, bool bPrintHeader)
     //  printf("\"ReadLines\": %d,\n", total);
     //else
     //  printf("\"ReadBytes\": %d,\n", total);
-    printf("\t\"MatchedLines\": %d,\n", m_line);
-    printf("\t\"SelectedRows\": %d\n", m_outputrow);
+    printf("\t\"MatchedLines\": %ld,\n", m_line);
+    printf("\t\"SelectedRows\": %ld\n", m_outputrow);
     printf("}\n");
   }else if (bPrintHeader){
     //if (mode == READLINE)
     //  printf("Read %d lines(s).\n", total);
     //else
     //  printf("Read %d byte(s).\n", total);
-    printf("Pattern matched %d line(s).\n", m_line);
-    printf("Selected %d row(s).\n", m_outputrow);
+    printf("Pattern matched %ld line(s).\n", m_line);
+    printf("Selected %ld row(s).\n", m_outputrow);
   }
 }
 

@@ -116,9 +116,8 @@ bool ExpressionC::expstrAnalyzed()
 ExpressionC* ExpressionC::getTopParent()
 {
   if (m_parentNode)
-    m_parentNode->getTopParent();
-  else
-    return this;
+    return m_parentNode->getTopParent();
+  return this;
 }
 
 /*********** Build Btree from expression string logic ******************
@@ -378,8 +377,9 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
     }
   }catch (exception& e) {
     trace(ERROR, "Building leaf node exception: %s\n", e.what());
-    return "";
+    return false;
   }
+  return false;
 }
 
 // build expression class from the expression string
@@ -390,8 +390,9 @@ bool ExpressionC::buildExpression()
     root->copyTo(this);
     root->clear();
     delete root;
-  }else
-    return false;
+    return true;
+  }
+  return false;
 }
 
 // get left tree Height

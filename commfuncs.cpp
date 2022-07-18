@@ -120,13 +120,13 @@ void trace(short level, const char *fmt, ...)
       char buf[1024];
       int bsize = 0;
       //memset( buf, '\0', sizeof(char)*1024 );
-      bsize = sprintf(buf, (decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
+      bsize = sprintf(buf, string(decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
       gv.g_logfile->write(buf, bsize);
       //memset( buf, '\0', sizeof(char)*1024 );
       bsize = vsprintf(buf, fmt, args);
       gv.g_logfile->write(buf, bsize);
     }else{
-      printf((decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
+      printf(string(decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
       vprintf(fmt, args);
     }
     if (level == FATAL && !gv.g_consolemode)
@@ -1612,6 +1612,7 @@ string getFirstToken(string str, string token){
     trace(ERROR, "Regular search exception: %s\n", e.what());
     return "";
   }
+  return "";
 }
 
 //get all matched regelar token from a string

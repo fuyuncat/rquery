@@ -42,12 +42,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Delete Tag
-      shell: bash
-      run: |
-        /usr/bin/git tag -d ${{ env.RELEASE_VERSION }}
-        /usr/bin/git push --tags
-        /usr/bin/git push --delete origin refs/tags/${{ env.RELEASE_VERSION }}
+    #- name: Delete Tag
+    #  shell: bash
+    #  run: |
+    #    /usr/bin/git tag -d ${{ env.RELEASE_VERSION }}
+    #    /usr/bin/git push --tags
+    #    /usr/bin/git push --delete origin refs/tags/${{ env.RELEASE_VERSION }}
 
     - name: Create Release
       id: create_release

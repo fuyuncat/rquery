@@ -910,6 +910,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
       sResult = m_expStr;
       return true;
     }else if (m_expType == FUNCTION){
+      //trace(DEBUG2, "Expression '%s' is a fucntion.. \n",m_expStr.c_str());
       FunctionC* func = new FunctionC(m_expStr);
       func->analyzeColumns(m_fieldnames, m_fieldtypes);
       bool gotResult = func->runFunction(fieldnames, fieldvalues, varvalues, sResult);
@@ -953,11 +954,15 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
     }
   }else{
     string leftRst = "", rightRst = "";
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldnames, fieldvalues, varvalues, leftRst))
+    if (!m_leftNode || !m_leftNode->evalExpression(fieldnames, fieldvalues, varvalues, leftRst)){
+      trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
       return false;
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldnames, fieldvalues, varvalues, rightRst))
+    }
+    if (!m_rightNode || !m_rightNode->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
+      trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
       return false;
-    //trace(DEBUG,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
+    }
+    //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
     return anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
   }
 

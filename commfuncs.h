@@ -113,6 +113,10 @@ using namespace std;
 #define NOW 16
 #define REGREPLACE 17
 #define ISNULL 18
+#define SWITCH 19
+#define PAD 20
+#define GREATEST 21
+#define LEAST 22
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103

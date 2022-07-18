@@ -139,7 +139,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
   }
   // size_t filesize = ifile.tellg();
   size_t filesize = getFileSize(filename);
-  trace(DEBUG2, "File size '%d'.\n", filesize);
+  // trace(DEBUG2, "File size '%d'.\n", filesize);
   total = 0;
 
   switch (fileMode){

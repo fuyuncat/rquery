@@ -74,6 +74,7 @@ Functions can be used in the expression. We current provide some essential norma
    - regreplace(str,sub1,sub2) : Normal function. Replace all regular pattern in a string with sub2 (capturing group supported).<br />
    - Comparestr(str1,str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - NocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
+   - pad(seed,len) : Normal function. Construct a new string from seed multiple len times.<br />
    - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
    - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
    - round(num) : Normal function. Round a given float number.<br />
@@ -82,6 +83,9 @@ Functions can be used in the expression. We current provide some essential norma
    - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />
    - now() : Normal function. Get current date time.<br />
    - truncdate(date,seconds) : Normal function. Truncate a date a number is multiple of the given second number.<br />
+   - switch(input,case1,return1[,case2,result2...][,default]): Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br />
+   - greatest(expr1,expr2[,...]) : Normal function. Return the largest one of the given expressions.<br />
+   - least(expr1,expr2[,...]) : Normal function. Return the smallest one of the given expressions.<br />
    - Count(expr) : Aggregation function. Count the number of expr.<br />
    - Sum(expr) : Aggregation function. Sum the number of expr.<br />
    - Max(expr) : Aggregation function. Get the maximum value of expr.<br />

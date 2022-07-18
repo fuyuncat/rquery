@@ -105,7 +105,7 @@ bool FunctionC::analyzeExpStr()
     //eParam.analyzeColumns(m_fieldnames, m_fieldtypes);
     m_params.push_back(eParam);
   }
-  if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0 || m_funcName.compare("REPLACE")==0 || m_funcName.compare("REGREPLACE")==0 || m_funcName.compare("DATEFORMAT")==0)
+  if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0 || m_funcName.compare("REPLACE")==0 || m_funcName.compare("REGREPLACE")==0 || m_funcName.compare("DATEFORMAT")==0 || m_funcName.compare("PAD")==0 || m_funcName.compare("SWITCH")==0 || m_funcName.compare("GREATEST")==0 || m_funcName.compare("LEAST")==0)
     m_datatype.datatype = STRING;
   else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("ROUND")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0 || m_funcName.compare("STRLEN")==0 || m_funcName.compare("COUNT")==0 || m_funcName.compare("UNIQUECOUNT")==0 || m_funcName.compare("ISNULL")==0)
     m_datatype.datatype = LONG;
@@ -540,6 +540,100 @@ bool FunctionC::runNow(vector<string>* fieldnames, vector<string>* fieldvalues, 
   return true;
 }
 
+// switch(input,case1,return1[,case2,result2...][,default]): if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided.
+bool FunctionC::runSwitch(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  if (m_params.size() <= 2){
+    trace(ERROR, "switch() function accepts at least three parameters.\n");
+    return false;
+  }
+  if (!m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult)){
+    trace(ERROR, "(0)Eval expression '%s' failed.\n",m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+  string scase,sreturn;
+  for (int i=1;i<m_params.size();i++){
+    if (m_params[i].getEntireExpstr().compare("2")==0)
+      int breakme=1;
+    if (!m_params[i].evalExpression(fieldnames, fieldvalues, varvalues, scase)){
+      trace(ERROR, "(1)Eval expression '%s' failed.\n",m_params[i].getEntireExpstr().c_str());
+      return false;
+    }
+    if (i+1<m_params.size()){
+      if (!m_params[i+1].evalExpression(fieldnames, fieldvalues, varvalues, sreturn)){
+        trace(ERROR, "(2)Eval expression '%s' failed.\n",m_params[i+1].getEntireExpstr().c_str());
+        return false;
+      }
+      i++;
+    }else{
+      //trace(DEBUG2,"Retruning default '%s'\n",scase.c_str());
+      sResult = scase;
+      return true;
+    }
+    //trace(DEBUG2,"Comparing '%s' '%s'\n",sResult.c_str(),scase.c_str());
+    if (sResult.compare(scase) == 0){
+      sResult = sreturn;
+      return true;
+    }
+  }
+  //trace(DEBUG2,"Retruning original '%s'\n",sResult.c_str());
+  return true;
+}
+
+bool FunctionC::runPad(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "pad() function accepts only two parameters.\n");
+    return false;
+  }
+  string seed, sLen;
+  if (m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, seed) && m_params[1].evalExpression(fieldnames, fieldvalues, varvalues, sLen)){
+    if (!isInt(sLen))
+      return false;
+    sResult = "";
+    for (int i=0;i<atoi(sLen.c_str());i++)
+      sResult.append(seed);
+    return true;
+  }else
+    return false;
+}
+
+bool FunctionC::runGreatest(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  if (m_params.size() <= 1){
+    trace(ERROR, "greatest() function accepts at least two parameters.\n");
+    return false;
+  }
+  if (!m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult))
+    return false;
+  string scomp;
+  for (int i=1;i<m_params.size();i++){
+    if (!m_params[i].evalExpression(fieldnames, fieldvalues, varvalues, scomp))
+      return false;
+    if (scomp.compare(sResult)>0)
+      sResult = scomp;
+  }
+  return true;
+}
+
+bool FunctionC::runLeast(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  if (m_params.size() <= 1){
+    trace(ERROR, "least() function accepts at least two parameters.\n");
+    return false;
+  }
+  if (!m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult))
+    return false;
+  string scomp;
+  for (int i=1;i<m_params.size();i++){
+    if (!m_params[i].evalExpression(fieldnames, fieldvalues, varvalues, scomp))
+      return false;
+    if (scomp.compare(sResult)<0)
+      sResult = scomp;
+  }
+  return true;
+}
+
 // run function and get result
 bool FunctionC::runFunction(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
 {
@@ -570,6 +664,14 @@ bool FunctionC::runFunction(vector<string>* fieldnames, vector<string>* fieldval
     getResult = runReplace(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("REGREPLACE")==0)
     getResult = runRegreplace(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("SWITCH")==0)
+    getResult = runSwitch(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("PAD")==0)
+    getResult = runPad(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("GREATEST")==0)
+    getResult = runGreatest(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("LEAST")==0)
+    getResult = runLeast(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("ROUND")==0)
     getResult = runRound(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("LOG")==0)

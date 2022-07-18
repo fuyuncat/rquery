@@ -182,8 +182,8 @@ bool QuerierC::assignSelString(string selstr)
     vector<string> allColNames;
     for (int i=0; i<m_groups.size(); i++)
       m_groups[i].getAllColumnNames(allColNames);
-    if (!eSel.groupFuncOnly() && !eSel.inColNamesRange(allColNames)){
-      trace(ERROR, "Selection '%s' does not exist in Group or invalid using aggregation function \n", sSel.c_str());
+    if (m_groups.size()>0 && !eSel.groupFuncOnly() && !eSel.inColNamesRange(allColNames)){
+      trace(ERROR, "Selection '%s' does not exist in Group or invalid using aggregation function \n", vSelAlias[0].c_str());
       //continue;
       //return false;
     }

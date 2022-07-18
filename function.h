@@ -65,6 +65,10 @@ class FunctionC
     bool runNoCaseComparestr(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runReplace(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runRegreplace(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runSwitch(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runPad(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runGreatest(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
+    bool runLeast(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runFloor(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runCeil(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runTimediff(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);

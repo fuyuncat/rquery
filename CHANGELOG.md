@@ -2,6 +2,7 @@
 All change logs will be documented here.
    # [0.901] 2022-07-18
    Fixed compile warnings
+   New feature: added switch,pad,greatest,least functions 
    # [0.90] 2022-07-18
    New feature: added isnull(arg) function 
    # [0.893] 2022-07-18

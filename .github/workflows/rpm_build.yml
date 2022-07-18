@@ -32,15 +32,15 @@ jobs:
         echo ${reftag#*tags/}
         echo "RELEASE_VERSION=${reftag#*tags/}" >> $GITHUB_ENV
 
-    - name: Delete Release
-      id: delete_release
-      uses: dev-drprasad/delete-tag-and-release@v0.2.0
-      with:
-        delete_release: true # default: false
-        tag_name: ${{ env.RELEASE_VERSION }}
-        #tag_name: latest
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #- name: Delete Release
+    #  id: delete_release
+    #  uses: dev-drprasad/delete-tag-and-release@v0.2.0
+    #  with:
+    #    delete_release: true # default: false
+    #    tag_name: ${{ env.RELEASE_VERSION }}
+    #    #tag_name: latest
+    #  env:
+    #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     #- name: Delete Tag
     #  shell: bash

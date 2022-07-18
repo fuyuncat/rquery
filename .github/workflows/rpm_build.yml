@@ -22,10 +22,10 @@ jobs:
         /usr/bin/git pull
         /usr/bin/git pull --tags
         echo "All tags"
-        /usr/bin/git for-each-ref --sort=creatordate --format %(refname) refs/tags
+        /usr/bin/git for-each-ref --sort=creatordate --format "%(refname)" refs/tags
         #/usr/bin/git tag --sort=creatordate
         #/usr/bin/git describe --tags --abbrev=0
         echo "latest tag"
-        reftag=$(/usr/bin/git for-each-ref --sort=creatordate --format %(refname) refs/tags|tail -1)
+        reftag=$(/usr/bin/git for-each-ref --sort=creatordate --format "%(refname)" refs/tags|tail -1)
         echo ${reftag#*tags/}
         echo "RELEASE_VERSION=${reftag#*tags/}" >> $GITHUB_ENV

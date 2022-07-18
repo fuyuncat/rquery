@@ -67,6 +67,7 @@ Functions can be used in the expression. We current provide some essential norma
    - upper(str) : Normal function. Convert a string to upper case.<br />
    - lower(str) : Normal function. Convert a string to lower case.<br />
    - strlen(str) : Normal function. Return the length of a string.<br />
+   - isnull(expr) : Normal function. Return 1 if the size of the give parameter is 0, otherwise return 0<br />
    - instr(str,sub) : Normal function. Return the position of a sub string in a string. Return -1 if caannot find the sub string<br />
    - substr(str,pos,len) : Normal function. Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string.<br />
    - replace(str,sub1,sub2) : Normal function. Replace all sub1 in a string with sub2.<br />

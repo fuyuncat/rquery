@@ -171,6 +171,7 @@ void exitProgram(short int code);
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
+vector<string> split(const string & str, string delim = " ", string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 int findFirstCharacter(string str, std::set<char> lookfor, int pos=0, string quoters = "''{}()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 

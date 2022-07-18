@@ -58,7 +58,7 @@ void usage()
   printf("\t\tparse /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n");
   printf("\t\tset <field datatype [date format],...> -- Set the date type of the fields.\n");
   printf("\t\tfilter <filter conditions> -- Provide filter conditions to filt the content.\n");
-  printf("\t\tselect <field or expression,...> -- Provide a field name/variables/expressions to be selected.\n");
+  printf("\t\tselect <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected.\n");
   printf("\t\tgroup <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n");
   printf("\t\tsort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
   printf("\t\tlimt <n | bottomN,topN> -- Provide output limit range.\n");
@@ -504,7 +504,7 @@ int main(int argc, char *argv[])
         cout << "parse /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n";
         cout << "set <field datatype [date format],...> -- Set the date type of the fields.\n";
         cout << "filter <filter conditions> -- Provide filter conditions to filt the content.\n";
-        cout << "select <field or expression,...> -- Provide a field name/variables/expressions to be selected.\n";
+        cout << "select <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected.\n";
         cout << "group <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n";
         cout << "sort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n";
         cout << "limt <n | bottomN,topN> -- Provide output limit range.\n";

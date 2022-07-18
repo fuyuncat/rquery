@@ -173,8 +173,12 @@ bool QuerierC::assignSelString(string selstr)
       trace(ERROR, "Empty selection string!\n");
       return false;
     }
-    m_selnames.push_back(sSel);
-    ExpressionC eSel(sSel);
+    vector<string> vSelAlias = split(sSel," as ","''{}()",'\\',{'(',')'});
+    if (vSelAlias.size()>1)
+      m_selnames.push_back(trim_copy(vSelAlias[1]));
+    else
+      m_selnames.push_back(sSel);
+    ExpressionC eSel(vSelAlias[0]);
     vector<string> allColNames;
     for (int i=0; i<m_groups.size(); i++)
       m_groups[i].getAllColumnNames(allColNames);
@@ -194,7 +198,7 @@ bool QuerierC::assignSelString(string selstr)
     //trace(DEBUG, "Selection: '%s'!\n", eSel.getEntireExpstr().c_str());
   }
   m_aggrOnly = (bGroupFunc && !bNonGroupFuncSel);
-  if (!m_aggrOnly && m_groups.size() == 0){ // selection has non-aggregation function but non group field.
+  if (bGroupFunc && m_groups.size() == 0){ // selection has non-aggregation function but non group field.
     trace(FATAL, "Invalid using aggregation function in selection, no group involved!\n");
     return false;
   }

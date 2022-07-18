@@ -236,6 +236,49 @@ vector<string> split(const string & str, char delim, string quoters, char escape
   return v;
 }
 
+// split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
+vector<string> split(const string & str, string delim, string quoters, char escape, std::set<char> nestedQuoters) 
+{
+  if (delim.size()==1)
+    return split(str,delim[0],quoters,escape,nestedQuoters);
+  vector<string> v;
+  string upDelim = upper_copy(delim);
+  size_t i = 0, j = 0, begin = 0;
+  vector<int> q;
+  while(i < str.size()) {
+    if (str.size()>=i+upDelim.size() && upper_copy(str.substr(i,upDelim.size())).compare(upDelim)==0 && i>0 && q.size()==0) {
+      trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
+      //v.push_back(string(str, begin, i));
+      v.push_back(str.substr(begin, i-begin));
+      begin = i+upDelim.size();
+    }
+    if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+      if (i>0 && str[i-1]!=escape){
+        //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+        q.pop_back();
+        ++i;
+        continue;
+      }
+    if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
+      for (int k=0; k<(int)(quoters.size()/2); k++){
+        if (str[i] == quoters[k*2])
+          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+            //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+            q.push_back(k*2+1); // quoted start, need to pair the right quoter
+            break;
+          }
+      }
+    ++i;
+  }
+  if (begin<str.size())
+    v.push_back(str.substr(begin, str.size()-begin));
+
+  if (q.size() > 0)
+    trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
+
+  return v;
+}
+
 string trim_pair(const string & str, const string & pair)
 {
   if(str.size() > 1 && pair.size() == 2 && str[0] == pair[0] && str[str.size()-1] == pair[1])

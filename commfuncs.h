@@ -112,6 +112,7 @@ using namespace std;
 #define TRUNCDATE 15
 #define NOW 16
 #define REGREPLACE 17
+#define ISNULL 18
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103

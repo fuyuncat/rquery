@@ -55,6 +55,7 @@ class FunctionC
 
     bool analyzeExpStr();  // analyze expression string to get the function name (upper case) and parameter expression (classes)
     
+    bool runIsnull(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runUpper(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runLower(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);
     bool runSubstr(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult);

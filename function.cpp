@@ -107,7 +107,7 @@ bool FunctionC::analyzeExpStr()
   }
   if(m_funcName.compare("UPPER")==0 || m_funcName.compare("LOWER")==0 || m_funcName.compare("SUBSTR")==0 || m_funcName.compare("REPLACE")==0 || m_funcName.compare("REGREPLACE")==0 || m_funcName.compare("DATEFORMAT")==0)
     m_datatype.datatype = STRING;
-  else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("ROUND")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0 || m_funcName.compare("STRLEN")==0 || m_funcName.compare("COUNT")==0 || m_funcName.compare("UNIQUECOUNT")==0)
+  else if(m_funcName.compare("FLOOR")==0 || m_funcName.compare("CEIL")==0 || m_funcName.compare("ROUND")==0 || m_funcName.compare("TIMEDIFF")==0 || m_funcName.compare("INSTR")==0 || m_funcName.compare("COMPARESTR")==0 || m_funcName.compare("NOCASECOMPARESTR")==0 || m_funcName.compare("STRLEN")==0 || m_funcName.compare("COUNT")==0 || m_funcName.compare("UNIQUECOUNT")==0 || m_funcName.compare("ISNULL")==0)
     m_datatype.datatype = LONG;
   else if(m_funcName.compare("LOG")==0 || m_funcName.compare("AVERAGE")==0 || m_funcName.compare("SUM")==0)
     m_datatype.datatype = DOUBLE;
@@ -210,6 +210,20 @@ bool FunctionC::remove(FunctionC* node){
     return true;
   }else
     return removed;
+}
+
+bool FunctionC::runIsnull(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isnull() function accepts only one parameter.\n");
+    return false;
+  }
+  bool gotResult = m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, sResult);
+  if (gotResult){
+    sResult = intToStr(sResult.length()==0?1:0);
+    return true;
+  }else
+    return false;
 }
 
 bool FunctionC::runUpper(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult)
@@ -542,6 +556,8 @@ bool FunctionC::runFunction(vector<string>* fieldnames, vector<string>* fieldval
     getResult = runCeil(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("TIMEDIFF")==0)
     getResult = runTimediff(fieldnames, fieldvalues, varvalues, sResult);
+  else if(m_funcName.compare("ISNULL")==0)
+    getResult = runIsnull(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("INSTR")==0)
     getResult = runInstr(fieldnames, fieldvalues, varvalues, sResult);
   else if(m_funcName.compare("STRLEN")==0)

@@ -32,9 +32,6 @@ jobs:
         echo ${reftag#*tags/}
         echo "RELEASE_VERSION=${reftag#*tags/}" >> $GITHUB_ENV
 
-    - name: Cancel job
-      uses: andymckay/cancel-action@0.2
-
     - name: Delete Release
       id: delete_release
       uses: dev-drprasad/delete-tag-and-release@v0.2.0

@@ -1019,7 +1019,7 @@ void QuerierC::formatoutput(vector<string> datas)
     if (m_outputrow==m_limitbottom-1){
       printf("{\n");
       printf("\t\"records\": [\n");
-    }else{
+    }else if (m_outputrow>m_limitbottom-1){
       printf(",\n");
     }
   }

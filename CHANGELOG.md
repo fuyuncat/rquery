@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.
+   # [0.902] 2022-07-19
+   Fixed bug: Json format becomes messy when limt N,M involved
+   Fixed bug: Selected row number is incorrect when limt N,M involved
+   Fixed compile warnings
    # [0.901] 2022-07-18
    Fixed compile warnings
    New feature: added switch,pad,greatest,least functions 

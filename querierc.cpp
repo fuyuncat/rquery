@@ -569,7 +569,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         }
         m_sortKeys.push_back(vResults);
       }else{ // need to do group. store evaled data in a temp date set
-        //trace(DEBUG, " Grouping! \n");
+        //trace(DEBUG2, " Grouping! \n");
         vector<string> groupExps;  // the group expressions. as the key of following hash map
         vector<string> nonAggVals;
         //unordered_map< string,vector<string> > aggFuncTaget;
@@ -582,8 +582,10 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
         else // group expressions to the sorting keys
           for (int i=0; i<m_groups.size(); i++){
             m_groups[i].evalExpression(&m_fieldnames, &fieldValues, &varValues, sResult);
+            //trace(DEBUG2, "Adding '%s' from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str());
             groupExps.push_back(sResult);
           }
+        //trace(DEBUG2, "Checking  '%s' (%d)\n", groupExps[0].c_str(), m_aggrOnly);
         unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it1 = m_nonAggSels.find(groupExps);
         unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > >::iterator it2 = m_aggGroupProp.find(groupExps);
         //unordered_map< vector<string>, unordered_map< string,vector<string> >, hash_container< vector<string> > >::iterator it2 = m_aggFuncTaget.find(groupExps);
@@ -886,6 +888,7 @@ bool QuerierC::group()
   if ((m_groups.size() == 0 && !m_aggrOnly) || m_nonAggSels.size() == 0)
     return true;
 
+  //trace(DEBUG2, "m_nonAggSels size: %d\n", m_nonAggSels.size());
   for (unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it=m_nonAggSels.begin(); it!=m_nonAggSels.end(); ++it){
     vector<string> vResults;
     vResults.push_back(it->second[0]);
@@ -894,7 +897,7 @@ bool QuerierC::group()
     for (int i=0; i<m_selections.size(); i++){
       string sResult;
       if (!m_selections[i].containGroupFunc()){ // non aggregation function selections
-        //trace(DEBUG1, "None aggr func selection: %s\n", it->second[iNonAggSelID].c_str());
+        //trace(DEBUG2, "None aggr func selection: %s\n", it->second[iNonAggSelID].c_str());
         vResults.push_back(it->second[iNonAggSelID]);
         iNonAggSelID++;
       }else{
@@ -902,6 +905,7 @@ bool QuerierC::group()
         string sResult;
         //runAggFuncExp(&m_selections[i], &(m_aggFuncTaget[it->first]), sResult);
         runAggFuncExp(&m_selections[i], &(m_aggGroupProp[it->first]), sResult);
+        //trace(DEBUG2, "Aggr func selection: %s\n", sResult.c_str());
         vResults.push_back(sResult);
       }
     }
@@ -942,12 +946,12 @@ bool QuerierC::group()
 // doing merging sort exchanging
 void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
 {
-  //trace(DEBUG1, "Mergeing %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
+  trace(DEBUG2, "Mergeing %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
   if (iLeftT >= iRightB || iLeftB > iLeftT || iRightB > iRightT)
     return;
   else{
-    mergeSort(iLeftB, iLeftB+(int)floor(iLeftT-iLeftB)/2, iLeftB+(int)floor(iLeftT-iLeftB)/2+1, iLeftT);
-    mergeSort(iRightB, iRightB+(int)floor(iRightT-iRightB)/2, iRightB+(int)floor(iRightT-iRightB)/2+1, iRightT);
+    mergeSort(iLeftB, max(iLeftB,iLeftB+(int)floor(iLeftT-iLeftB)/2-1), min(iLeftT,max(iLeftB,iLeftB+(int)floor(iLeftT-iLeftB)/2-1)+1), iLeftT);
+    mergeSort(iRightB, max(iRightB,iRightB+(int)floor(iRightT-iRightB)/2-1), min(iRightT,max(iRightB,iRightB+(int)floor(iRightT-iRightB)/2-1)+1), iRightT);
 //#ifdef __DEBUG__
 //  for (int i=0; i<m_sortKeys.size(); i++)
 //    printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
@@ -955,16 +959,17 @@ void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
 //#endif // __DEBUG__
     int iLPos = iLeftB, iRPos = iRightB, iCheckPos = iRightB;
     while (iLPos<iCheckPos && iRPos<=iRightT){
-      //trace(DEBUG1, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRight);
+      trace(DEBUG2, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRightT);
       bool exchanged = false;
       for (int i=0; i<m_sorts.size(); i++){
+        trace(DEBUG2, "Checking '%s' : '%s'\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str());
         bool bToBeSwapped = false;
         if (m_sorts[i].direction==ASC)
           bToBeSwapped = (anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype)>0);
         else
           bToBeSwapped = (anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype)<0);
 //#ifdef __DEBUG__
-//  trace(DEBUG1, "Checking %s(L) %s(R) (%d %d %d) (%s) (%d %d)\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str(),iLPos,iCheckPos,iRPos,decodeDatatype(m_sorts[i].sortKey.m_datatype.datatype).c_str(), m_sorts[i].direction, bToBeSwapped);
+  trace(DEBUG2, "Checking %s(L) %s(R) (%d %d %d) (%s) (%d %d)\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str(),iLPos,iCheckPos,iRPos,decodeDatatype(m_sorts[i].sortKey.m_datatype.datatype).c_str(), m_sorts[i].direction, bToBeSwapped);
 //#endif // __DEBUG__
         //if (bToBeSwapped){
         if ((m_sorts[i].direction==ASC ? anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype)>0 : anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype)<0)){
@@ -972,7 +977,7 @@ void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
           //vector<string> tmp;
           //tmp.insert(tmp.begin(), (*(m_results.begin()+iRPos)).begin(), (*(m_results.begin()+iRPos)).end());
 //#ifdef __DEBUG__
-//  trace(DEBUG1, "moving %s(R) before %s(L) (%d %d %d)\n", (*(m_sortKeys.begin()+iRPos))[i].c_str(), (*(m_sortKeys.begin()+iLPos))[i].c_str(),iLPos,iCheckPos,iRPos);
+  trace(DEBUG2, "moving %s(R) before %s(L) (%d %d %d)\n", (*(m_sortKeys.begin()+iRPos))[i].c_str(), (*(m_sortKeys.begin()+iLPos))[i].c_str(),iLPos,iCheckPos,iRPos);
 //#endif // __DEBUG__
           //trace(DEBUG1, "Before move: %s(%d) %s(%d)\n", (*(m_results.begin()+iLPos))[2].c_str(), iLPos, (*(m_results.begin()+iRPos))[2].c_str(), iRPos);
           m_results.insert(m_results.begin()+iLPos,*(m_results.begin()+iRPos));
@@ -1005,9 +1010,9 @@ void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
 // sort result
 bool QuerierC::sort()
 {
-  //trace(DEBUG1, "Sorting begins \n");
+  //trace(DEBUG2, "Sorting begins \n");
   if (m_sorts.size() == 0 || m_sortKeys.size() == 0){
-    //trace(DEBUG1, "No sorting keys %d %d!\n",m_sortKeys.size(),m_sorts.size());
+    //trace(DEBUG2, "No sorting keys %d %d!\n",m_sortKeys.size(),m_sorts.size());
     return true;
   }
   if (m_sortKeys[0].size() != m_sorts.size()){
@@ -1018,7 +1023,7 @@ bool QuerierC::sort()
     trace(ERROR, "The sorting value number %d doesnot equal to the selected value number %d!\n",m_sortKeys.size(),m_results.size());
     return false;
   }
-  mergeSort(0,(int)floor(m_sortKeys.size())/2, (int)floor(m_sortKeys.size())/2+1,m_sortKeys.size()-1);
+  mergeSort(0,max(0,(int)floor(m_sortKeys.size())/2-1), min((int)(m_sortKeys.size()-1),max(0,(int)floor(m_sortKeys.size())/2-1)+1),m_sortKeys.size()-1);
   //trace(DEBUG1, "Sorting completed \n");
   return true;
 }

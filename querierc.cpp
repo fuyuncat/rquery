@@ -78,7 +78,7 @@ void QuerierC::init()
   m_outputformat = TEXT;
   m_matchcount = 0; 
   m_outputrow = 0;
-  m_limitbottom = 0;
+  m_limitbottom = 1;
   m_limittop = -1;
   m_bNamePrinted = false;
   m_aggrOnly = false;
@@ -644,8 +644,8 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
 
 bool QuerierC::searchStopped()
 {
-  //trace(DEBUG1, "Limit checking. m_groups:%d, m_sorts:%d, m_limittop:%d, m_outputrow:%d!\n",m_groups.size(),m_sorts.size(),m_limittop,m_outputrow);
-  if (m_groups.size()==0 && !m_aggrOnly && m_sorts.size()==0 && m_limittop>=0 && m_outputrow>m_limittop)
+  //trace(DEBUG1, "Limit checking. m_groups:%d, m_sorts:%d, m_aggrOnly:%d, m_limittop:%d, m_outputrow:%d!\n",m_groups.size(),m_sorts.size(),m_aggrOnly,m_limittop,m_outputrow);
+  if (m_groups.size()==0 && !m_aggrOnly && m_sorts.size()==0 && m_limittop>=0 && m_outputrow>=m_limittop)
     return true;
   else
     return false;
@@ -1016,16 +1016,20 @@ bool QuerierC::sort()
 void QuerierC::formatoutput(vector<string> datas)
 {
   if (m_outputformat == JSON){
-    if (m_outputrow==0){
+    if (m_outputrow==m_limitbottom-1){
       printf("{\n");
       printf("\t\"records\": [\n");
     }else{
       printf(",\n");
     }
   }
-  m_outputrow++;
-  if (m_outputrow<m_limitbottom || (m_limittop>=0 && m_outputrow>m_limittop))
+  if (m_outputrow<m_limitbottom-1 ){
+    m_outputrow++;
     return;
+  }else if (m_limittop>=0 && m_outputrow+1>m_limittop)
+    return;
+  else
+    m_outputrow++;
   //printf("%d: ", m_outputrow);
   if (m_outputformat == JSON){
     printf("\t\t{\n");
@@ -1164,7 +1168,7 @@ void QuerierC::outputExtraInfo(size_t total, short int mode, bool bPrintHeader)
     //else
     //  printf("\"ReadBytes\": %d,\n", total);
     printf("\t\"MatchedLines\": %ld,\n", m_line);
-    printf("\t\"SelectedRows\": %ld\n", m_outputrow);
+    printf("\t\"SelectedRows\": %ld\n", m_outputrow-m_limitbottom+1);
     printf("}\n");
   }else if (bPrintHeader){
     //if (mode == READLINE)
@@ -1172,7 +1176,7 @@ void QuerierC::outputExtraInfo(size_t total, short int mode, bool bPrintHeader)
     //else
     //  printf("Read %d byte(s).\n", total);
     printf("Pattern matched %ld line(s).\n", m_line);
-    printf("Selected %ld row(s).\n", m_outputrow);
+    printf("Selected %ld row(s).\n", m_outputrow-m_limitbottom+1);
   }
 }
 
@@ -1191,7 +1195,7 @@ void QuerierC::clear()
     delete m_filter;
   }
   m_filter = NULL;
-  m_limitbottom = 0;
+  m_limitbottom = 1;
   m_limittop = -1;
   m_filename = "";
   init();

@@ -272,6 +272,24 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
   return true;
 }
 
+void QuerierC::setUserVars(string variables)
+{
+  vector<string> vVariables = split(variables,' ',"//''{}",'\\',{'(',')'});
+  for (int i=0; i<vVariables.size(); i++){
+    vector<string> vNameVal = split(vVariables[i],':',"//''{}",'\\',{'(',')'});
+    if (vNameVal.size()<2){
+      trace(ERROR, "Incorrect variable format!\n", vVariables[i].c_str());
+      continue;
+    }
+    string sName=upper_copy(trim_copy(vNameVal[0])), sValue=trim_copy(vNameVal[1]);
+    if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0){
+      trace(ERROR, "%s is a reserved word, cannot be used as a variable name!\n", sName.c_str());
+      continue;
+    }
+    m_uservariables.insert(pair<string, string> ("@"+sName,sValue));
+  }
+}
+
 void QuerierC::setFileName(string filename)
 {
   m_filename = filename;
@@ -512,6 +530,7 @@ bool QuerierC::matchFilter(vector<string> rowValue, FilterC* filter)
   varValues.insert( pair<string,string>("@FILE",m_filename));
   varValues.insert( pair<string,string>("@LINE",rowValue[m_fieldnames.size()+1]));
   varValues.insert( pair<string,string>("@ROW",rowValue[m_fieldnames.size()+2]));
+  varValues.insert(m_uservariables.begin(), m_uservariables.end());
   //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
   //dumpMap(varValues);
   bool matched = (!filter || filter->compareExpression(&m_fieldnames, &fieldValues, &varValues));

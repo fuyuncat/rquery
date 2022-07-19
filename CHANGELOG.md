@@ -1,6 +1,7 @@
 # Change Log
 All change logs will be documented here.
    # [0.902] 2022-07-19
+   New feature: Using -v or --variable to pass variables in
    Fixed bug: Json format becomes messy when limt N,M involved
    Fixed bug: Selected row number is incorrect when limt N,M involved
    Fixed compile warnings

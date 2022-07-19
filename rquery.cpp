@@ -69,6 +69,7 @@ void usage()
   printf("\t-l|--logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n");
   printf("\t-p|--progress <on|off> -- Wheather show the processing progress or not(default).\n");
   printf("\t-o|--outputformat <text|json> -- Provide output format, default is text.\n");
+  printf("\t-v|--variable \"name1:value1[ name2:value2..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.\n");
   printf("More information can be found at https://github.com/fuyuncat/rquery .\n");
 }
 
@@ -435,6 +436,13 @@ int main(int argc, char *argv[])
       }
       gv.g_ouputformat = (lower_copy(string(argv[i+1])).compare("json")!=0?TEXT:JSON);
       i++;
+    }else if (lower_copy(string(argv[i])).compare("-v")==0 || lower_copy(string(argv[i])).compare("--variable")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      rq.setUserVars(trim_copy(string(argv[i+1])));
+      i++;
     }else if (lower_copy(string(argv[i])).compare("-s")==0 || lower_copy(string(argv[i])).compare("--skip")==0){
       if (argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
@@ -516,6 +524,7 @@ int main(int argc, char *argv[])
         cout << "logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n";
         cout << "progress <on|off> -- Wheather show the processing progress or not(default).\n";
         cout << "format <text|json> -- Provide output format, default is text.\n";
+        cout << "var \"name1:value1[ name2:value2..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("load ")==0){
         string strParam = trim_copy(lineInput).substr(string("load ").size());
@@ -606,6 +615,11 @@ int main(int argc, char *argv[])
         string strParam = trim_copy(lineInput).substr(string("set ").size());
         rq.setFieldTypeFromStr(strParam);
         cout << "Fileds data type has been set up.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("var ")==0){
+        string strParam = trim_one(trim_copy(lineInput).substr(string("set ").size()),'"');
+        rq.setUserVars(strParam);
+        cout << "Variables have been set up.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("filter ")==0){
         string strParam = trim_copy(lineInput).substr(string("filter ").size());

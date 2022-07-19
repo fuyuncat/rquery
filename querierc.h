@@ -84,6 +84,7 @@ class QuerierC
     bool assignLimitStr(string limitstr);
     bool setFieldTypeFromStr(string setstr);
     void setFileName(string filename);
+    void setUserVars(string variables);
     void setOutputFormat(short int format=TEXT);
     int searchNext(namesaving_smatch & matches);
     int searchAll();
@@ -124,6 +125,7 @@ class QuerierC
     //map<string, int> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     vector<DataTypeStruct> m_fieldtypes;       // field datatype in sequence
     map<string, DataTypeStruct> m_fieldntypes; // field datatype by names, set by setFieldDatatype
+    map<string, string> m_uservariables; // User defined variables
     vector<string>  m_selnames; // selection names
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions

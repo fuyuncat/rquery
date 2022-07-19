@@ -29,6 +29,7 @@
          - group <field or expression,...> : Fields or expressions to be groupd for aggregation selections<br />
          - sort <field or expression [asc|desc],...> : Sorting keys to decide order of the output records<br />
          - limt <n | bottomN,topN> : Limited number records to be printed<br />
+         - var "name1:value1[:datatyp1][ name2:value2[:datatyp2]..]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
          - run [query] : Run the preprocessed query of a provided query (refering to below part)<br />
 - options
    - --help|-h<br />
@@ -38,6 +39,7 @@
    - --readmode | -r buffer|line : File read mode, buffer(default) or line.<br />
    - --buffsize | -b size : The buffer size when read mode is buffer, default is 16384.<br />
    - --skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0.<br />
+   - --variable | -v "name1:value1[ name2:value2..]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
    - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
    - --query | -q <qeury string> : The query string to be used to parse and query the text content.<br />
 - Syntax of query string:

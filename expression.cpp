@@ -585,8 +585,8 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
             m_datatype.datatype = UNKNOWN;
           }
         }else{
-          trace(ERROR, "Unrecognized variable(2) %s .\n", m_expStr.c_str());
-          m_expType = UNKNOWN;
+          //trace(ERROR, "Unrecognized variable(2) %s .\n", m_expStr.c_str());
+          //m_expType = UNKNOWN;
           m_datatype.datatype = UNKNOWN;
         }
         trace(DEBUG, "Expression '%s' type is %s, data type is UNKNOWN\n", m_expStr.c_str(), decodeExptype(m_expType).c_str());

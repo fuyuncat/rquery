@@ -611,12 +611,12 @@ DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const Dat
   if (ldatatype.datatype == ANY || rdatatype.datatype == ANY)
     dts.datatype = ldatatype.datatype == ANY?rdatatype.datatype:ldatatype.datatype;
   else if (ldatatype.datatype == STRING || rdatatype.datatype == STRING)
-    if (ldatatype.datatype == DATE || rdatatype.datatype == DATE || ldatatype.datatype == TIMESTAMP || rdatatype.datatype == TIMESTAMP){ // incompatible types
-      trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING).c_str(), decodeDatatype(ldatatype.datatype==STRING?rdatatype.datatype:ldatatype.datatype).c_str());
-      dts.datatype = UNKNOWN;
-    }else{
+    //if (ldatatype.datatype == DATE || rdatatype.datatype == DATE || ldatatype.datatype == TIMESTAMP || rdatatype.datatype == TIMESTAMP){ // incompatible types
+    //  trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(STRING).c_str(), decodeDatatype(ldatatype.datatype==STRING?rdatatype.datatype:ldatatype.datatype).c_str());
+    //  dts.datatype = UNKNOWN;
+    //}else{
       dts.datatype = STRING;
-    }
+    //}
   else if (ldatatype.datatype == DOUBLE || rdatatype.datatype == DOUBLE)
     if (ldatatype.datatype == DATE || rdatatype.datatype == DATE || ldatatype.datatype == TIMESTAMP || rdatatype.datatype == TIMESTAMP || ldatatype.datatype == STRING || rdatatype.datatype == STRING){ // incompatible types
       trace(ERROR, "Datatype %s is incompatible to %s. ", decodeDatatype(DOUBLE).c_str(), decodeDatatype(ldatatype.datatype==DOUBLE?rdatatype.datatype:ldatatype.datatype).c_str());
@@ -865,7 +865,7 @@ string decodeOperator(int op)
 {
   switch (op){
   case PLUS:
-    return "=";
+    return "+";
   case SUBTRACT:
     return "-";
   case TIMES:

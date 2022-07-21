@@ -33,6 +33,7 @@ void ExpressionC::init()
   m_parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
   m_fieldnames = NULL;
   m_fieldtypes = NULL;
+  m_Function = NULL;
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;   // if expression string analyzed
@@ -82,6 +83,7 @@ ExpressionC::ExpressionC(ExpressionC* node)
   m_leftNode = node->m_leftNode;
   m_rightNode = node->m_rightNode;
   m_parentNode = node->m_parentNode;
+  m_Function = node->m_Function;
   m_metaDataAnzlyzed = node->m_metaDataAnzlyzed;
   m_expstrAnalyzed = node->m_expstrAnalyzed;
   m_fieldnames = node->m_fieldnames; // all nodes
@@ -359,12 +361,12 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
       string sParams = trim_copy(expStr.substr(iQuoteStart));
       node->m_expType = FUNCTION;
       node->m_expStr = sFuncName+sParams;
-      FunctionC* func = new FunctionC(m_expStr);
-      node->m_datatype = func->m_datatype;
-      node->m_funcID = func->m_funcID;
-      func->clear();
-      delete func;
-      m_expstrAnalyzed = true;
+      //trace(DEBUG2, "Found function '%s' => ! \n", expStr.c_str(), node->m_expStr.c_str());
+      if (!node->m_Function)
+        node->m_Function = new FunctionC(node->m_expStr);
+      node->m_datatype = node->m_Function->m_datatype;
+      node->m_funcID = node->m_Function->m_funcID;
+      node->m_expstrAnalyzed = true;
       if (node->m_datatype.datatype != UNKNOWN)
         return true;
       else {
@@ -373,7 +375,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         return false;
       }
     }else{ // it could be a COLUMN or invalid expression string
-      m_expstrAnalyzed = true;
+      node->m_expstrAnalyzed = true;
     }
   }catch (exception& e) {
     trace(ERROR, "Building leaf node exception: %s\n", e.what());
@@ -562,8 +564,8 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
       }
       //m_expStr = trim_copy(m_expStr);
       // check if it is a variable
-      if (m_expStr.size()>0 && m_expStr[0]=='@'){
-        m_expType = VARIABLE;
+      //if (m_expStr.size()>0 && m_expStr[0]=='@'){
+      if (m_expType == VARIABLE){
         m_expStr = upper_copy(trim_copy(m_expStr));
         //string strVarName = upper_copy(m_expStr);
         if (m_expStr.compare("@RAW") == 0 || m_expStr.compare("@FILE") == 0)
@@ -593,47 +595,36 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         return m_datatype;
       }
       if (m_datatype.datatype == UNKNOWN){
-        // check if it is a time, quoted by {}
-        if (m_expStr.size()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.size()-1]=='}'){
-          m_expType = CONST;
-          if (isDate(m_expStr.substr(1,m_expStr.size()-2),m_datatype.extrainfo)){
-            m_datatype.datatype = DATE;
-          }else{
-            trace(ERROR,"Failed to get the date format from '%s'.\n", m_expStr.c_str());
-            m_metaDataAnzlyzed = false;
-            dts.datatype = UNKNOWN;
-            return dts;
-          }
-          trace(DEBUG, "Expression '%s' type is CONST, data type is DATE\n", m_expStr.c_str());
-          return m_datatype;
-        }
-        // check if it is a string, quoted by ''
-        if (m_expStr.size()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.size()-1]=='\''){
-          m_expType = CONST;
-          m_datatype.datatype = STRING;
-          trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
-          return m_datatype;
-        }
-        // check if it is a regular expression string, quoted by //
-        if (m_expStr.size()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.size()-1]=='/'){
-          m_expType = CONST;
-          m_datatype.datatype = STRING;
-          trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
-          return m_datatype;
-        }
         // check if it is a function FUNCNAME(...)
         int lefParPos = m_expStr.find("(");
-        if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')'){
+        if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')')
           m_expType = FUNCTION;
-          FunctionC* func = new FunctionC(m_expStr);
-          m_datatype = func->m_datatype;
-          m_funcID = func->m_funcID;
-          //m_expStr = upper_copy(trim_copy(func->m_expStr)); -- should NOT turn the parameters to UPPER case.
-          m_expStr = func->m_expStr;
-          func->clear();
-          delete func;
-          trace(DEBUG, "Expression '%s' type is FUNCTION, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
-          return m_datatype;
+        if (m_expType == CONST){
+          // check if it is a time, quoted by {}
+          if (m_expStr.size()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.size()-1]=='}'){
+            if (isDate(m_expStr.substr(1,m_expStr.size()-2),m_datatype.extrainfo)){
+              m_datatype.datatype = DATE;
+            }else{
+              trace(ERROR,"Failed to get the date format from '%s'.\n", m_expStr.c_str());
+              m_metaDataAnzlyzed = false;
+              dts.datatype = UNKNOWN;
+              return dts;
+            }
+            trace(DEBUG, "Expression '%s' type is CONST, data type is DATE\n", m_expStr.c_str());
+            return m_datatype;
+          }
+          // check if it is a string, quoted by ''
+          if (m_expStr.size()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.size()-1]=='\''){
+            m_datatype.datatype = STRING;
+            trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
+            return m_datatype;
+          }
+          // check if it is a regular expression string, quoted by //
+          if (m_expStr.size()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.size()-1]=='/'){
+            m_datatype.datatype = STRING;
+            trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
+            return m_datatype;
+          }
         }
         // check if it is a column
         for (int i=0; i<fieldnames->size(); i++){
@@ -659,6 +650,17 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
           m_expType = UNKNOWN;
           m_datatype.datatype = UNKNOWN;
         }
+      }
+      if (m_expType == FUNCTION){
+        if (!m_Function)
+          m_Function = new FunctionC(m_expStr);
+        m_datatype = m_Function->analyzeColumns(fieldnames, fieldtypes);
+        // m_datatype = m_Function->m_datatype;
+        m_funcID = m_Function->m_funcID;
+        //m_expStr = upper_copy(trim_copy(m_Function->m_expStr)); -- should NOT turn the parameters to UPPER case.
+        m_expStr = m_Function->m_expStr;
+        trace(DEBUG, "Expression '%s' type is FUNCTION, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
+        return m_datatype;
       }
       trace(DEBUG, "Expression '%s' type is %s, data type is %s\n", m_expStr.c_str(), decodeExptype(m_expType).c_str(), decodeDatatype(m_datatype.datatype).c_str());
     }
@@ -689,6 +691,8 @@ ExpressionC* ExpressionC::cloneMe(){
   node->m_expStr = m_expStr;
   node->m_fieldnames = m_fieldnames;
   node->m_fieldtypes = m_fieldtypes;
+  if (m_Function)
+    node->m_Function = m_Function->cloneMe();
   if (m_type == BRANCH){
     node->m_leftNode = new ExpressionC();
     node->m_leftNode = m_leftNode->cloneMe();
@@ -719,6 +723,14 @@ void ExpressionC::copyTo(ExpressionC* node){
     node->m_expStr = m_expStr;
     node->m_fieldnames = m_fieldnames;
     node->m_fieldtypes = m_fieldtypes;
+    if(m_Function){
+      if (node->m_Function){
+        node->m_Function->clear();
+        delete node->m_Function;
+      }
+      node->m_Function = new FunctionC();
+      m_Function->copyTo(node->m_Function);
+    }
     if (m_type == BRANCH){
       if (m_leftNode){
         node->m_leftNode = new ExpressionC();
@@ -802,6 +814,11 @@ void ExpressionC::clear(){
     delete m_rightNode;
     m_rightNode = NULL;
   }
+  if (m_Function){
+    m_Function->clear();
+    delete m_Function;
+    m_Function = NULL;
+  }
   m_fieldnames = NULL;  // dont delete, as it points to an variable address
   m_fieldtypes = NULL;  // dont delete, as it points to an variable address
   m_expstrAnalyzed = false;
@@ -875,8 +892,9 @@ void ExpressionC::fillDataForColumns(map <string, string> & dataList, vector <st
       m_leftNode->fillDataForColumns(dataList, columns);
     if (m_rightNode)
       m_rightNode->fillDataForColumns(dataList, columns);
-  }else if (m_type == LEAF && m_colId >= 0)
+  }else if (m_type == LEAF && m_colId >= 0){
     dataList.insert( pair<string,string>(columns[m_colId],m_expStr) );
+  }
 }
 
 // align children datatype with current datatype
@@ -895,13 +913,13 @@ void ExpressionC::alignChildrenDataType()
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not
-bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult){
-  if (!fieldnames || !fieldvalues || !varvalues){
+bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult){
+  if (!fieldnames || !fieldvalues || !varvalues || !aggFuncs){
     trace(ERROR, "Insufficient metadata!\n");
     return false;
   }
   // if (!m_metaDataAnzlyzed || !m_expstrAnalyzed){
-  if (!m_metaDataAnzlyzed ){
+  if (!m_metaDataAnzlyzed && (m_type != LEAF || m_expType != FUNCTION || !m_Function || !m_Function->isAggFunc())){
     trace(ERROR, "Expression '%s' is not analyzed! metaData: %d, expstr: %d \n",m_expStr.c_str(),m_metaDataAnzlyzed,m_expstrAnalyzed);
     return false;
   }
@@ -911,12 +929,24 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
       return true;
     }else if (m_expType == FUNCTION){
       //trace(DEBUG2, "Expression '%s' is a fucntion.. \n",m_expStr.c_str());
-      FunctionC* func = new FunctionC(m_expStr);
-      func->analyzeColumns(m_fieldnames, m_fieldtypes);
-      bool gotResult = func->runFunction(fieldnames, fieldvalues, varvalues, sResult);
-      func->clear();
-      delete func;
-      return gotResult;
+      if (m_Function){
+        if (m_Function->isAggFunc()){
+          // looks like this part is duplicated with querierc.evalAggExpNode(), but dont change aggFuncs values, as the same aggregation function may present multiple times in the selections/sorts clauses.
+          unordered_map< string,GroupProp >::iterator it = aggFuncs->find(m_Function->m_expStr);
+          if (it != aggFuncs->end()){
+            if (m_Function->m_params.size()>0)
+              m_Function->m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, sResult);
+            else
+              trace(ERROR, "Missing paramters for aggregation function '%s'\n",m_Function->m_expStr.c_str());
+          }else{
+            trace(ERROR, "Failed to find aggregation function '%s' dataset when evaling '%s'!\n", m_Function->m_expStr.c_str(), getTopParent()->getEntireExpstr().c_str());
+            return false;
+          }
+        }else{
+          bool gotResult = m_Function->runFunction(fieldnames, fieldvalues, varvalues, aggFuncs, sResult);
+          return gotResult;
+        }
+      }
     }else if (m_expType == COLUMN){
       if (m_colId >= 0 && m_colId<fieldvalues->size()){
         sResult = (*fieldvalues)[m_colId];
@@ -954,29 +984,21 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
     }
   }else{
     string leftRst = "", rightRst = "";
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldnames, fieldvalues, varvalues, leftRst)){
+    if (!m_leftNode || !m_leftNode->evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, leftRst)){
       trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
       return false;
     }
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
+    if (!m_rightNode || !m_rightNode->evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, rightRst)){
       trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
       return false;
     }
     //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
-    return anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
+    if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
+      //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
+      return true;
+    }else
+      return false;
   }
-
-  //string result="";
-  //if (m_type == BRANCH){
-  //  if (!m_leftNode || !m_rightNode)
-  //    return result;
-  //  result = anyDataOperate(m_leftNode->evalExpression(), m_operate, m_rightNode->evalExpression(), m_datatype);
-  //}else if(m_type == LEAF){
-  //  return m_expStr;
-  //}else{ // no expression
-  //  return result;
-  //}
-  //return result;
 }
 
 // merge const expression, reduce calculation during matching
@@ -989,28 +1011,28 @@ bool ExpressionC::mergeConstNodes(string & sResult)
       trace(DEBUG,"Return CONST '%s'\n", m_expStr.c_str());
       return true;
     }else if (m_expType == FUNCTION){
-      if (containGroupFunc()) // skip aggregation functions
-        return false;
-      FunctionC* func = new FunctionC(m_expStr);
-      bool gotResult = false;
-      if (func->isConst()){
-        vector<string> vfieldnames;
-        vector<DataTypeStruct> fieldtypes;
-        vector<string> vfieldvalues;
-        map<string,string> mvarvalues;
-        func->analyzeColumns(&vfieldnames, &fieldtypes);
-        gotResult = func->runFunction(&vfieldnames,&vfieldvalues,&mvarvalues,sResult);
-        if (gotResult){
-          m_expStr = sResult;
-          m_expType = CONST;
-          m_datatype = func->m_datatype;
-          trace(DEBUG,"Return function '%s' result '%s'\n", func->m_expStr.c_str(), sResult.c_str());
-        }
-      }else
-        gotResult = false;
-      func->clear();
-      delete func;
-      return gotResult;
+      //if (containGroupFunc()) // skip aggregation functions
+      //  return false;
+      if (m_Function){
+        bool gotResult = false;
+        if (m_Function->isConst()){
+          vector<string> vfieldnames;
+          vector<DataTypeStruct> fieldtypes;
+          vector<string> vfieldvalues;
+          map<string,string> mvarvalues;
+          unordered_map< string,GroupProp > aggFuncs;
+          m_Function->analyzeColumns(&vfieldnames, &fieldtypes);
+          gotResult = m_Function->runFunction(&vfieldnames,&vfieldvalues,&mvarvalues,&aggFuncs,sResult);
+          if (gotResult){
+            m_expStr = sResult;
+            m_expType = CONST;
+            m_datatype = m_Function->m_datatype;
+            trace(DEBUG,"Return function '%s' result '%s'\n", m_Function->m_expStr.c_str(), sResult.c_str());
+          }
+        }else
+          gotResult = false;
+        return gotResult;
+      }
     }else{
       trace(DEBUG,"'%s' is not a CONST or FUNCTION.\n", m_expStr.c_str());
       return false;
@@ -1048,6 +1070,33 @@ void ExpressionC::getAllColumnNames(vector<string> & fieldnames)
     m_rightNode->getAllColumnNames(fieldnames);
 }
 
+bool ExpressionC::getAggFuncs(unordered_map< string,GroupProp > & aggFuncs)
+{
+  trace(DEBUG2,"Checking '%s'(%d %d %d)\n",getEntireExpstr().c_str(),m_type,m_expType,m_Function?m_Function->isAggFunc():-1);
+  if (m_type == LEAF && m_expType == FUNCTION && m_Function){
+    if (m_Function->isAggFunc()){
+      if (aggFuncs.find(m_Function->m_expStr) == aggFuncs.end()){
+        GroupProp gp;
+        trace(DEBUG2,"Adding aggregation function '%s' properties \n",m_Function->m_expStr.c_str());
+        aggFuncs.insert(pair<string,GroupProp>(m_Function->m_expStr,gp));
+      }
+      return true; // the parameter expressions of an aggregation function should not include another aggregation function
+    }else { // check the paramters of normal functions
+      trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
+      bool bGotAggFunc = false;
+      for (int i=0;i<m_Function->m_params.size();i++){
+        trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
+        bGotAggFunc = m_Function->m_params[i].getAggFuncs(aggFuncs)||bGotAggFunc;
+      }
+      return bGotAggFunc;
+    }
+  }else{
+    bool bGotAggFunc = (m_leftNode && m_leftNode->getAggFuncs(aggFuncs));
+    bGotAggFunc = (m_rightNode && m_rightNode->getAggFuncs(aggFuncs));
+    return bGotAggFunc;
+  }
+}
+
 bool ExpressionC::containGroupFunc()
 {
   if (m_type == LEAF){
@@ -1058,9 +1107,14 @@ bool ExpressionC::containGroupFunc()
       string sFuncName=trim_copy(upper_copy(m_expStr.substr(0,nPos)));
       if (sFuncName.compare("SUM")==0 || sFuncName.compare("COUNT")==0 || sFuncName.compare("UNIQUECOUNT")==0 || sFuncName.compare("AVERAGE")==0 || sFuncName.compare("MAX")==0 || sFuncName.compare("MIN")==0)
         return true;
+      if (m_Function){
+        for (int i=0;i<m_Function->m_params.size();i++)
+          if (m_Function->m_params[i].containGroupFunc())
+            return true;
+      }
     }
   }else{
-    if (m_leftNode && m_leftNode->containGroupFunc() && m_rightNode && m_rightNode->containGroupFunc())
+    if ((m_leftNode && m_leftNode->containGroupFunc()) || (m_rightNode && m_rightNode->containGroupFunc()))
       return true;
     return false;
   }
@@ -1119,46 +1173,44 @@ bool ExpressionC::inColNamesRange(vector<string> fieldnames)
 {
   if (m_type == LEAF){
     if (m_expType == CONST){
-      trace(DEBUG,"666666 '%s' '%s'\n", m_expStr.c_str());
+      //trace(DEBUG,"666666 '%s' '%s'\n", m_expStr.c_str());
       return true;
     }
     else if (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN){
       for (int i=0;i<fieldnames.size();i++)
         if (upper_copy(m_expStr).compare(upper_copy(fieldnames[i])) == 0){
-          trace(DEBUG,"777777 '%s' \n", m_expStr.c_str());
+          //trace(DEBUG,"777777 '%s' \n", m_expStr.c_str());
           return true;
         }
-      trace(DEBUG,"888888 '%s' \n", m_expStr.c_str());
+      //trace(DEBUG,"888888 '%s' \n", m_expStr.c_str());
       return false;
     }else if (m_expType == FUNCTION){
       if (groupFuncOnly()){
-        trace(DEBUG,"999999 '%s' \n", m_expStr.c_str());
+        //trace(DEBUG,"999999 '%s' \n", m_expStr.c_str());
         return true;
       }
-      FunctionC* func = new FunctionC(m_expStr);
-      m_datatype = func->m_datatype;
-      bool compatible = true;
-      for (int i=0;i<func->m_params.size();i++)
-        if (!func->m_params[i].inColNamesRange(fieldnames)){
-          compatible = false;
-          trace(DEBUG,"AAAAAA '%s' \n", m_expStr.c_str());
-          break;
-        }
-      func->clear();
-      delete func;
-      trace(DEBUG,"BBBBBB '%s' \n", m_expStr.c_str());
-      return compatible;
+      if (m_Function){
+        bool compatible = true;
+        for (int i=0;i<m_Function->m_params.size();i++)
+          if (!m_Function->m_params[i].inColNamesRange(fieldnames)){
+            compatible = false;
+            //trace(DEBUG,"AAAAAA '%s' \n", m_expStr.c_str());
+            break;
+          }
+        //trace(DEBUG,"BBBBBB '%s' \n", m_expStr.c_str());
+        return compatible;
+      }
     }
   }else{
     if (!m_leftNode || !m_leftNode->inColNamesRange(fieldnames)){
-      trace(DEBUG,"CCCCCC '%s' \n", m_leftNode?m_leftNode->m_expStr.c_str():m_expStr.c_str());
+      //trace(DEBUG,"CCCCCC '%s' \n", m_leftNode?m_leftNode->m_expStr.c_str():m_expStr.c_str());
       return false;
     }
     if (!m_rightNode || !m_rightNode->inColNamesRange(fieldnames)){
-      trace(DEBUG,"DDDDDD '%s' \n", m_rightNode?m_rightNode->m_expStr.c_str():m_expStr.c_str());
+      //trace(DEBUG,"DDDDDD '%s' \n", m_rightNode?m_rightNode->m_expStr.c_str():m_expStr.c_str());
       return false;
     }
-    trace(DEBUG,"EEEEEE '%s' \n", m_expStr.c_str());
+    //trace(DEBUG,"EEEEEE '%s' \n", m_expStr.c_str());
     return true;
   }
   trace(DEBUG,"FFFFFF '%s' \n", m_expStr.c_str());

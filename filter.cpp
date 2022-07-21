@@ -689,19 +689,19 @@ bool FilterC::remove(FilterC* node){
     return true;
   }else
     return removed;
+}
 
-  /*if (this == node){
-      if (this.m_parentNode != null){
-          if (this.m_parentNode.m_leftNode == this ) // this is m_leftNode
-              this.m_parentNode.m_rightNode.copyTo(this); // assign right brother as parent
-          else if (this.m_parentNode.m_rightNode == this ) // this is rihtnode
-               this.m_parentNode.m_leftNode.copyTo(this); // assign left brother as parent
-      }
-      return true;
-  }else if (m_type == Consts.BRANCH){
-      return (m_leftNode != null && m_leftNode.remove(node)) || (m_rightNode != null && m_rightNode.remove(node));
+bool FilterC::getAggFuncs(unordered_map< string,GroupProp > & aggFuncs)
+{
+  if (m_type == LEAF){
+    bool bGotAggFunc = (m_leftExpression && m_leftExpression->getAggFuncs(aggFuncs));
+    bGotAggFunc = (m_rightExpression && m_rightExpression->getAggFuncs(aggFuncs));
+    return bGotAggFunc;
+  }else{
+    bool bGotAggFunc = (m_leftNode && m_leftNode->getAggFuncs(aggFuncs));
+    bGotAggFunc = (m_rightNode && m_rightNode->getAggFuncs(aggFuncs));
+    return bGotAggFunc;
   }
-  return false;//*/
 }
 
 // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
@@ -717,17 +717,23 @@ void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string
     dataList.insert( pair<string,string>(columns[m_leftColId],m_rightExpStr) );
 }
 
-bool FilterC::compareIn(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues)
+bool FilterC::compareIn(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs)
 {
   string leftRst, sResult;
-  if (m_inExpressions.size() == 0 || !m_leftExpression || !m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst)){
+  bool bDoAggFilter = (aggFuncs && aggFuncs->size()>0);
+  // dont do filte in two scenarios: 1: aggFuncs prvoided, but no aggregation function involved in the expression (except CONST); 2: no aggFuncs provided, but aggregation function involved in the expression;
+  if ((!bDoAggFilter && m_leftExpression && m_leftExpression->containGroupFunc()) || (bDoAggFilter && !m_leftExpression->containGroupFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)))
+    return true;
+  if (m_inExpressions.size() == 0 || !m_leftExpression || !m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, leftRst)){
     trace(ERROR, "Failed to get the value to be compared in IN!\n"); 
     return false;
   }
   // trace(DEBUG, "Comparing '%s' IN '%s' (data type: %s)\n", leftRst.c_str(), m_rightExpStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
 
   for (int i=0;i<m_inExpressions.size();i++){
-    if (!m_inExpressions[i].evalExpression(fieldnames, fieldvalues, varvalues, sResult)){
+    if ((!bDoAggFilter && m_inExpressions[i].containGroupFunc()) || (bDoAggFilter && !m_inExpressions[i].containGroupFunc() && !(m_inExpressions[i].m_type==LEAF&&m_inExpressions[i].m_expType==CONST)))
+      return false;
+    if (!m_inExpressions[i].evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, sResult)){
       trace(ERROR, "Failed to get result of IN element %s!\n", m_inExpressions[i].getEntireExpstr().c_str());
       return false;
     }
@@ -739,26 +745,51 @@ bool FilterC::compareIn(vector<string>* fieldnames, vector<string>* fieldvalues,
 }
 
 // calculate an expression prediction. no predication or comparasion failed means alway false
-bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues){
+bool FilterC::compareExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs){
   bool result=false;
   if (m_type == BRANCH){
     if (!m_leftNode || !m_rightNode)
       return false;
     if (m_junction == AND)
-      return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues) && m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues);
+      return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues, aggFuncs) && m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues, aggFuncs);
     else
-      return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues) || m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues);
+      return m_leftNode->compareExpression(fieldnames, fieldvalues, varvalues, aggFuncs) || m_rightNode->compareExpression(fieldnames, fieldvalues, varvalues, aggFuncs);
   }else if(m_type == LEAF){
     if (m_comparator == IN || m_comparator == NOIN){
-      return compareIn(fieldnames, fieldvalues, varvalues)?(m_comparator == IN?true:false):(m_comparator == IN?false:true);
+      return compareIn(fieldnames, fieldvalues, varvalues, aggFuncs)?(m_comparator == IN?true:false):(m_comparator == IN?false:true);
     }
     else{
-      string leftRst = "", rightRst = "";
-      if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, rightRst)){
-        trace(DEBUG, "Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype.datatype).c_str());
-        return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
-      }else
-        return false;
+      if (aggFuncs && aggFuncs->size()==0){ // in the matching the raw data process, dont compare aggregation function
+        if (m_leftExpression && m_rightExpression){
+          // do not filter if aggregation function involved
+          if (m_leftExpression->containGroupFunc() || m_rightExpression->containGroupFunc())
+            return true;
+          else{ // no aggregation function in either left or right expression. do filter comparasion
+            string leftRst = "", rightRst = "";
+            if (m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, rightRst)){
+              //trace(DEBUG, "(1)Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype.datatype).c_str());
+              return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
+            }else
+              return false;
+          }
+        }else
+          return false;
+      }else{ // matching the aggregation functions only
+        if (m_leftExpression && m_rightExpression){
+          // do not filter if no aggregation function involved (exemp const)
+          if ((!m_leftExpression->containGroupFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)) || (m_rightExpression->containGroupFunc() && !(m_rightExpression->m_type==LEAF&&m_rightExpression->m_expType==CONST)))
+            return true;
+          else{ // aggregation function in either left or right expression. do filter comparasion
+            string leftRst = "", rightRst = "";
+            if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, leftRst) && m_rightExpression->evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, rightRst)){
+              //trace(DEBUG, "(2)Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype.datatype).c_str());
+              return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
+            }else
+              return false;
+          }
+        }else
+          return false;
+      }
     }
   }else{ 
     return false;

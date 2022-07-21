@@ -169,6 +169,15 @@ struct hash_container
 
 };
 
+struct GroupProp{
+  long count;
+  long double sum;
+  string max;
+  string min;
+  std::set <string> uniquec;
+  bool inited = false;
+};
+
 extern GlobalVars gv;
 
 void trace(short level, const char *fmt, ...);

@@ -16,6 +16,7 @@
 #define __FILTERC_H
 
 #include "expression.h"
+#include <unordered_map>
 #include "commfuncs.h"
 
 class FilterC;
@@ -68,8 +69,9 @@ class FilterC
     bool remove(FilterC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     void mergeExprConstNodes();  // merge const in the expressions
+    bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
 
-    bool compareExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues); // calculate an expression prediction. no predication or comparasion failed means alway false
+    bool compareExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs); // calculate an expression prediction. no predication or comparasion failed means alway false
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.
@@ -79,7 +81,7 @@ class FilterC
     void dump(int deep);
     void buildLeafNodeFromStr(FilterC* node, string str); // build a leaf node
     bool buildFilter(string splitor, string quoters); // build current filter class from the expression string
-    bool compareIn(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues);
+    bool compareIn(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs);
 
   protected:
     void init();

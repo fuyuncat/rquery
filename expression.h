@@ -16,9 +16,12 @@
 #define __EXPRESSIONC_H
 
 #include "expression.h"
+#include <unordered_map>
 #include "commfuncs.h"
 
 class ExpressionC;
+
+class FunctionC;
 
 class ExpressionC
 {
@@ -42,6 +45,7 @@ class ExpressionC
     ExpressionC* m_leftNode; // if type is BRANCH, it links to the left child node. Otherwise, it's meaningless
     ExpressionC* m_rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
     ExpressionC* m_parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
+    FunctionC* m_Function;  // if m_expType is FUNCTION, it points to a function class, otherwise, it's NULL
 
     void setExpstr(string expString); // set expression string and analyze the string
     int getLeftHeight(); // get left tree Height
@@ -66,8 +70,9 @@ class ExpressionC
     void clear(); // clear predictin
     bool remove(ExpressionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
-    bool evalExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, string & sResult); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not
+    bool evalExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not
     bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.
+    bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.

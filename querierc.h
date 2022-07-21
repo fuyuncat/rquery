@@ -56,14 +56,6 @@ struct SortProp{
   short int direction; //1 ASC; 2 DESC
 };
 
-struct GroupProp{
-  long count;
-  long double sum;
-  string max;
-  string min;
-  std::set <string> uniquec;
-};
-
 class ExpressionC;
 
 class QuerierC
@@ -136,18 +128,16 @@ class QuerierC
     vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     //map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
-    unordered_map< vector<string>, vector<string>, hash_container< vector<string> > > m_nonAggSels;  // temp results for non aggregation functions selections. mapping group keys:selections, it should be 1:1
-    //unordered_map< vector<string>, unordered_map< string,vector<string> >, hash_container< vector<string> > > m_aggFuncTaget;  // temp results for calculating aggregation functions. mapping group keys: <func_expr:evaled parameter expressions>
-    //std::set < vector<string> > m_nonAggSelSet; // the vector is: group keys + non aggregation selections
+    std::set< vector<string> > m_groupKeys;  // group keys
+    unordered_map< vector<string>, vector<string>, hash_container< vector<string> > > m_aggSelResults;  // temp results for all selections if aggregation functions or group involed. mapping group keys:selections, it should be 1:1
+    unordered_map< string,GroupProp > m_initAggProps; // an initial aggregation function properties map retrieved from the selection&sort expressions
+    unordered_map< string,ExpressionC > m_aggFuncExps; // aggregation function expressions map retrieved from the selection&sort expressions. mapping funcExpStr:ExpressionC
     unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > > m_aggGroupProp; // mapping group keys: group properties
     bool m_aggrOnly; // the selection has aggregation functions only, no matter if there is any group field.
 
-    bool matchFilter(vector<string> rowValue, FilterC* filter); // filt a row data by filter. no predication mean true. comparasion failed means alway false
-    void evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,vector<string> > & aggFuncTaget); // eval expression in aggregation paramter and store in a data set
-    void evalAggExpNode(ExpressionC* node, vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp);
-    void runAggFuncExp(ExpressionC* node, unordered_map< string,vector<string> >* dateSet, string & sResult); // run aggregation function
-    void runAggFuncExp(ExpressionC* node, unordered_map< string,GroupProp > * dateSet, string & sResult); // run aggregation function
-    bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, vector< vector<string> > & resultSet); // add a data row to a result set
+    bool matchFilter(vector<string> rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
+    void evalAggExpNode(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp);  // eval expression in aggregation paramter and store in a data set
+    bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, vector< vector<string> > & resultSet); // add a data row to a result set
     //void mergeSort(int iLeft, int iMid, int iRight);
     void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);
 

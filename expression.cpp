@@ -934,9 +934,36 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
           // looks like this part is duplicated with querierc.evalAggExpNode(), but dont change aggFuncs values, as the same aggregation function may present multiple times in the selections/sorts clauses.
           unordered_map< string,GroupProp >::iterator it = aggFuncs->find(m_Function->m_expStr);
           if (it != aggFuncs->end()){
-            if (m_Function->m_params.size()>0)
-              m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, extrainfo);
-            else
+            if (m_Function->m_params.size()>0){
+              // we dont bother with the paramter, as it has already been evaled in querierc.evalAggExpNode()
+              // calculate the parameter here will cause duplicated calculation if the same aggregation function involved multiple times in the selection/sort
+              //m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, extrainfo);
+              switch (m_Function->m_funcID){
+                case AVERAGE:
+                  sResult = doubleToStr(it->second.sum/(double)it->second.count);
+                  break;
+                case SUM:
+                  sResult = doubleToStr(it->second.sum);
+                  break;
+                case COUNT:
+                  sResult = longToStr(it->second.count);
+                  break;
+                case UNIQUECOUNT:
+                  sResult = longToStr(it->second.uniquec.size());
+                  break;
+                case MAX:
+                  sResult = it->second.max;
+                  break;
+                case MIN:
+                  sResult = it->second.min;
+                  break;
+                default:{
+                  trace(ERROR, "Invalid aggregation function '%s'\n",m_Function->m_expStr.c_str());
+                  return false;
+                }
+              }
+              return true;
+            }else
               trace(ERROR, "Missing paramters for aggregation function '%s'\n",m_Function->m_expStr.c_str());
           }else{
             trace(ERROR, "Failed to find aggregation function '%s' dataset when evaling '%s'!\n", m_Function->m_expStr.c_str(), getTopParent()->getEntireExpstr().c_str());

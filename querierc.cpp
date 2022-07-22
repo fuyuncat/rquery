@@ -387,7 +387,8 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
       continue;
     }
     string extrainfo;
-    if (ite->second.evalExpression(fieldvalues, varvalues, &aggGroupProp, sResult, extrainfo)){
+    //trace(DEBUG2, "Eval aggregation function expression '%s'\n", ite->second.getEntireExpstr().c_str());
+    if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, sResult, extrainfo)){
       if (!it->second.inited){
         switch(ite->second.m_funcID){
         case AVERAGE:
@@ -426,15 +427,16 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
           break;
         case COUNT:
           it->second.count += 1;
+          //trace(DEBUG2," count increasing 1 => %d\n",it->second.count);
           break;
         case UNIQUECOUNT:
           it->second.uniquec.insert(sResult);
           break;
         case MAX:
-          //trace(DEBUG2,"Comparing '%s' : '%s' ... ",sResult.c_str(),it->second.max.c_str());
+          trace(DEBUG2,"Comparing '%s' : '%s' ... ",sResult.c_str(),it->second.max.c_str());
           if (sResult.compare(it->second.max)>0)
             it->second.max = sResult;
-          //trace(DEBUG2," get '%s'\n",it->second.max.c_str());
+          trace(DEBUG2," get '%s'\n",it->second.max.c_str());
           break;
         case MIN:
           if (sResult.compare(it->second.min)<0)

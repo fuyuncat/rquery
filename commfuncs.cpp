@@ -526,7 +526,7 @@ bool strToDate(string str, struct tm & tm, string fmt)
       return false;
   }
   if (strptime(sRaw.c_str(), sFm.c_str(), &tm)){
-    if (dateToStr(tm, sFm).compare(sRaw) != 0)
+    if (!sFm.empty() && dateToStr(tm, sFm).compare(sRaw) != 0)
       return false;
     time_t t1 = mktime(&tm);
     //t1 -= iOffSet*36;

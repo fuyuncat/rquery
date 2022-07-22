@@ -526,8 +526,6 @@ bool FunctionC::runTruncdate(vector<string>* fieldvalues, map<string,string>* va
     return false;
   }
   string sTm, sSeconds, tmpExtra; 
-  m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sTm, extrainfo) ;
-  trace(DEBUG2, "Truncating date format:%s\n", extrainfo.c_str());
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sTm, extrainfo) && isDate(sTm, extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sSeconds, tmpExtra) && isInt(sSeconds)){
     struct tm tm;
     long iSeconds = atol(sSeconds.c_str());

@@ -912,9 +912,9 @@ void ExpressionC::alignChildrenDataType()
   }
 }
 
-// calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not
-bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult){
-  if (!fieldnames || !fieldvalues || !varvalues || !aggFuncs){
+// calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
+bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, string & extrainfo){
+  if (!fieldvalues || !varvalues || !aggFuncs){
     trace(ERROR, "Insufficient metadata!\n");
     return false;
   }
@@ -935,7 +935,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
           unordered_map< string,GroupProp >::iterator it = aggFuncs->find(m_Function->m_expStr);
           if (it != aggFuncs->end()){
             if (m_Function->m_params.size()>0)
-              m_Function->m_params[0].evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, sResult);
+              m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, extrainfo);
             else
               trace(ERROR, "Missing paramters for aggregation function '%s'\n",m_Function->m_expStr.c_str());
           }else{
@@ -943,21 +943,23 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
             return false;
           }
         }else{
-          bool gotResult = m_Function->runFunction(fieldnames, fieldvalues, varvalues, aggFuncs, sResult);
+          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, sResult, extrainfo);
           return gotResult;
         }
       }
     }else if (m_expType == COLUMN){
       if (m_colId >= 0 && m_colId<fieldvalues->size()){
         sResult = (*fieldvalues)[m_colId];
+        extrainfo = (*m_fieldtypes)[m_colId].extrainfo;
         return true;
       }else{
         int i=0;
-        for (i=0; i<fieldnames->size(); i++)
-          if ((*fieldnames)[i].compare(m_expStr) == 0)
+        for (i=0; i<m_fieldnames->size(); i++)
+          if ((*m_fieldnames)[i].compare(m_expStr) == 0)
             break;
-        if (i<fieldnames->size()){
+        if (i<m_fieldnames->size()){
           sResult = (*fieldvalues)[i];
+          extrainfo = (*m_fieldtypes)[i].extrainfo;
           return true;
         }else{
           trace(ERROR, "Cannot find COLUMN '%s'\n",m_expStr.c_str());
@@ -983,18 +985,19 @@ bool ExpressionC::evalExpression(vector<string>* fieldnames, vector<string>* fie
       return false;
     }
   }else{
-    string leftRst = "", rightRst = "";
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, leftRst)){
+    string leftRst = "", rightRst = "", leftExtra = "", rightExtra = "";
+    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, leftExtra)){
       trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
       return false;
     }
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldnames, fieldvalues, varvalues, aggFuncs, rightRst)){
+    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, rightRst, rightExtra)){
       trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
       return false;
     }
     //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
     if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
       //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
+      extrainfo = m_datatype.extrainfo;
       return true;
     }else
       return false;
@@ -1022,7 +1025,8 @@ bool ExpressionC::mergeConstNodes(string & sResult)
           map<string,string> mvarvalues;
           unordered_map< string,GroupProp > aggFuncs;
           m_Function->analyzeColumns(&vfieldnames, &fieldtypes);
-          gotResult = m_Function->runFunction(&vfieldnames,&vfieldvalues,&mvarvalues,&aggFuncs,sResult);
+          string extrainfo;
+          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,sResult,extrainfo);
           if (gotResult){
             m_expStr = sResult;
             m_expType = CONST;
@@ -1072,20 +1076,20 @@ void ExpressionC::getAllColumnNames(vector<string> & fieldnames)
 
 bool ExpressionC::getAggFuncs(unordered_map< string,GroupProp > & aggFuncs)
 {
-  trace(DEBUG2,"Checking '%s'(%d %d %d)\n",getEntireExpstr().c_str(),m_type,m_expType,m_Function?m_Function->isAggFunc():-1);
+  //trace(DEBUG2,"Checking '%s'(%d %d %d)\n",getEntireExpstr().c_str(),m_type,m_expType,m_Function?m_Function->isAggFunc():-1);
   if (m_type == LEAF && m_expType == FUNCTION && m_Function){
     if (m_Function->isAggFunc()){
       if (aggFuncs.find(m_Function->m_expStr) == aggFuncs.end()){
         GroupProp gp;
-        trace(DEBUG2,"Adding aggregation function '%s' properties \n",m_Function->m_expStr.c_str());
+        //trace(DEBUG2,"Adding aggregation function '%s' properties \n",m_Function->m_expStr.c_str());
         aggFuncs.insert(pair<string,GroupProp>(m_Function->m_expStr,gp));
       }
       return true; // the parameter expressions of an aggregation function should not include another aggregation function
     }else { // check the paramters of normal functions
-      trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
+      //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
       bool bGotAggFunc = false;
       for (int i=0;i<m_Function->m_params.size();i++){
-        trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
+        //trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
         bGotAggFunc = m_Function->m_params[i].getAggFuncs(aggFuncs)||bGotAggFunc;
       }
       return bGotAggFunc;

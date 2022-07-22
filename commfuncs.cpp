@@ -567,6 +567,8 @@ long int curtime()
 bool isDate(const string& str, string& fmt)
 {
   struct tm tm;
+  if (strToDate(str, tm, fmt))
+    return true;
   std::set<string> alldatefmt, alltimefmt, alljunction, alltzfmt;
   alldatefmt.insert("%Y-%m-%d");alldatefmt.insert("%Y/%m/%d");alldatefmt.insert("%d/%m/%Y");alldatefmt.insert("%m/%d/%Y");alldatefmt.insert("%m-%d-%Y");alldatefmt.insert("%d-%m-%Y");alldatefmt.insert("%d/%b/%Y");alldatefmt.insert("%b/%d/%Y");alldatefmt.insert("%Y-%b-%d");alldatefmt.insert("%Y/%b/%d");
   alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%h:%M:%S");alltimefmt.insert("%H/%M/%S");alltimefmt.insert("%h/%M/%S");
@@ -668,19 +670,23 @@ DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const Dat
 int detectDataType(string str, string & extrainfo)
 {
   string trimmedStr = trim_copy(str);
-  if (matchQuoters(trimmedStr, 0, "''") || matchQuoters(trimmedStr, 0, "//"))
-    return STRING;
+  short int datatype = UNKNOWN;
+  if (trimmedStr.size()>1 && ((trimmedStr[0]=='\'' && trimmedStr[trimmedStr.size()-1]=='\'' && matchQuoters(trimmedStr, 0, "''")==0) || (trimmedStr[0]=='/' && trimmedStr[trimmedStr.size()-1]=='/' && matchQuoters(trimmedStr, 0, "//")==0))){
+    datatype = STRING;
+    //trace(DEBUG2, "'%s' has quoters\n", trimmedStr.c_str());
   //else if (matchQuoters(trimmedStr, 0, "{}"))
-  else if (isDate(trimmedStr, extrainfo))
-    return DATE;
+  }else if (isDate(trimmedStr, extrainfo))
+    datatype = DATE;
   else if (isLong(trimmedStr))
-    return LONG;
+    datatype = LONG;
   else if (isDouble(trimmedStr))
-    return DOUBLE;
+    datatype = DOUBLE;
   else if (isInt(trimmedStr))
-    return INTEGER;
+    datatype = INTEGER;
   else
-    return UNKNOWN;
+    datatype = UNKNOWN;
+  //trace(DEBUG2, "Detected from '%s', data type '%s', extrainfo '%s'\n", str.c_str(), decodeDatatype(datatype).c_str(), extrainfo.c_str());
+  return datatype;
 }
 
 bool wildmatch(const char *candidate, const char *pattern, int p, int c, char multiwild='*', char singlewild='?', char escape='\\') {
@@ -986,6 +992,16 @@ short int encodeFunction(string str)
     return REPLACE;
   else if(sUpper.compare("REGREPLACE")==0)
     return REGREPLACE;
+  else if(sUpper.compare("ISNULL")==0)
+    return ISNULL;
+  else if(sUpper.compare("SWITCH")==0)
+    return SWITCH;
+  else if(sUpper.compare("PAD")==0)
+    return PAD;
+  else if(sUpper.compare("GREATEST")==0)
+    return GREATEST;
+  else if(sUpper.compare("LEAST")==0)
+    return LEAST;
   else if(sUpper.compare("ROUND")==0)
     return ROUND;
   else if(sUpper.compare("LOG")==0)

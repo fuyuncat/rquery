@@ -136,7 +136,7 @@ class QuerierC
     bool m_aggrOnly; // the selection has aggregation functions only, no matter if there is any group field.
 
     bool matchFilter(vector<string> rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
-    void evalAggExpNode(vector<string>* fieldnames, vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp);  // eval expression in aggregation paramter and store in a data set
+    void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp);  // eval expression in aggregation paramter and store in a data set
     bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, vector< vector<string> > & resultSet); // add a data row to a result set
     //void mergeSort(int iLeft, int iMid, int iRight);
     void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);
@@ -144,6 +144,13 @@ class QuerierC
 #ifdef __DEBUG__
     long int m_searchtime;
     long int m_filtertime;
+    long int m_filtercomptime;
+    long int m_evalGroupKeytime;
+    long int m_prepAggGPtime;
+    long int m_evalAggExptime;
+    long int m_evalSeltime;
+    long int m_evalSorttime;
+    long int m_updateResulttime;
 #endif // __DEBUG__
 
   protected:

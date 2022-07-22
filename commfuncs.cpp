@@ -497,6 +497,8 @@ bool strToDate(string str, struct tm & tm, string fmt)
 {
   // accept %z at then of the time string only
   //trace(DEBUG, "Trying date format: %s\n", fmt.c_str());
+  if (fmt.empty())
+    return false;
   string sRaw = str, sFm = fmt;
   int iOffSet = 0;
   if (sFm.length()>5 && sFm[sFm.length()-2]=='%' && sFm[sFm.length()-1]=='z'){
@@ -526,7 +528,7 @@ bool strToDate(string str, struct tm & tm, string fmt)
       return false;
   }
   if (strptime(sRaw.c_str(), sFm.c_str(), &tm)){
-    if (!sFm.empty() && dateToStr(tm, sFm).compare(sRaw) != 0)
+    if (dateToStr(tm, sFm).compare(sRaw) != 0)
       return false;
     time_t t1 = mktime(&tm);
     //t1 -= iOffSet*36;

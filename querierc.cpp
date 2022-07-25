@@ -564,7 +564,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
         else // group expressions to the sorting keys
           for (int i=0; i<m_groups.size(); i++){
             m_groups[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, dts);
-            //trace(DEBUG2, "Adding '%s' for Group '%s', eval from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str(),rowValue[0].c_str());
+            trace(DEBUG2, "Adding '%s' for Group '%s', eval from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str(),rowValue[0].c_str());
             groupExps.push_back(sResult);
           }
         //trace(DEBUG2, "Checking  '%s' (%d)\n", groupExps[0].c_str(), m_aggrOnly);

@@ -221,6 +221,7 @@ string dateToStr(struct tm val, int iOffSet = 888888, string fmt = DATEFMT);
 
 bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt=DATEFMT);
 struct tm zonetime(time_t t1, int iOffSet);
+int dateFormatLen(string fmt);
 string stripTimeZone(string str, int & iOffSet, string & sTimeZone);
 struct tm now();
 long int curtime();

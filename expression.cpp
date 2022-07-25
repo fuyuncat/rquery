@@ -974,6 +974,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
           }
         }else{
           bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, sResult, dts);
+          m_datatype = dts;
           return gotResult;
         }
       }
@@ -981,6 +982,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
       if (m_colId >= 0 && m_colId<fieldvalues->size()){
         sResult = (*fieldvalues)[m_colId];
         dts = (*m_fieldtypes)[m_colId];
+        m_datatype = dts;
         return true;
       }else{
         int i=0;
@@ -990,6 +992,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
         if (i<m_fieldnames->size()){
           sResult = (*fieldvalues)[i];
           dts = (*m_fieldtypes)[i];
+          m_datatype = dts;
           return true;
         }else{
           trace(ERROR, "Cannot find COLUMN '%s'\n",m_expStr.c_str());

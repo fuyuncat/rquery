@@ -557,12 +557,89 @@ string stripTimeZone(string str, int & iOffSet, string & sTimeZone)
   return sRaw;
 }
 
+// get expected data format minimum length
+// %Y 4;%y 2;%m 2;%b(abb month) 3;%d 2;%H 2;%M 2;%S 2;
+// %a(abb week) 3; %A(Full week) 6+; %B(Full month) 3+; %c (Thu Aug 23 14:55:02 2001) 24; %C (year%100) 2; %D(MM/DD/YY) 8; %e (day of month) 1+; %F(YYYY-MM-DD) 10;%g	(week based year) 2; %G (week based year) 4; %h	(abb month) 3; %I(12hours) 2; %j(day of year) 3; %n	(new line) 1;%p	(AM/PM) 2; %r(12 hour clock 02:55:02 pm) 11; %R(%H:%M) 5; %t(tab) 1; %T	(HH:MM:SS) 8; %u (week day in start 1) 1; %U (week number of year start 0) 2; %V (week number of year start 1) 2; %w (week day in start 0) 1; %W (week number of year, monday is first day) 2; %x(08/23/01) 8; %X(14:55:02) 8; %z(timezone +100) 4+;%Z(timezone UTC) 3+;%% (%sign) 1;
+int dateFormatLen(string fmt)
+{
+  int len = 0, i=0;
+  while(i<fmt.length()){
+    if (fmt[i]=='%' && i<fmt.length()-1){
+      switch(fmt[i+1]){
+        case 'e':
+        case 'n':
+        case 't':
+        case 'u':
+        case 'w':
+        case '%':
+          len+=1;
+          break;
+        case 'y':
+        case 'm':
+        case 'd':
+        case 'H':
+        case 'M':
+        case 'S':
+        case 'C':
+        case 'g':
+        case 'I':
+        case 'p':
+        case 'U':
+        case 'V':
+        case 'W':
+          len+=2;
+          break;
+        case 'b':
+        case 'a':
+        case 'B':
+        case 'h':
+        case 'j':
+        case 'Z':
+          len+=3;
+          break;
+        case 'Y':
+        case 'G':
+        case 'z':
+          len+=4;
+          break;
+        case 'R':
+          len+=5;
+          break;
+        case 'A':
+          len+=6;
+          break;
+        case 'D':
+        case 'T':
+        case 'x':
+        case 'X':
+          len+=8;
+          break;
+        case 'F':
+          len+=10;
+          break;
+        case 'r':
+          len+=11;
+          break;
+        case 'c':
+          len+=24;
+          break;
+      }
+      i++;
+    }else
+      len++;
+    i++;
+  }
+  return len;
+}
+
 // note: tm returns GMT time, iOffSet is the timezone
+// strptime doesnot consider the whole datetime string. For example, strptime("20/Jul/2022:01:00:00", "%Y/%b/%d", tm) will return true.
+// The return value of the strptime is a pointer to the first character not processed in this function call. In case the whole input string is consumed, the return value points to the null byte at the end of the string.
 bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
 {
   // accept %z at then of the time string only
-  trace(DEBUG2, "Trying date format: '%s' for '%s'\n", fmt.c_str(), str.c_str());
-  if (fmt.empty())
+  //trace(DEBUG2, "Trying date format: '%s' (expected len:%d) for '%s'\n", fmt.c_str(), dateFormatLen(fmt), str.c_str());
+  if (fmt.empty() || str.length() < dateFormatLen(fmt))
     return false;
   string sRaw, sTimeZone, sFm = fmt;
   iOffSet = 0;
@@ -576,26 +653,55 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
       return false;
   }
   // bare in mind: strptime will ignore %z. means we need to treat its returned time as GMT time
-  if (strptime(sRaw.c_str(), sFm.c_str(), &tm)){
-    trace(DEBUG2, "(1)Converting '%s' => %d %d %d %d %d %d %d offset %d format '%s' \n",sRaw.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, iOffSet, sFm.c_str());
+  char * c = strptime(sRaw.c_str(), sFm.c_str(), &tm);
+  if (c && string(c).empty()){
+    //trace(DEBUG2, "(1)Converting '%s' => %d %d %d %d %d %d %d offset %d format '%s' \n",sRaw.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, iOffSet, sFm.c_str());
     tm.tm_isdst = 0;
-    time_t t1;
-    //t1 = mktime(&tm);
-    //t1 += iOffSet*36;
-    //tm = *(gmtime(&t1));
-    string sDate = dateToStr(tm, 0, sFm); // as tm got from strptime ignored offset, need to set offset to 0
-    trace(DEBUG2, "(2)Converting '%s' get '%s' \n",sRaw.c_str(), sDate.c_str());
-    if (sDate.compare(sRaw) != 0)
+    //string sDate = dateToStr(tm, 0, sFm); // as tm got from strptime ignored offset, need to set offset to 0
+    //trace(DEBUG2, "(2)Converting '%s' get '%s' \n",sRaw.c_str(), sDate.c_str());
     //if (sDate.compare(sRaw) != 0)
-      return false;
-    t1 = mktime(&tm);
-    //t1 += iOffSet*36;
-    //t1 += iOffSet*36*(iOffOp==SUBTRACT?-1:1);
-    //tm = *(gmtime(&t1)); // we cannot get any local time as strptime ignored the timezone, return GMT time only.
-    //tm = *(localtime(&t1));
-    tm = zonetime(t1, iOffSet*-1); // we cannot get any local time as strptime ignored the timezone, return GMT time only.
-    tm.tm_isdst = 0;
-    trace(DEBUG2, "(3)Converting '%s'(format '%s') to local time => %d %d %d %d %d %d %d \n",str.c_str(), fmt.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst);
+    //  return false;
+    if (iOffSet != 0){
+      tm.tm_hour = tm.tm_hour+(iOffSet/100*-1);
+      if (tm.tm_hour<0){
+        tm.tm_hour += 24;
+        tm.tm_mday -= 1;
+        if (tm.tm_mday<=0){
+          switch(tm.tm_mon){
+            case 0:
+            case 1:
+            case 3:
+            case 5:
+            case 7:
+            case 8:
+            case 10:
+            case 12:
+              tm.tm_mday+=31;
+              break;
+            case 4:
+            case 6:
+            case 9:
+            case 11:
+              tm.tm_mday+=30;
+              break;
+            case 2:
+              if ((tm.tm_year+1900)%400==0 || ((tm.tm_year+1900)%4==0&&(tm.tm_year+1900)%100!=0))
+                tm.tm_mday+=29;
+              else
+                tm.tm_mday+=28;
+              break;
+          }
+          tm.tm_mon -= 1;
+          if(tm.tm_mon<0)
+            tm.tm_year-=1;
+        }
+      }
+    }
+    //time_t t1;
+    //t1 = mktime(&tm);
+    //tm = zonetime(t1, iOffSet*-1); // we cannot get any local time as strptime ignored the timezone, return GMT time only.
+    //tm.tm_isdst = 0;
+    //trace(DEBUG2, "(3)Converting '%s'(format '%s') to local time => %d %d %d %d %d %d %d \n",str.c_str(), fmt.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst);
     //trace(DEBUG, "Trying final get format %s : %s\n", str.c_str(), fmt.c_str());
     return true;
   }else{
@@ -636,7 +742,7 @@ bool isDate(const string& str, int & iOffSet, string& fmt)
     return true;
   std::set<string> alldatefmt, alltimefmt, alljunction, alltzfmt;
   alldatefmt.insert("%Y-%m-%d");alldatefmt.insert("%Y/%m/%d");alldatefmt.insert("%d/%m/%Y");alldatefmt.insert("%m/%d/%Y");alldatefmt.insert("%m-%d-%Y");alldatefmt.insert("%d-%m-%Y");alldatefmt.insert("%d/%b/%Y");alldatefmt.insert("%b/%d/%Y");alldatefmt.insert("%Y-%b-%d");alldatefmt.insert("%Y/%b/%d");
-  alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%h:%M:%S");alltimefmt.insert("%H/%M/%S");alltimefmt.insert("%h/%M/%S");
+  alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%H/%M/%S");
   alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
   alltzfmt.insert(" %z");alltzfmt.insert(" %Z");alltzfmt.insert("%z");alltzfmt.insert("%Z");alltzfmt.insert("");
   for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
@@ -653,7 +759,7 @@ bool isDate(const string& str, int & iOffSet, string& fmt)
             for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
               if (strToDate(str, tm, iOffSet, string((*id)+(*ij)+(*it)+(*iz)))){
                 fmt = string((*id)+(*ij)+(*it)+(*iz));
-                trace(DEBUG2, "(1)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
+                // trace(DEBUG2, "(1)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
                 return true;
               }else if (strToDate(str, tm, iOffSet, string((*it)+(*ij)+(*id)+(*iz)))){
                 fmt = string((*it)+(*ij)+(*id)+(*iz));
@@ -1194,14 +1300,14 @@ int anyDataCompare(string str1, string str2, DataTypeStruct dts){
       newstr1=trim_one(newstr1,'}');newstr2=trim_one(newstr2,'}');
       bool bIsDate1 = true, bIsDate2 = true;
       int offSet1,offSet2;
-      if (dts.extrainfo.empty()){
-        bIsDate1 = isDate(newstr1,offSet1,fmt1);
-        bIsDate2 = isDate(newstr2,offSet2,fmt2);
-      }else{
+      //if (dts.extrainfo.empty()){
+      //  bIsDate1 = isDate(newstr1,offSet1,fmt1);
+      //  bIsDate2 = isDate(newstr2,offSet2,fmt2);
+      //}else{
         fmt1 = dts.extrainfo;
         fmt2 = dts.extrainfo;
-      }
-      if (bIsDate1 && bIsDate2){
+      //}
+      //if (bIsDate1 && bIsDate2){
         struct tm tm1, tm2;
         if (strToDate(newstr1, tm1, offSet1, fmt1) && strToDate(newstr2, tm2, offSet2, fmt2)){
           time_t t1 = mktime(&tm1);
@@ -1215,9 +1321,9 @@ int anyDataCompare(string str1, string str2, DataTypeStruct dts){
         }else{
           return -101;
         }
-      }else{
-        return -101;
-      }
+      //}else{
+      //  return -101;
+      //}
     }case BOOLEAN:{
       if (isInt(str1) && isInt(str2)){
         // convert boolean to int to compare. false => 0; true => 1

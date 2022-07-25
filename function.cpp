@@ -542,27 +542,22 @@ bool FunctionC::runTruncdate(vector<string>* fieldvalues, map<string,string>* va
     return false;
   }
   string sTm, sSeconds;
+  struct tm tm;
   DataTypeStruct tmpDts;
   int iOffSet;
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sTm, dts) && isDate(sTm, iOffSet, dts.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sSeconds, tmpDts) && isInt(sSeconds)){
-    struct tm tm;
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sTm, dts) && strToDate(sTm, tm, iOffSet, dts.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sSeconds, tmpDts) && isInt(sSeconds)){
     long iSeconds = atol(sSeconds.c_str());
-    if (strToDate(sTm, tm, iOffSet, dts.extrainfo)){
-      trace(DEBUG2, "(a)Truncating '%s' (%d) %d %d %d %d %d %d \n",sTm.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-      time_t t1 = mktime(&tm);
-      time_t t2 = (time_t)(trunc((long double)t1/iSeconds))*iSeconds;
-      //tm = *(localtime(&t2));
-      //tm = *(gmtime(&t2));
-      tm = zonetime(t2, 0); // as tm returned from strToDate is GMT time
-      sResult = dateToStr(tm, iOffSet, dts.extrainfo);
-      trace(DEBUG2, "(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) \n",sTm.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-      dts.datatype = DATE;
-      //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", iSeconds, sTm.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
-      return !sResult.empty();
-    }else{
-      trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
-      return false;
-    }
+    trace(DEBUG2, "(a)Truncating '%s' (%d) %d %d %d %d %d %d \n",sTm.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    time_t t1 = mktime(&tm);
+    time_t t2 = (time_t)(trunc((long double)t1/iSeconds))*iSeconds;
+    //tm = *(localtime(&t2));
+    //tm = *(gmtime(&t2));
+    tm = zonetime(t2, 0); // as tm returned from strToDate is GMT time
+    sResult = dateToStr(tm, iOffSet, dts.extrainfo);
+    trace(DEBUG2, "(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) \n",sTm.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    dts.datatype = DATE;
+    //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", iSeconds, sTm.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
+    return !sResult.empty();
   }else{
     trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
     return false;

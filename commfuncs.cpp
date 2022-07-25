@@ -560,12 +560,6 @@ string stripTimeZone(string str, int & iOffSet, string & sTimeZone)
 // note: tm returns GMT time, iOffSet is the timezone
 bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
 {
-  //const std::locale loc = std::locale(std::locale::classic(), new boost::posix_time::time_input_facet(fmt));
-  //std::istringstream is(str);
-  //is.imbue(loc);
-  //boost::posix_time::ptime t;
-  //is >> t;
-
   // accept %z at then of the time string only
   trace(DEBUG2, "Trying date format: '%s' for '%s'\n", fmt.c_str(), str.c_str());
   if (fmt.empty())
@@ -578,12 +572,11 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
     // trace(DEBUG, "Trying timezone '%s' : '%s'\n", fmt.c_str(), sRaw.c_str());
     sFm = trim_copy(sFm.substr(0,sFm.size()-2));
   }else{
-    if (!sTimeZone.empty())
+    if (!sTimeZone.empty()) // no %z in the format, there should no timezone info in the datetime string
       return false;
   }
-  // strptime will ignore %z.
+  // bare in mind: strptime will ignore %z. means we need to treat its returned time as GMT time
   if (strptime(sRaw.c_str(), sFm.c_str(), &tm)){
-  //if (strptime(str.c_str(), fmt.c_str(), &tm)){
     trace(DEBUG2, "(1)Converting '%s' => %d %d %d %d %d %d %d offset %d format '%s' \n",sRaw.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, iOffSet, sFm.c_str());
     tm.tm_isdst = 0;
     time_t t1;

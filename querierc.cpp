@@ -367,7 +367,7 @@ void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
     else{
       DataTypeStruct dts;
       dts.datatype = detectDataType(matches[i], dts.extrainfo);
-      //trace(DEBUG2, "Detected column '%s' from '%s', data type '%s'\n", m_fieldnames[i-1].c_str(), string(matches[i]).c_str(), decodeDatatype(dts.datatype).c_str());
+      // trace(DEBUG2, "Detected column '%s' from '%s', data type '%s' extrainfo '%s'\n", m_fieldnames[i-1].c_str(), string(matches[i]).c_str(), decodeDatatype(dts.datatype).c_str(), dts.extrainfo.c_str());
       if (dts.datatype==UNKNOWN)
         dts.datatype = STRING;
       m_fieldtypes.push_back(dts); // set UNKNOWN (real) data as STRING

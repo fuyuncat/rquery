@@ -387,9 +387,9 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
       trace(ERROR,"No expression found for '%s'\n", it->first.c_str());
       continue;
     }
-    string extrainfo;
+    DataTypeStruct dts;
     //trace(DEBUG2, "Eval aggregation function expression '%s'\n", ite->second.getEntireExpstr().c_str());
-    if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, sResult, extrainfo)){
+    if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, sResult, dts)){
       if (!it->second.inited){
         switch(ite->second.m_funcID){
         case AVERAGE:
@@ -434,13 +434,13 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
           it->second.uniquec.insert(sResult);
           break;
         case MAX:
-          trace(DEBUG2,"Comparing '%s' : '%s' ... ",sResult.c_str(),it->second.max.c_str());
-          if (sResult.compare(it->second.max)>0)
+          //trace(DEBUG2,"Comparing '%s' : '%s' ... ",sResult.c_str(),it->second.max.c_str());
+          if (anyDataCompare(sResult,it->second.max,dts)>0)
             it->second.max = sResult;
-          trace(DEBUG2," get '%s'\n",it->second.max.c_str());
+          //trace(DEBUG2," get '%s'\n",it->second.max.c_str());
           break;
         case MIN:
-          if (sResult.compare(it->second.min)<0)
+          if (anyDataCompare(sResult,it->second.min,dts)<0)
             it->second.min = sResult;
           break;
         }
@@ -459,9 +459,10 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
     //vResults.push_back(rowValue[0]);
     vResults.push_back(""); // save memory
     for (int i=0; i<expressions.size(); i++){
-      string sResult, extrainfo;
+      string sResult;
+      DataTypeStruct dts;
       if (!expressions[i].containGroupFunc()){
-        expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, extrainfo);
+        expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, dts);
         //trace(DEBUG, "eval '%s' => '%s'\n", expressions[i].getEntireExpstr().c_str(), sResult.c_str());
       }else{
         trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", expressions[i].getEntireExpstr().c_str());
@@ -522,7 +523,8 @@ bool QuerierC::matchFilter(vector<string> rowValue)
 
         vector<string> vResults;
         for (int i=0; i<m_sorts.size(); i++){
-          string sResult, extrainfo;
+          string sResult;
+          DataTypeStruct dts;
           if (!m_sorts[i].sortKey.containGroupFunc()){
             //if it has the exact same expression as any selection, get the result from selection
             int iSel = -1;
@@ -537,7 +539,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
             else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size())
               sResult = m_results[m_results.size()-1][atoi(m_sorts[i].sortKey.m_expStr.c_str()) + 1];
             else
-              m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, extrainfo);
+              m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, dts);
             //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
           }else{
             trace(ERROR, "(3)Invalid using aggregation function in '%s', no group involved!\n", m_sorts[i].sortKey.getEntireExpstr().c_str());
@@ -554,14 +556,15 @@ bool QuerierC::matchFilter(vector<string> rowValue)
         //trace(DEBUG2, " Grouping! \n");
         vector<string> groupExps;  // the group expressions. as the key of following hash map
         vector<string> aggSelResult;
-        string sResult, extrainfo;
+        string sResult;
+        DataTypeStruct dts;
         bool dataSetExist = false;
         if (m_aggrOnly) // has aggregation function without any group, give an empty string as the key
           groupExps.push_back("");
         else // group expressions to the sorting keys
           for (int i=0; i<m_groups.size(); i++){
-            m_groups[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, extrainfo);
-            //trace(DEBUG2, "Adding '%s' from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str());
+            m_groups[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, dts);
+            //trace(DEBUG2, "Adding '%s' for Group '%s', eval from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str(),rowValue[0].c_str());
             groupExps.push_back(sResult);
           }
         //trace(DEBUG2, "Checking  '%s' (%d)\n", groupExps[0].c_str(), m_aggrOnly);
@@ -595,10 +598,11 @@ bool QuerierC::matchFilter(vector<string> rowValue)
   thistime = curtime();
 #endif // __DEBUG__
         for (int i=0; i<m_selections.size(); i++){
-          string sResult, extrainfo;
+          string sResult;
+          DataTypeStruct dts;
           //trace(DEBUG1, "Selection '%s': %d \n",m_selections[i].getEntireExpstr().c_str(), m_selections[i].containGroupFunc());
-          m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, extrainfo);
-          //trace(DEBUG2, "Eval selection '%s', get '%s' \n",m_selections[i].getEntireExpstr().c_str(), sResult.c_str());
+          m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, dts);
+          //trace(DEBUG2, "Eval selection '%s', get '%s', from '%s' \n",m_selections[i].getEntireExpstr().c_str(), sResult.c_str(), rowValue[0].c_str());
           aggSelResult.push_back(sResult);
         }
 #ifdef __DEBUG__
@@ -606,7 +610,8 @@ bool QuerierC::matchFilter(vector<string> rowValue)
   thistime = curtime();
 #endif // __DEBUG__
         for (int i=0; i<m_sorts.size(); i++){
-          string sResult, extrainfo;
+          string sResult;
+          DataTypeStruct dts;
           //if it has the exact same expression as any selection, get the result from selection
           int iSel = -1;
           for (int j=0; j<m_selections.size(); j++)
@@ -618,7 +623,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           if (iSel >= 0 || (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()))
             continue;
           else{ // non aggregation function selections
-            m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, extrainfo);
+            m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, dts);
             aggSelResult.push_back(sResult);
             //trace(DEBUG1, "Got non-aggr selection '%s' \n",sResult.c_str());
           }
@@ -634,6 +639,9 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           m_aggSelResults.erase(groupExps);
         }
         // m_aggFuncTaget.insert( pair<vector<string>, unordered_map< string,vector<string> > >(groupExps,aggFuncTaget));
+        //trace(DEBUG2, "adding result .. \n");
+        //dumpVector(groupExps);
+        //trace(DEBUG2, "sel: '%s' \n",aggSelResult[1].c_str());
         m_aggSelResults.insert( pair<vector<string>, vector<string> >(groupExps,aggSelResult));
         m_aggGroupProp.insert( pair<vector<string>, unordered_map< string,GroupProp > >(groupExps,aggGroupProp));
 #ifdef __DEBUG__
@@ -776,9 +784,13 @@ bool QuerierC::group()
   vector<string> vfieldvalues;
   map<string,string> mvarvalues;
   //trace(DEBUG2, "m_aggSelResults size: %d, m_groupKeys size: %d\n", m_aggSelResults.size(), m_groupKeys.size());
+  //for (unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it=m_aggSelResults.begin(); it!=m_aggSelResults.end(); ++it)
+  //  dumpVector(it->first);
   for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
     if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &m_aggGroupProp[*it]))
       continue;
+    //dumpVector(*it);
+    //trace(DEBUG2,"Sel:'%s'\n",m_aggSelResults[*it][1].c_str());
     vector<string> vResults;
     vResults.push_back(m_aggSelResults[*it][0]);
     int iAggSelID = 1;

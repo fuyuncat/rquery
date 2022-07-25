@@ -212,14 +212,16 @@ bool isInt(const string& str);
 bool isLong(const string& str);
 bool isFloat(const string& str);
 bool isDouble(const string& str);
-bool isDate(const string& str, string& fmt);
+bool isDate(const string& str, int & iOffSet, string& fmt);
 string intToStr(const int val);
 string longToStr(const long val);
 string floatToStr(const float val);
 string doubleToStr(const double val);
-string dateToStr(struct tm val, string fmt = DATEFMT);
+string dateToStr(struct tm val, int iOffSet = 888888, string fmt = DATEFMT);
 
-bool strToDate(string str, struct tm & tm, string fmt=DATEFMT);
+bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt=DATEFMT);
+struct tm zonetime(time_t t1, int iOffSet);
+string stripTimeZone(string str, int & iOffSet, string & sTimeZone);
 struct tm now();
 long int curtime();
 
@@ -244,7 +246,7 @@ short int encodeFunction(string str);
 short int operatorPriority(int iOperator);
 int findStrArrayId(const vector<string> array, const string member);
 
-int anyDataCompare(string str1, string str2, DataTypeStruct dts);
+int anyDataCompare(string str1, string str2, DataTypeStruct dts);  // @return int str1 < str2: -1; str1 == str2:0; str1 > str2: 1
 int anyDataCompare(string str1, int comparator, string str2, DataTypeStruct dts);
 int compareVector(vector<string> array1, vector<string> array2);
 

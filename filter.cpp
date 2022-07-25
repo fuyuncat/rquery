@@ -719,12 +719,13 @@ void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string
 
 bool FilterC::compareIn(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs)
 {
-  string leftRst, sResult, extra1 = "", extra2 = "";
+  string leftRst, sResult;
+  DataTypeStruct dts1, dts2;
   bool bDoAggFilter = (aggFuncs && aggFuncs->size()>0);
   // dont do filte in two scenarios: 1: aggFuncs prvoided, but no aggregation function involved in the expression (except CONST); 2: no aggFuncs provided, but aggregation function involved in the expression;
   if ((!bDoAggFilter && m_leftExpression && m_leftExpression->containGroupFunc()) || (bDoAggFilter && !m_leftExpression->containGroupFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)))
     return true;
-  if (m_inExpressions.size() == 0 || !m_leftExpression || !m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, extra1)){
+  if (m_inExpressions.size() == 0 || !m_leftExpression || !m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, dts1)){
     trace(ERROR, "Failed to get the value to be compared in IN!\n"); 
     return false;
   }
@@ -733,7 +734,7 @@ bool FilterC::compareIn(vector<string>* fieldvalues, map<string,string>* varvalu
   for (int i=0;i<m_inExpressions.size();i++){
     if ((!bDoAggFilter && m_inExpressions[i].containGroupFunc()) || (bDoAggFilter && !m_inExpressions[i].containGroupFunc() && !(m_inExpressions[i].m_type==LEAF&&m_inExpressions[i].m_expType==CONST)))
       return false;
-    if (!m_inExpressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, extra2)){
+    if (!m_inExpressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, dts2)){
       trace(ERROR, "Failed to get result of IN element %s!\n", m_inExpressions[i].getEntireExpstr().c_str());
       return false;
     }
@@ -765,8 +766,9 @@ bool FilterC::compareExpression(vector<string>* fieldvalues, map<string,string>*
           if (m_leftExpression->containGroupFunc() || m_rightExpression->containGroupFunc())
             return true;
           else{ // no aggregation function in either left or right expression. do filter comparasion
-            string leftRst = "", rightRst = "", extra1 = "", extra2 = "";
-            if (m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, extra1) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, rightRst, extra2)){
+            string leftRst = "", rightRst = "";
+            DataTypeStruct dts1, dts2;
+            if (m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, dts1) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, rightRst, dts2)){
               //trace(DEBUG, "(1)Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype.datatype).c_str());
               return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
             }else
@@ -780,8 +782,9 @@ bool FilterC::compareExpression(vector<string>* fieldvalues, map<string,string>*
           if ((!m_leftExpression->containGroupFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)) || (m_rightExpression->containGroupFunc() && !(m_rightExpression->m_type==LEAF&&m_rightExpression->m_expType==CONST)))
             return true;
           else{ // aggregation function in either left or right expression. do filter comparasion
-            string leftRst = "", rightRst = "", extra1 = "", extra2 = "";
-            if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, extra1) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, rightRst, extra2)){
+            string leftRst = "", rightRst = "";
+            DataTypeStruct dts1, dts2;
+            if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, dts1) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, rightRst, dts2)){
               //trace(DEBUG, "(2)Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype.datatype).c_str());
               return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
             }else

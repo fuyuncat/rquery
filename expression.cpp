@@ -312,8 +312,9 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         return false;
       }
     }else if (expStr[0] == '{'){ // checking DATE string
+      int iOffSet;
       if (expStr.size()>1 && expStr[expStr.size()-1] == '}'){ // whole string is a date string
-        if (isDate(expStr.substr(1,expStr.size()-2), node->m_datatype.extrainfo))
+        if (isDate(expStr.substr(1,expStr.size()-2), iOffSet, node->m_datatype.extrainfo))
           node->m_datatype.datatype = DATE;
         else{
           trace(ERROR, "Unrecognized date format of '%s'. \n", expStr.c_str());
@@ -601,8 +602,9 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
           m_expType = FUNCTION;
         if (m_expType == CONST){
           // check if it is a time, quoted by {}
+          int iOffSet;
           if (m_expStr.size()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.size()-1]=='}'){
-            if (isDate(m_expStr.substr(1,m_expStr.size()-2),m_datatype.extrainfo)){
+            if (isDate(m_expStr.substr(1,m_expStr.size()-2),iOffSet,m_datatype.extrainfo)){
               m_datatype.datatype = DATE;
             }else{
               trace(ERROR,"Failed to get the date format from '%s'.\n", m_expStr.c_str());
@@ -913,7 +915,7 @@ void ExpressionC::alignChildrenDataType()
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
-bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, string & extrainfo){
+bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts){
   if (!fieldvalues || !varvalues || !aggFuncs){
     trace(ERROR, "Insufficient metadata!\n");
     return false;
@@ -962,6 +964,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
                   return false;
                 }
               }
+              dts = m_Function->m_datatype;
               return true;
             }else
               trace(ERROR, "Missing paramters for aggregation function '%s'\n",m_Function->m_expStr.c_str());
@@ -970,14 +973,14 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             return false;
           }
         }else{
-          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, sResult, extrainfo);
+          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, sResult, dts);
           return gotResult;
         }
       }
     }else if (m_expType == COLUMN){
       if (m_colId >= 0 && m_colId<fieldvalues->size()){
         sResult = (*fieldvalues)[m_colId];
-        extrainfo = (*m_fieldtypes)[m_colId].extrainfo;
+        dts = (*m_fieldtypes)[m_colId];
         return true;
       }else{
         int i=0;
@@ -986,7 +989,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             break;
         if (i<m_fieldnames->size()){
           sResult = (*fieldvalues)[i];
-          extrainfo = (*m_fieldtypes)[i].extrainfo;
+          dts = (*m_fieldtypes)[i];
           return true;
         }else{
           trace(ERROR, "Cannot find COLUMN '%s'\n",m_expStr.c_str());
@@ -1002,6 +1005,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
         //trace(DEBUG, "Assigning '%s' to '%s' ... \n", (*varvalues)[m_expStr].c_str(), m_expStr.c_str());
         //dumpMap(*varvalues);
         sResult = (*varvalues)[m_expStr];
+        dts = m_datatype;
         return true;
       }else{
         trace(ERROR, "Cannot find VARIABLE '%s'\n",m_expStr.c_str());
@@ -1012,19 +1016,20 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
       return false;
     }
   }else{
-    string leftRst = "", rightRst = "", leftExtra = "", rightExtra = "";
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, leftExtra)){
+    string leftRst = "", rightRst = "";
+    DataTypeStruct leftDts, rightDts;
+    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, leftDts)){
       trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
       return false;
     }
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, rightRst, rightExtra)){
+    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, rightRst, rightDts)){
       trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
       return false;
     }
     //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
     if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
       //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
-      extrainfo = m_datatype.extrainfo;
+      dts = m_datatype;
       return true;
     }else
       return false;
@@ -1052,8 +1057,8 @@ bool ExpressionC::mergeConstNodes(string & sResult)
           map<string,string> mvarvalues;
           unordered_map< string,GroupProp > aggFuncs;
           m_Function->analyzeColumns(&vfieldnames, &fieldtypes);
-          string extrainfo;
-          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,sResult,extrainfo);
+          DataTypeStruct dts;
+          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,sResult,dts);
           if (gotResult){
             m_expStr = sResult;
             m_expType = CONST;

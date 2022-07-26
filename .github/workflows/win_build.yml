@@ -21,6 +21,4 @@ jobs:
     - name: make
       run: |
         dir
-        dir C:\cygwin-packages\
-        C:\cygwin-packages\setup-x86_64.exe -q --packages=make
         C:\cygwin\bin\bash.exe make

@@ -226,6 +226,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
           m_rightNode = NULL;
           return false;
         }
+        //trace(DEBUG2, "(1)Filter expression '%s' \n",m_expStr.c_str());
         return true;
       }
     }
@@ -243,6 +244,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
     return buildFilter(" AND ",quoters);
   }else
     buildLeafNodeFromStr(this, m_expStr);
+  //trace(DEBUG2, "(2)Filter expression '%s' \n",m_expStr.c_str());
   return true;
 }
 

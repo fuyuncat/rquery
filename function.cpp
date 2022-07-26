@@ -96,8 +96,8 @@ bool FunctionC::analyzeExpStr()
     return false;
   }
   m_funcName = trim_copy(upper_copy(m_expStr.substr(0, m_expStr.find("("))));
-  m_expStr = m_funcName+strParams;
-  strParams = trim_pair(strParams, "()");
+  m_expStr = m_funcName+"("+strParams+")";
+  //strParams = trim_pair(strParams, "()");
   vector<string> vParams = split(strParams,',',"//''{}()",'\\',{'(',')'});
   for (int i=0; i<vParams.size(); i++){
     trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
@@ -119,6 +119,7 @@ bool FunctionC::analyzeExpStr()
     case SUBSTR:
     case REPLACE:
     case REGREPLACE:
+    case REGMATCH:
     case DATEFORMAT:
     case PAD:
       m_datatype.datatype = STRING;
@@ -436,6 +437,23 @@ bool FunctionC::runRegreplace(vector<string>* fieldvalues, map<string,string>* v
     return true;
   }else{
     trace(ERROR, "Failed to run regreplace(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runRegmatch(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 3){
+    trace(ERROR, "regmatch(str, regex_pattern, expr) function accepts only three parameters.\n");
+    return false;
+  }
+  string str, sPattern; 
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, str, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sPattern, dts) && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, dts)){
+    regmatchstr(str, sPattern, sResult);
+    dts.datatype = STRING;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run regmatch(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
     return false;
   }
 }
@@ -758,6 +776,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case REGREPLACE:
       getResult = runRegreplace(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case REGMATCH:
+      getResult = runRegmatch(fieldvalues, varvalues, aggFuncs, sResult, dts);
       break;
     case SWITCH:
       getResult = runSwitch(fieldvalues, varvalues, aggFuncs, sResult, dts);

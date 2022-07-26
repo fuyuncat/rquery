@@ -207,6 +207,7 @@ string upper_copy(const string & str);
 string lower_copy(const string & str);
 void replacestr(string & sRaw, const string & sReplace, const string & sNew);
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew);
+void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr);
 
 bool isNumber(const string& str);
 bool isInt(const string& str);

@@ -369,6 +369,11 @@ void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
   //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
 }
 
+void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr)
+{
+  
+}
+
 string trim_copy(const string & str)
 {
   return boost::algorithm::trim_copy<string>(str);

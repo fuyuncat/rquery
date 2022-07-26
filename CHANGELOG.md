@@ -1,5 +1,12 @@
 # Change Log
 All change logs will be documented here.
+   # [0.91] 2022-07-25
+   New feature: Regmatch returns an expression including the capturing groups matched a regular pattern.
+   Fixed bug: the escaped quoter is missing in a string
+   Fixed bug: filter incorrectly read quoters in the string
+   # [0.903] 2022-07-25
+   Fixed Bug: incorrect timezone converting
+   Improved date cast performance
    # [0.902] 2022-07-19
    New feature: Using -v or --variable to pass variables in
    Fixed bug: Json format becomes messy when limt N,M involved

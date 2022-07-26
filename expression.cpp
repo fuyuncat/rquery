@@ -334,7 +334,8 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_datatype.datatype = STRING;
         node->m_expType = CONST;
         node->m_expstrAnalyzed = true;
-        node->m_expStr = trim_pair(expStr,"''");
+        int iPos = 0;
+        node->m_expStr = readQuotedStr(expStr, iPos, "''", '\\');
         return true;
       }else{
         trace(ERROR, "STRING '%s' is not closed. \n", expStr.c_str());

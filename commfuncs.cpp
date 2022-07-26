@@ -142,20 +142,30 @@ void trace(short level, const char *fmt, ...)
 // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 string readQuotedStr(string str, int& pos, string quoters, char escape)
 {
+  string trimmedStr="";
   if (quoters.size()<2)
-    return "";
+    return trimmedStr;
   int quoteStart = -1, i = pos, quoteDeep=0;
   bool quoted = false;
   while(i < str.size()) {
     if (quoteDeep > 0){ // checking right quoter only when the string is quoted.
-      if (str[i] == quoters[1])
+      if (str[i]==escape && i<str.length()-1 && (str[i+1] == quoters[0] || str[i+1] == quoters[1])){ // skip escape
+        i++;
+        trimmedStr.push_back(str[i]);
+      }
+      if (quoteDeep>1 || str[i]!=quoters[1])
+        trimmedStr.push_back(str[i]);
+      if (str[i] == quoters[1]){
         if (i>0 && str[i-1]!=escape){
           quoteDeep--;
           if (quoteDeep == 0){
             pos = i+1;
-            return str.substr(quoteStart,pos-quoteStart);
+            trace(DEBUG2, "Read trimmed string \"%s\" from \"%s\"\n", trimmedStr.c_str(), str.c_str());
+            return trimmedStr;
+            //return str.substr(quoteStart,pos-quoteStart);
           }
         }
+      }
     }
     if (str[i] == quoters[0])
       if (i==0 || (i>0 && str[i-1]!=escape)){
@@ -654,7 +664,8 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
   }
   // bare in mind: strptime will ignore %z. means we need to treat its returned time as GMT time
   char * c = strptime(sRaw.c_str(), sFm.c_str(), &tm);
-  if (c && string(c).empty()){
+  if (c && c == sRaw.c_str()+sRaw.size()){
+  //if (c && string(c).empty()){
     //trace(DEBUG2, "(1)Converting '%s' => %d %d %d %d %d %d %d offset %d format '%s' \n",sRaw.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, iOffSet, sFm.c_str());
     tm.tm_isdst = 0;
     //string sDate = dateToStr(tm, 0, sFm); // as tm got from strptime ignored offset, need to set offset to 0

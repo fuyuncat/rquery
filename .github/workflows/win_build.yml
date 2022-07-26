@@ -19,7 +19,7 @@ jobs:
       uses: egor-tensin/setup-cygwin@v3
       with:
         platform: x64
-        packages: cmake gcc-g++
+        packages: make cmake gcc-g++
     
     - name: make
       run: |

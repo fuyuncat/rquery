@@ -363,15 +363,52 @@ void replacestr(string & sRaw, const string & sReplace, const string & sNew)
 
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
 {
-  //trace(DEBUG, "replacing '%s','%s','%s' ...",sRaw.c_str(),sPattern.c_str(),sNew.c_str());
-  sregex regexp = sregex::compile(sPattern);
-  sRaw = regex_replace(sRaw,regexp,sNew.c_str());
-  //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
+  try{
+    //trace(DEBUG, "replacing '%s','%s','%s' ...",sRaw.c_str(),sPattern.c_str(),sNew.c_str());
+    sregex regexp = sregex::compile(sPattern);
+    sRaw = regex_replace(sRaw,regexp,sNew.c_str());
+    //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
+  }catch (exception& e) {
+    trace(ERROR, "Regular replace exception: %s\n", e.what());
+  }
 }
 
 void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr)
 {
-  
+  string sNew = "";
+  smatch matches;
+  sregex regexp = sregex::compile(sPattern);
+  try{
+    //trace(DEBUG2, "'%s' matching '%s'\n", sRaw.c_str(), sPattern.c_str());
+    if (regex_match(sRaw, matches, regexp)) {
+      //trace(DEBUG2, "Regular matched: %s\n", string(matches[0]).c_str());
+      int iStart=0;
+      for (int i=0; i<sExpr.length(); i++){
+        if (sExpr[i]=='{' && (i==0 || sExpr[i-1]!='\\')){
+          iStart=i+1;
+          while(sExpr[i]!='}' && i<sExpr.length()){
+            i++;
+          }
+          if (sExpr[i]=='}' && sExpr[i-1]!='\\' && i<sExpr.length()){
+            string sNum = sExpr.substr(iStart,i-iStart);
+            if (isInt(sNum)){
+              int iNum = atoi(sNum.c_str());
+              if (iNum<matches.size())
+                sNew.append(matches[iNum]);
+            }
+          }
+        }else{
+          if (sExpr[i]=='\\' && i<sExpr.length()-1 && (sExpr[i+1]=='{' || sExpr[i+1]=='}')) // skip escape
+            i++;
+          sNew.push_back(sExpr[i]);
+        }
+      }
+    }
+  }catch (exception& e) {
+    trace(ERROR, "Regular match exception: %s\n", e.what());
+    return;
+  }
+  sExpr = sNew;
 }
 
 string trim_copy(const string & str)

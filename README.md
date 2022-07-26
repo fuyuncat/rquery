@@ -74,7 +74,7 @@ Functions can be used in the expression. We current provide some essential norma
    - substr(str,pos,len) : Normal function. Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string.<br />
    - replace(str,sub1,sub2) : Normal function. Replace all sub1 in a string with sub2.<br />
    - regreplace(str,pattern,sub) : Normal function. Replace all regular pattern in a string with sub (capturing group supported).<br />
-   - regmatch(str,pattern,sub) : Normal function. Return an expression including the capturing groups matched a regular pattern.<br />
+   - regmatch(str,pattern,sub) : Normal function. Return an expression including the capturing groups matched a regular pattern. Use {N} to stand for the matched groups<br />
    - Comparestr(str1,str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - NocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - pad(seed,len) : Normal function. Construct a new string from seed multiple len times.<br />

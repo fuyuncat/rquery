@@ -22,6 +22,6 @@ jobs:
         packages: cmake gcc-g++
     
     - name: make
-    - run: |
+      run: |
         dir
         C:\tools\cygwin\bin\bash.exe make

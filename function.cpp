@@ -683,7 +683,6 @@ bool FunctionC::runGreatest(vector<string>* fieldvalues, map<string,string>* var
     dts = getCompatibleDataType(dts1, dts2);
     if (dts.datatype == ANY || dts.datatype == UNKNOWN)
       dts.datatype = STRING;
-    //
     
     //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
     if (anyDataCompare(scomp,sResult,dts)>0)

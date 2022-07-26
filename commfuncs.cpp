@@ -160,7 +160,7 @@ string readQuotedStr(string str, int& pos, string quoters, char escape)
           quoteDeep--;
           if (quoteDeep == 0){
             pos = i+1;
-            trace(DEBUG2, "Read trimmed string \"%s\" from \"%s\"\n", trimmedStr.c_str(), str.c_str());
+            //trace(DEBUG2, "Read trimmed string \"%s\" from \"%s\"\n", trimmedStr.c_str(), str.c_str());
             return trimmedStr;
             //return str.substr(quoteStart,pos-quoteStart);
           }
@@ -214,14 +214,20 @@ int findFirstCharacter(string str, std::set<char> lookfor, int pos, string quote
 vector<string> split(const string & str, char delim, string quoters, char escape, std::set<char> nestedQuoters) 
 {
   vector<string> v;
+  string element="";
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.size()) {
     if (str[i] == delim && i>0 && q.size()==0) {
       trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
-      //v.push_back(string(str, begin, i));
+      //v.push_back(element);
+      element = "";
       v.push_back(str.substr(begin, i-begin));
       begin = i+1;
+    }else{
+      if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
+        i++;
+      element.push_back(str[i]);
     }
     if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
       if (i>0 && str[i-1]!=escape){
@@ -256,15 +262,21 @@ vector<string> split(const string & str, string delim, string quoters, char esca
   if (delim.size()==1)
     return split(str,delim[0],quoters,escape,nestedQuoters);
   vector<string> v;
+  string element;
   string upDelim = upper_copy(delim);
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.size()) {
     if (str.size()>=i+upDelim.size() && upper_copy(str.substr(i,upDelim.size())).compare(upDelim)==0 && i>0 && q.size()==0) {
       trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
-      //v.push_back(string(str, begin, i));
+      //v.push_back(element);
+      element = "";
       v.push_back(str.substr(begin, i-begin));
       begin = i+upDelim.size();
+    }else{
+      if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
+        i++;
+      element.push_back(str[i]);
     }
     if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
       if (i>0 && str[i-1]!=escape){
@@ -1175,6 +1187,8 @@ short int encodeFunction(string str)
     return REPLACE;
   else if(sUpper.compare("REGREPLACE")==0)
     return REGREPLACE;
+  else if(sUpper.compare("REGMATCH")==0)
+    return REGMATCH;
   else if(sUpper.compare("ISNULL")==0)
     return ISNULL;
   else if(sUpper.compare("SWITCH")==0)

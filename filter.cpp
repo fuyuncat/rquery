@@ -172,7 +172,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
   }else
     m_expStr = trim_copy(m_expStr);
   //m_expStr = m_expStr.trim();
-  char stringQuoter = '"';
+  char stringQuoter = '\'';
   if (quoters.empty() || quoters.length() != 2)
       quoters = "()";
   //printf("Building: %s; splitor: %s; quoters: %s\n", m_expStr.c_str(), splitor.c_str(), quoters.c_str());

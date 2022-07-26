@@ -117,6 +117,7 @@ using namespace std;
 #define PAD 20
 #define GREATEST 21
 #define LEAST 22
+#define REGMATCH 23
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103

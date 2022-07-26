@@ -23,6 +23,5 @@ jobs:
     
     - name: make
       run: |
-        dir
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
         make

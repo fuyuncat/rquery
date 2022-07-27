@@ -53,7 +53,7 @@ void usage()
 {
   printf("\nProgram Name: RQuery AKA RQ\n");
   printf("Contact Email: fuyuncat@gmail.com\n");
-  printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q \"parse /<regular expression>/ | select | set | filter <filters> | group | sort | limit \" \"file or string to be queried\"\nquery string/file using regular expression\n\n");
+  printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q \"parse /<regular expression>/ | select <expr>... | set field datatype,... | filter <filters> | group <expr>,... | sort <expr>,... | limit n[,topN] | unique \" \"file or string to be queried\"\nquery string/file using regular expression\n\n");
   printf("\t-q|--query <query string> -- The query string indicates how to query the content, valid query commands include parse,select,set,filter,group,sort,limit. One or more commands can be provide in the query, multiple commands are separated by |. They can be in any order. \n");
   printf("\t\tparse /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n");
   printf("\t\tset <field datatype [date format],...> -- Set the date type of the fields.\n");
@@ -220,6 +220,10 @@ void printResult(QuerierC & rq, size_t total, short int fileMode)
     thisTime = curtime();
     trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
     lastTime = thisTime;
+    rq.unique();// unique must be done before sort
+    thisTime = curtime();
+    trace(DEBUG2, "Unique: %u\n", thisTime-lastTime);
+    lastTime = thisTime;
     rq.sort();
     thisTime = curtime();
     trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
@@ -273,6 +277,9 @@ void processQuery(string sQuery, QuerierC & rq)
     //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
     rq.assignSortStr(query["sort"]);
   }
+  if (query.find("unique") != query.end()){
+    rq.setUniqueResult(true);
+  }
   if (query.find("limit") != query.end()){
     //trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
     rq.assignLimitStr(query["limit"]);
@@ -288,6 +295,7 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
       //rq.searchNext();
       rq.searchAll();
       rq.group();
+      rq.unique();
       rq.sort();
       rq.setOutputFormat(gv.g_ouputformat);
       if (gv.g_printheader && gv.g_ouputformat==TEXT)
@@ -516,6 +524,8 @@ int main(int argc, char *argv[])
         cout << "group <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n";
         cout << "sort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n";
         cout << "limt <n | bottomN,topN> -- Provide output limit range.\n";
+        cout << "unique -- Make the returned resutl unique.\n";
+        cout << "clear -- Clear all query inputs.\n";
         cout << "filemode <buffer|line> -- Provide file read mode, default is buffer.\n";
         cout << "skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n";
         cout << "buffsize <N> -- The read buffer size when read mode is buffer.\n";
@@ -643,6 +653,14 @@ int main(int argc, char *argv[])
         string strParam = trim_copy(lineInput).substr(string("sort ").size());
         rq.assignSortStr(strParam);
         cout << "Sorting keys are provided.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).compare("unique")==0){
+        rq.setUniqueResult(true);
+        cout << "Set returned result unique.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).compare("clear")==0){
+        rq.clear();
+        cout << "All query inputs have been cleared.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("limit ")==0){
         string strParam = trim_copy(lineInput).substr(string("limit ").size());

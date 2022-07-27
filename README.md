@@ -29,6 +29,7 @@
          - group <field or expression,...> : Fields or expressions to be groupd for aggregation selections<br />
          - sort <field or expression [asc|desc],...> : Sorting keys to decide order of the output records<br />
          - limt <n | bottomN,topN> : Limited number records to be printed<br />
+         - unique : Make the returned resutl unique.<br />
          - var "name1:value1[:datatyp1][ name2:value2[:datatyp2]..]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
          - run [query] : Run the preprocessed query of a provided query (refering to below part)<br />
 - options
@@ -52,6 +53,7 @@
       - group field or expression,... : Fields or expressions to be groupd for aggregation selections<br />
       - sort field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
       - limt n | bottomN,topN : Limited number records to be printed<br />
+      - unique : Make the returned resutl unique. <br />
       - msglevel : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
       - progress <on|off> -- Wheather show the processing progress or not(default).<br />
       - format <text|json> -- Provide output format, default is text.<br />

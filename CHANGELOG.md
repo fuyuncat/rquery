@@ -1,6 +1,9 @@
 # Change Log
 All change logs will be documented here.
-   # [0.91] 2022-07-25
+   # [0.91] 2022-07-27
+   New feature: UNIQUE searching command to make the returned result unique.
+   New console command: clear: clear all inputs
+   # [0.91] 2022-07-26
    New feature: Regmatch returns an expression including the capturing groups matched a regular pattern.
    Fixed bug: the escaped quoter is missing in a string
    Fixed bug: filter incorrectly read quoters in the string

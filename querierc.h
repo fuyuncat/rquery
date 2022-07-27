@@ -77,12 +77,14 @@ class QuerierC
     bool setFieldTypeFromStr(string setstr);
     void setFileName(string filename);
     void setUserVars(string variables);
+    void setUniqueResult(bool bUnique);
     void setOutputFormat(short int format=TEXT);
     int searchNext(namesaving_smatch & matches);
     int searchAll();
     bool toGroupOrSort();
     bool group();
     bool sort();
+    void unique();
     bool searchStopped();
     void output();
     void clear();
@@ -109,6 +111,7 @@ class QuerierC
     long m_matchcount;  // number of matched rows. Can be used to match @row
     long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
     short int m_outputformat; // TEXT or JSON
+    bool m_bUniqueResult; // flag for the returned result is unique or not
     
     //vector<namesaving_smatch> m_results;
     FilterC* m_filter;
@@ -125,7 +128,7 @@ class QuerierC
     int m_limitbottom;  // output limit start
     int m_limittop;     // output limit top, -1 means no limit
     vector< vector<string> > m_sortKeys;  // extra sorting keys. The sorting keys that are not a parts of selections, it could be aggregation functions
-    vector< vector<string> > m_results; // First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
+    vector< vector<string> > m_results; // Result set. First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     //map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
     std::set< vector<string> > m_groupKeys;  // group keys

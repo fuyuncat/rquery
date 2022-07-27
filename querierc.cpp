@@ -82,6 +82,7 @@ void QuerierC::init()
   m_limittop = -1;
   m_bNamePrinted = false;
   m_aggrOnly = false;
+  m_bUniqueResult = false;
 #ifdef __DEBUG__
   m_searchtime = 0;
   m_filtertime = 0;
@@ -140,6 +141,11 @@ bool QuerierC::assignGroupStr(string groupstr)
     m_groups.push_back(eGroup);
   }
   return true;
+}
+
+void QuerierC::setUniqueResult(bool bUnique)
+{
+  m_bUniqueResult = bUnique;
 }
 
 bool QuerierC::assignLimitStr(string limitstr)
@@ -828,6 +834,29 @@ bool QuerierC::group()
   return true;
 }
 
+void QuerierC::unique()
+{
+  if (!m_bUniqueResult)
+    return;
+  std::set< vector<string> > uresults; // temp result set when UNIQUE involved
+  vector< vector<string> > tmpResult; // we need this as SET cannot keep the same sequence with sortkeys
+  int iSize=0, iDups=0;
+  for (int i=0;i<m_results.size();i++){
+    iSize = uresults.size();
+    uresults.insert(m_results[i]);
+    if (iSize == uresults.size()) { // duplicated row
+      if (m_sortKeys.size()>i-iDups){
+        m_sortKeys.erase(m_sortKeys.begin()+i-iDups);
+        iDups++;
+      }
+    }else
+      tmpResult.push_back(m_results[i]);
+  }
+  m_results.clear();
+  for (int i=0;i<tmpResult.size();i++)
+    m_results.push_back(tmpResult[i]);
+}
+
 // doing merging sort exchanging
 void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
 {
@@ -1101,6 +1130,8 @@ void QuerierC::clear()
   m_aggFuncExps.clear();
   m_sortKeys.clear();
   m_bNamePrinted = false;
+  m_aggrOnly = false;
+  m_bUniqueResult = false;
   m_outputformat = TEXT;
   if (m_filter){
     m_filter->clear();

@@ -66,7 +66,8 @@ map<string,string> ParserC::parseparam(string parameterstr)
     if  (found!=string::npos){
       //trace(DEBUG, "Operation %s: %s\n", lower_copy(trim_copy(params[i].substr(0,found))).c_str(), trim_copy(params[i].substr(found+1)).c_str());
       m_queryparts.insert( pair<string,string>(lower_copy(trimmedstr.substr(0,found)),trimmedstr.substr(found+1)) );
-    }
+    }else
+      m_queryparts.insert( pair<string,string>(lower_copy(trimmedstr),""));
   }
 
   return m_queryparts;

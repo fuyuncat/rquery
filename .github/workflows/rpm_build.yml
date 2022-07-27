@@ -82,6 +82,11 @@ jobs:
         echo "::set-output name=source_rpm_path::/home/runner/rpmbuild/RPMS/x86_64/rquery-${{ env.RELEASE_VERSION }}-1.x86_64.rpm"
         echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.rpm"
         echo "::set-output name=rpm_content_type::application/octet-stream"
+        make
+        zip rquery-${{ env.RELEASE_VERSION }}.x86_64.zip rq
+        echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.x86_64.zip"
+        echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.x86_64.zip"
+        echo "::set-output name=zip_content_type::application/zip"
 
     - name: Upload artifact
       id: upload-release-asset 
@@ -93,3 +98,14 @@ jobs:
           asset_path: ${{ steps.rpm_build.outputs.source_rpm_path }}
           asset_name: ${{ steps.rpm_build.outputs.source_rpm_name }}
           asset_content_type: ${{ steps.rpm_build.outputs.rpm_content_type }}
+
+    - name: Upload zip
+      id: upload-zip-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.rpm_build.outputs.source_zip_path }}
+          asset_name: ${{ steps.rpm_build.outputs.source_zip_name }}
+          asset_content_type: ${{ steps.rpm_build.outputs.zip_content_type }}

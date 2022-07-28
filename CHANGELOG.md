@@ -1,5 +1,8 @@
 # Change Log
 All change logs will be documented here.
+   # [0.911] 2022-07-28
+   Fixed bug: LIKE missed quoters
+   Fixed bug: SET field data type does not set the correct date format for DATE type.
    # [0.91] 2022-07-27
    New feature: UNIQUE searching command to make the returned result unique.
    New console command: clear: clear all inputs

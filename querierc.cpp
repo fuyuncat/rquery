@@ -284,7 +284,8 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
       trace(ERROR, "Unknown data type %s!\n", vField[1].c_str());
       return false;
     }else if(iType == DATE && vField.size() >= 2){
-      setFieldDatatype(vField[0], iType, vField[2]);
+      //trace(DEBUG2, "SET field '%s' type '%s' extrainfor '%s'!\n",vField[0].c_str(),decodeDatatype(iType).c_str(),trim_pair(vField[2],"''").c_str());
+      setFieldDatatype(vField[0], iType, trim_pair(vField[2],"''"));
     }else
       setFieldDatatype(vField[0], iType);
   }

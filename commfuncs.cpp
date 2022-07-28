@@ -29,6 +29,9 @@
 #include <boost/xpressive/regex_actions.hpp>
 #include "commfuncs.h"
 #include <stdlib.h>
+#if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
+#include <time.h>
+#endif
 
 using namespace boost::xpressive;
 
@@ -550,6 +553,10 @@ string doubleToStr(const double val)
   return str;
 }
 
+#if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
+extern int putenv(char*);
+#endif
+
 // get the local time in the specific timezone
 struct tm zonetime(time_t t1, int iOffSet)
 {
@@ -558,20 +565,28 @@ struct tm zonetime(time_t t1, int iOffSet)
   if (iOffSet>=-1200 && iOffSet<=1200){
     string sOldTimeZone = tmp?string(tmp):"";
     string sNewTimeZone = "GMT"+intToStr(iOffSet/100*-1);
-#if defined _WIN32 || defined _WIN64
+#if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
+    putenv(const_cast<char *>(string("TZ="+sNewTimeZone).c_str()));
+    system("set"); 
+#elif defined _WIN32 || defined _WIN64
     putenv(("TZ="+sNewTimeZone).c_str());
+    tzset();
 #else
     setenv("TZ", sNewTimeZone.c_str(), 1);
-#endif
     tzset();
+#endif
     //trace(DEBUG2, "Setting timezone to '%s'(%d)\n", sNewTimeZone.c_str(), iOffSet);
     tm = *(localtime(&t1));
-#if defined _WIN32 || defined _WIN64
+#if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
+    putenv(const_cast<char *>(string("TZ="+sOldTimeZone).c_str()));
+    system("set"); 
+#elif defined _WIN32 || defined _WIN64
     putenv(("TZ="+sOldTimeZone).c_str());
+    tzset();
 #else
     setenv("TZ", sOldTimeZone.c_str(), 1);
-#endif
     tzset();
+#endif
   }else
     tm = *(localtime(&t1));
   return tm;
@@ -927,11 +942,12 @@ int detectDataType(string str, string & extrainfo)
 }
 
 bool wildmatch(const char *candidate, const char *pattern, int p, int c, char multiwild='*', char singlewild='?', char escape='\\') {
+  //trace(DEBUG2, "Like matching '%s'(%d) => '%s'(%d)\n", string(pattern+p).c_str(),p, string(candidate+c).c_str(),c);
   if (pattern[p] == '\0') {
     return candidate[c] == '\0';
   }else if (pattern[p] == escape && pattern[p+1] != '\0' && (pattern[p+1] == multiwild || pattern[p+1] == singlewild)) {
     return wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape);
-  } else if ((pattern[p] == multiwild && p == 0) || (pattern[p] == multiwild && p > 0 && pattern[p] != escape)) {
+  } else if ((pattern[p] == multiwild && p == 0) || (pattern[p] == multiwild && p > 0 && pattern[p-1] != escape)) {
     for (; candidate[c] != '\0'; c++) {
       if (wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape))
         return true;
@@ -947,7 +963,7 @@ bool wildmatch(const char *candidate, const char *pattern, int p, int c, char mu
 bool like(string str1, string str2)
 {
   bool matched = wildmatch(str1.c_str(), str2.c_str(), 0, 0);
-  //trace(DEBUG, "'%s' matching '%s': %d\n",str1.c_str(), str2.c_str(), matched);
+  //trace(DEBUG2, "'%s' matching '%s': %d\n",str1.c_str(), str2.c_str(), matched);
   return matched;
 }
 
@@ -1363,8 +1379,7 @@ int anyDataCompare(string str1, string str2, DataTypeStruct dts){
     }case DATE:
     case TIMESTAMP:{
       string fmt1, fmt2;
-      string newstr1=trim_one(str1,'{'),newstr2=trim_one(str2,'{');
-      newstr1=trim_one(newstr1,'}');newstr2=trim_one(newstr2,'}');
+      string newstr1=trim_pair(str1,"{}"),newstr2=trim_pair(str2,"{}");
       bool bIsDate1 = true, bIsDate2 = true;
       int offSet1,offSet2;
       //if (dts.extrainfo.empty()){
@@ -1406,9 +1421,9 @@ int anyDataCompare(string str1, string str2, DataTypeStruct dts){
         return -101;
       }
     }case STRING:{
-      string newstr1=trim_one(str1,'\''),newstr2=trim_one(str2,'\'');
-      newstr1=trim_one(newstr1,'/');newstr2=trim_one(newstr2,'/');
-      return newstr1.compare(newstr2);
+      //string newstr1=trim_one(str1,'\''),newstr2=trim_one(str2,'\'');
+      //newstr1=trim_one(newstr1,'/');newstr2=trim_one(newstr2,'/');
+      return str1.compare(str2);
     }default: {
       return -102;
     }
@@ -1494,8 +1509,7 @@ int anyDataCompare(string str1, int comparator, string str2, DataTypeStruct dts)
       string fmt1, fmt2;
       bool bIsDate1 = true, bIsDate2 = true;
       int offSet1, offSet2;
-      string newstr1=trim_one(str1,'{'),newstr2=trim_one(str2,'{');
-      newstr1=trim_one(newstr1,'}');newstr2=trim_one(newstr2,'}');
+      string newstr1=trim_pair(str1,"{}"),newstr2=trim_pair(str2,"{}");
       if (dts.extrainfo.empty()){
         bIsDate1 = isDate(newstr1,offSet1,fmt1);
         bIsDate2 = isDate(newstr2,offSet2,fmt2);
@@ -1556,33 +1570,33 @@ int anyDataCompare(string str1, int comparator, string str2, DataTypeStruct dts)
         return -101;
       }
     }case STRING:{
-      string newstr1=trim_one(str1,'\''),newstr2=trim_one(str2,'\'');
-      newstr1=trim_one(newstr1,'/');newstr2=trim_one(newstr2,'/');
+      //string newstr1=trim_one(str1,'\''),newstr2=trim_one(str2,'\'');
+      //newstr1=trim_one(newstr1,'/');newstr2=trim_one(newstr2,'/');
       switch (comparator){
       case EQ:
-        return newstr1.compare(newstr2)==0?1:0;
+        return str1.compare(str2)==0?1:0;
       case LT:
-        return newstr1.compare(newstr2)>0?1:0;
+        return str1.compare(str2)>0?1:0;
       case ST:
-        return newstr1.compare(newstr2)<0?1:0;
+        return str1.compare(str2)<0?1:0;
       case NEQ:
-        return newstr1.compare(newstr2)!=0?1:0;
+        return str1.compare(str2)!=0?1:0;
       case LE:
-        return newstr1.compare(newstr2)>=0?1:0;
+        return str1.compare(str2)>=0?1:0;
       case SE:
-        return newstr1.compare(newstr2)<=0?1:0;
+        return str1.compare(str2)<=0?1:0;
       case LIKE:
-        return like(newstr1, newstr2);
+        return like(str1, str2);
       case REGLIKE:
-        return reglike(newstr1, newstr2);
+        return reglike(str1, str2);
       case NOLIKE:
-        return !like(newstr1, newstr2);
+        return !like(str1, str2);
       case NOREGLIKE:
-        return !reglike(newstr1, newstr2);
+        return !reglike(str1, str2);
       case IN:
-        return in(newstr1, newstr2);
+        return in(str1, str2);
       case NOIN:
-        return !in(newstr1, newstr2);
+        return !in(str1, str2);
       default:
         return -101;
       }

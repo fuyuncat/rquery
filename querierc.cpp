@@ -322,7 +322,7 @@ void QuerierC::setOutputFormat(short int format)
 
 bool QuerierC::toGroupOrSort()
 {
-  return (m_groups.size()>0 || m_sorts.size()>0 || m_aggrOnly);
+  return (m_groups.size()>0 || m_sorts.size()>0 || m_aggrOnly || m_bUniqueResult);
 }
 
 void QuerierC::pairFiledNames(namesaving_smatch matches)
@@ -837,6 +837,7 @@ bool QuerierC::group()
 
 void QuerierC::unique()
 {
+  trace(DEBUG, "Result number before unique: %d.\n",m_results.size());
   if (!m_bUniqueResult)
     return;
   std::set< vector<string> > uresults; // temp result set when UNIQUE involved
@@ -856,6 +857,7 @@ void QuerierC::unique()
   m_results.clear();
   for (int i=0;i<tmpResult.size();i++)
     m_results.push_back(tmpResult[i]);
+  trace(DEBUG, "Result number after unique: %d.\n",m_results.size());
 }
 
 // doing merging sort exchanging

@@ -1252,6 +1252,10 @@ short int encodeFunction(string str)
     return REGREPLACE;
   else if(sUpper.compare("REGMATCH")==0)
     return REGMATCH;
+  else if(sUpper.compare("COUNTWORD")==0)
+    return COUNTWORD;
+  else if(sUpper.compare("ZONECONVERT")==0)
+    return ZONECONVERT;
   else if(sUpper.compare("ISNULL")==0)
     return ISNULL;
   else if(sUpper.compare("SWITCH")==0)

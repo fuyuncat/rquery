@@ -2,6 +2,7 @@
 All change logs will be documented here.
    # [0.911] 2022-07-29
    New feature: New option: -d | --detecttyperows How many matched rows will be used for detecting data types, default is 1<br/>
+   Added examples.md
    Fixed bug: Incorrectly detected data type for @RAW<br/>
    Fixed bug: Some DATE data can not be detected the correct data type and date format<br/>
    Fixed bug: Functions without paramter dont work properly.<br/>

@@ -94,6 +94,7 @@ Functions can be used in the expression. We current provide some essential norma
    - greatest(expr1,expr2[,...]) : Normal function. Return the largest one of the given expressions.<br />
    - least(expr1,expr2[,...]) : Normal function. Return the smallest one of the given expressions.<br />
    - Count(expr) : Aggregation function. Count the number of expr.<br />
+   - Uniquecount(expr) : Aggregation function. Count the number of distinct expr.<br />
    - Sum(expr) : Aggregation function. Sum the number of expr.<br />
    - Max(expr) : Aggregation function. Get the maximum value of expr.<br />
    - Min(expr) : Aggregation function. Get the minimum value of expr.<br />

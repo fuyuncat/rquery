@@ -118,6 +118,8 @@ using namespace std;
 #define GREATEST 21
 #define LEAST 22
 #define REGMATCH 23
+#define COUNTWORD 24
+#define ZONECONVERT 25
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103

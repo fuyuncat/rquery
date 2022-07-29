@@ -55,6 +55,7 @@ void GlobalVars::initVars()
   g_logfile = NULL;
   
   g_consolemode = false;
+  g_recursiveread = false;
 }
 
 void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader)

@@ -51,6 +51,17 @@ Returns result:<br/>
    #if __XSI_VISIBLE
      printf("strptime is defined!\n");
    ```
+- Get the line count of each file in a folder including subfolders<br/>
+   ```
+   rq -c yes -q "select @file,count(1) | group @file" logs/
+   ```
+   Returns result:<br/>
+   ```
+   logs/access.log 692
+   logs/g_access_log.loh   4855
+   logs/result.lst 722
+   logs/sublogs/timezone.log       10
+   ```
 - Get the file count number and total size of each user in a specific folder<br/>
    ```ls -l $folder/ | rq -q "parse /(\S+)[ ]{1,}(\S+)[ ]{1,}(?P<owner>\S+)[ ]{1,}(?P<group>\S+)[ ]{1,}(?P<size>\S+)[ ]{1,}(\S+)[ ]{1,}(\S+)[ ]{1,}(\S+)[ ]{1,}(\S+)/ | select owner, count(1), sum(size) | group owner"
    ```

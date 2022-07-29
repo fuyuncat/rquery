@@ -160,6 +160,7 @@ public:
   ofstream* g_logfile;
   
   bool g_consolemode;
+  bool g_recursiveread;
 };
 
 template <class T>

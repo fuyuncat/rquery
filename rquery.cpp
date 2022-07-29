@@ -68,6 +68,7 @@ void usage()
   printf("\t-m|--msglevel <fatal|error|warning|info> -- Logging messages output level, default is fatal.\n");
   printf("\t-l|--logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n");
   printf("\t-p|--progress <on|off> -- Wheather show the processing progress or not(default).\n");
+  printf("\t-c|--recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n");
   printf("\t-o|--outputformat <text|json> -- Provide output format, default is text.\n");
   printf("\t-d|--detecttyperows <N> : How many matched rows will be used for detecting data types, default is 1.\n");
   printf("\t-v|--variable \"name1:value1[ name2:value2..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.\n");
@@ -131,6 +132,7 @@ vector<string> listFilesInFolder(string foldername)
 
 void processFile(string filename, QuerierC & rq, size_t& total, short int fileMode=READBUFF, int iSkip=0)
 {
+  trace(DEBUG,"Processing file: %s \n", filename.c_str());
   long int thisTime,lastTime = curtime();
 
   rq.setFileName(filename);
@@ -166,7 +168,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
         readLines++;
         thisTime = curtime();
         if (gv.g_showprogress)
-          printf("\r%d lines(%.2f%%) read in %f seconds.", readLines, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+          printf("\r'%s': %d lines(%.2f%%) read in %f seconds.", filename.c_str(), readLines, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
       }
       if (gv.g_showprogress)
         printf("\n");
@@ -200,7 +202,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
         thisTime = curtime();
         if (gv.g_showprogress)
-          printf("\r%ld bytes(%.2f%%) read in %f seconds.", total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+          printf("\r'%s': %ld bytes(%.2f%%) read in %f seconds.", filename.c_str(), total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
       }
       if (gv.g_showprogress)
         printf("\n");
@@ -211,6 +213,31 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
       break;
     }
   }
+}
+
+void processFolder(string foldername, QuerierC & rq, size_t& total, short int fileMode=READBUFF, int iSkip=0)
+{
+  trace(DEBUG,"Processing folder: %s \n", foldername.c_str());
+  vector<string> filelist = listFilesInFolder(foldername);
+  size_t this_total = 0, this_filesize = 0;
+  for (int i=0; i<filelist.size(); i++){
+    string filename = trim_right(foldername,'/')+"/"+filelist[i];
+    short int filetype = checkReadMode(filename);
+    switch(filetype){
+    case SINGLEFILE:
+      processFile(filename, rq, this_filesize, fileMode, iSkip);
+      break;
+    case FOLDER:
+      if (gv.g_recursiveread)
+        processFolder(filename, rq, this_filesize, fileMode, iSkip);
+      break;
+    default:
+      trace(WARNING,"Unrecognized file type: %s (%d)\n", filename.c_str(), filetype);
+    }
+    this_total += this_filesize;
+    this_filesize = 0;
+  }
+  total += this_total;
 }
 
 void printResult(QuerierC & rq, size_t total, short int fileMode)
@@ -318,14 +345,8 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
     case FOLDER:{
       //trace(DEBUG1,"Processing content from folder \n");
       rq.setOutputFormat(gv.g_ouputformat);
-      vector<string> filelist = listFilesInFolder(sContent);
-      size_t total = 0, singlesize = 0;
-      for (int i=0; i<filelist.size(); i++){
-        trace(DEBUG1,"Processing file: %s \n", (sContent+"/"+filelist[i]).c_str());
-        processFile(sContent+"/"+filelist[i], rq, singlesize, fileMode, iSkip);
-        total += singlesize;
-        singlesize = 0;
-      }
+      size_t total = 0;
+      processFolder(sContent, rq, total, fileMode, iSkip);
       printResult(rq, total, fileMode);
       break;
     }
@@ -433,6 +454,13 @@ int main(int argc, char *argv[])
         exitProgram(1);
       }
       gv.g_showprogress = (lower_copy(string(argv[i+1])).compare("on")==0);
+      i++;
+    }else if (lower_copy(string(argv[i])).compare("-c")==0 || lower_copy(string(argv[i])).compare("--recursive")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      gv.g_recursiveread = (lower_copy(string(argv[i+1])).compare("yes")==0);
       i++;
     }else if (lower_copy(string(argv[i])).compare("-r")==0 || lower_copy(string(argv[i])).compare("--readmode")==0){
       if (argv[i+1][0] == '-'){
@@ -549,6 +577,7 @@ int main(int argc, char *argv[])
         cout << "msglevel <fatal|error|warning|info> -- Logging messages output level, default is fatal.\n";
         cout << "logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n";
         cout << "progress <on|off> -- Wheather show the processing progress or not(default).\n";
+        cout << "recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n";
         cout << "format <text|json> -- Provide output format, default is text.\n";
         cout << "var \"name1:value1[ name2:value2..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.\n";
         cout << "rquery >";
@@ -677,6 +706,11 @@ int main(int argc, char *argv[])
       }else if (lower_copy(trim_copy(lineInput)).compare("clear")==0){
         rq.clear();
         cout << "All query inputs have been cleared.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).compare("recursive ")==0){
+        string strParam = trim_copy(lineInput).substr(string("recursive ").size());
+        gv.g_recursiveread = (lower_copy(strParam).compare("yes")==0);
+        cout << "Set recursively read folder.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("limit ")==0){
         string strParam = trim_copy(lineInput).substr(string("limit ").size());

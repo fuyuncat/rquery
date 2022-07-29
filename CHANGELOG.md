@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.
+   # [0.912] 2022-07-29
+   New feature: New option: -c|--recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).<br/>
    # [0.911] 2022-07-29
    New feature: New option: -d | --detecttyperows How many matched rows will be used for detecting data types, default is 1<br/>
    Added examples.md

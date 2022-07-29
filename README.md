@@ -3,17 +3,19 @@
 &nbsp;&nbsp;&nbsp;Contact Email: fuyuncat@gmail.com<br />
 <br />
 # Install
+The latest version can be downloaded here: https://github.com/fuyuncat/rquery/releases <br />
+- Install method 1<br />
 &nbsp;&nbsp;&nbsp; Download source code zip<br />
 &nbsp;&nbsp;&nbsp; Unzip the downloaded file<br />
 &nbsp;&nbsp;&nbsp; sudo yum -y install boost-devel<br />
 &nbsp;&nbsp;&nbsp; make<br />
 
-&nbsp;&nbsp;&nbsp; or <br />
+- Install method 2<br />
 &nbsp;&nbsp;&nbsp; download the rpm file <br />
 &nbsp;&nbsp;&nbsp; unzip the rpm file <br />
 &nbsp;&nbsp;&nbsp; sudo rpm -ihv <downloaded_rpm_file> <br />
 
-&nbsp;&nbsp;&nbsp; or <br />
+- Install method 3<br />
 &nbsp;&nbsp;&nbsp; download the compiled zip file <br />
 &nbsp;&nbsp;&nbsp; unzip the compiled zip file <br />
 &nbsp;&nbsp;&nbsp; chmod ugo+x rq<br />

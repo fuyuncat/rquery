@@ -39,7 +39,7 @@ class FunctionC
     bool runFunction(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts);
     bool isConst();   // if all parameters are const
     void setExpStr(string expStr);
-    DataTypeStruct analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes); 
+    DataTypeStruct analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype); 
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     bool isAggFunc();

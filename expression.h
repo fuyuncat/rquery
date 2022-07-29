@@ -55,7 +55,7 @@ class ExpressionC
     string getEntireExpstr();
     bool containsColId(int colId); // detect if predication contains special colId
     ExpressionC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
-    DataTypeStruct analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes); // analyze column ID & name from metadata, return data type of current node
+    DataTypeStruct analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype); // analyze column ID & name from metadata, return data type of current node
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     bool groupFuncOnly(); // check if the expression contains group (aggregation) function only except CONST

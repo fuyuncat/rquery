@@ -620,18 +620,18 @@ string stripTimeZone(string str, int & iOffSet, string & sTimeZone)
   iOffSet = 0;
   sTimeZone = "";
   int iTZ = 0;
-  while ((sRaw[iTZ]!='+'&&sRaw[iTZ]!='-') && iTZ<sRaw.length())
+  while ((sRaw[iTZ]!='+'&&sRaw[iTZ]!='-') && iTZ<sRaw.length()){
     iTZ++;
-  if (iTZ>=sRaw.length()){ // at least one digit following +
-    //trace(ERROR, "Trying Missing digit number : %s\n", sRaw.c_str());
-    return sRaw;
-  }
-  sTimeZone = sRaw.substr(iTZ);
-  if (isInt(sTimeZone)){
-    iOffSet = atoi(sTimeZone.c_str());
-    sRaw = trim_copy(sRaw.substr(0,iTZ));
-  }else{
-    //trace(ERROR, "Trying It is not digit number : %s\n", sRaw.c_str());
+    if (sRaw[iTZ]=='+'||sRaw[iTZ]=='-'){
+      sTimeZone = sRaw.substr(iTZ);
+      if (isInt(sTimeZone)){
+        iOffSet = atoi(sTimeZone.c_str());
+        sRaw = trim_copy(sRaw.substr(0,iTZ));
+      }else{
+        sTimeZone = "";
+        // trace(ERROR, "Trying It is not digit number : %s\n", sRaw.c_str());
+      }
+    }
   }
   return sRaw;
 }
@@ -718,8 +718,10 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
 {
   // accept %z at then of the time string only
   //trace(DEBUG2, "Trying date format: '%s' (expected len:%d) for '%s'\n", fmt.c_str(), dateFormatLen(fmt), str.c_str());
-  if (fmt.empty() || str.length() < dateFormatLen(fmt))
+  if (fmt.empty() || str.length() < dateFormatLen(fmt)){
+    //trace(DEBUG2, "'%s' len %d doesnot match expected (Format: '%s') \n", str.c_str(), str.length(), fmt.c_str(), dateFormatLen(fmt) );
     return false;
+  }
   string sRaw, sTimeZone, sFm = fmt;
   iOffSet = 0;
   //short int iOffOp = PLUS;
@@ -728,8 +730,10 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
     // trace(DEBUG, "Trying timezone '%s' : '%s'\n", fmt.c_str(), sRaw.c_str());
     sFm = trim_copy(sFm.substr(0,sFm.size()-2));
   }else{
-    if (!sTimeZone.empty()) // no %z in the format, there should no timezone info in the datetime string
+    if (!sTimeZone.empty()) { // no %z in the format, there should no timezone info in the datetime string
+      //trace(DEBUG2, "'%s' (format: '%s') should not contain timezone '%s' \n", str.c_str(), sFm.c_str(), sTimeZone.c_str());
       return false;
+    }
   }
   // bare in mind: strptime will ignore %z. means we need to treat its returned time as GMT time
   char * c = strptime(sRaw.c_str(), sFm.c_str(), &tm);
@@ -738,7 +742,7 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
     //trace(DEBUG2, "(1)Converting '%s' => %d %d %d %d %d %d %d offset %d format '%s' \n",sRaw.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, iOffSet, sFm.c_str());
     tm.tm_isdst = 0;
     //string sDate = dateToStr(tm, 0, sFm); // as tm got from strptime ignored offset, need to set offset to 0
-    //trace(DEBUG2, "(2)Converting '%s' get '%s' \n",sRaw.c_str(), sDate.c_str());
+    //trace(DEBUG2, "(2)Converting '%s' (%s) get '%s' \n",sRaw.c_str(), sFm.c_str(), sDate.c_str());
     //if (sDate.compare(sRaw) != 0)
     //  return false;
     if (iOffSet != 0){
@@ -922,6 +926,7 @@ int detectDataType(string str, string & extrainfo)
 {
   string trimmedStr = trim_copy(str);
   short int datatype = UNKNOWN;
+  extrainfo = "";
   int iOffSet;
   if (trimmedStr.size()>1 && ((trimmedStr[0]=='\'' && trimmedStr[trimmedStr.size()-1]=='\'' && matchQuoters(trimmedStr, 0, "''")==0) || (trimmedStr[0]=='/' && trimmedStr[trimmedStr.size()-1]=='/' && matchQuoters(trimmedStr, 0, "//")==0))){
     datatype = STRING;
@@ -937,7 +942,7 @@ int detectDataType(string str, string & extrainfo)
     datatype = INTEGER;
   else
     datatype = UNKNOWN;
-  //trace(DEBUG2, "Detected from '%s', data type '%s', extrainfo '%s'\n", str.c_str(), decodeDatatype(datatype).c_str(), extrainfo.c_str());
+  trace(DEBUG, "Detected from '%s', data type '%s', extrainfo '%s'\n", str.c_str(), decodeDatatype(datatype).c_str(), extrainfo.c_str());
   return datatype;
 }
 

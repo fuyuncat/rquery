@@ -78,6 +78,7 @@ class QuerierC
     void setFileName(string filename);
     void setUserVars(string variables);
     void setUniqueResult(bool bUnique);
+    void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
     void setOutputFormat(short int format=TEXT);
     int searchNext(namesaving_smatch & matches);
     int searchAll();
@@ -112,6 +113,8 @@ class QuerierC
     long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
     short int m_outputformat; // TEXT or JSON
     bool m_bUniqueResult; // flag for the returned result is unique or not
+    int m_detectTypeMaxRowNum; // How many rows to be used to detect the data types
+    int m_detectedTypeRows; // How many rows have been used to detect the data types so far
     
     //vector<namesaving_smatch> m_results;
     FilterC* m_filter;
@@ -119,6 +122,7 @@ class QuerierC
     //vector<int> m_fieldtypes;       // field datatype in sequence
     //map<string, int> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     vector<DataTypeStruct> m_fieldtypes;       // field datatype in sequence
+    DataTypeStruct m_rawDatatype;  // @raw data type for special cases, e.g. each line contains only one data
     map<string, DataTypeStruct> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     map<string, string> m_uservariables; // User defined variables
     vector<string>  m_selnames; // selection names

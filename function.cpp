@@ -90,11 +90,11 @@ bool FunctionC::analyzeExpStr()
   }
   int iPos = 0;
   string strParams = readQuotedStr(m_expStr, iPos, "()", '\0');
-  if (iPos<0 || strParams.empty()){
-    trace(ERROR, "No quoted parameters found in '%s'!\n", m_expStr.c_str());
-    m_expstrAnalyzed = false;
-    return false;
-  }
+  //if (iPos<0 || strParams.empty()){
+  //  trace(ERROR, "No quoted parameters found in '%s'!\n", m_expStr.c_str());
+  //  m_expstrAnalyzed = false;
+  //  return false;
+  //}
   m_funcName = trim_copy(upper_copy(m_expStr.substr(0, m_expStr.find("("))));
   m_expStr = m_funcName+"("+strParams+")";
   //strParams = trim_pair(strParams, "()");
@@ -109,7 +109,7 @@ bool FunctionC::analyzeExpStr()
     }
     ExpressionC eParam = ExpressionC(sParam);
     //trace(DEBUG2,"'%s' merged const to '%s'.\n",sParam.c_str(),eParam.getEntireExpstr().c_str());
-    //eParam.analyzeColumns(m_fieldnames, m_fieldtypes);
+    //eParam.analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype);
     m_params.push_back(eParam);
   }
   m_funcID = encodeFunction(m_funcName);
@@ -168,7 +168,7 @@ void FunctionC::dump(){
 
 // analyze column ID & name from metadata, return data type of current node
 // decide current node data type by checking children's data type
-DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes)
+DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype)
 {
   trace(DEBUG, "Analyzing columns in function '%s'\n", m_expStr.c_str());
   if (!fieldnames || !fieldtypes){
@@ -181,7 +181,7 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
   m_fieldnames = fieldnames;
   m_fieldtypes = fieldtypes;
   for (int i=0; i<m_params.size(); i++){
-    m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes);
+    m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype);
     //trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
   }
   return m_datatype;
@@ -544,7 +544,7 @@ bool FunctionC::runLog(vector<string>* fieldvalues, map<string,string>* varvalue
   }
   string sNum; 
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sNum, dts) && isDouble(sNum)){
-    sResult = intToStr(log(atof(sNum.c_str())));
+    sResult = doubleToStr(log10(atof(sNum.c_str())));
     dts.datatype = DOUBLE;
     return true;
   }else{

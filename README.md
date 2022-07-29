@@ -22,6 +22,7 @@
          - load file|folder : load a file or a folder<br />
          - filemode buffer|line : Provide file read mode, default is buffer.<br />
          - skip <N> : How many bytes or lines (depends on the filemode) to be skipped.<br />
+         - detecttyperows <N> How many matched rows will be used for detecting data types, default is 1
          - parse /regular string/ : Parse a regular expression string quoted by //<br />
          - set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
          - filter <filter conditions> : Filter the parsed records<br />
@@ -41,6 +42,7 @@
    - --buffsize | -b size : The buffer size when read mode is buffer, default is 16384.<br />
    - --skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0.<br />
    - --variable | -v "name1:value1[ name2:value2..]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
+   - --detecttyperows | -d <N> : How many matched rows will be used for detecting data types, default is 1.<br />
    - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
    - --query | -q <qeury string> : The query string to be used to parse and query the text content.<br />
 - Syntax of query string:
@@ -98,9 +100,9 @@ Functions can be used in the expression. We current provide some essential norma
    - Average(expr) : Aggregation function. Get the average value of expr.<br />
 # Example and scenarios
 - Query an apache or nginx access log, to get the number of hits from different clients, and the browser is Chrome or Firefox<br />
-`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '*(Chrome|Firefox)*' | select host, count(1) | group host | sort count(1) desc" < access.log`
+`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '(Chrome|Firefox)' | select host, count(1) | group host | sort count(1) desc" < access.log`
 - Searching folder logs, to get all access log from 127.0.0.1<br />
-`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter origip like '127.0.0.1*' | select truncdate(time,3600) " logs`
+`./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter host = '127.0.0.1' | select @raw " logs`
 - Login console, customize the query
    ```
    ./rq --console

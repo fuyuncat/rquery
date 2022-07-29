@@ -69,6 +69,7 @@ void usage()
   printf("\t-l|--logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n");
   printf("\t-p|--progress <on|off> -- Wheather show the processing progress or not(default).\n");
   printf("\t-o|--outputformat <text|json> -- Provide output format, default is text.\n");
+  printf("\t-d|--detecttyperows <N> : How many matched rows will be used for detecting data types, default is 1.\n");
   printf("\t-v|--variable \"name1:value1[ name2:value2..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.\n");
   printf("More information can be found at https://github.com/fuyuncat/rquery .\n");
 }
@@ -288,11 +289,13 @@ void processQuery(string sQuery, QuerierC & rq)
 
 void runQuery(string sContent, short int readMode, QuerierC & rq, short int fileMode=READBUFF, int iSkip=0)
 {
+  //trace(DEBUG,"(0)Processing(mode:%d): %s \n", readMode, sContent.c_str());
   switch (readMode){
     case PARAMETER:{
       //trace(DEBUG1,"Processing content from parameter \n");
       rq.setrawstr(sContent);
       //rq.searchNext();
+      //trace(DEBUG,"(1)Processing: %s \n", sContent.c_str());
       rq.searchAll();
       rq.group();
       rq.unique();
@@ -340,6 +343,7 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
         std::cin.read(cachebuffer, cache_length);
         rq.appendrawstr(string(cachebuffer));
+        //trace(DEBUG,"(2)Processing: %s \n", cachebuffer);
         rq.searchAll();
         if (gv.g_printheader && gv.g_ouputformat==TEXT)
           rq.printFieldNames();
@@ -473,6 +477,17 @@ int main(int argc, char *argv[])
       }
       gv.g_inputbuffer = atoi((argv[i+1]));
       i++;
+    }else if (lower_copy(string(argv[i])).compare("-d")==0 || lower_copy(string(argv[i])).compare("--detecttyperows")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      if (!isInt(argv[i+1])){
+        trace(FATAL,"%s is not a correct row number.\n", argv[i]);
+        exitProgram(1);
+      }
+      rq.setDetectTypeMaxRowNum(atoi((argv[i+1])));
+      i++;
     }else if (lower_copy(string(argv[i])).compare("-m")==0 || lower_copy(string(argv[i])).compare("--msglevel")==0){
       if (argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
@@ -519,6 +534,7 @@ int main(int argc, char *argv[])
         cout << "load <file/folder> -- Provide a file or folder to be queried.\n";
         cout << "parse /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n";
         cout << "set <field datatype [date format],...> -- Set the date type of the fields.\n";
+        cout << "detecttyperows <N> : Set how many matched rows will be used for detecting data types, default is 1.\n";
         cout << "filter <filter conditions> -- Provide filter conditions to filt the content.\n";
         cout << "select <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected.\n";
         cout << "group <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n";
@@ -667,6 +683,15 @@ int main(int argc, char *argv[])
         rq.assignLimitStr(strParam);
         cout << "Output limit has been set up.\n";
         cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("detecttyperows ")==0){
+        string strParam = trim_copy(lineInput).substr(string("detecttyperows ").size());
+        if (!isInt(strParam)){
+          cout << "Error: Please provide a valid number.\n";
+        }else{
+          rq.setDetectTypeMaxRowNum(atoi(strParam.c_str()));
+          cout << "Row number of detecting data type has been set up.\n";
+          cout << "rquery >";
+        }
       }else if (lower_copy(trim_copy(lineInput)).compare("run")==0 || lower_copy(trim_copy(lineInput)).find("run ")==0){
         if (trim_copy(lineInput).length() == 3){
           if (readMode == SINGLEFILE || readMode == FOLDER)

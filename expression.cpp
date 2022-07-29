@@ -534,7 +534,7 @@ ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
 
 // analyze column ID & name from metadata, return data type of current node
 // decide current node data type by checking children's data type
-DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes)
+DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype)
 {
   DataTypeStruct dts;
   dts.extrainfo="";
@@ -550,8 +550,8 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
     m_fieldtypes = fieldtypes;
     if (m_type == BRANCH){
       dts.datatype=UNKNOWN;
-      DataTypeStruct rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes):dts;
-      DataTypeStruct ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes):dts;
+      DataTypeStruct rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype):dts;
+      DataTypeStruct ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype):dts;
       //trace(DEBUG, "Left node: %s (%d); Right node: %s (%d)\n", m_leftNode->m_expStr.c_str(),m_leftNode->m_type, m_rightNode->m_expStr.c_str(),m_rightNode->m_type);
       //trace(DEBUG, "Getting compatible type from %s and %s\n", decodeDatatype(ldatatype.datatype).c_str(), decodeDatatype(rdatatype.datatype).c_str());
       m_datatype = getCompatibleDataType(ldatatype, rdatatype);
@@ -570,7 +570,9 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
       if (m_expType == VARIABLE){
         m_expStr = upper_copy(trim_copy(m_expStr));
         //string strVarName = upper_copy(m_expStr);
-        if (m_expStr.compare("@RAW") == 0 || m_expStr.compare("@FILE") == 0)
+        if (m_expStr.compare("@RAW") == 0)
+          m_datatype = *rawDatatype;
+        else if(m_expStr.compare("@FILE") == 0)
           m_datatype.datatype = STRING;
         else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0)
           m_datatype.datatype = LONG;
@@ -593,7 +595,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
           //m_expType = UNKNOWN;
           m_datatype.datatype = UNKNOWN;
         }
-        //trace(DEBUG, "Expression '%s' type is %s, data type is UNKNOWN\n", m_expStr.c_str(), decodeExptype(m_expType).c_str());
+        //trace(DEBUG, "Expression '%s' type is %s, data type is '%s'\n", m_expStr.c_str(), decodeExptype(m_expType).c_str(),decodeDatatype(m_datatype.datatype).c_str());
         return m_datatype;
       }
       if (m_datatype.datatype == UNKNOWN){
@@ -657,7 +659,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
       if (m_expType == FUNCTION){
         if (!m_Function)
           m_Function = new FunctionC(m_expStr);
-        m_datatype = m_Function->analyzeColumns(fieldnames, fieldtypes);
+        m_datatype = m_Function->analyzeColumns(fieldnames, fieldtypes, rawDatatype);
         // m_datatype = m_Function->m_datatype;
         m_funcID = m_Function->m_funcID;
         //m_expStr = upper_copy(trim_copy(m_Function->m_expStr)); -- should NOT turn the parameters to UPPER case.
@@ -1057,10 +1059,11 @@ bool ExpressionC::mergeConstNodes(string & sResult)
         if (m_Function->isConst()){
           vector<string> vfieldnames;
           vector<DataTypeStruct> fieldtypes;
+          DataTypeStruct rawDatatype;
           vector<string> vfieldvalues;
           map<string,string> mvarvalues;
           unordered_map< string,GroupProp > aggFuncs;
-          m_Function->analyzeColumns(&vfieldnames, &fieldtypes);
+          m_Function->analyzeColumns(&vfieldnames, &fieldtypes, &rawDatatype);
           DataTypeStruct dts;
           gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,sResult,dts);
           if (gotResult){

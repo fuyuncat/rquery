@@ -83,6 +83,8 @@ void QuerierC::init()
   m_bNamePrinted = false;
   m_aggrOnly = false;
   m_bUniqueResult = false;
+  m_detectTypeMaxRowNum = 1;
+  m_detectedTypeRows = 0;
 #ifdef __DEBUG__
   m_searchtime = 0;
   m_filtertime = 0;
@@ -146,6 +148,11 @@ bool QuerierC::assignGroupStr(string groupstr)
 void QuerierC::setUniqueResult(bool bUnique)
 {
   m_bUniqueResult = bUnique;
+}
+
+void QuerierC::setDetectTypeMaxRowNum(int detectTypeMaxRowNum)
+{
+  m_detectTypeMaxRowNum = max(1,detectTypeMaxRowNum);
 }
 
 bool QuerierC::assignLimitStr(string limitstr)
@@ -365,19 +372,33 @@ void QuerierC::setFieldDatatype(string field, int datetype, string extrainfo)
 
 void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
 {
+  m_detectedTypeRows++;
   m_fieldtypes.clear();
+  DataTypeStruct dts;
+  dts.datatype = detectDataType(matches[0], dts.extrainfo);
+  dts.datatype = dts.datatype==UNKNOWN?STRING:dts.datatype;
+  if (m_rawDatatype.datatype == UNKNOWN)
+    m_rawDatatype = dts;
+  else
+    m_rawDatatype = getCompatibleDataType(m_rawDatatype, dts);
+  trace(DEBUG,"Detected @RAW '%s', data type '%s' extrainfo '%s'.\n",string(matches[0]).c_str(),decodeDatatype(m_rawDatatype.datatype).c_str(),m_rawDatatype.extrainfo.c_str());
+  if (m_rawDatatype.datatype == UNKNOWN)
+    m_rawDatatype.datatype = STRING;
   for (int i=1; i<matches.size(); i++){
     if (m_fieldnames.size()>i-1 && m_fieldntypes.find(m_fieldnames[i-1]) != m_fieldntypes.end()) 
       m_fieldtypes.push_back(m_fieldntypes[m_fieldnames[i-1]]);
     else if (m_fieldntypes.find("@FIELD"+intToStr(i)) != m_fieldntypes.end())
       m_fieldtypes.push_back(m_fieldntypes["@FIELD"+intToStr(i)]);
     else{
-      DataTypeStruct dts;
       dts.datatype = detectDataType(matches[i], dts.extrainfo);
+      dts.datatype = dts.datatype==UNKNOWN?STRING:dts.datatype;
       // trace(DEBUG2, "Detected column '%s' from '%s', data type '%s' extrainfo '%s'\n", m_fieldnames[i-1].c_str(), string(matches[i]).c_str(), decodeDatatype(dts.datatype).c_str(), dts.extrainfo.c_str());
-      if (dts.datatype==UNKNOWN)
-        dts.datatype = STRING;
-      m_fieldtypes.push_back(dts); // set UNKNOWN (real) data as STRING
+      if (m_fieldtypes.size()>i-1)
+        m_fieldtypes[i-1] = getCompatibleDataType(m_fieldtypes[i-1], dts);
+      else
+        m_fieldtypes.push_back(dts); 
+      if (m_fieldtypes[i-1].datatype==UNKNOWN)
+        m_fieldtypes[i-1].datatype = STRING; // set UNKNOWN (real) data as STRING
       if (m_fieldnames.size()>i-1)
         m_fieldntypes.insert( pair<string, DataTypeStruct>(m_fieldnames[i-1],dts) );
     }
@@ -699,23 +720,24 @@ int QuerierC::searchNext(namesaving_smatch & matches)
       vector<string> matcheddata;
       for (int i=0; i<matches.size(); i++)
         matcheddata.push_back(matches[i]);
-      if (m_fieldnames.size() == 0){
+      //trace(DEBUG2,"Detected rows %d/%d\n", m_detectedRawDatatype.size(), m_detectTypeMaxRowNum);
+      if (m_detectedTypeRows < m_detectTypeMaxRowNum){
         pairFiledNames(matches);
         analyzeFiledTypes(matches);
         if (m_filter){
-          m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes);
+          m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
           //m_filter->mergeExprConstNodes();
         }
         for (int i=0; i<m_selections.size(); i++){
           //trace(DEBUG, "Analyzing selection '%s' (%d), found %d\n", m_selections[i].m_expStr.c_str(), i, found);
-          m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
+          m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
         }
         for (int i=0; i<m_groups.size(); i++)
-          m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes);
+          m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
         for (int i=0; i<m_sorts.size(); i++)
-          m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes);
+          m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
         for (unordered_map< string,ExpressionC >::iterator it=m_aggFuncExps.begin(); it!=m_aggFuncExps.end(); ++it)
-          it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes);
+          it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
       }
       // append variables
       //matcheddata.push_back(m_filename);
@@ -1135,6 +1157,8 @@ void QuerierC::clear()
   m_bNamePrinted = false;
   m_aggrOnly = false;
   m_bUniqueResult = false;
+  m_detectTypeMaxRowNum = 1;
+  m_detectedTypeRows = 0;
   m_outputformat = TEXT;
   if (m_filter){
     m_filter->clear();

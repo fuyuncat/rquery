@@ -129,8 +129,17 @@ using namespace std;
 #define JSON 2
 
 struct DataTypeStruct{
-  int datatype;
+  int datatype=UNKNOWN;
   string extrainfo="";  // for DATE type only so far, the format of the DATE 
+
+  // We only need these operators when this struct is being used as Key of Map
+  //bool operator==(const DataTypeStruct& x) const {
+  //  return (this->datatype==x.datatype && this->extrainfo.compare(x.extrainfo)==0);
+  //}
+
+  //bool operator<(const DataTypeStruct& x) const {
+  //  return (this->datatype<x.datatype || (this->datatype==x.datatype && this->extrainfo.compare(x.extrainfo)<0));
+  //}
 };
 
 class GlobalVars{

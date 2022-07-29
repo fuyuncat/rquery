@@ -83,9 +83,9 @@ jobs:
         echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.rpm"
         echo "::set-output name=rpm_content_type::application/octet-stream"
         make
-        zip rquery-${{ env.RELEASE_VERSION }}.x86_64.zip rq
-        echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.x86_64.zip"
-        echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.x86_64.zip"
+        zip rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip rq
+        echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
+        echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
         echo "::set-output name=zip_content_type::application/zip"
 
     - name: Upload artifact

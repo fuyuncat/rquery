@@ -7,6 +7,18 @@
 &nbsp;&nbsp;&nbsp; Unzip the downloaded file<br />
 &nbsp;&nbsp;&nbsp; sudo yum -y install boost-devel<br />
 &nbsp;&nbsp;&nbsp; make<br />
+
+&nbsp;&nbsp;&nbsp; or <br />
+&nbsp;&nbsp;&nbsp; download the rpm file <br />
+&nbsp;&nbsp;&nbsp; unzip the rpm file <br />
+&nbsp;&nbsp;&nbsp; sudo rpm -ihv <downloaded_rpm_file> <br />
+
+&nbsp;&nbsp;&nbsp; or <br />
+&nbsp;&nbsp;&nbsp; download the compiled zip file <br />
+&nbsp;&nbsp;&nbsp; unzip the compiled zip file <br />
+&nbsp;&nbsp;&nbsp; chmod ugo+x rq<br />
+&nbsp;&nbsp;&nbsp; cp rq /usr/bin/<br />
+&nbsp;&nbsp;&nbsp; or directly run it from local.<br />
 <br />
 # Usage & Help Doc
 - run modes

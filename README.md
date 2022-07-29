@@ -154,7 +154,7 @@ Functions can be used in the expression. We current provide some essential norma
     29/Jun/2022:01:00:00 +1000      76
     29/Jun/2022:02:00:00 +1000      32
    ```
-
+   More examples can be found here: https://github.com/fuyuncat/rquery/blob/main/EXAMPLES.md <br />
 # Dependencies
 &nbsp;&nbsp;&nbsp;This engine currently depends on boost, we are planning to remove this dependency in the near future.<br />
 <br />
@@ -165,3 +165,5 @@ Functions can be used in the expression. We current provide some essential norma
 # License
 &nbsp;&nbsp;&nbsp;Our source code is available under the GNU GPLv3 license.<br />
 <br />
+# Change logs
+&nbsp;&nbsp;&nbsp;https://github.com/fuyuncat/rquery/blob/main/CHANGELOG.md <br />

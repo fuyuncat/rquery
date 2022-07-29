@@ -17,16 +17,17 @@ RQuery is a regular expression (Capturing Group and Named Group supported) based
 %prep
 %setup -q -n %{name}-%{version}
 
-
 %build
 make %{?_smp_mflags}
 
-
 %install
 make install DESTDIR=%{buildroot}
-
+mkdir -p %{buildroot}/usr/local/bin/
+cp rq %{buildroot}/usr/local/bin/
 
 %files
+%defattr(755,root,root)
+/usr/local/bin/rq
 %doc
 
 %changelog

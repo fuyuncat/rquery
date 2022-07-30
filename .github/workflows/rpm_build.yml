@@ -57,7 +57,6 @@ jobs:
       with:
           tag_name: ${{ env.RELEASE_VERSION }}
           release_name: Release ${{ env.RELEASE_VERSION }}
-          allowUpdates: true
           body: |
             Changes in this Release
             - Create RPM
@@ -109,3 +108,9 @@ jobs:
           asset_path: ${{ steps.rpm_build.outputs.source_zip_path }}
           asset_name: ${{ steps.rpm_build.outputs.source_zip_name }}
           asset_content_type: ${{ steps.rpm_build.outputs.zip_content_type }}
+
+  CentOS7:
+    runs-on: ubuntu-latest
+    container: centos:7
+    steps:
+      - uses: fuyuncat/rquery/.github/actions/deploy-centos7@actions

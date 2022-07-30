@@ -6,7 +6,7 @@ on:
         tags:
           - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
   
-name: Create RPM Release
+name: Test Container
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
       run: |
         yum -y update
         yum -y install centos-release-scl-rh epel-release
-        yum -y install boost-devel ccache clang gcc-c++ gcc-gfortran rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool libusb-devel libusb1-devel openssl-devel bzip2-devel zlib-devel
+        yum -y install git boost-devel gcc-c++ rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool
 
     - name: Check Release Version
       run: |

@@ -66,6 +66,7 @@ jobs:
         echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
         echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
         echo "::set-output name=zip_content_type::application/zip"
+        echo "upload_url:"${{ github.event.release.upload_url }}
 
     - name: Upload artifact
       id: upload-release-asset 

@@ -1,6 +1,5 @@
 name: Deploy on CentOS
 runs:
-  uses: repo/.github/workflows/rpm_build.yml@main
   using: composite
   steps:
   - name: Prepare container

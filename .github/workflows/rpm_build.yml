@@ -120,8 +120,8 @@ jobs:
     container: centos:7
     steps:
       - run: |
-          echo "upload_url 1 - " ${{ needs.build.outputs.upload_url }}
-          echo "upload_url 2 - " ${{ needs.build.steps.rpm_build.outputs.upload_url }}
+          echo "upload_url - " ${{ needs.build.outputs.upload_url }}
+          echo "token - " ${{ secrets.GITHUB_TOKEN }}
       - uses: fuyuncat/rquery/.github/actions/deploy_centos7@main
         with:
           github_token: ${{ needs.build.outputs.github_token }}

@@ -23,9 +23,6 @@ jobs:
         yum -y update
         yum -y install centos-release-scl-rh epel-release
         yum -y install git boost-devel gcc-c++ rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool
-
-    - name: Check Release Version
-      run: |
         #echo ${GITHUB_REF}
         #echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
         /usr/bin/git checkout main

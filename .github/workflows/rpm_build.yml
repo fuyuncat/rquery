@@ -11,6 +11,9 @@ jobs:
   build:
     name: Create RPM Release
     runs-on: ubuntu-latest
+    outputs:
+      github_token: ${{ steps.rpm_build.outputs.github_token }}
+      upload_url: ${{ steps.rpm_build.outputs.upload_url }}
 
     steps:
     - name: Checkout code
@@ -86,6 +89,8 @@ jobs:
         echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.el8.x86_64.zip"
         echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.el8.x86_64.zip"
         echo "::set-output name=zip_content_type::application/zip"
+        echo "::set-output github_token=${{ secrets.GITHUB_TOKEN }}"
+        echo "::set-output upload_url=${{ steps.create_release.outputs.upload_url }}"
 
     - name: Upload artifact
       id: upload-release-asset 
@@ -116,5 +121,5 @@ jobs:
     steps:
       - uses: fuyuncat/rquery/.github/actions/deploy_centos7@main
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          github_token: ${{ needs.build.outputs.github_token }}
+          upload_url: ${{ needs.build.outputs.upload_url }}

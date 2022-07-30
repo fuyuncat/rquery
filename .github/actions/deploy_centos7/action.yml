@@ -1,4 +1,11 @@
 name: Deploy on CentOS
+inputs:
+  upload_url:
+    description: 'Release Upload URL'     
+    required: true
+  github_token:
+    description: 'Github Token'     
+    required: true
 runs:
   using: composite
   steps:
@@ -54,7 +61,7 @@ runs:
       echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
       echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
       echo "::set-output name=zip_content_type::application/zip"
-      echo "UPLOAD_URL: "${{ env.UPLOAD_URL }}
+      echo "UPLOAD_URL: "${{ inputs.upload_url }}
       #upload_url=$(curl -sL https://api.github.com/repos/actions/checkout/releases/latest | jq -r '.upload_url')
       #rel_id=$(curl -sL https://api.github.com/repos/${{github.repository}}/releases/latest?access_token=${{ env.GITHUB_TOKEN }} | jq -r '.id')
       #echo ${{github.repository}}
@@ -67,9 +74,9 @@ runs:
     id: upload-release-asset 
     uses: actions/upload-release-asset@v1
     env:
-        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
     with:
-        upload_url: ${{ env.UPLOAD_URL }}
+        upload_url: ${{ inputs.upload_url }}
         asset_path: ${{ steps.rpm_build.outputs.source_rpm_path }}
         asset_name: ${{ steps.rpm_build.outputs.source_rpm_name }}
         asset_content_type: ${{ steps.rpm_build.outputs.rpm_content_type }}
@@ -78,9 +85,9 @@ runs:
     id: upload-zip-asset 
     uses: actions/upload-release-asset@v1
     env:
-        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
     with:
-        upload_url: ${{ env.UPLOAD_URL }}
+        upload_url: ${{ inputs.upload_url }}
         asset_path: ${{ steps.rpm_build.outputs.source_zip_path }}
         asset_name: ${{ steps.rpm_build.outputs.source_zip_name }}
         asset_content_type: ${{ steps.rpm_build.outputs.zip_content_type }}

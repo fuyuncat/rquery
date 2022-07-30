@@ -11,6 +11,7 @@ jobs:
   build:
     name: Create RPM Release
     runs-on: ubuntu-latest
+    container: centos:7
 
     steps:
     - name: Checkout code
@@ -80,12 +81,12 @@ jobs:
         /usr/bin/git archive --output=/home/runner/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
         /usr/bin/rpmbuild -ba --define "latestversion ${{ env.RELEASE_VERSION }}" /home/runner/rpmbuild/SPECS/rquery.spec
         echo "::set-output name=source_rpm_path::/home/runner/rpmbuild/RPMS/x86_64/rquery-${{ env.RELEASE_VERSION }}-1.x86_64.rpm"
-        echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el8.x86_64.rpm"
+        echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.rpm"
         echo "::set-output name=rpm_content_type::application/octet-stream"
         make
-        zip rquery-${{ env.RELEASE_VERSION }}.el8.x86_64.zip rq
-        echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.el8.x86_64.zip"
-        echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.el8.x86_64.zip"
+        zip rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip rq
+        echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
+        echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
         echo "::set-output name=zip_content_type::application/zip"
 
     - name: Upload artifact

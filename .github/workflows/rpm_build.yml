@@ -119,7 +119,9 @@ jobs:
     runs-on: ubuntu-latest
     container: centos:7
     steps:
+      - run: echo "upload_url - " ${{ needs.build.outputs.upload_url }}
       - uses: fuyuncat/rquery/.github/actions/deploy_centos7@main
         with:
           github_token: ${{ needs.build.outputs.github_token }}
           upload_url: ${{ needs.build.outputs.upload_url }}
+          

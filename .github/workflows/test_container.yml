@@ -20,8 +20,10 @@ jobs:
         yum -y update
         yum -y install centos-release-scl-rh epel-release
         yum -y install git boost-devel gcc-c++ rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool
-        #echo ${GITHUB_REF}
-        #echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        yum -y remove git
+        yum -y remove git-*
+        yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
+        yum install git
         /usr/bin/git --version
 
     - name: Checkout code

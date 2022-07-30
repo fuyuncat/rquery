@@ -27,6 +27,9 @@ jobs:
         #echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
         pwd
         ls -la
+        export GIT_DISCOVERY_ACROSS_FILESYSTEM=true
+        ls -la ../
+        #/usr/bin/git init
         /usr/bin/git checkout main
         /usr/bin/git pull
         /usr/bin/git pull --tags

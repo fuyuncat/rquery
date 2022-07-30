@@ -3,6 +3,7 @@ runs:
   using: composite
   steps:
   - name: Prepare container
+    shell: bash
     run: |
       yum -y update
       yum -y install centos-release-scl-rh epel-release
@@ -16,6 +17,7 @@ runs:
     uses: actions/checkout@main
 
   - name: Get release version
+    shell: bash
     run: |
       pwd
       ls -la
@@ -34,6 +36,7 @@ runs:
       reftag=$(/usr/bin/git for-each-ref --sort=creatordate --format "%(refname)" refs/tags|tail -1)
       echo ${reftag#*tags/}
       echo "RELEASE_VERSION=${reftag#*tags/}" >> $GITHUB_ENV
+
   - name: build RPM package
     id: rpm_build
     shell: bash # git must be present before checkout
@@ -54,6 +57,7 @@ runs:
       upload_url=$(curl -sL https://api.github.com/repos/actions/checkout/releases/latest | jq -r '.upload_url')
       echo $upload_url
       echo UPLOAD_URL=$upload_url >> $GITHUB_ENV
+
   - name: Upload artifact
     id: upload-release-asset 
     uses: actions/upload-release-asset@v1

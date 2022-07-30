@@ -19,7 +19,7 @@ jobs:
       run: |
         yum -y update
         yum -y install centos-release-scl-rh epel-release
-        yum -y install git boost-devel gcc-c++ rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool
+        yum -y install git boost-devel gcc-c++ rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool jq
         yum -y remove git
         yum -y remove git-*
         yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
@@ -66,12 +66,8 @@ jobs:
         echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
         echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
         echo "::set-output name=zip_content_type::application/zip"
-
-    - name: Get release
-      id: get_release
-      uses: bruceadams/get-release@${{ env.RELEASE_VERSION }}
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+        upload_url=$(curl -sL https://api.github.com/repos/actions/checkout/releases/latest | jq -r '.upload_url')
+        echo UPLOAD_URL=$upload_url >> $GITHUB_ENV
 
     - name: Upload artifact
       id: upload-release-asset 
@@ -79,7 +75,7 @@ jobs:
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          upload_url: ${{ env.UPLOAD_URL }}
           asset_path: ${{ steps.rpm_build.outputs.source_rpm_path }}
           asset_name: ${{ steps.rpm_build.outputs.source_rpm_name }}
           asset_content_type: ${{ steps.rpm_build.outputs.rpm_content_type }}
@@ -90,7 +86,7 @@ jobs:
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          upload_url: ${{ env.UPLOAD_URL }}
           asset_path: ${{ steps.rpm_build.outputs.source_zip_path }}
           asset_name: ${{ steps.rpm_build.outputs.source_zip_name }}
           asset_content_type: ${{ steps.rpm_build.outputs.zip_content_type }}

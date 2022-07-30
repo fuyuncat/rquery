@@ -56,7 +56,7 @@ jobs:
         /usr/bin/mkdir -pv ~/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS,BUILDROOT}
         /usr/bin/cp rquery.spec ~/rpmbuild/SPECS/rquery.spec
         ls -ld ~/rpmbuild/SOURCES/
-        /usr/bin/git archive --output=~/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
+        /usr/bin/git archive --output=/github/home/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
         /usr/bin/rpmbuild -ba --define "latestversion ${{ env.RELEASE_VERSION }}" ~/rpmbuild/SPECS/rquery.spec
         echo "::set-output name=source_rpm_path::~/rpmbuild/RPMS/x86_64/rquery-${{ env.RELEASE_VERSION }}-1.x86_64.rpm"
         echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.rpm"

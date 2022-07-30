@@ -11,30 +11,15 @@ jobs:
   build:
     name: Create RPM Release
     runs-on: ubuntu-latest
-    container: centos:8
 
     steps:
-    - name: Prepare container
-      run: |
-        yum -y update
-        yum -y install centos-release-scl-rh epel-release
-        yum -y install git boost-devel gcc-c++ rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool jq
-        yum -y remove git
-        yum -y remove git-*
-        yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
-        yum -y install git
-        /usr/bin/git --version
     - name: Checkout code
       uses: actions/checkout@main
 
-    - name: Get release version
+    - name: Check Release Version
       run: |
-        pwd
-        ls -la
-        export GIT_DISCOVERY_ACROSS_FILESYSTEM=true
-        ls -la ../
-        #/usr/bin/git init
-        /usr/bin/git config --global --add safe.directory /__w/rquery/rquery
+        #echo ${GITHUB_REF}
+        #echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
         /usr/bin/git checkout main
         /usr/bin/git pull
         /usr/bin/git pull --tags
@@ -46,27 +31,6 @@ jobs:
         reftag=$(/usr/bin/git for-each-ref --sort=creatordate --format "%(refname)" refs/tags|tail -1)
         echo ${reftag#*tags/}
         echo "RELEASE_VERSION=${reftag#*tags/}" >> $GITHUB_ENV
-
-    - name: build RPM package
-      id: rpm_build
-      shell: bash # git must be present before checkout
-      run: |
-        /usr/bin/mkdir -pv /github/home/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS,BUILDROOT}
-        /usr/bin/cp rquery.spec /github/home/rpmbuild/SPECS/rquery.spec
-        #ls -ld /github/home/rpmbuild/SOURCES/
-        /usr/bin/git archive --output=/github/home/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
-        /usr/bin/rpmbuild -ba --define "latestversion ${{ env.RELEASE_VERSION }}" /github/home/rpmbuild/SPECS/rquery.spec
-        echo "::set-output name=source_rpm_path::/github/home/rpmbuild/RPMS/x86_64/rquery-${{ env.RELEASE_VERSION }}-1.x86_64.rpm"
-        echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.rpm"
-        echo "::set-output name=rpm_content_type::application/octet-stream"
-        make
-        zip rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip rq
-        echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
-        echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
-        echo "::set-output name=zip_content_type::application/zip"
-        upload_url=$(curl -sL https://api.github.com/repos/actions/checkout/releases/latest | jq -r '.upload_url')
-        echo $upload_url
-        echo UPLOAD_URL=$upload_url >> $GITHUB_ENV
 
     #- name: Delete Release
     #  id: delete_release
@@ -100,6 +64,29 @@ jobs:
             - Upload RPM
           draft: false
           prerelease: false
+
+    - name: build RPM package
+      id: rpm_build
+      shell: bash # git must be present before checkout
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install gcc g++ make libboost-all-dev git libmpc-dev nasm gcc-multilib
+        which g++
+        echo "/usr/bin" >> $GITHUB_PATH
+        ls
+        pwd
+        /usr/bin/mkdir -pv ~/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS,BUILDROOT}
+        /usr/bin/cp rquery.spec /home/runner/rpmbuild/SPECS/rquery.spec
+        /usr/bin/git archive --output=/home/runner/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
+        /usr/bin/rpmbuild -ba --define "latestversion ${{ env.RELEASE_VERSION }}" /home/runner/rpmbuild/SPECS/rquery.spec
+        echo "::set-output name=source_rpm_path::/home/runner/rpmbuild/RPMS/x86_64/rquery-${{ env.RELEASE_VERSION }}-1.x86_64.rpm"
+        echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.rpm"
+        echo "::set-output name=rpm_content_type::application/octet-stream"
+        make
+        zip rquery-${{ env.RELEASE_VERSION }}.x86_64.zip rq
+        echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.x86_64.zip"
+        echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.x86_64.zip"
+        echo "::set-output name=zip_content_type::application/zip"
 
     - name: Upload artifact
       id: upload-release-asset 

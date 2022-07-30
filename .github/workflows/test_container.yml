@@ -36,6 +36,7 @@ jobs:
         export GIT_DISCOVERY_ACROSS_FILESYSTEM=true
         ls -la ../
         #/usr/bin/git init
+        /usr/bin/git config --global --add safe.directory /__w/rquery/rquery
         /usr/bin/git checkout main
         /usr/bin/git pull
         /usr/bin/git pull --tags

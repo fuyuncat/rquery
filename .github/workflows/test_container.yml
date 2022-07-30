@@ -1,1 +1,41 @@
 
+on: 
+    push:
+        branches: [ main ]
+        # Sequence of patterns matched against refs/tags
+        tags:
+          - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  
+name: Create RPM Release
+
+jobs:
+  build:
+    name: Create RPM Release
+    runs-on: ubuntu-latest
+    container: centos:7
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@main
+
+    - name: Prepare container
+      run: |
+        yum -y update
+        yum -y install centos-release-scl-rh epel-release
+        yum -y install boost-devel ccache clang gcc-c++ gcc-gfortran rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool libusb-devel libusb1-devel openssl-devel bzip2-devel zlib-devel
+
+    - name: Check Release Version
+      run: |
+        #echo ${GITHUB_REF}
+        #echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        /usr/bin/git checkout main
+        /usr/bin/git pull
+        /usr/bin/git pull --tags
+        echo "All tags"
+        /usr/bin/git for-each-ref --sort=creatordate --format "%(refname) %(creatordate)" refs/tags
+        #/usr/bin/git tag --sort=creatordate
+        #/usr/bin/git describe --tags --abbrev=0
+        echo "latest tag"
+        reftag=$(/usr/bin/git for-each-ref --sort=creatordate --format "%(refname)" refs/tags|tail -1)
+        echo ${reftag#*tags/}
+        echo "RELEASE_VERSION=${reftag#*tags/}" >> $GITHUB_ENV

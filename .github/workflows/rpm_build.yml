@@ -115,3 +115,5 @@ jobs:
     container: centos:7
     steps:
       - uses: fuyuncat/rquery/.github/actions/deploy_centos7@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

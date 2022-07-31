@@ -45,12 +45,13 @@ runs:
       rpmbuild -ba --define "latestversion ${{ env.RELEASE_VERSION }}" /Users/runner/rpmbuild/SPECS/rquery.spec
       ls -l /Users/runner/rpmbuild/RPMS/
       echo "::set-output name=source_rpm_path::/Users/runner/rpmbuild/RPMS/x86_64/rquery-${{ env.RELEASE_VERSION }}-1.x86_64.rpm"
-      echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.x86_64.rpm"
+      echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.macos.x86_64.rpm"
       echo "::set-output name=rpm_content_type::application/octet-stream"
       make
-      zip rquery-${{ env.RELEASE_VERSION }}.macos.zip rq
-      echo "::set-output name=source_zip_path::/Users/runner/rquery-${{ env.RELEASE_VERSION }}.macos.zip"
-      echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.macos.zip"
+      zip rquery-${{ env.RELEASE_VERSION }}.macos.x86_64.zip rq
+      pwd
+      echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.macos.x86_64.zip"
+      echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.macos.x86_64.zip"
       echo "::set-output name=zip_content_type::application/zip"
       echo "UPLOAD_URL: "${{ inputs.upload_url }}
 

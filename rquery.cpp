@@ -51,9 +51,10 @@ GlobalVars gv;
 
 void usage()
 {
-  printf("\nProgram Name: RQuery AKA RQ\n");
+  printf("\nProgram Name: RQuery AKA RQ Version %s\n", VERSION);
   printf("Contact Email: fuyuncat@gmail.com\n");
-  printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q \"parse /<regular expression>/ | select <expr>... | set field datatype,... | filter <filters> | group <expr>,... | sort <expr>,... | limit n[,topN] | unique \" \"file or string to be queried\"\nquery string/file using regular expression\n\n");
+  printf("Search string block/file/folder using regular expression\n\n");
+  printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q \"parse /<regular expression>/ | select <expr>... | set field datatype,... | filter <filters> | group <expr>,... | sort <expr>,... | limit n[,topN] | unique \" \"file or string to be queried\"\n\n");
   printf("\t-q|--query <query string> -- The query string indicates how to query the content, valid query commands include parse,select,set,filter,group,sort,limit. One or more commands can be provide in the query, multiple commands are separated by |. They can be in any order. \n");
   printf("\t\tparse /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n");
   printf("\t\tset <field datatype [date format],...> -- Set the date type of the fields.\n");
@@ -300,7 +301,8 @@ void processQuery(string sQuery, QuerierC & rq)
   if (query.find("select") != query.end()){
     //trace(DEBUG,"Assigning selections: %s \n", query["select"].c_str());
     rq.assignSelString(query["select"]);
-  }
+  }else
+    rq.assignSelString("@raw");
   if (query.find("sort") != query.end()){
     //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
     rq.assignSortStr(query["sort"]);
@@ -743,8 +745,8 @@ int main(int argc, char *argv[])
       }
     }
   }else{
-    if (!sQuery.empty())
-      processQuery(sQuery, rq);
+    //if (!sQuery.empty())
+    processQuery(sQuery, rq);
     runQuery(sContent, readMode, rq, fileMode, iSkip);
   }
   exitProgram(0);

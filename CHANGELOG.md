@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.
+   # [0.912] 2022-07-31
+   Added Version Info
+   Added workflow actions to create CentOS7/8&MacOS rpm and zip files.
+   Enhancement: query option is optional now; Set select @raw when no "select" provided.
    # [0.912] 2022-07-29
    New feature: New option: -c|--recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).<br/>
    # [0.911] 2022-07-29

@@ -1040,6 +1040,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
     }else
       return false;
   }
+  return false;
 }
 
 // merge const expression, reduce calculation during matching
@@ -1101,6 +1102,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
     }
     return gotResult;
   }
+  return false;
 }
 
 void ExpressionC::getAllColumnNames(vector<string> & fieldnames)

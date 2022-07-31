@@ -127,8 +127,7 @@ jobs:
 
   MacOS:
     needs: build
-    runs-on: ubuntu-latest
-    container: macos-10.15
+    runs-on: macos-10.15
     steps:
       - uses: fuyuncat/rquery/.github/actions/deploy_macos@main
         env:

@@ -40,6 +40,7 @@ runs:
     run: |
       mkdir -pv $(pwd)/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS,BUILDROOT}
       cp rquery.spec $(pwd)/rpmbuild/SPECS/rquery.spec
+      ls -l $(pwd)/rpmbuild/
       git archive --output=$(pwd)/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
       rpmbuild -ba --define "latestversion ${{ env.RELEASE_VERSION }}" $(pwd)/rpmbuild/SPECS/rquery.spec
       ls -l $(pwd)/rpmbuild/RPMS/

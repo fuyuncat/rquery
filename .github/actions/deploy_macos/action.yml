@@ -1,0 +1,77 @@
+name: Deploy on CentOS
+inputs:
+  upload_url:
+    description: 'Release Upload URL'     
+    required: true
+runs:
+  using: composite
+  steps:
+  - name: Prepare container
+    shell: bash
+    run: |
+      brew uninstall --force gcc gcc@7 gcc@8 gcc@9 gcc@10 gcc@11 gcc@12 maven
+      brew install git boost ccache make autoconf-archive automake cmake libomp libtool gcc@10 rpm
+      which git
+      git --version
+
+  - name: Checkout code
+    uses: actions/checkout@main
+
+  - name: Get release version
+    shell: bash
+    run: |
+      pwd
+      ls -la
+      export GIT_DISCOVERY_ACROSS_FILESYSTEM=true
+      ls -la ../
+      git config --global --add safe.directory /__w/rquery/rquery
+      git checkout main
+      git pull
+      git pull --tags
+      echo "All tags"
+      git for-each-ref --sort=creatordate --format "%(refname) %(creatordate)" refs/tags
+      echo "latest tag"
+      reftag=$(/usr/bin/git for-each-ref --sort=creatordate --format "%(refname)" refs/tags|tail -1)
+      echo ${reftag#*tags/}
+      echo "RELEASE_VERSION=${reftag#*tags/}" >> $GITHUB_ENV
+  - name: build RPM package
+    id: rpm_build
+    shell: bash # git must be present before checkout
+    run: |
+      mkdir -pv $(pwd)/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS,BUILDROOT}
+      cp rquery.spec $(pwd)/rpmbuild/SPECS/rquery.spec
+      git archive --output=$(pwd)/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
+      rpmbuild -ba --define "latestversion ${{ env.RELEASE_VERSION }}" /github/home/rpmbuild/SPECS/rquery.spec
+      ls -l $(pwd)/rpmbuild/RPMS/
+      echo "::set-output name=source_rpm_path::$(pwd)/rpmbuild/RPMS/x86_64/rquery-${{ env.RELEASE_VERSION }}-1.el7.x86_64.rpm"
+      echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.rpm"
+      echo "::set-output name=rpm_content_type::application/octet-stream"
+      make
+      zip rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip rq
+      echo "::set-output name=source_zip_path::$(pwd)/rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
+      echo "::set-output name=source_zip_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.zip"
+      echo "::set-output name=zip_content_type::application/zip"
+      echo "UPLOAD_URL: "${{ inputs.upload_url }}
+
+  - name: Upload artifact
+    id: upload-release-asset 
+    uses: actions/upload-release-asset@v1
+    env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+    with:
+        upload_url: ${{ inputs.upload_url }}
+        asset_path: ${{ steps.rpm_build.outputs.source_rpm_path }}
+        asset_name: ${{ steps.rpm_build.outputs.source_rpm_name }}
+        asset_content_type: ${{ steps.rpm_build.outputs.rpm_content_type }}
+
+  - name: Upload zip
+    id: upload-zip-asset 
+    uses: actions/upload-release-asset@v1
+    env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+    with:
+        upload_url: ${{ inputs.upload_url }}
+        asset_path: ${{ steps.rpm_build.outputs.source_zip_path }}
+        asset_name: ${{ steps.rpm_build.outputs.source_zip_name }}
+        asset_content_type: ${{ steps.rpm_build.outputs.zip_content_type }}
+

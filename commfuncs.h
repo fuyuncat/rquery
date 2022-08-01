@@ -126,6 +126,7 @@ using namespace std;
 #define MAX 104
 #define MIN 105
 #define AVERAGE 106
+#define FOREACH 501
 
 #define TEXT 1
 #define JSON 2
@@ -218,6 +219,7 @@ string trim_copy(const string & str);
 string upper_copy(const string & str);
 string lower_copy(const string & str);
 void replacestr(string & sRaw, const string & sReplace, const string & sNew);
+void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'});
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew);
 void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr);
 

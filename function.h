@@ -43,11 +43,14 @@ class FunctionC
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     bool isAggFunc();
+    bool isMacro();
     void dump();
     FunctionC* cloneMe();
     void copyTo(FunctionC* node);
     void clear(); // clear predictin
     bool remove(FunctionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
+    vector<ExpressionC> expandForeach(int maxFieldNum); // expand foreach to a vector of expression
+    vector<ExpressionC> expandForeach(vector<ExpressionC> vExps); // expand foreach to a vector of expression
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.

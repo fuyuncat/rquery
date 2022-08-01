@@ -46,6 +46,10 @@ void ExpressionC::setExpstr(string expString)
 {
   m_expStr = expString;
   buildExpression();
+  if (isMacroInExpression()){
+    trace(FATAL, "A macro function cannot be a part of an expression '%s'\n", m_expStr.c_str());
+    //return;
+  }
   string sResult;
   if (mergeConstNodes(sResult)){
     m_expStr = sResult;
@@ -397,6 +401,23 @@ bool ExpressionC::buildExpression()
     return true;
   }
   return false;
+}
+
+bool ExpressionC::isMacroInExpression()
+{
+  if (m_expType == FUNCTION && m_Function && m_Function->isMacro())
+    if (m_parentNode || m_leftNode || m_rightNode){
+      return true;
+    }else
+      return false;
+  else{
+    bool bLeftMacro = false, bRightMacro = false;
+    if (m_leftNode)
+      bLeftMacro = m_leftNode->isMacroInExpression();
+    if (m_rightNode)
+      bRightMacro = m_rightNode->isMacroInExpression();
+    return bLeftMacro || bRightMacro;
+  }
 }
 
 // get left tree Height

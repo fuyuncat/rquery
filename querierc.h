@@ -70,8 +70,8 @@ class QuerierC
     void setrawstr(string rawstr);
     void appendrawstr(string rawstr);
     void assignFilter(FilterC* filter);
-    bool assignSelString(string selstr);
     bool assignGroupStr(string groupstr);
+    bool assignSelString(string selstr);
     bool assignSortStr(string sortstr);
     bool assignLimitStr(string limitstr);
     bool setFieldTypeFromStr(string setstr);
@@ -115,6 +115,10 @@ class QuerierC
     bool m_bUniqueResult; // flag for the returned result is unique or not
     int m_detectTypeMaxRowNum; // How many rows to be used to detect the data types
     int m_detectedTypeRows; // How many rows have been used to detect the data types so far
+    string m_selstr; // select raw string
+    string m_sortstr; // sort raw string
+    bool m_bSelectContainMacro; // flag indicating if macro function exists in select expressions
+    bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
     
     //vector<namesaving_smatch> m_results;
     FilterC* m_filter;
@@ -142,6 +146,10 @@ class QuerierC
     unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > > m_aggGroupProp; // mapping group keys: group properties
     bool m_aggrOnly; // the selection has aggregation functions only, no matter if there is any group field.
 
+    bool analyzeSelString();
+    bool analyzeSortStr();
+    bool checkSelGroupConflict(ExpressionC eSel);
+    bool checkSortGroupConflict(ExpressionC eSort);
     bool matchFilter(vector<string> rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp);  // eval expression in aggregation paramter and store in a data set
     bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, vector< vector<string> > & resultSet); // add a data row to a result set

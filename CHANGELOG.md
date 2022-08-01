@@ -1,5 +1,8 @@
 # Change Log
 All change logs will be documented here.
+   # [0.912] 2022-08-01
+   Enhancement: Query commands accept one letter abbrivation, e.g. s stands for 'select'
+   New feature: Macro function foreach(beginid,endid,macro_expr) is introduced.
    # [0.912] 2022-07-31
    Added Version Info
    Added workflow actions to create CentOS7/8&MacOS rpm and zip files.

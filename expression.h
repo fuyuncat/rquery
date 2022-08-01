@@ -78,6 +78,10 @@ class ExpressionC
     bool m_metaDataAnzlyzed; // analyze column name to column id.
     bool m_expstrAnalyzed; // if expression string analyzed
 
+    static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
+    vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!
+    vector<DataTypeStruct>* m_fieldtypes;     // all nodes (parent & children) point to the same address!!!
+
     void dump(int deep);
     bool buildExpression();  // build expression class from the expression string
     void alignChildrenDataType(); // align children datatype with current datatype
@@ -85,10 +89,7 @@ class ExpressionC
     ExpressionC* getTopParent(); // get the top parent node
     ExpressionC* BuildTree(string expStr, ExpressionC* parentNode); // build a BTree from an expression string
     bool buildLeafNode(string expStr, ExpressionC* node); // build a Leaf Node from an (atom) expression string
-
-    static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
-    vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!
-    vector<DataTypeStruct>* m_fieldtypes;     // all nodes (parent & children) point to the same address!!!
+    bool isMacroInExpression();
 
   protected:
     void init();

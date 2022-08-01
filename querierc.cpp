@@ -83,6 +83,10 @@ void QuerierC::init()
   m_bNamePrinted = false;
   m_aggrOnly = false;
   m_bUniqueResult = false;
+  m_bSelectContainMacro = false;
+  m_bSortContainMacro = false;
+  m_selstr = "";
+  m_sortstr = "";
   m_detectTypeMaxRowNum = 1;
   m_detectedTypeRows = 0;
 #ifdef __DEBUG__
@@ -140,6 +144,10 @@ bool QuerierC::assignGroupStr(string groupstr)
       return false;
     }
     ExpressionC eGroup(sGroup);
+    if (eGroup.m_expType == FUNCTION && eGroup.m_Function && eGroup.m_Function->m_funcID==FOREACH){
+      trace(FATAL,"Macro function '%s' cannot be used in GROUP!\n", eGroup.m_Function->m_funcName.c_str());
+      continue;
+    }
     m_groups.push_back(eGroup);
   }
   return true;
@@ -185,7 +193,24 @@ bool QuerierC::assignLimitStr(string limitstr)
 // m_groups should always be analyzed before m_selections
 bool QuerierC::assignSelString(string selstr)
 {
-  vector<string> vSelections = split(selstr,',',"''{}()",'\\',{'(',')'});
+  m_selstr = selstr;
+  return analyzeSelString();
+}
+
+bool QuerierC::checkSelGroupConflict(ExpressionC eSel)
+{
+  vector<string> allColNames;
+  for (int i=0; i<m_groups.size(); i++)
+    m_groups[i].getAllColumnNames(allColNames);
+  if (m_groups.size()>0 && !eSel.groupFuncOnly() && !eSel.inColNamesRange(allColNames)){
+    trace(WARNING, "Selection '%s' does not exist in Group or invalid using aggregation function \n", eSel.m_expStr.c_str());
+    return false;
+  }
+  return true;
+}
+
+bool QuerierC::analyzeSelString(){
+  vector<string> vSelections = split(m_selstr,',',"''{}()",'\\',{'(',')'});
   bool bGroupFunc = false, bNonGroupFuncSel = false;
   for (int i=0; i<vSelections.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
@@ -195,23 +220,50 @@ bool QuerierC::assignSelString(string selstr)
       continue;
     }
     vector<string> vSelAlias = split(sSel," as ","''{}()",'\\',{'(',')'});
+    string sAlias = "";
     if (vSelAlias.size()>1)
-      m_selnames.push_back(trim_copy(vSelAlias[1]));
-    else
-      m_selnames.push_back(sSel);
+      sAlias = trim_copy(vSelAlias[1]);
     //trace(DEBUG2,"Selection expression: '%s'\n",vSelAlias[0].c_str());
     ExpressionC eSel(vSelAlias[0]);
-    //trace(DEBUG2,"'%s' merged const to '%s'.\n",vSelAlias[0].c_str(),eSel.getEntireExpstr().c_str());
-    //eSel.dump();
-    vector<string> allColNames;
-    for (int i=0; i<m_groups.size(); i++)
-      m_groups[i].getAllColumnNames(allColNames);
-    if (m_groups.size()>0 && !eSel.groupFuncOnly() && !eSel.inColNamesRange(allColNames)){
-      trace(WARNING, "Selection '%s' does not exist in Group or invalid using aggregation function \n", vSelAlias[0].c_str());
-      //continue;
-      //return false;
-    }
+    //trace(DEBUG, "Got selection expression '%s'!\n", eSel.getEntireExpstr().c_str());
+    
+    // if macro function is involved, need to wait util the first data analyzed to analyze select expression
+    if (eSel.m_expType == FUNCTION && eSel.m_Function && eSel.m_Function->m_funcID==FOREACH){
+      if (m_fieldtypes.size()==0){
+        m_bSelectContainMacro = true;
+        m_selections.clear();
+        m_selnames.clear();
+        trace(DEBUG2,"Skiping select FOREACH: '%s'\n",eSel.m_expStr.c_str());
+        return true;
+      }else{
+        vector<ExpressionC> vExpandedExpr; 
+        if (m_groups.size()>0)
+          vExpandedExpr = eSel.m_Function->expandForeach(m_groups);
+        else
+          vExpandedExpr = eSel.m_Function->expandForeach(m_fieldtypes.size());
+        //trace(DEBUG2,"Expanding FOREACH: '%s'\n",eSel.m_expStr.c_str());
+        for (int j=0; j<vExpandedExpr.size(); j++){
+          //trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
+          m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
+          checkSelGroupConflict(vExpandedExpr[j]);
+          if (vExpandedExpr[j].containGroupFunc())
+            bGroupFunc = true;
+          else
+            bNonGroupFuncSel = true;
 
+          vExpandedExpr[j].getAggFuncs(m_initAggProps);
+          m_selections.push_back(vExpandedExpr[j]);
+        }
+        m_bSelectContainMacro = false;
+        continue;
+      }
+    }
+    if (sAlias.empty())
+      m_selnames.push_back(eSel.getEntireExpstr());
+    else
+      m_selnames.push_back(sAlias);
+    
+    checkSelGroupConflict(eSel);
     if (eSel.containGroupFunc())
       bGroupFunc = true;
     else
@@ -219,7 +271,6 @@ bool QuerierC::assignSelString(string selstr)
 
     eSel.getAggFuncs(m_initAggProps);
     m_selections.push_back(eSel);
-    //eSel.dump();
     //trace(DEBUG, "Selection: '%s'!\n", eSel.getEntireExpstr().c_str());
   }
   m_aggrOnly = (bGroupFunc && !bNonGroupFuncSel && m_groups.size()==0);
@@ -233,7 +284,36 @@ bool QuerierC::assignSelString(string selstr)
 // m_groups, m_selections should always be analyzed before m_sorts
 bool QuerierC::assignSortStr(string sortstr)
 {
-  vector<string> vSorts = split(sortstr,',',"''{}()",'\\',{'(',')'});
+  m_sortstr = sortstr;
+  return analyzeSortStr();
+}
+
+bool QuerierC::checkSortGroupConflict(ExpressionC eSort)
+{
+  if (m_groups.size() > 0) {// checking if compatible with GROUP
+    vector<string> allColNames;
+    for (int i=0; i<m_groups.size(); i++)
+      m_groups[i].getAllColumnNames(allColNames);
+    if (!eSort.groupFuncOnly() && !eSort.inColNamesRange(allColNames)){
+      trace(WARNING, "Sorting key '%s' does not exist in Group or invalid using aggregation function \n", eSort.m_expStr.c_str());
+      return false;
+    }
+  }else{
+    if (eSort.containGroupFunc()){
+      trace(FATAL, "Invalid using aggregation function in sorting key '%s', no group involved!\n", eSort.m_expStr.c_str());
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool QuerierC::analyzeSortStr(){
+  // if macro function is involved in select , need to wait util the first data analyzed to analyze sort expression
+  if (m_bSelectContainMacro)
+    return true;
+  trace(DEBUG, "Processing sorting string '%s'!\n", m_sortstr.c_str());
+  vector<string> vSorts = split(m_sortstr,',',"''{}()",'\\',{'(',')'});
   for (int i=0; i<vSorts.size(); i++){
     trace(DEBUG, "Processing sorting keys (%d) '%s'!\n", i, vSorts[i].c_str());
     string sSort = trim_copy(vSorts[i]);
@@ -248,23 +328,40 @@ bool QuerierC::assignSortStr(string sortstr)
     else
       keyProp.direction = DESC;
     keyProp.sortKey.setExpstr(trim_copy(vKP[0]));
-    keyProp.sortKey.getAggFuncs(m_initAggProps);
-    if (m_groups.size() > 0) {// checking if compatible with GROUP
-      vector<string> allColNames;
-      for (int i=0; i<m_groups.size(); i++)
-        m_groups[i].getAllColumnNames(allColNames);
-      if (!keyProp.sortKey.groupFuncOnly() && !keyProp.sortKey.inColNamesRange(allColNames)){
-        trace(WARNING, "Sorting key '%s' does not exist in Group or invalid using aggregation function \n", sSort.c_str());
-        //continue;
-        //return false;
-      }
-    }else{
-      if (keyProp.sortKey.containGroupFunc()){
-        trace(FATAL, "Invalid using aggregation function in sorting key '%s', no group involved!\n", sSort.c_str());
-        return false;
+    // if macro function is involved , need to wait util the first data analyzed to analyze sort expression
+    if (keyProp.sortKey.m_expType == FUNCTION && keyProp.sortKey.m_Function && keyProp.sortKey.m_Function->m_funcID==FOREACH){
+      if (m_fieldtypes.size()==0){
+        m_bSortContainMacro = true;
+        m_sorts.clear();
+        trace(DEBUG2,"Skiping sort FOREACH: '%s'\n",keyProp.sortKey.m_expStr.c_str());
+        return true;
+      }else{
+        vector<ExpressionC> vExpandedExpr;
+        if (m_groups.size()>0)
+          vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_groups);
+        else
+          vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_fieldtypes.size());
+        for (int j=0; j<vExpandedExpr.size(); j++){
+          SortProp keyPropE;
+          vKP = split(vExpandedExpr[j].getEntireExpstr(),' ',"''{}()",'\\',{'(',')'});
+          trace(DEBUG, "Splited from expanded expression '%s' to '%s'(%d)\n",vExpandedExpr[j].getEntireExpstr().c_str(),vKP[0].c_str(),vKP.size());
+          if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
+            keyPropE.direction = ASC;
+          else
+            keyPropE.direction = DESC;
+          keyPropE.sortKey.setExpstr(trim_copy(vKP[0]));
+
+          checkSortGroupConflict(keyPropE.sortKey);
+          keyPropE.sortKey.getAggFuncs(m_initAggProps);
+          if (keyPropE.sortKey.m_type==BRANCH || keyPropE.sortKey.m_expType != CONST || (!isInt(keyPropE.sortKey.m_expStr) && !isLong(keyPropE.sortKey.m_expStr)) || atoi(keyPropE.sortKey.m_expStr.c_str())>=m_selections.size())
+            m_sorts.push_back(keyPropE);
+        }
+        m_bSortContainMacro = false;
+        continue;
       }
     }
-
+    checkSortGroupConflict(keyProp.sortKey);
+    keyProp.sortKey.getAggFuncs(m_initAggProps);
     // discard non integer CONST
     // Any INTEGER number will be mapped to the correspond sequence of the selections.
     // Thus, m_selections should always be analyzed before m_sorts
@@ -272,6 +369,8 @@ bool QuerierC::assignSortStr(string sortstr)
       m_sorts.push_back(keyProp);
     }
   }
+  for (int i=0; i<m_sorts.size(); i++)
+    trace(DEBUG, "Sorting key '%s'(%d) !\n",m_sorts[i].sortKey.getEntireExpstr().c_str(),i);
   //trace(DEBUG1, "Got %d sorting keys!\n",m_sorts.size());
   return true;
 }
@@ -724,6 +823,13 @@ int QuerierC::searchNext(namesaving_smatch & matches)
       if (m_detectedTypeRows < m_detectTypeMaxRowNum){
         pairFiledNames(matches);
         analyzeFiledTypes(matches);
+        trace(DEBUG2,"Detected field type %d/%d\n", m_fieldtypes.size(), matches.size());
+        if (m_bSelectContainMacro){
+          analyzeSelString();
+          analyzeSortStr();
+        }
+        if (m_bSortContainMacro)
+          analyzeSortStr();
         if (m_filter){
           m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
           //m_filter->mergeExprConstNodes();
@@ -885,7 +991,7 @@ void QuerierC::unique()
 // doing merging sort exchanging
 void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
 {
-  //trace(DEBUG2, "Mergeing %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
+  trace(DEBUG2, "Mergeing %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
   if (iLeftT >= iRightB || iLeftB > iLeftT || iRightB > iRightT)
     return;
   else{
@@ -898,17 +1004,17 @@ void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
 //#endif // __DEBUG__
     int iLPos = iLeftB, iRPos = iRightB, iCheckPos = iRightB;
     while (iLPos<iCheckPos && iRPos<=iRightT){
-      //trace(DEBUG2, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRightT);
+      trace(DEBUG2, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRightT);
       bool exchanged = false;
       for (int i=0; i<m_sorts.size(); i++){
-        //trace(DEBUG2, "Checking '%s' : '%s'\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str());
+        trace(DEBUG2, "Checking '%s' : '%s'\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str());
         bool bToBeSwapped = false;
         if (m_sorts[i].direction==ASC)
           bToBeSwapped = (anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype)>0);
         else
           bToBeSwapped = (anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype)<0);
 //#ifdef __DEBUG__
-  //trace(DEBUG2, "Checking %s(L) %s(R) (%d %d %d) (%s) (%d %d)\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str(),iLPos,iCheckPos,iRPos,decodeDatatype(m_sorts[i].sortKey.m_datatype.datatype).c_str(), m_sorts[i].direction, bToBeSwapped);
+  trace(DEBUG2, "Checking %s(L) %s(R) (%d %d %d) (%s) (%d %d)\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str(),iLPos,iCheckPos,iRPos,decodeDatatype(m_sorts[i].sortKey.m_datatype.datatype).c_str(), m_sorts[i].direction, bToBeSwapped);
 //#endif // __DEBUG__
         //if (bToBeSwapped){
         if ((m_sorts[i].direction==ASC ? anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype)>0 : anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype)<0)){
@@ -916,14 +1022,14 @@ void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
           //vector<string> tmp;
           //tmp.insert(tmp.begin(), (*(m_results.begin()+iRPos)).begin(), (*(m_results.begin()+iRPos)).end());
 //#ifdef __DEBUG__
-  //trace(DEBUG2, "moving %s(R) before %s(L) (%d %d %d)\n", (*(m_sortKeys.begin()+iRPos))[i].c_str(), (*(m_sortKeys.begin()+iLPos))[i].c_str(),iLPos,iCheckPos,iRPos);
+  trace(DEBUG2, "moving %s(R) before %s(L) (%d %d %d)\n", (*(m_sortKeys.begin()+iRPos))[i].c_str(), (*(m_sortKeys.begin()+iLPos))[i].c_str(),iLPos,iCheckPos,iRPos);
 //#endif // __DEBUG__
-          //trace(DEBUG1, "Before move: %s(%d) %s(%d)\n", (*(m_results.begin()+iLPos))[2].c_str(), iLPos, (*(m_results.begin()+iRPos))[2].c_str(), iRPos);
+          trace(DEBUG2, "Before move: %s(%d) %s(%d)\n", (*(m_results.begin()+iLPos))[1].c_str(), iLPos, (*(m_results.begin()+iRPos))[1].c_str(), iRPos);
           m_results.insert(m_results.begin()+iLPos,*(m_results.begin()+iRPos));
           m_results.erase(m_results.begin()+iRPos+1);
           m_sortKeys.insert(m_sortKeys.begin()+iLPos,*(m_sortKeys.begin()+iRPos));
           m_sortKeys.erase(m_sortKeys.begin()+iRPos+1);
-          //trace(DEBUG1, "After move: %s(%d) %s(%d)\n", (*(m_results.begin()+iLPos))[2].c_str(), iLPos, (*(m_results.begin()+iRPos))[2].c_str(), iRPos);
+          trace(DEBUG2, "After move: %s(%d) %s(%d)\n", (*(m_results.begin()+iLPos))[1].c_str(), iLPos, (*(m_results.begin()+iRPos))[1].c_str(), iRPos);
           exchanged = true;
           break;
         }
@@ -949,6 +1055,8 @@ void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
 // sort result
 bool QuerierC::sort()
 {
+  for (int i=0; i<m_sorts.size(); i++)
+    trace(DEBUG, "Sorting key '%s'(%d) !\n",m_sorts[i].sortKey.getEntireExpstr().c_str(),i);
   //trace(DEBUG2, "Sorting begins \n");
   if (m_sorts.size() == 0 || m_sortKeys.size() == 0){
     //trace(DEBUG2, "No sorting keys %d %d!\n",m_sortKeys.size(),m_sorts.size());
@@ -1157,6 +1265,10 @@ void QuerierC::clear()
   m_bNamePrinted = false;
   m_aggrOnly = false;
   m_bUniqueResult = false;
+  m_bSelectContainMacro = false;
+  m_bSortContainMacro = false;
+  m_selstr = "";
+  m_sortstr = "";
   m_detectTypeMaxRowNum = 1;
   m_detectedTypeRows = 0;
   m_outputformat = TEXT;

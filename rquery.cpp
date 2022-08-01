@@ -56,13 +56,14 @@ void usage()
   printf("Search string block/file/folder using regular expression\n\n");
   printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q \"parse /<regular expression>/ | select <expr>... | set field datatype,... | filter <filters> | group <expr>,... | sort <expr>,... | limit n[,topN] | unique \" \"file or string to be queried\"\n\n");
   printf("\t-q|--query <query string> -- The query string indicates how to query the content, valid query commands include parse,select,set,filter,group,sort,limit. One or more commands can be provide in the query, multiple commands are separated by |. They can be in any order. \n");
-  printf("\t\tparse /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n");
-  printf("\t\tset <field datatype [date format],...> -- Set the date type of the fields.\n");
-  printf("\t\tfilter <filter conditions> -- Provide filter conditions to filt the content.\n");
-  printf("\t\tselect <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected.\n");
-  printf("\t\tgroup <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n");
-  printf("\t\tsort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
-  printf("\t\tlimt <n | bottomN,topN> -- Provide output limit range.\n");
+  printf("\t\tparse|p /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n");
+  printf("\t\tset|t <field datatype [date format],...> -- Set the date type of the fields.\n");
+  printf("\t\tfilter|f <filter conditions> -- Provide filter conditions to filt the content.\n");
+  printf("\t\tselect|s <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected.\n");
+  printf("\t\tgroup|g <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n");
+  printf("\t\tsort|o <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
+  printf("\t\tlimt|l <n | bottomN,topN> -- Provide output limit range.\n");
+  printf("\t\tunique|u -- Make the returned result unique.\n");
   printf("\t-r|--readmode <buffer|line> -- Provide file read mode, default is buffer.\n");
   printf("\t-s|--skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n");
   printf("\t-b|--buffsize <N> -- The read buffer size when read mode is buffer.\n");
@@ -279,6 +280,8 @@ void processQuery(string sQuery, QuerierC & rq)
   string patternStr = "[^\n]*"; // if no PARSE passed, search each lines
   if (query.find("parse") != query.end())
     patternStr = query["parse"];
+  else if (query.find("p") != query.end())
+    patternStr = query["p"];
 
   string rex = trim_one(patternStr, '/');
   //trace(DEBUG2,"Searching pattern: %s \n", rex.c_str());
@@ -288,31 +291,52 @@ void processQuery(string sQuery, QuerierC & rq)
     //trace(DEBUG,"Assigning filter: %s \n", query["filter"].c_str());
     FilterC* filter = new FilterC(query["filter"]);
     rq.assignFilter(filter);
+  }else if (query.find("f") != query.end()){
+    //trace(DEBUG,"Assigning filter: %s \n", query["filter"].c_str());
+    FilterC* filter = new FilterC(query["f"]);
+    rq.assignFilter(filter);
   }
   if (query.find("set") != query.end()){
     //trace(DEBUG,"Setting fields data type: %s \n", query["set"].c_str());
     rq.setFieldTypeFromStr(query["set"]);
+  }else if (query.find("t") != query.end()){
+    //trace(DEBUG,"Setting fields data type: %s \n", query["set"].c_str());
+    rq.setFieldTypeFromStr(query["t"]);
   }
   // assign GROUP before assigning SELECTION and SORT. expressions in SELECTION and SORT should present in GROUP
   if (query.find("group") != query.end()){
     //trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
     rq.assignGroupStr(query["group"]);
+  }else if (query.find("g") != query.end()){
+    //trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
+    rq.assignGroupStr(query["g"]);
   }
   if (query.find("select") != query.end()){
     //trace(DEBUG,"Assigning selections: %s \n", query["select"].c_str());
     rq.assignSelString(query["select"]);
+  }else if (query.find("s") != query.end()){
+    //trace(DEBUG,"Assigning selections: %s \n", query["select"].c_str());
+    rq.assignSelString(query["s"]);
   }else
     rq.assignSelString("@raw");
   if (query.find("sort") != query.end()){
     //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
     rq.assignSortStr(query["sort"]);
+  }else if (query.find("o") != query.end()){
+    //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
+    rq.assignSortStr(query["o"]);
   }
   if (query.find("unique") != query.end()){
+    rq.setUniqueResult(true);
+  }else if (query.find("u") != query.end()){
     rq.setUniqueResult(true);
   }
   if (query.find("limit") != query.end()){
     //trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
     rq.assignLimitStr(query["limit"]);
+  }else if (query.find("l") != query.end()){
+    //trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
+    rq.assignLimitStr(query["l"]);
   }
 }
 

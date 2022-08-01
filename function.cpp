@@ -78,6 +78,11 @@ bool FunctionC::isAggFunc()
   return (m_funcID==SUM || m_funcID==COUNT || m_funcID==UNIQUECOUNT || m_funcID==MAX || m_funcID==MIN || m_funcID==AVERAGE);
 }
 
+bool FunctionC::isMacro()
+{
+  return (m_funcID==FOREACH);
+}
+
 // analyze expression string to get the function name (upper case) and parameter expression (classes)
 bool FunctionC::analyzeExpStr()
 {
@@ -151,6 +156,7 @@ bool FunctionC::analyzeExpStr()
     case SWITCH:
     case GREATEST:
     case LEAST: // MAX and MIN could be any data type
+    case FOREACH:
       m_datatype.datatype = ANY;
       break;
     default:{
@@ -825,6 +831,10 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       }
       break;
     }
+    case FOREACH:
+      break;
+      //trace(ERROR, "Internal error: Macro function '%s' is not parsed yet!\n", m_funcName.c_str());
+      //return false;
     default:{
       trace(ERROR, "Function(2) '%s' is not supported yet!\n", m_funcName.c_str());
       return false;
@@ -832,4 +842,88 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
   }
 
   return getResult;
+}
+
+// expand foreach to a vector of expression
+// foreach(beginid,endid,macro_expr). $ stands for field, # stands for field sequence, % stands for the largest field sequence ID.
+vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
+{
+  vector<ExpressionC> vExpr;
+  trace(DEBUG,"(1)Expanding foreach expression '%s'\n",m_expStr.c_str());
+  if (m_funcID!=FOREACH){
+    trace(ERROR, "(1)'%s' is not foreach macro function!\n", m_funcName.c_str());
+    return vExpr;
+  }
+  if (m_params.size()<3){
+    trace(ERROR, "(1)Foreach macro function requires 3 parameters!\n", m_funcName.c_str());
+    return vExpr;
+  }
+  int begin = 0, end = 0;
+  if (m_params[0].m_expStr.compare("%") == 0)
+    begin = maxFieldNum;
+  else if (isInt(m_params[0].m_expStr))
+    begin = min(maxFieldNum,atoi(m_params[0].m_expStr.c_str()));
+  else{
+    trace(ERROR, "(1)Invalid begin ID for foreach macro function!\n", m_params[0].m_expStr.c_str());
+    return vExpr;
+  }
+  if (m_params[1].m_expStr.compare("%") == 0)
+    end = maxFieldNum;
+  else if (isInt(m_params[1].m_expStr))
+    end = min(maxFieldNum,atoi(m_params[1].m_expStr.c_str()));
+  else{
+    trace(ERROR, "(1)Invalid end ID for foreach macro function!\n", m_params[1].m_expStr.c_str());
+    return vExpr;
+  }
+  for (int i=begin; begin<end?i<=end:i>=end; begin<end?i++:i--){
+    trace(DEBUG,"(1)Expanding foreach element '%s'\n",m_params[2].getEntireExpstr().c_str());
+    string sNew = m_params[2].getEntireExpstr();
+    replaceunquotedstr(sNew,"$","@field"+intToStr(i),"''",'\\',{'(',')'});
+    replaceunquotedstr(sNew,"#",intToStr(i),"''",'\\',{'(',')'});
+    ExpressionC expr(sNew);
+    vExpr.push_back(expr);
+    trace(DEBUG,"(1)Expanded foreach element '%s'\n",expr.getEntireExpstr().c_str());
+  }
+  return vExpr;
+}
+
+vector<ExpressionC> FunctionC::expandForeach(vector<ExpressionC> vExps)
+{
+  vector<ExpressionC> vExpr;
+  trace(DEBUG,"(2)Expanding foreach expression '%s'\n",m_expStr.c_str());
+  if (m_funcID!=FOREACH){
+    trace(ERROR, "(2)'%s' is not foreach macro function!\n", m_funcName.c_str());
+    return vExpr;
+  }
+  if (m_params.size()<3){
+    trace(ERROR, "(2)Foreach macro function requires 3 parameters!\n", m_funcName.c_str());
+    return vExpr;
+  }
+  int begin = 0, end = 0;
+  if (m_params[0].m_expStr.compare("%") == 0)
+    begin = vExps.size();
+  else if (isInt(m_params[0].m_expStr))
+    begin = min((int)vExps.size(),atoi(m_params[0].m_expStr.c_str()));
+  else{
+    trace(ERROR, "(2)Invalid begin ID for foreach macro function!\n", m_params[0].m_expStr.c_str());
+    return vExpr;
+  }
+  if (m_params[1].m_expStr.compare("%") == 0)
+    end = vExps.size();
+  else if (isInt(m_params[1].m_expStr))
+    end = min((int)vExps.size(),atoi(m_params[1].m_expStr.c_str()));
+  else{
+    trace(ERROR, "(2)Invalid end ID for foreach macro function!\n", m_params[1].m_expStr.c_str());
+    return vExpr;
+  }
+  for (int i=begin; begin<end?i<=end:i>=end; begin<end?i++:i--){
+    trace(DEBUG,"(2)Expanding foreach element '%s'\n",m_params[2].getEntireExpstr().c_str());
+    string sNew = m_params[2].getEntireExpstr();
+    replaceunquotedstr(sNew,"$",vExps[i-1].getEntireExpstr(),"''",'\\',{'(',')'});
+    replaceunquotedstr(sNew,"#",intToStr(i),"''",'\\',{'(',')'});
+    ExpressionC expr(sNew);
+    vExpr.push_back(expr);
+    trace(DEBUG,"(2)Expanded foreach element '%s'\n",expr.getEntireExpstr().c_str());
+  }
+  return vExpr;
 }

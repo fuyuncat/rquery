@@ -214,6 +214,49 @@ int findFirstCharacter(string str, std::set<char> lookfor, int pos, string quote
   return -1;
 }
 
+void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, string quoters, char escape, std::set<char> nestedQuoters)
+{
+  size_t i = 0;
+  string sReturn="";
+  vector<int> q;
+  while(i < str.size()) {
+    bool bReplaced = false;
+    if (str.substr(i,sReplace.length()).compare(sReplace) == 0 && i>0 && q.size()==0) {
+      sReturn.append(sNew);
+      bReplaced = true;
+      i+=(sReplace.length()-1);
+    }else{
+      if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())){ // skip escape
+        sReturn.push_back(str[i]);
+        i++;
+      }
+    }
+    if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+      if (i>0 && str[i-1]!=escape){
+        //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+        q.pop_back();
+        sReturn.push_back(str[i]);
+        ++i;
+        continue;
+      }
+    if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
+      for (int k=0; k<(int)(quoters.size()/2); k++){
+        if (str[i] == quoters[k*2])
+          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+            //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+            q.push_back(k*2+1); // quoted start, need to pair the right quoter
+            break;
+          }
+      }
+    if (!bReplaced)
+      sReturn.push_back(str[i]);
+    ++i;
+  }
+  if (q.size() > 0)
+    trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
+  str = sReturn;
+}
+
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
 vector<string> split(const string & str, char delim, string quoters, char escape, std::set<char> nestedQuoters) 
 {
@@ -1289,6 +1332,8 @@ short int encodeFunction(string str)
     return MIN;
   else if(sUpper.compare("AVERAGE")==0)
     return AVERAGE;
+  else if(sUpper.compare("FOREACH")==0)
+    return FOREACH;
   else
     return UNKNOWN;
 }

@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.
+   # [0.913] 2022-08-01
+   Fixed bug: sorting doesnot work properly when multiple sort keys involved
    # [0.912] 2022-08-01
    Enhancement: Query commands accept one letter abbrivation, e.g. s stands for 'select'
    New feature: Macro function foreach(beginid,endid,macro_expr) is introduced.

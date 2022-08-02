@@ -2,7 +2,7 @@
 All change logs will be documented here.
    # [0.913] 2022-08-02
    New feature: @N can be used for abbrevation of @fieldN
-   New option: --nameline | -n N : Specify which matched line should be used for filed names (useful for csv files). Default is 0, means None.
+   New option: --nameline | -n Yes/no : Specify the first line should be used for filed names (useful for csv files). Default is no.
    # [0.913] 2022-08-01
    Fixed bug: sorting doesnot work properly when multiple sort keys involved
    Enhancement: // no long be used for regular expression string, {} no long be used for date string, they all use '' now.

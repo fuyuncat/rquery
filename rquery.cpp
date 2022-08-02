@@ -68,6 +68,7 @@ void usage()
   printf("\t-s|--skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n");
   printf("\t-b|--buffsize <N> -- The read buffer size when read mode is buffer.\n");
   printf("\t-m|--msglevel <fatal|error|warning|info> -- Logging messages output level, default is fatal.\n");
+  printf("\t-n|--nameline yes/no : Specify the first matched line should be used for filed names (useful for csv files). Default is no.\n");
   printf("\t-l|--logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n");
   printf("\t-p|--progress <on|off> -- Wheather show the processing progress or not(default).\n");
   printf("\t-c|--recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n");
@@ -495,7 +496,7 @@ int main(int argc, char *argv[])
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
-      gv.g_recursiveread = (lower_copy(string(argv[i+1])).compare("yes")==0);
+      gv.g_recursiveread = (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
       i++;
     }else if (lower_copy(string(argv[i])).compare("-r")==0 || lower_copy(string(argv[i])).compare("--readmode")==0){
       if (argv[i+1][0] == '-'){
@@ -550,6 +551,14 @@ int main(int argc, char *argv[])
         exitProgram(1);
       }
       rq.setDetectTypeMaxRowNum(atoi((argv[i+1])));
+      i++;
+    }else if (lower_copy(string(argv[i])).compare("-n")==0 || lower_copy(string(argv[i])).compare("--nameline")==0){
+      if (argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      if (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0)
+        rq.setNameline(true);
       i++;
     }else if (lower_copy(string(argv[i])).compare("-m")==0 || lower_copy(string(argv[i])).compare("--msglevel")==0){
       if (argv[i+1][0] == '-'){
@@ -610,6 +619,7 @@ int main(int argc, char *argv[])
         cout << "buffsize <N> -- The read buffer size when read mode is buffer.\n";
         cout << "run [query string] -- Run the query (either preprocessed or provide as a parameter).\n";
         cout << "msglevel <fatal|error|warning|info> -- Logging messages output level, default is fatal.\n";
+        cout << "nameline N -- Specify which matched line should be used for filed names (useful for csv files). Default is 0, means None.\n";
         cout << "logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n";
         cout << "progress <on|off> -- Wheather show the processing progress or not(default).\n";
         cout << "recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n";
@@ -744,7 +754,7 @@ int main(int argc, char *argv[])
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).compare("recursive ")==0){
         string strParam = trim_copy(lineInput).substr(string("recursive ").size());
-        gv.g_recursiveread = (lower_copy(strParam).compare("yes")==0);
+        gv.g_recursiveread = (lower_copy(strParam).compare("yes")==0||(lower_copy(strParam).compare("y")==0));
         cout << "Set recursively read folder.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("limit ")==0){
@@ -758,6 +768,13 @@ int main(int argc, char *argv[])
           cout << "Error: Please provide a valid number.\n";
         }else{
           rq.setDetectTypeMaxRowNum(atoi(strParam.c_str()));
+          cout << "Row number of detecting data type has been set up.\n";
+          cout << "rquery >";
+        }
+      }else if (lower_copy(trim_copy(lineInput)).find("nameline ")==0){
+        string strParam = trim_copy(lineInput).substr(string("nameline ").size());
+        if (lower_copy(strParam).compare("yes")==0||lower_copy(strParam).compare("y")==0){
+          rq.setNameline(true);
           cout << "Row number of detecting data type has been set up.\n";
           cout << "rquery >";
         }

@@ -78,6 +78,7 @@ void QuerierC::init()
   m_bEof = false;
   m_quoters = "";
   m_filename = "";
+  m_nameline = false;
   m_line = 0;
   m_outputformat = TEXT;
   m_matchcount = 0; 
@@ -204,6 +205,11 @@ void QuerierC::setUniqueResult(bool bUnique)
 void QuerierC::setDetectTypeMaxRowNum(int detectTypeMaxRowNum)
 {
   m_detectTypeMaxRowNum = max(1,detectTypeMaxRowNum);
+}
+
+void QuerierC::setNameline(bool nameline)
+{
+  m_nameline = nameline;
 }
 
 bool QuerierC::assignLimitStr(string limitstr)
@@ -875,11 +881,19 @@ int QuerierC::searchNextReg()
     while(!m_rawstr.empty() && regex_search(m_rawstr, m_matches, m_regexp)){
       m_line++;
       vector<string> matcheddata;
-      for (int i=0; i<m_matches.size(); i++)
-        matcheddata.push_back(m_matches[i]);
+      if (m_nameline && m_line==1){ // use the first line as field names
+        for (int i=1; i<m_matches.size(); i++)
+          m_fieldnames.push_back(m_matches[i]);
+        m_nameline = false;
+        m_line--;
+        continue;
+      }else
+        for (int i=0; i<m_matches.size(); i++)
+          matcheddata.push_back(m_matches[i]);
       //trace(DEBUG2,"Detected rows %d/%d\n", m_detectedRawDatatype.size(), m_detectTypeMaxRowNum);
       if (m_detectedTypeRows < m_detectTypeMaxRowNum){
-        pairFiledNames(m_matches);
+        if (m_fieldnames.size() == 0)
+          pairFiledNames(m_matches);
         trialAnalyze(matcheddata);
       }
       // append variables
@@ -944,13 +958,21 @@ int QuerierC::searchNextWild()
     if (matcheddata.size()==0)
       continue;
     m_line++;
+    if (m_nameline && m_line==1){ // use the first line as field names
+      for (int i=0; i<matcheddata.size(); i++)
+        m_fieldnames.push_back(matcheddata[i]);
+      m_nameline = false;
+      m_line--;
+      continue;
+    }
     matcheddata.insert(matcheddata.begin(),sLine); // whole matched line for @raw
     //trace(DEBUG, "Matched %d\n", matcheddata.size());
     //for (int i=0; i<matcheddata.size(); i++)
     //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
     if (m_detectedTypeRows < m_detectTypeMaxRowNum){
-      for (int i=1;i<matcheddata.size();i++)
-        m_fieldnames.push_back("@FIELD"+intToStr(i));
+      if (m_fieldnames.size() == 0)
+        for (int i=1;i<matcheddata.size();i++)
+          m_fieldnames.push_back("@FIELD"+intToStr(i));
       trialAnalyze(matcheddata);
     }
     matcheddata.push_back(intToStr(m_line));
@@ -1374,6 +1396,7 @@ void QuerierC::clear()
   m_searchMode = REGSEARCH;
   m_readmode = READBUFF;
   m_quoters = "";
+  m_nameline = false;
   m_bEof = false;
   m_bNamePrinted = false;
   m_aggrOnly = false;

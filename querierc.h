@@ -78,6 +78,7 @@ class QuerierC
     bool assignLimitStr(string limitstr);
     bool setFieldTypeFromStr(string setstr);
     void setFileName(string filename);
+    void setNameline(bool nameline);
     void setUserVars(string variables);
     void setUniqueResult(bool bUnique);
     void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
@@ -119,6 +120,7 @@ class QuerierC
     long m_matchcount;  // number of matched rows. Can be used to match @row
     long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
     short int m_outputformat; // TEXT or JSON
+    bool m_nameline; // The first matched line be used for field name.
     bool m_bUniqueResult; // flag for the returned result is unique or not
     int m_detectTypeMaxRowNum; // How many rows to be used to detect the data types
     int m_detectedTypeRows; // How many rows have been used to detect the data types so far

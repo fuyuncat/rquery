@@ -297,7 +297,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
           node->m_colId = isInt(sColId)?atoi(sColId.c_str())-1:-1;
           node->m_expStr = "@FIELD"+sColId;
         }else{
-          node->m_expType = UNKNOWN;
+          node->m_expType = VARIABLE;
           node->m_datatype.datatype = UNKNOWN;
         }
         return true;

@@ -456,6 +456,7 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
       trace(ERROR, "SET field type failed! Correct format is SET <FIELD> <TYPE>!\n");
       return false;
     }
+    trace(DEBUG, "Setting field '%s' data type '%s'!\n", vField[0].c_str(), vField[1].c_str());
     int iType = encodeDatatype(vField[1]);
     if (iType == UNKNOWN){
       trace(ERROR, "Unknown data type %s!\n", vField[1].c_str());
@@ -471,6 +472,7 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
 
 void QuerierC::setUserVars(string variables)
 {
+  trace(DEBUG, "Setting variables from '%s' !\n", variables.c_str());
   vector<string> vVariables = split(variables,' ',"''()",'\\',{'(',')'});
   for (int i=0; i<vVariables.size(); i++){
     vector<string> vNameVal = split(vVariables[i],':',"''()",'\\',{'(',')'});
@@ -479,6 +481,7 @@ void QuerierC::setUserVars(string variables)
       continue;
     }
     string sName=upper_copy(trim_copy(vNameVal[0])), sValue=trim_copy(vNameVal[1]);
+    trace(DEBUG, "Setting variable '%s' value '%s'!\n", sName.c_str(), sValue.c_str());
     if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0){
       trace(ERROR, "%s is a reserved word, cannot be used as a variable name!\n", sName.c_str());
       continue;
@@ -981,8 +984,10 @@ int QuerierC::searchNextWild()
     string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
     pos = 0;
-    if(sLine.empty() && pos<m_rawstr.length() && m_bEof) // read the rest of content if file reached eof
+    if(sLine.empty() && pos<m_rawstr.length() && m_bEof) {// read the rest of content if file reached eof
       sLine = m_rawstr;
+      m_rawstr = "";
+    }
     //trace(DEBUG, "Read '%s'\n", sLine.c_str());
     vector<string>  matcheddata = matchWildcard(sLine,m_regexstr,m_quoters,'\\',{});
     if (matcheddata.size()==0)
@@ -1037,8 +1042,10 @@ int QuerierC::searchNextDelm()
     string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
     pos = 0;
-    if(sLine.empty() && pos<m_rawstr.length() && m_bEof) // read the rest of content if file reached eof
+    if(sLine.empty() && pos<m_rawstr.length() && m_bEof){ // read the rest of content if file reached eof
       sLine = m_rawstr;
+      m_rawstr = "";
+    }
     trace(DEBUG, "Read '%s'\n", sLine.c_str());
     vector<string>  matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable);
     dumpVector(matcheddata);

@@ -355,18 +355,20 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
 }
 
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-vector<string> split(const string & str, char delim, string quoters, char escape, std::set<char> nestedQuoters) 
+vector<string> split(const string & str, char delim, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable) 
 {
   vector<string> v;
   string element="";
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
-  while(i < str.size()) {
+  while(i < str.length()) {
     if (str[i] == delim && i>0 && str[i-1]!=escape && q.size()==0) {
       trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       //v.push_back(element);
       element = "";
       v.push_back(str.substr(begin, i-begin));
+      while(repeatable && i<str.length()-1 && str[i+1] == delim) // skip repeated delim
+        i++;
       begin = i+1;
     }else{
       if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
@@ -401,22 +403,25 @@ vector<string> split(const string & str, char delim, string quoters, char escape
 }
 
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-vector<string> split(const string & str, string delim, string quoters, char escape, std::set<char> nestedQuoters) 
+vector<string> split(const string & str, string delim, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable) 
 {
   if (delim.size()==1)
-    return split(str,delim[0],quoters,escape,nestedQuoters);
+    return split(str,delim[0],quoters,escape,nestedQuoters,repeatable);
   vector<string> v;
   string element;
   string upDelim = upper_copy(delim);
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
-  while(i < str.size()) {
-    if (str.size()>=i+upDelim.size() && upper_copy(str.substr(i,upDelim.size())).compare(upDelim)==0 && i>0 && q.size()==0) {
+  while(i < str.length()) {
+    if (str.length()>=i+upDelim.length() && upper_copy(str.substr(i,upDelim.length())).compare(upDelim)==0 && i>0 && q.size()==0) {
       trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       //v.push_back(element);
       element = "";
       v.push_back(str.substr(begin, i-begin));
-      begin = i+upDelim.size();
+      while(repeatable && str.length()>=i+upDelim.length()*2 && upper_copy(str.substr(i+upDelim.length(),upDelim.length())).compare(upDelim)==0) // skip repeated delim
+        i+=upDelim.length();
+      begin = i+upDelim.length();
+      i+=(upDelim.length()-1);
     }else{
       if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
         i++;

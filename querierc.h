@@ -113,6 +113,7 @@ class QuerierC
     short int m_searchMode;
     short int m_readmode;
     bool m_bEof;
+    bool m_delmrepeatable;
     
     string m_filename;  // Data source file name
     bool m_bNamePrinted;// a flag for checking if field names are printed.

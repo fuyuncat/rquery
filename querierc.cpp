@@ -76,6 +76,7 @@ void QuerierC::init()
   m_searchMode = REGSEARCH;
   m_readmode = READBUFF;
   m_bEof = false;
+  m_delmrepeatable = false;
   m_quoters = "";
   m_filename = "";
   m_nameline = false;
@@ -123,9 +124,21 @@ void QuerierC::setregexp(string regexstr)
       else
         m_quoters = vSearchPattern[1];
     }
-  }else if ((regexstr[0] == 'd' || regexstr[0] == 'D') && regexstr[1] == '/' && regexstr[regexstr.length()-1] == '/'){
+  }else if ((regexstr[0] == 'd' || regexstr[0] == 'D') && regexstr[1] == '/' && (regexstr[regexstr.length()-1] == '/' || (regexstr.length()>3 && regexstr[regexstr.length()-2] == '/'))){
     m_searchMode = DELMSEARCH;
-    vector<string> vSearchPattern = split(regexstr.substr(2,regexstr.length()-3),'/',"",'\\',{'(',')'});
+    m_delmrepeatable = false;
+    string spattern = "";
+    if (regexstr[regexstr.length()-1] == '/')
+      spattern = regexstr.substr(2,regexstr.length()-3);
+    else{
+      if (regexstr.length()>3 && regexstr[regexstr.length()-2] == '/'){
+        if (regexstr[regexstr.length()-1] == 'r' || regexstr[regexstr.length()-1] == 'R')
+          m_delmrepeatable = true;
+      }else
+        trace(FATAL, "'%s' is not a valid searching pattern\n",regexstr.c_str());
+      spattern = regexstr.substr(2,regexstr.length()-4);
+    }
+    vector<string> vSearchPattern = split(spattern,'/',"",'\\',{'(',')'});
     m_regexstr = vSearchPattern[0];
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
@@ -931,7 +944,7 @@ int QuerierC::searchNextReg()
     trace(ERROR, "Regular search exception: %s\n", e.what());
     return found;
   }
-  //trace(DEBUG, "Found: %d in this searching\n", m_matchcount);
+  //trace(DEBUG, "(1)Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
   m_searchtime += (curtime()-thistime);
 #endif // __DEBUG__
@@ -981,7 +994,7 @@ int QuerierC::searchNextWild()
       m_matchcount++;
     found++;
   }
-  //trace(DEBUG, "Found: %d in this searching\n", m_matchcount);
+  //trace(DEBUG, "(2)Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
   m_searchtime += (curtime()-thistime);
 #endif // __DEBUG__
@@ -995,6 +1008,44 @@ int QuerierC::searchNextDelm()
 #endif // __DEBUG__
   trace(DEBUG, "Delm searching '%s'\n", m_regexstr.c_str());
   int found = 0;
+  size_t pos = 0;
+  while (!m_rawstr.empty() && pos<m_rawstr.length()){
+    // Unlike regular matching, wildcard and delimiter only match lines.
+    string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
+    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
+    pos = 0;
+    if(sLine.empty() && pos<m_rawstr.length() && m_bEof) // read the rest of content if file reached eof
+      sLine = m_rawstr;
+    trace(DEBUG, "Read '%s'\n", sLine.c_str());
+    vector<string>  matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable);
+    dumpVector(matcheddata);
+    if (matcheddata.size()==0)
+      continue;
+    m_line++;
+    if (m_nameline && m_line==1){ // use the first line as field names
+      for (int i=0; i<matcheddata.size(); i++)
+        m_fieldnames.push_back(matcheddata[i]);
+      m_nameline = false;
+      m_line--;
+      continue;
+    }
+    matcheddata.insert(matcheddata.begin(),sLine); // whole matched line for @raw
+    //trace(DEBUG, "Matched %d\n", matcheddata.size());
+    //for (int i=0; i<matcheddata.size(); i++)
+    //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
+    if (m_detectedTypeRows < m_detectTypeMaxRowNum){
+      if (m_fieldnames.size() == 0)
+        for (int i=1;i<matcheddata.size();i++)
+          m_fieldnames.push_back("@FIELD"+intToStr(i));
+      trialAnalyze(matcheddata);
+    }
+    matcheddata.push_back(intToStr(m_line));
+    matcheddata.push_back(intToStr(m_matchcount+1));
+    if (matchFilter(matcheddata))
+      m_matchcount++;
+    found++;
+  }
+  //trace(DEBUG, "(3)Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
   m_searchtime += (curtime()-thistime);
 #endif // __DEBUG__
@@ -1398,6 +1449,7 @@ void QuerierC::clear()
   m_quoters = "";
   m_nameline = false;
   m_bEof = false;
+  m_delmrepeatable = false;
   m_bNamePrinted = false;
   m_aggrOnly = false;
   m_bUniqueResult = false;

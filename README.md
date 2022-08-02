@@ -40,7 +40,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - parse /regular string/ : Choose one of three mode to match the content.<br />
             - // quotes a regular expression pattern string to parse the content; 
             - w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/. substrings between two \* are the spliters, spliter between quoters will be skipped; 
-            - d/<Delmiter>/[quoters/] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, e.g. d/ /""/
+            - d/<Delmiter>/[quoters/][r] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, r at the end of pattern means the delmiter is repeatable, e.g. d/ /""/
          - set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
          - filter <filter conditions> : Filter the parsed records<br />
          - select <field or expression,...> : Fields or expressions to be selected<br />

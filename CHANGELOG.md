@@ -1,7 +1,13 @@
 # Change Log
 All change logs will be documented here.
+   # [0.913] 2022-08-02
+   New feature: @N can be used for abbrevation of @fieldN
+   New option: --nameline | -n N : Specify which matched line should be used for filed names (useful for csv files). Default is 0, means None.
    # [0.913] 2022-08-01
    Fixed bug: sorting doesnot work properly when multiple sort keys involved
+   Enhancement: // no long be used for regular expression string, {} no long be used for date string, they all use '' now.
+   New feature: New searching pattern: w/<WildCardExpr>/, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/
+   New feature: New searching pattern: d/<Delmiter>/[quoters/], Delmiter splits fields, delmiter between quoters will be skipped, e.g. d/ /""/
    # [0.912] 2022-08-01
    Enhancement: Query commands accept one letter abbrivation, e.g. s stands for 'select'
    New feature: Macro function foreach(beginid,endid,macro_expr) is introduced.

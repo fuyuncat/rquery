@@ -183,12 +183,12 @@ string readQuotedStr(string str, int& pos, string quoters, char escape)
 }
 
 // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-int findFirstCharacter(string str, std::set<char> lookfor, int pos, string quoters,  char escape, std::set<char> nestedQuoters)
+int findFirstCharacter(const string & str, std::set<char> lookfor, size_t pos, string quoters,  char escape, std::set<char> nestedQuoters)
 {
   //trace(DEBUG, "findFirstCharacter '%s', quoters: '%s' !\n",str.c_str(),quoters.c_str());
-  size_t i = 0, j = 0;
+  size_t i = pos, j = 0;
   vector<int> q;
-  while(i < str.size()) {
+  while(i < str.length()) {
     if (lookfor.find(str[i]) != lookfor.end() && i>0 && q.size()==0) 
       return i;
     if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
@@ -212,6 +212,103 @@ int findFirstCharacter(string str, std::set<char> lookfor, int pos, string quote
   if (q.size() > 0)
     trace(ERROR, "(1)Quoters in '%s' are not paired!\n",str.c_str());
   return -1;
+}
+
+// find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
+int findFirstSub(const string & str, const string & lookfor, size_t pos, string quoters,  char escape, std::set<char> nestedQuoters)
+{
+  trace(DEBUG, "findFirstSub '%s'\n",str.c_str());
+  trace(DEBUG, "looking for: '%s', start from %d, quoters '%s' !\n",lookfor.c_str(),pos,quoters.c_str());
+  size_t i = pos, j = 0;
+  vector<int> q;
+  while(i < str.length()) {
+    size_t l=i,r=0;
+    while(q.size()==0 && l<str.length() && r<lookfor.length() && str[l] == lookfor[r]){
+      l++;
+      r++;
+    }
+    if (r==lookfor.length()) {
+      trace(DEBUG, "found at %d !\n",i);
+      return i;
+    }
+    if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+      if (i>0 && str[i-1]!=escape){
+        q.pop_back();
+        //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+        ++i;
+        continue;
+      }
+    if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
+      for (int k=0; k<(int)(quoters.size()/2); k++){
+        if (str[i] == quoters[k*2])
+          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+            //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+            q.push_back(k*2+1); // quoted start, need to pair the right quoter
+            break;
+          }
+      }
+    ++i;
+  }
+  if (q.size() > 0)
+    trace(ERROR, "(1)Quoters in '%s' are not paired!\n",str.c_str());
+  return -1;
+}
+
+string readLine(string str, size_t & pos)
+{
+  string sReturn="";
+  size_t origpos = pos;
+  while(pos<str.length() && str[pos]!='\n'){
+    sReturn.push_back(str[pos]);
+    pos++;
+  }
+  if (pos<str.length() && str[pos]=='\n')
+    pos++;
+  else{
+    pos = origpos;
+    sReturn = "";
+  }
+  return sReturn;
+}
+
+string readWordTillStop(const string & str, size_t & pos, char stopper, char escape)
+{
+  string sub="";
+  while(pos<str.length() && str[pos]!=stopper){
+    if (str[pos] == escape && pos<str.length()-1 && str[pos+1] == stopper)
+      pos++;
+    sub.push_back(str[pos]);
+    pos++;
+  }
+  return sub;
+}
+
+vector<string> matchWildcard(const string & str, const string & wildStr, string quoters, char escape, std::set<char> nestedQuoters)
+{
+  vector<string> matches;
+  size_t iBPos=0, iWPos=0;
+  bool bToMatch;
+  while (iWPos<wildStr.length() && iBPos<str.length()){
+    bToMatch = false;
+    if (wildStr[iWPos]=='*'){
+      bToMatch = true;
+      while(wildStr[iWPos]=='*')
+        iWPos++;
+    }
+    string sub = readWordTillStop(wildStr,iWPos,'*','\\');
+    if (bToMatch){
+      if (!sub.empty()){
+        size_t iEPos = findFirstSub(str,sub,iBPos,quoters,escape,nestedQuoters);
+        if (iEPos != string::npos)
+          matches.push_back(str.substr(iBPos,iEPos-iBPos));
+        iBPos=iEPos+sub.length();
+      }else{
+        matches.push_back(str.substr(iBPos));
+        iBPos = str.length();
+      }
+    }
+  }
+  return matches;
 }
 
 void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, string quoters, char escape, std::set<char> nestedQuoters)
@@ -265,7 +362,7 @@ vector<string> split(const string & str, char delim, string quoters, char escape
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.size()) {
-    if (str[i] == delim && i>0 && q.size()==0) {
+    if (str[i] == delim && i>0 && str[i-1]!=escape && q.size()==0) {
       trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       //v.push_back(element);
       element = "";

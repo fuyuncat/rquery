@@ -73,6 +73,10 @@ void QuerierC::init()
   m_filter = NULL;
   m_rawstr = "";
   m_searchflags = regex_constants::match_default;
+  m_searchMode = REGSEARCH;
+  m_readmode = READBUFF;
+  m_bEof = false;
+  m_quoters = "";
   m_filename = "";
   m_line = 0;
   m_outputformat = TEXT;
@@ -104,12 +108,41 @@ void QuerierC::init()
 
 void QuerierC::setregexp(string regexstr)
 {
-  m_regexstr = regexstr;
-  try{
-    m_regexp = sregex::compile(m_regexstr);
-  }catch (exception& e) {
-    trace(FATAL, "Regular pattern compile exception: %s\n", e.what());
+  if (regexstr.length()<3){
+    trace(FATAL, "Searching pattern '%s' is too short!\n", regexstr.c_str());
   }
+  if ((regexstr[0] == 'w' || regexstr[0] == 'W')&& regexstr[1] == '/' && regexstr[regexstr.length()-1] == '/'){
+    m_searchMode = WILDSEARCH;
+    vector<string> vSearchPattern = split(regexstr.substr(2,regexstr.length()-3),'/',"",'\\',{'(',')'});
+    //dumpVector(vSearchPattern);
+    m_regexstr = vSearchPattern[0];
+    if (vSearchPattern.size()>1){
+      if (vSearchPattern[1].length()%2 != 0)
+        trace(ERROR, "(1)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
+      else
+        m_quoters = vSearchPattern[1];
+    }
+  }else if ((regexstr[0] == 'd' || regexstr[0] == 'D') && regexstr[1] == '/' && regexstr[regexstr.length()-1] == '/'){
+    m_searchMode = DELMSEARCH;
+    vector<string> vSearchPattern = split(regexstr.substr(2,regexstr.length()-3),'/',"",'\\',{'(',')'});
+    m_regexstr = vSearchPattern[0];
+    if (vSearchPattern.size()>1){
+      if (vSearchPattern[1].length()%2 != 0)
+        trace(ERROR, "(2)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
+      else
+        m_quoters = vSearchPattern[1];
+    }
+  }else if (regexstr[0] == '/' && regexstr[regexstr.length()-1] == '/'){
+    m_searchMode = REGSEARCH;
+    m_regexstr = trim_one(regexstr, '/');
+    try{
+      m_regexp = sregex::compile(m_regexstr);
+    }catch (exception& e) {
+      trace(FATAL, "Regular pattern compile exception: %s\n", e.what());
+    }
+  }else
+    trace(FATAL, "Searching pattern '%s' is invalid!\n", regexstr.c_str());
+  trace(DEBUG, "Parsed searching string '%s' => '%s', search mode is %d\n", regexstr.c_str(),m_regexstr.c_str(),m_searchMode);
 }
 
 void QuerierC::assignFilter(FilterC* filter)
@@ -133,9 +166,19 @@ void QuerierC::setrawstr(string rawstr)
   m_rawstr = rawstr;
 }
 
+void QuerierC::setReadmode(short int readmode)
+{
+  m_readmode = readmode;
+}
+
+void QuerierC::setEof(bool bEof)
+{
+  m_bEof = bEof;
+}
+
 bool QuerierC::assignGroupStr(string groupstr)
 {
-  vector<string> vGroups = split(groupstr,',',"''{}()",'\\',{'(',')'});
+  vector<string> vGroups = split(groupstr,',',"''()",'\\',{'(',')'});
   for (int i=0; i<vGroups.size(); i++){
     trace(DEBUG, "Processing group (%d) '%s'!\n", i, vGroups[i].c_str());
     string sGroup = trim_copy(vGroups[i]);
@@ -165,7 +208,7 @@ void QuerierC::setDetectTypeMaxRowNum(int detectTypeMaxRowNum)
 
 bool QuerierC::assignLimitStr(string limitstr)
 {
-  vector<string> vLimits = split(limitstr,',',"''{}()",'\\',{'(',')'});
+  vector<string> vLimits = split(limitstr,',',"''()",'\\',{'(',')'});
   string sFirst = trim_copy(vLimits[0]);
   int iFirst = 0;
   if (isInt(sFirst))
@@ -210,7 +253,7 @@ bool QuerierC::checkSelGroupConflict(ExpressionC eSel)
 }
 
 bool QuerierC::analyzeSelString(){
-  vector<string> vSelections = split(m_selstr,',',"''{}()",'\\',{'(',')'});
+  vector<string> vSelections = split(m_selstr,',',"''()",'\\',{'(',')'});
   bool bGroupFunc = false, bNonGroupFuncSel = false;
   for (int i=0; i<vSelections.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
@@ -219,7 +262,7 @@ bool QuerierC::analyzeSelString(){
       trace(ERROR, "Empty selection string!\n");
       continue;
     }
-    vector<string> vSelAlias = split(sSel," as ","''{}()",'\\',{'(',')'});
+    vector<string> vSelAlias = split(sSel," as ","''()",'\\',{'(',')'});
     string sAlias = "";
     if (vSelAlias.size()>1)
       sAlias = trim_copy(vSelAlias[1]);
@@ -313,7 +356,7 @@ bool QuerierC::analyzeSortStr(){
   if (m_bSelectContainMacro)
     return true;
   trace(DEBUG, "Processing sorting string '%s'!\n", m_sortstr.c_str());
-  vector<string> vSorts = split(m_sortstr,',',"''{}()",'\\',{'(',')'});
+  vector<string> vSorts = split(m_sortstr,',',"''()",'\\',{'(',')'});
   for (int i=0; i<vSorts.size(); i++){
     trace(DEBUG, "Processing sorting keys (%d) '%s'!\n", i, vSorts[i].c_str());
     string sSort = trim_copy(vSorts[i]);
@@ -322,7 +365,7 @@ bool QuerierC::analyzeSortStr(){
       return false;
     }
     SortProp keyProp;
-    vector<string> vKP = split(sSort,' ',"''{}()",'\\',{'(',')'});
+    vector<string> vKP = split(sSort,' ',"''()",'\\',{'(',')'});
     if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
       keyProp.direction = ASC;
     else
@@ -343,7 +386,7 @@ bool QuerierC::analyzeSortStr(){
           vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_fieldtypes.size());
         for (int j=0; j<vExpandedExpr.size(); j++){
           SortProp keyPropE;
-          vKP = split(vExpandedExpr[j].getEntireExpstr(),' ',"''{}()",'\\',{'(',')'});
+          vKP = split(vExpandedExpr[j].getEntireExpstr(),' ',"''()",'\\',{'(',')'});
           trace(DEBUG, "Splited from expanded expression '%s' to '%s'(%d)\n",vExpandedExpr[j].getEntireExpstr().c_str(),vKP[0].c_str(),vKP.size());
           if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
             keyPropE.direction = ASC;
@@ -377,10 +420,10 @@ bool QuerierC::analyzeSortStr(){
 
 bool QuerierC::setFieldTypeFromStr(string setstr)
 {
-  vector<string> vSetFields = split(setstr,',',"//''{}",'\\',{'(',')'});
+  vector<string> vSetFields = split(setstr,',',"''()",'\\',{'(',')'});
   for (int i=0; i<vSetFields.size(); i++){
-    vector<string> vField = split(vSetFields[i],' ',"//''{}",'\\',{'(',')'});
-    vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"//''{}",'\\',{'(',')'});
+    vector<string> vField = split(vSetFields[i],' ',"''()",'\\',{'(',')'});
+    vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"''()",'\\',{'(',')'});
     if (vField.size()<2){
       trace(ERROR, "SET field type failed! Correct format is SET <FIELD> <TYPE>!\n");
       return false;
@@ -400,9 +443,9 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
 
 void QuerierC::setUserVars(string variables)
 {
-  vector<string> vVariables = split(variables,' ',"//''{}",'\\',{'(',')'});
+  vector<string> vVariables = split(variables,' ',"''()",'\\',{'(',')'});
   for (int i=0; i<vVariables.size(); i++){
-    vector<string> vNameVal = split(vVariables[i],':',"//''{}",'\\',{'(',')'});
+    vector<string> vNameVal = split(vVariables[i],':',"''()",'\\',{'(',')'});
     if (vNameVal.size()<2){
       trace(ERROR, "Incorrect variable format!\n", vVariables[i].c_str());
       continue;
@@ -444,11 +487,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
         foundName = true;
       }
     if (!foundName){
-      try{
-        m_fieldnames.push_back("@FIELD"+boost::lexical_cast<std::string>(i));
-      }catch (bad_lexical_cast &){
-        m_fieldnames.push_back("?");
-      }
+      m_fieldnames.push_back("@FIELD"+intToStr(i));
     }
   }
 }
@@ -469,7 +508,7 @@ void QuerierC::setFieldDatatype(string field, int datetype, string extrainfo)
   }
 }
 
-void QuerierC::analyzeFiledTypes(namesaving_smatch matches)
+void QuerierC::analyzeFiledTypes(vector<string> matches)
 {
   m_detectedTypeRows++;
   m_fieldtypes.clear();
@@ -800,50 +839,48 @@ bool QuerierC::searchStopped()
     return false;
 }
 
-int QuerierC::searchNext(namesaving_smatch & matches)
+void QuerierC::trialAnalyze(vector<string> matcheddata)
 {
-  if (searchStopped()){
-    //trace(DEBUG1, "stopped searching!\n");
-    return 0;
+  analyzeFiledTypes(matcheddata);
+  trace(DEBUG2,"Detected field type %d/%d\n", m_fieldtypes.size(), matcheddata.size());
+  if (m_bSelectContainMacro){
+    analyzeSelString();
+    analyzeSortStr();
   }
+  if (m_bSortContainMacro)
+    analyzeSortStr();
+  if (m_filter){
+    m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+    //m_filter->mergeExprConstNodes();
+  }
+  for (int i=0; i<m_selections.size(); i++){
+    //trace(DEBUG, "Analyzing selection '%s' (%d), found %d\n", m_selections[i].m_expStr.c_str(), i, found);
+    m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+  }
+  for (int i=0; i<m_groups.size(); i++)
+    m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+  for (int i=0; i<m_sorts.size(); i++)
+    m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+  for (unordered_map< string,ExpressionC >::iterator it=m_aggFuncExps.begin(); it!=m_aggFuncExps.end(); ++it)
+    it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+}
+
+int QuerierC::searchNextReg()
+{
 #ifdef __DEBUG__
   long int thistime = curtime();
 #endif // __DEBUG__
-  //string::const_iterator start = m_rawstr.begin(), end = m_rawstr.end();
-  //smatch matches;
-  //m_line++;
   int found = 0;
   try {
-    while(!m_rawstr.empty() && regex_search(m_rawstr, matches, m_regexp)){
+    while(!m_rawstr.empty() && regex_search(m_rawstr, m_matches, m_regexp)){
       m_line++;
       vector<string> matcheddata;
-      for (int i=0; i<matches.size(); i++)
-        matcheddata.push_back(matches[i]);
+      for (int i=0; i<m_matches.size(); i++)
+        matcheddata.push_back(m_matches[i]);
       //trace(DEBUG2,"Detected rows %d/%d\n", m_detectedRawDatatype.size(), m_detectTypeMaxRowNum);
       if (m_detectedTypeRows < m_detectTypeMaxRowNum){
-        pairFiledNames(matches);
-        analyzeFiledTypes(matches);
-        trace(DEBUG2,"Detected field type %d/%d\n", m_fieldtypes.size(), matches.size());
-        if (m_bSelectContainMacro){
-          analyzeSelString();
-          analyzeSortStr();
-        }
-        if (m_bSortContainMacro)
-          analyzeSortStr();
-        if (m_filter){
-          m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-          //m_filter->mergeExprConstNodes();
-        }
-        for (int i=0; i<m_selections.size(); i++){
-          //trace(DEBUG, "Analyzing selection '%s' (%d), found %d\n", m_selections[i].m_expStr.c_str(), i, found);
-          m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-        }
-        for (int i=0; i<m_groups.size(); i++)
-          m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-        for (int i=0; i<m_sorts.size(); i++)
-          m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-        for (unordered_map< string,ExpressionC >::iterator it=m_aggFuncExps.begin(); it!=m_aggFuncExps.end(); ++it)
-          it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+        pairFiledNames(m_matches);
+        trialAnalyze(matcheddata);
       }
       // append variables
       //matcheddata.push_back(m_filename);
@@ -880,11 +917,84 @@ int QuerierC::searchNext(namesaving_smatch & matches)
     trace(ERROR, "Regular search exception: %s\n", e.what());
     return found;
   }
-  //trace(DEBUG, "So far found: %d\n", m_matchcount);
+  //trace(DEBUG, "Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
   m_searchtime += (curtime()-thistime);
 #endif // __DEBUG__
   return found;
+}
+
+int QuerierC::searchNextWild()
+{
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
+  trace(DEBUG, "Wild searching '%s'\n", m_regexstr.c_str());
+  int found = 0;
+  size_t pos = 0;
+  while (!m_rawstr.empty() && pos<m_rawstr.length()){
+    // Unlike regular matching, wildcard and delimiter only match lines.
+    string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
+    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
+    pos = 0;
+    if(sLine.empty() && pos<m_rawstr.length() && m_bEof) // read the rest of content if file reached eof
+      sLine = m_rawstr;
+    //trace(DEBUG, "Read '%s'\n", sLine.c_str());
+    vector<string>  matcheddata = matchWildcard(sLine,m_regexstr,m_quoters,'\\',{});
+    if (matcheddata.size()==0)
+      continue;
+    m_line++;
+    matcheddata.insert(matcheddata.begin(),sLine); // whole matched line for @raw
+    //trace(DEBUG, "Matched %d\n", matcheddata.size());
+    //for (int i=0; i<matcheddata.size(); i++)
+    //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
+    if (m_detectedTypeRows < m_detectTypeMaxRowNum){
+      for (int i=1;i<matcheddata.size();i++)
+        m_fieldnames.push_back("@FIELD"+intToStr(i));
+      trialAnalyze(matcheddata);
+    }
+    matcheddata.push_back(intToStr(m_line));
+    matcheddata.push_back(intToStr(m_matchcount+1));
+    if (matchFilter(matcheddata))
+      m_matchcount++;
+    found++;
+  }
+  //trace(DEBUG, "Found: %d in this searching\n", m_matchcount);
+#ifdef __DEBUG__
+  m_searchtime += (curtime()-thistime);
+#endif // __DEBUG__
+  return found;
+}
+
+int QuerierC::searchNextDelm()
+{
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
+  trace(DEBUG, "Delm searching '%s'\n", m_regexstr.c_str());
+  int found = 0;
+#ifdef __DEBUG__
+  m_searchtime += (curtime()-thistime);
+#endif // __DEBUG__
+  return found;
+}
+
+int QuerierC::searchNext()
+{
+  if (searchStopped()){
+    trace(DEBUG1, "stopped searching!\n");
+    return 0;
+  }
+  switch(m_searchMode){
+    case REGSEARCH:
+      return searchNextReg();
+    case WILDSEARCH:
+      return searchNextWild();
+    case DELMSEARCH:
+      return searchNextDelm();
+    default:
+      return 0;
+  }
 }
 
 int QuerierC::searchAll()
@@ -897,11 +1007,10 @@ int QuerierC::searchAll()
 
   int totalfound = 0;
   //trace(DEBUG2, "Searching pattern: %s\n", m_regexstr.c_str());
-  namesaving_smatch matches(m_regexstr);
-  int found = searchNext(matches);
+  int found = searchNext();
   while (found>0 && !m_rawstr.empty()){
     //trace(DEBUG, "Searching pattern: '%s' in '%s', found %d\n", m_regexstr.c_str(), m_rawstr.c_str(), totalfound);
-    found = searchNext(matches);
+    found = searchNext();
     totalfound+=found;
   }
 #ifdef __DEBUG__
@@ -1262,6 +1371,10 @@ void QuerierC::clear()
   m_initAggProps.clear();
   m_aggFuncExps.clear();
   m_sortKeys.clear();
+  m_searchMode = REGSEARCH;
+  m_readmode = READBUFF;
+  m_quoters = "";
+  m_bEof = false;
   m_bNamePrinted = false;
   m_aggrOnly = false;
   m_bUniqueResult = false;

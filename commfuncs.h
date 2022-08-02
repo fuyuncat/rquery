@@ -131,6 +131,10 @@ using namespace std;
 #define TEXT 1
 #define JSON 2
 
+#define REGSEARCH 1
+#define WILDSEARCH 2
+#define DELMSEARCH 3
+
 struct DataTypeStruct{
   int datatype=UNKNOWN;
   string extrainfo="";  // for DATE type only so far, the format of the DATE 
@@ -201,7 +205,11 @@ string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); 
 int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
 vector<string> split(const string & str, string delim = " ", string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-int findFirstCharacter(string str, std::set<char> lookfor, int pos=0, string quoters = "''{}()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+int findFirstCharacter(const string & str, std::set<char> lookfor, size_t pos=0, string quoters = "''()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+int findFirstSub(const string & str, const string & lookfor, size_t pos=0, string quoters = "''()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+string readLine(string str, size_t & pos); // read a line
+vector<string> matchWildcard(const string & str, const string & wildStr, string quoters = "\"\"", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // match wildcard to transfer a string to a vector
+string readWordTillStop(const string & str, size_t & pos, char stopper='*', char escape = '\\'); // read the first word until reaches stopper
 
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
 int startsWithWords(string str, vector<string> words); // detect if string start with special words

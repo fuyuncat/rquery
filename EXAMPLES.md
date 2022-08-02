@@ -71,7 +71,7 @@ Returns result:<br/>
    root    505     3127798
    ```
 - Pre set data type for fields<br/>
-   ```rq -q "parse /\\\"(?P<origip>[^\n]*)\\\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/ | set time date '%d/%b/%Y:%H:%M:%S %z'| select @raw | filter time={29/Jun/2022:16:58:18 +1000}" logs/access.log
+   ```rq -q "parse /\\\"(?P<origip>[^\n]*)\\\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/ | set time date '%d/%b/%Y:%H:%M:%S %z'| select @raw | filter time='29/Jun/2022:16:58:18 +1000'" logs/access.log
    ```
    Returns result:<br/>
    ```

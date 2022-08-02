@@ -213,7 +213,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
       buildLeafNode(expStr, newNode);
       return newNode->getTopParent();
     }
-    int iPos = findFirstCharacter(expStr, m_operators, 0, "''{}()", '\\',{'(',')'});
+    int iPos = findFirstCharacter(expStr, m_operators, 0, "''()", '\\',{'(',')'});
     if (iPos<0) { // didnt find any operator, reached the end
       if (expStr.size()>1 && expStr[0]=='(' && expStr[expStr.size()-1]==')') { // quoted expression
         newNode->clear();
@@ -286,17 +286,19 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_expstrAnalyzed = true;
         node->m_expStr = upper_copy(expStr);
         if (node->m_expStr.compare("@RAW") == 0 || node->m_expStr.compare("@FILE") == 0)
-          m_datatype.datatype = STRING;
+          node->m_datatype.datatype = STRING;
         else if (node->m_expStr.compare("@LINE") == 0 || node->m_expStr.compare("@ROW") == 0 || node->m_expStr.compare("@ROWSORTED") == 0)
-          m_datatype.datatype = LONG;
+          node->m_datatype.datatype = LONG;
         else if (node->m_expStr.find("@FIELD") == 0){
           string sColId = m_expStr.substr(string("@FIELD").size());
-          int iColID = isInt(sColId)?atoi(sColId.c_str())-1:-1;
-          //m_expType = COLUMN;
-          m_colId = iColID;
+          node->m_colId = isInt(sColId)?atoi(sColId.c_str())-1:-1;
+        }else if (isInt(node->m_expStr.substr(1))){ // @N is abbreviasion of @fieldN
+          string sColId = node->m_expStr.substr(1);
+          node->m_colId = isInt(sColId)?atoi(sColId.c_str())-1:-1;
+          node->m_expStr = "@FIELD"+sColId;
         }else{
-          m_expType = UNKNOWN;
-          m_datatype.datatype = UNKNOWN;
+          node->m_expType = UNKNOWN;
+          node->m_datatype.datatype = UNKNOWN;
         }
         return true;
       }else{
@@ -304,42 +306,45 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_expstrAnalyzed = false;
         return false;
       }
-    }else if (expStr[0] == '/'){
-      if (expStr.size()>1 && expStr[expStr.size()-1] == '/'){ // whole string is a regular expression string
-        node->m_datatype.datatype = STRING;
-        node->m_expType = CONST;
-        node->m_expStr = trim_pair(expStr,"//");
-        node->m_expstrAnalyzed = true;
-        return true;
-      }else{
-        trace(ERROR, "Regular expression '%s' is not closed. \n", expStr.c_str());
-        return false;
-      }
-    }else if (expStr[0] == '{'){ // checking DATE string
-      int iOffSet;
-      if (expStr.size()>1 && expStr[expStr.size()-1] == '}'){ // whole string is a date string
-        if (isDate(expStr.substr(1,expStr.size()-2), iOffSet, node->m_datatype.extrainfo))
-          node->m_datatype.datatype = DATE;
-        else{
-          trace(ERROR, "Unrecognized date format of '%s'. \n", expStr.c_str());
-          return false;
-        }
-        node->m_expType = CONST;
-        node->m_expstrAnalyzed = true;
-        node->m_expStr = trim_pair(expStr,"{}");
-        return true;
-      }else{
-        trace(ERROR, "DATE string '%s' is not closed. \n", expStr.c_str());
-        node->m_expstrAnalyzed = false;
-        return false;
-      }
+    //}else if (expStr[0] == '/'){
+    //  if (expStr.size()>1 && expStr[expStr.size()-1] == '/'){ // whole string is a regular expression string
+    //    node->m_datatype.datatype = STRING;
+    //    node->m_expType = CONST;
+    //    node->m_expStr = trim_pair(expStr,"//");
+    //    node->m_expstrAnalyzed = true;
+    //    return true;
+    //  }else{
+    //    trace(ERROR, "Regular expression '%s' is not closed. \n", expStr.c_str());
+    //    return false;
+    //  }
+    //}else if (expStr[0] == '{'){ // checking DATE string
+    //  int iOffSet;
+    //  if (expStr.size()>1 && expStr[expStr.size()-1] == '}'){ // whole string is a date string
+    //    if (isDate(expStr.substr(1,expStr.size()-2), iOffSet, node->m_datatype.extrainfo))
+    //      node->m_datatype.datatype = DATE;
+    //    else{
+    //      trace(ERROR, "Unrecognized date format of '%s'. \n", expStr.c_str());
+    //      return false;
+    //    }
+    //    node->m_expType = CONST;
+    //    node->m_expstrAnalyzed = true;
+    //    node->m_expStr = trim_pair(expStr,"{}");
+    //    return true;
+    //  }else{
+    //    trace(ERROR, "DATE string '%s' is not closed. \n", expStr.c_str());
+    //    node->m_expstrAnalyzed = false;
+    //    return false;
+    //  }
     }else if (expStr[0] == '\''){ // checking STRING string
       if (expStr.size()>1 && expStr[expStr.size()-1] == '\''){ // whole string is a STRING string
-        node->m_datatype.datatype = STRING;
+        int iOffSet, iPos = 0;
+        node->m_expStr = readQuotedStr(expStr, iPos, "''", '\\');
+        if (isDate(node->m_expStr, iOffSet, node->m_datatype.extrainfo))
+          node->m_datatype.datatype = DATE;
+        else
+          node->m_datatype.datatype = STRING;
         node->m_expType = CONST;
         node->m_expstrAnalyzed = true;
-        int iPos = 0;
-        node->m_expStr = readQuotedStr(expStr, iPos, "''", '\\');
         return true;
       }else{
         trace(ERROR, "STRING '%s' is not closed. \n", expStr.c_str());

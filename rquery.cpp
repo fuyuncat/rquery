@@ -56,10 +56,10 @@ void usage()
   printf("Search string block/file/folder using regular expression\n\n");
   printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q \"parse /<regular expression>/ | select <expr>... | set field datatype,... | filter <filters> | group <expr>,... | sort <expr>,... | limit n[,topN] | unique \" \"file or string to be queried\"\n\n");
   printf("\t-q|--query <query string> -- The query string indicates how to query the content, valid query commands include parse,select,set,filter,group,sort,limit. One or more commands can be provide in the query, multiple commands are separated by |. They can be in any order. \n");
-  printf("\t\tparse|p /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n");
+  printf("\t\tparse|p /<searching expression string>/ -- Choose one of three mode to match the content.\n\t\t\t// quotes a regular expression pattern string to parse the content; \n\t\t\t w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '*' stands for a field, e.g. w/*abc*,*/. substrings between two * are the spliters, spliter between quoters will be skipped;\n\t\t\td/<Delmiter>/[quoters/] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, e.g. d/ /\"\"/\n");
   printf("\t\tset|t <field datatype [date format],...> -- Set the date type of the fields.\n");
   printf("\t\tfilter|f <filter conditions> -- Provide filter conditions to filt the content.\n");
-  printf("\t\tselect|s <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected.\n");
+  printf("\t\tselect|s <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected. If no filed name captured, @N or @fieldN can be used for field N.\n");
   printf("\t\tgroup|g <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n");
   printf("\t\tsort|o <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
   printf("\t\tlimt|l <n | bottomN,topN> -- Provide output limit range.\n");
@@ -152,6 +152,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
     case READLINE:{
       string strline;
       int readLines = 0;
+      rq.setReadmode(READLINE);
       while (std::getline(ifile, strline)){
         total += (strline.size()+1);
         if (readLines<iSkip){
@@ -187,6 +188,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
       const size_t cache_length = gv.g_inputbuffer;
       //char cachebuffer[cache_length];
       char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
+      rq.setReadmode(READBUFF);
 
       memset( cachebuffer, '\0', sizeof(char)*cache_length );
       while(!ifile.eof()) {
@@ -194,6 +196,8 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
           break;
         ifile.read(cachebuffer, cache_length);
         //ifile.seekg(pos, ios::beg);
+        if (ifile.eof())
+          rq.setEof(true);
         rq.appendrawstr(string(cachebuffer));
         rq.searchAll();
         if (gv.g_printheader && gv.g_ouputformat==TEXT)
@@ -283,9 +287,9 @@ void processQuery(string sQuery, QuerierC & rq)
   else if (query.find("p") != query.end())
     patternStr = query["p"];
 
-  string rex = trim_one(patternStr, '/');
+  //string rex = trim_one(patternStr, '/');
   //trace(DEBUG2,"Searching pattern: %s \n", rex.c_str());
-  rq.setregexp(rex);
+  rq.setregexp(patternStr);
 
   if (query.find("filter") != query.end()){
     //trace(DEBUG,"Assigning filter: %s \n", query["filter"].c_str());
@@ -346,6 +350,8 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
   switch (readMode){
     case PARAMETER:{
       //trace(DEBUG1,"Processing content from parameter \n");
+      rq.setReadmode(READBUFF);
+      rq.setEof(true);
       rq.setrawstr(sContent);
       //rq.searchNext();
       //trace(DEBUG,"(1)Processing: %s \n", sContent.c_str());
@@ -384,11 +390,14 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
       rq.setOutputFormat(gv.g_ouputformat);
       char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
       size_t howmany = 0, reads = 0;
+      rq.setReadmode(READBUFF);
       while(std::cin) {
         if (rq.searchStopped())
           break;
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
         std::cin.read(cachebuffer, cache_length);
+        if (!std::cin)
+          rq.setEof(true);
         rq.appendrawstr(string(cachebuffer));
         //trace(DEBUG,"(2)Processing: %s \n", cachebuffer);
         rq.searchAll();
@@ -586,11 +595,11 @@ int main(int argc, char *argv[])
         break;
       }else if (lower_copy(trim_copy(lineInput)).find("h ")==0 || lower_copy(trim_copy(lineInput)).find("help")==0){
         cout << "load <file/folder> -- Provide a file or folder to be queried.\n";
-        cout << "parse /<regular expression string>/ -- Provide a regular expression pattern string quoted by \"//\" to parse the content.\n";
+        cout << "parse /<regular expression string>/ -- Choose one of three mode to match the content. \n\t// quotes a regular expression pattern string to parse the content; \n \tw/<WildCardExpr>/ quotes wildcard expression to parse the content, wildcard '*' stands for a field, e.g. w/*abc*,*/. substrings between two * are the spliters, spliter between quoters will be skipped\n\td/<Delmiter>/[quoters/] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, e.g. d/ /\"\"/\n";
         cout << "set <field datatype [date format],...> -- Set the date type of the fields.\n";
         cout << "detecttyperows <N> : Set how many matched rows will be used for detecting data types, default is 1.\n";
         cout << "filter <filter conditions> -- Provide filter conditions to filt the content.\n";
-        cout << "select <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected.\n";
+        cout << "select <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected. If no filed name captured, @N or @fieldN can be used for field N.\n";
         cout << "group <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n";
         cout << "sort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n";
         cout << "limt <n | bottomN,topN> -- Provide output limit range.\n";
@@ -689,7 +698,7 @@ int main(int argc, char *argv[])
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("parse ")==0){
         string strParam = trim_copy(lineInput).substr(string("parse ").size());
-        rq.setregexp(trim_one(strParam, '/'));
+        rq.setregexp(strParam);
         cout << "Regular expression string is provided.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("set ")==0){

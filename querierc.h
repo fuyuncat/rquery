@@ -69,6 +69,8 @@ class QuerierC
     void setregexp(string regexstr);
     void setrawstr(string rawstr);
     void appendrawstr(string rawstr);
+    void setReadmode(short int readmode);
+    void setEof(bool bEof);
     void assignFilter(FilterC* filter);
     bool assignGroupStr(string groupstr);
     bool assignSelString(string selstr);
@@ -80,7 +82,7 @@ class QuerierC
     void setUniqueResult(bool bUnique);
     void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
     void setOutputFormat(short int format=TEXT);
-    int searchNext(namesaving_smatch & matches);
+    int searchNext();
     int searchAll();
     bool toGroupOrSort();
     bool group();
@@ -104,7 +106,12 @@ class QuerierC
     string m_regexstr;
     sregex m_regexp;
     string m_rawstr;
+    string m_quoters;
+    namesaving_smatch m_matches;
     regex_constants::match_flag_type m_searchflags;
+    short int m_searchMode;
+    short int m_readmode;
+    bool m_bEof;
     
     string m_filename;  // Data source file name
     bool m_bNamePrinted;// a flag for checking if field names are printed.
@@ -155,6 +162,9 @@ class QuerierC
     bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, vector< vector<string> > & resultSet); // add a data row to a result set
     //void mergeSort(int iLeft, int iMid, int iRight);
     void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);
+    int searchNextReg();
+    int searchNextWild();
+    int searchNextDelm();
 
 #ifdef __DEBUG__
     long int m_searchtime;
@@ -173,7 +183,8 @@ class QuerierC
     //void formatoutput(namesaving_smatch matches);
     void formatoutput(vector<string> datas);
     void pairFiledNames(namesaving_smatch matches);
-    void analyzeFiledTypes(namesaving_smatch matches);
+    void analyzeFiledTypes(vector<string> matches);
+    void trialAnalyze(vector<string> matcheddata);
 };
 
 #endif // __QUERIERC_H

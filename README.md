@@ -37,7 +37,10 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - filemode buffer|line : Provide file read mode, default is buffer.<br />
          - skip <N> : How many bytes or lines (depends on the filemode) to be skipped.<br />
          - detecttyperows <N> How many matched rows will be used for detecting data types, default is 1
-         - parse /regular string/ : Parse a regular expression string quoted by //<br />
+         - parse /regular string/ : Choose one of three mode to match the content.<br />
+            - // quotes a regular expression pattern string to parse the content; 
+            - w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/. substrings between two \* are the spliters, spliter between quoters will be skipped; 
+            - d/<Delmiter>/[quoters/] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, e.g. d/ /""/
          - set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
          - filter <filter conditions> : Filter the parsed records<br />
          - select <field or expression,...> : Fields or expressions to be selected<br />
@@ -58,6 +61,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
    - --variable | -v "name1:value1[ name2:value2..]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
    - --detecttyperows | -d <N> : How many matched rows will be used for detecting data types, default is 1.<br />
    - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
+   - --nameline | -n N : Specify which matched line should be used for filed names (useful for csv files). Default is 0, means None.<br />
    - --query | -q <qeury string> : The query string to be used to parse and query the text content.<br />
 - Syntax of query string:
    - parse /regular string/|set field datatype [date format],...|filter <ilter conditions|select field or expression,...|group field or expression,...|sort field or expression [asc|desc],...|limt n | bottomN,topN<br />
@@ -81,7 +85,7 @@ In any expression of select, filter, group, sort, variables can be used. The var
    - @row : The sequence number of output records<br />
    - @filedN : The field of a parsed line, N is the sequence number of the field. It matches to the Capturing Group in the regular expression.<br />
 - Fields:<br />
-Fields are the Capturing Group or Named Capturing Group in the regular expression. If it's a Named Capturing Group, the name can be used as the field name, or a variable @fieldN can be mapped to a Capturing Group. <br />
+Fields are the Capturing Group or Named Capturing Group in the regular expression. If it's a Named Capturing Group, the name can be used as the field name, or a variable @N or @fieldN can be mapped to a Capturing Group. <br />
 - Functions:<br />
 Functions can be used in the expression. We current provide some essential normal functions and aggregation functions.
    - upper(str) : Normal function. Convert a string to upper case.<br />

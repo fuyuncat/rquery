@@ -90,7 +90,9 @@ void QuerierC::init()
   m_aggrOnly = false;
   m_bUniqueResult = false;
   m_bSelectContainMacro = false;
+  m_bToAnalyzeSelectMacro = false;
   m_bSortContainMacro = false;
+  m_bToAnalyzeSortMacro = false;
   m_selstr = "";
   m_sortstr = "";
   m_detectTypeMaxRowNum = 1;
@@ -151,6 +153,7 @@ void QuerierC::setregexp(string regexstr)
     m_regexstr = trim_one(regexstr, '/');
     try{
       m_regexp = sregex::compile(m_regexstr);
+      m_matches = namesaving_smatch(m_regexstr);
     }catch (exception& e) {
       trace(FATAL, "Regular pattern compile exception: %s\n", e.what());
     }
@@ -272,6 +275,9 @@ bool QuerierC::checkSelGroupConflict(ExpressionC eSel)
 }
 
 bool QuerierC::analyzeSelString(){
+  trace(DEBUG, "Analyzing selections from '%s'!\n", m_selstr.c_str());
+  m_selections.clear();
+  m_selnames.clear();
   vector<string> vSelections = split(m_selstr,',',"''()",'\\',{'(',')'});
   bool bGroupFunc = false, bNonGroupFuncSel = false;
   for (int i=0; i<vSelections.size(); i++){
@@ -293,6 +299,7 @@ bool QuerierC::analyzeSelString(){
     if (eSel.m_expType == FUNCTION && eSel.m_Function && eSel.m_Function->m_funcID==FOREACH){
       if (m_fieldtypes.size()==0){
         m_bSelectContainMacro = true;
+        m_bToAnalyzeSelectMacro = true;
         m_selections.clear();
         m_selnames.clear();
         trace(DEBUG2,"Skiping select FOREACH: '%s'\n",eSel.m_expStr.c_str());
@@ -303,9 +310,9 @@ bool QuerierC::analyzeSelString(){
           vExpandedExpr = eSel.m_Function->expandForeach(m_groups);
         else
           vExpandedExpr = eSel.m_Function->expandForeach(m_fieldtypes.size());
-        //trace(DEBUG2,"Expanding FOREACH: '%s'\n",eSel.m_expStr.c_str());
+        trace(DEBUG2,"Expanding FOREACH: '%s'\n",eSel.m_expStr.c_str());
         for (int j=0; j<vExpandedExpr.size(); j++){
-          //trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
+          trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
           m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
           checkSelGroupConflict(vExpandedExpr[j]);
           if (vExpandedExpr[j].containGroupFunc())
@@ -316,7 +323,7 @@ bool QuerierC::analyzeSelString(){
           vExpandedExpr[j].getAggFuncs(m_initAggProps);
           m_selections.push_back(vExpandedExpr[j]);
         }
-        m_bSelectContainMacro = false;
+        m_bToAnalyzeSelectMacro = false;
         continue;
       }
     }
@@ -372,8 +379,9 @@ bool QuerierC::checkSortGroupConflict(ExpressionC eSort)
 
 bool QuerierC::analyzeSortStr(){
   // if macro function is involved in select , need to wait util the first data analyzed to analyze sort expression
-  if (m_bSelectContainMacro)
+  if (m_bToAnalyzeSelectMacro)
     return true;
+  m_sorts.clear();
   trace(DEBUG, "Processing sorting string '%s'!\n", m_sortstr.c_str());
   vector<string> vSorts = split(m_sortstr,',',"''()",'\\',{'(',')'});
   for (int i=0; i<vSorts.size(); i++){
@@ -394,6 +402,7 @@ bool QuerierC::analyzeSortStr(){
     if (keyProp.sortKey.m_expType == FUNCTION && keyProp.sortKey.m_Function && keyProp.sortKey.m_Function->m_funcID==FOREACH){
       if (m_fieldtypes.size()==0){
         m_bSortContainMacro = true;
+        m_bToAnalyzeSortMacro = true;
         m_sorts.clear();
         trace(DEBUG2,"Skiping sort FOREACH: '%s'\n",keyProp.sortKey.m_expStr.c_str());
         return true;
@@ -418,7 +427,7 @@ bool QuerierC::analyzeSortStr(){
           if (keyPropE.sortKey.m_type==BRANCH || keyPropE.sortKey.m_expType != CONST || (!isInt(keyPropE.sortKey.m_expStr) && !isLong(keyPropE.sortKey.m_expStr)) || atoi(keyPropE.sortKey.m_expStr.c_str())>=m_selections.size())
             m_sorts.push_back(keyPropE);
         }
-        m_bSortContainMacro = false;
+        m_bToAnalyzeSortMacro = false;
         continue;
       }
     }
@@ -860,13 +869,14 @@ bool QuerierC::searchStopped()
 
 void QuerierC::trialAnalyze(vector<string> matcheddata)
 {
+  trace(DEBUG, "Detecing data types from the matched line '%s'\n", matcheddata[0].c_str());
   analyzeFiledTypes(matcheddata);
   trace(DEBUG2,"Detected field type %d/%d\n", m_fieldtypes.size(), matcheddata.size());
-  if (m_bSelectContainMacro){
+  if (m_bToAnalyzeSelectMacro || m_selections.size()==0){
     analyzeSelString();
     analyzeSortStr();
   }
-  if (m_bSortContainMacro)
+  if (m_bToAnalyzeSortMacro)
     analyzeSortStr();
   if (m_filter){
     m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
@@ -891,6 +901,7 @@ int QuerierC::searchNextReg()
 #endif // __DEBUG__
   int found = 0;
   try {
+    //namesaving_smatch matches(m_regexstr);
     while(!m_rawstr.empty() && regex_search(m_rawstr, m_matches, m_regexp)){
       m_line++;
       vector<string> matcheddata;
@@ -904,7 +915,13 @@ int QuerierC::searchNextReg()
         for (int i=0; i<m_matches.size(); i++)
           matcheddata.push_back(m_matches[i]);
       //trace(DEBUG2,"Detected rows %d/%d\n", m_detectedRawDatatype.size(), m_detectTypeMaxRowNum);
-      if (m_detectedTypeRows < m_detectTypeMaxRowNum){
+      if (m_detectedTypeRows < m_detectTypeMaxRowNum || matcheddata.size()!=m_fieldnames.size()+1){
+        if (matcheddata.size()!=m_fieldnames.size()+1 && m_fieldnames.size()>0){
+          m_fieldnames.clear();
+          m_selections.clear();
+          m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
+          m_bToAnalyzeSortMacro = m_bSortContainMacro;
+        }
         if (m_fieldnames.size() == 0)
           pairFiledNames(m_matches);
         trialAnalyze(matcheddata);
@@ -982,7 +999,13 @@ int QuerierC::searchNextWild()
     //trace(DEBUG, "Matched %d\n", matcheddata.size());
     //for (int i=0; i<matcheddata.size(); i++)
     //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
-    if (m_detectedTypeRows < m_detectTypeMaxRowNum){
+    if (m_detectedTypeRows < m_detectTypeMaxRowNum || matcheddata.size()!=m_fieldnames.size()+1){
+      if (matcheddata.size()!=m_fieldnames.size()+1 && m_fieldnames.size()>0){
+        m_fieldnames.clear();
+        m_selections.clear();
+        m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
+        m_bToAnalyzeSortMacro = m_bSortContainMacro;
+      }
       if (m_fieldnames.size() == 0)
         for (int i=1;i<matcheddata.size();i++)
           m_fieldnames.push_back("@FIELD"+intToStr(i));
@@ -1033,7 +1056,13 @@ int QuerierC::searchNextDelm()
     //trace(DEBUG, "Matched %d\n", matcheddata.size());
     //for (int i=0; i<matcheddata.size(); i++)
     //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
-    if (m_detectedTypeRows < m_detectTypeMaxRowNum){
+    if (m_detectedTypeRows < m_detectTypeMaxRowNum || matcheddata.size()!=m_fieldnames.size()+1){
+      if (matcheddata.size()!=m_fieldnames.size()+1 && m_fieldnames.size()>0){
+        m_fieldnames.clear();
+        m_selections.clear();
+        m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
+        m_bToAnalyzeSortMacro = m_bSortContainMacro;
+      }
       if (m_fieldnames.size() == 0)
         for (int i=1;i<matcheddata.size();i++)
           m_fieldnames.push_back("@FIELD"+intToStr(i));
@@ -1454,7 +1483,9 @@ void QuerierC::clear()
   m_aggrOnly = false;
   m_bUniqueResult = false;
   m_bSelectContainMacro = false;
+  m_bToAnalyzeSelectMacro = false;
   m_bSortContainMacro = false;
+  m_bToAnalyzeSortMacro = false;
   m_selstr = "";
   m_sortstr = "";
   m_detectTypeMaxRowNum = 1;

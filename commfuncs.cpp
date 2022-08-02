@@ -318,7 +318,7 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
   vector<int> q;
   while(i < str.size()) {
     bool bReplaced = false;
-    if (str.substr(i,sReplace.length()).compare(sReplace) == 0 && i>0 && q.size()==0) {
+    if (str.substr(i,sReplace.length()).compare(sReplace) == 0 && i>=0 && q.size()==0) {
       sReturn.append(sNew);
       bReplaced = true;
       i+=(sReplace.length()-1);
@@ -363,7 +363,7 @@ vector<string> split(const string & str, char delim, string quoters, char escape
   vector<int> q;
   while(i < str.length()) {
     if (str[i] == delim && i>0 && str[i-1]!=escape && q.size()==0) {
-      trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
+      //trace(DEBUG, "(1)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       //v.push_back(element);
       element = "";
       v.push_back(str.substr(begin, i-begin));
@@ -414,7 +414,7 @@ vector<string> split(const string & str, string delim, string quoters, char esca
   vector<int> q;
   while(i < str.length()) {
     if (str.length()>=i+upDelim.length() && upper_copy(str.substr(i,upDelim.length())).compare(upDelim)==0 && i>0 && q.size()==0) {
-      trace(DEBUG, "found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
+      //trace(DEBUG, "(2)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       //v.push_back(element);
       element = "";
       v.push_back(str.substr(begin, i-begin));

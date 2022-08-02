@@ -128,8 +128,10 @@ class QuerierC
     string m_selstr; // select raw string
     string m_sortstr; // sort raw string
     bool m_bSelectContainMacro; // flag indicating if macro function exists in select expressions
+    bool m_bToAnalyzeSelectMacro; // whether need to analyze marco in selections
     bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
-    
+    bool m_bToAnalyzeSortMacro; // whether need to analyze marco in sort
+
     //vector<namesaving_smatch> m_results;
     FilterC* m_filter;
     vector<string> m_fieldnames;    // field names

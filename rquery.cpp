@@ -282,7 +282,7 @@ void processQuery(string sQuery, QuerierC & rq)
   map<string,string> matches;
   vector<string> cmatches;
 
-  string patternStr = "[^\n]*"; // if no PARSE passed, search each lines
+  string patternStr = "/[^\n]*/"; // if no PARSE passed, search each lines
   if (query.find("parse") != query.end())
     patternStr = query["parse"];
   else if (query.find("p") != query.end())

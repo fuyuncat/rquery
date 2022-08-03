@@ -62,6 +62,19 @@ Returns result:<br/>
    logs/result.lst 722
    logs/sublogs/timezone.log       10
    ```
+- Get fields from multibytes content<br/>
+   ```
+   rq -q "p d/,/ | s @1,@2,@3" multicode.txt
+   ```
+   Returns result:<br/>
+   ```
+   en      english Hello
+   cn      中文    你好
+   kr      한국어    안녕하세요
+   jp      日本語  こんにちは
+   gr      Deutsch Hallo
+   ru      Русский Привет
+   ```
 - Use wildcard pattern to query a csv file, read the first line as the field names<br/>
    ```
    rq -n y -q "p w/*,*,*/|s Year, Industry_aggregation_NZSIOC" survey_small.csv
@@ -94,15 +107,32 @@ Returns result:<br/>
    ...
    ```
 - Get the file count number and total size of each user in a specific folder<br/>
-   ```ls -l $folder/ | rq -q "parse /(\S+)[ ]{1,}(\S+)[ ]{1,}(?P<owner>\S+)[ ]{1,}(?P<group>\S+)[ ]{1,}(?P<size>\S+)[ ]{1,}(\S+)[ ]{1,}(\S+)[ ]{1,}(\S+)[ ]{1,}(\S+)/ | s owner, count(1), sum(size) | g owner"
+   ```
+   ls -l $folder/ | rq -q "parse /(\S+)[ ]{1,}(\S+)[ ]{1,}(?P<owner>\S+)[ ]{1,}(?P<group>\S+)[ ]{1,}(?P<size>\S+)[ ]{1,}(\S+)[ ]{1,}(\S+)[ ]{1,}(\S+)[ ]{1,}(\S+)/ | s owner, count(1), sum(size) | g owner"
    ```
    Returns result:<br/>
    ```
    nginx   20      16436
    root    505     3127798
    ```
+- Filter empty lines<br/>
+   ```
+   rq -q "f isnull(@raw)!=1" test.cpp
+   ```
+   Returns result:<br/>
+   ```
+   main ()
+   {
+     struct tm;
+   #if __XSI_VISIBLE
+     printf("strptime is defined!\n");
+     char * c = strptime("20220728", "%Y%m%d", &tm);
+   #endif
+   }
+   ```
 - Pre set data type for fields<br/>
-   ```rq -q "p /\\\"(?P<origip>[^\n]*)\\\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/ | set time date '%d/%b/%Y:%H:%M:%S %z'| s @raw | filter time='29/Jun/2022:16:58:18 +1000'" logs/access.log
+   ```
+   rq -q "p /\\\"(?P<origip>[^\n]*)\\\" (?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/ | set time date '%d/%b/%Y:%H:%M:%S %z'| s @raw | filter time='29/Jun/2022:16:58:18 +1000'" logs/access.log
    ```
    Returns result:<br/>
    ```
@@ -618,4 +648,36 @@ Returns result:<br/>
    Returns result:<br/>
    ```
    3
+   ```
+- random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br/>
+   ```
+   rq -q "s random()" " "
+   ```
+   Returns result:<br/>
+   ```
+   58
+   ```
+   Another example:<br/>
+   ```
+   rq -q "s random(101,108)" " "
+   ```
+   Returns result:<br/>
+   ```
+   106
+   ```
+   One more example:<br/>
+   ```
+   rq -q "s random(8)" " "
+   ```
+   Returns result:<br/>
+   ```
+   6
+   ```
+- randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br/>
+   ```
+   rq -q "s randstr(16,'Udx')" " "
+   ```
+   Returns result:<br/>
+   ```
+   P@R32YOM*Z16R3R5`
    ```

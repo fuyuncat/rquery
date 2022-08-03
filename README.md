@@ -1,5 +1,5 @@
 # rquery
-&nbsp;&nbsp;&nbsp;RQuery is a tool to search string block/file/folder using regular/delmiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut can do and more. <br />
+&nbsp;&nbsp;&nbsp;RQuery is a tool to search string block/file/folder using regular/delmiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. <br />
 &nbsp;&nbsp;&nbsp;Contact Email: fuyuncat@gmail.com<br />
 <br />
 # Install
@@ -106,6 +106,8 @@ Functions can be used in the expression. We current provide some essential norma
    - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
    - round(num) : Normal function. Round a given float number.<br />
    - log(num) : Normal function. Get the log result of a given float number.<br />
+   - random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br />
+   - randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br />
    - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
    - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />
    - now() : Normal function. Get current date time.<br />

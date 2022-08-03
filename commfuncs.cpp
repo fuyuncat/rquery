@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <sys/time.h>
 #include <math.h> 
+#include <random>
 //#include <cstdlib>
 //#include <chrono>
 //#include <sstream>
@@ -612,6 +613,123 @@ string upper_copy(const string & str)
 string lower_copy(const string & str)
 {
   return boost::to_lower_copy<string>(str);
+}
+
+int random(int min, int max)
+{
+  //srand( (unsigned)time(NULL) );
+  //return rand()%max+min;
+  random_device dev;
+  mt19937 rng(dev());
+  uniform_int_distribution<mt19937::result_type> distribute(min,max);
+  return distribute(rng);
+}
+
+// Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(`~!@#$%^&*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice
+string randstr(int len, const string & flags)
+{
+  string genstr = "";
+  if (flags.empty()){
+    trace(ERROR,"Flag of randstr cannot be empty!\n");
+    return genstr;
+  }
+  std::set<char> validflags = {'U','u','L','l','D','d','M','m','U','u','S','s','X','x','B','b'};
+  string upper = "ABCDEFGHIJKLMOPQRSTUVWXYZ";
+  string lower = "abcdefghijklmopqrstuvwxyz";
+  string digit = "0123456789";
+  string minus = "-";
+  string unlderline = "-";
+  string space = " ";
+  string special = "`~!@#$%^&*+/\\|;:'\"?/";
+  string bracket = "[](){}<>";
+  
+  // generate compulsory characters first
+  for (int i=0;i<flags.length();i++){
+    if (validflags.find(flags[i])==validflags.end()){
+      trace(ERROR,"'%s' is a invlid flag of randstr!\n",flags.substr(i,1).c_str());
+      return genstr;
+    }
+    switch(flags[i]){
+    case 'U':
+      genstr.push_back(upper[random(0,upper.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'L':
+      genstr.push_back(lower[random(0,lower.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'D':
+      genstr.push_back(digit[random(0,digit.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'M':
+      genstr.push_back('-');
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'N':
+      genstr.push_back('_');
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'S':
+      genstr.push_back(' ');
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'X':
+      genstr.push_back(special[random(0,special.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'B':
+      genstr.push_back(bracket[random(0,bracket.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    }
+  }
+  char flag;
+  for (int i=genstr.length()-1;i<len;i++){
+    flag = flags[random(0,flags.length()-1)];
+    switch(flag){
+    case 'U':
+    case 'u':
+      genstr.push_back(upper[random(0,upper.length()-1)]);
+      break;
+    case 'L':
+    case 'l':
+      genstr.push_back(lower[random(0,lower.length()-1)]);
+      break;
+    case 'D':
+    case 'd':
+      genstr.push_back(digit[random(0,digit.length()-1)]);
+      break;
+    case 'M':
+    case 'm':
+      genstr.push_back('-');
+      break;
+    case 'N':
+    case 'n':
+      genstr.push_back('_');
+      break;
+    case 'S':
+    case 's':
+      genstr.push_back(' ');
+      break;
+    case 'X':
+    case 'x':
+      genstr.push_back(special[random(0,special.length()-1)]);
+      break;
+    case 'B':
+    case 'b':
+      genstr.push_back(bracket[random(0,bracket.length()-1)]);
+      break;
+    }
+  }
 }
 
 bool isNumber(const string& str)
@@ -1443,6 +1561,20 @@ short int encodeFunction(string str)
     return GETWORD;
   else if(sUpper.compare("ZONECONVERT")==0)
     return ZONECONVERT;
+  else if(sUpper.compare("RANDOM")==0)
+    return RANDOM;
+  else if(sUpper.compare("RANDSTR")==0)
+    return RANDSTR;
+  else if(sUpper.compare("CAMELSTR")==0)
+    return CAMELSTR;
+  else if(sUpper.compare("SNAKESTR")==0)
+    return SNAKESTR;
+  else if(sUpper.compare("TRIMLEFT")==0)
+    return TRIMLEFT;
+  else if(sUpper.compare("TRIMRIGHT")==0)
+    return TRIMRIGHT;
+  else if(sUpper.compare("TRIM")==0)
+    return TRIM;
   else if(sUpper.compare("ISNULL")==0)
     return ISNULL;
   else if(sUpper.compare("SWITCH")==0)

@@ -121,6 +121,13 @@ using namespace std;
 #define COUNTWORD 24
 #define GETWORD 25
 #define ZONECONVERT 26
+#define RANDOM 27
+#define CAMELSTR 28
+#define SNAKESTR 29
+#define TRIMLEFT 30
+#define TRIMRIGHT 31
+#define TRIM 32
+#define RANDSTR 33
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103
@@ -251,6 +258,9 @@ int dateFormatLen(string fmt);
 string stripTimeZone(string str, int & iOffSet, string & sTimeZone);
 struct tm now();
 long int curtime();
+
+int random(int min=1, int max=100);
+string randstr(int len=8, const string & flags="uld");
 
 bool like(string str1, string str2); 
 bool reglike(string str, string regstr); 

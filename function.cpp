@@ -128,6 +128,7 @@ bool FunctionC::analyzeExpStr()
     case DATEFORMAT:
     case PAD:
     case GETWORD:
+    case RANDSTR:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -141,6 +142,7 @@ bool FunctionC::analyzeExpStr()
     case UNIQUECOUNT:
     case ISNULL:
     case COUNTWORD:
+    case RANDOM:
       m_datatype.datatype = LONG;
       break;
     case TIMEDIFF:
@@ -151,6 +153,7 @@ bool FunctionC::analyzeExpStr()
       break;
     case NOW:
     case TRUNCDATE:
+    case ZONECONVERT:
       m_datatype.datatype = DATE;
       break;
     case MAX:
@@ -623,6 +626,53 @@ bool FunctionC::runLog(vector<string>* fieldvalues, map<string,string>* varvalue
   }
 }
 
+bool FunctionC::runRandom(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() > 2){
+    trace(ERROR, "random([min,][max]) function accepts only one parameter.\n");
+    return false;
+  }
+  string sMin="1", sMax="100";
+  if (m_params.size() > 0){
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sMax, dts) || !isDouble(sMax)){ // the parameter is the maximum range if only one parameter provided
+      trace(ERROR, "Failed to run random(%s)!\n", m_params[0].m_expStr.c_str());
+      return false;
+    }
+    if (m_params.size() > 1){ // the first parameter is the minimum range and the second parameter is the maximum range if two parameters provided
+      sMin = sMax;
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sMax, dts) || !isDouble(sMax)){ 
+        trace(ERROR, "Failed to run random(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        return false;
+      }
+    }
+  }
+  sResult = intToStr(random(atoi(sMin.c_str()),atoi(sMax.c_str())));
+  return true;
+}
+
+bool FunctionC::runRandstr(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() > 2){
+    trace(ERROR, "runRandstr([min,][max]) function accepts only one parameter.\n");
+    return false;
+  }
+  string sLen="8", sFlags="uld";
+  if (m_params.size() > 0){
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sLen, dts) || !isDouble(sLen)){ 
+      trace(ERROR, "Failed to run runRandstr(%s)!\n", m_params[0].m_expStr.c_str());
+      return false;
+    }
+    if (m_params.size() > 1){ 
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sFlags, dts)){ 
+        trace(ERROR, "Failed to run runRandstr(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        return false;
+      }
+    }
+  }
+  sResult = randstr(atoi(sLen.c_str()),sFlags);
+  return true;
+}
+
 bool FunctionC::runTruncdate(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 2){
@@ -940,11 +990,14 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
     case GETWORD:
       getResult = runGetword(fieldvalues, varvalues, aggFuncs, sResult, dts);
       break;
-    case SWITCH:
-      getResult = runSwitch(fieldvalues, varvalues, aggFuncs, sResult, dts);
+    case RANDSTR:
+      getResult = runRandstr(fieldvalues, varvalues, aggFuncs, sResult, dts);
       break;
     case PAD:
       getResult = runPad(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case SWITCH:
+      getResult = runSwitch(fieldvalues, varvalues, aggFuncs, sResult, dts);
       break;
     case GREATEST:
       getResult = runGreatest(fieldvalues, varvalues, aggFuncs, sResult, dts);
@@ -957,6 +1010,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case LOG:
       getResult = runLog(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case RANDOM:
+      getResult = runRandom(fieldvalues, varvalues, aggFuncs, sResult, dts);
       break;
     case DATEFORMAT:
       getResult = runDateformat(fieldvalues, varvalues, aggFuncs, sResult, dts);

@@ -697,6 +697,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
   varValues.insert( pair<string,string>("@FILE",m_filename));
   varValues.insert( pair<string,string>("@LINE",rowValue[m_fieldnames.size()+1]));
   varValues.insert( pair<string,string>("@ROW",rowValue[m_fieldnames.size()+2]));
+  varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
   unordered_map< string,GroupProp > aggGroupProp;
   //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
@@ -979,22 +980,22 @@ int QuerierC::searchNextWild()
   trace(DEBUG, "Wild searching '%s'\n", m_regexstr.c_str());
   int found = 0;
   size_t pos = 0, opos;
-  while (!m_rawstr.empty() && pos<m_rawstr.length()){
+  bool bEnded = false;
+  while (!bEnded && !m_rawstr.empty() && pos<m_rawstr.length()){
     // Unlike regular matching, wildcard and delimiter only match lines.
     opos = pos;
     string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
+    bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
-    if(sLine.empty() && opos == pos && m_bEof) {// read the rest of content if file reached eof, opos == pos check if it read an empty line
+    pos = 0;
+    if(sLine.empty() && bEnded && m_bEof) {// read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
     }
     //trace(DEBUG, "Read '%s'\n", sLine.c_str());
     vector<string>  matcheddata = matchWildcard(sLine,m_regexstr,m_quoters,'\\',{});
-    if (matcheddata.size()==0 && opos == pos){
-      pos = 0;
+    if (matcheddata.size()==0 && bEnded)
       continue;
-    }
-    pos = 0;
     m_line++;
     if (m_nameline && m_line==1){ // use the first line as field names
       for (int i=0; i<matcheddata.size(); i++)
@@ -1040,23 +1041,24 @@ int QuerierC::searchNextDelm()
   trace(DEBUG, "Delm searching '%s'\n", m_regexstr.c_str());
   int found = 0;
   size_t pos = 0, opos;
-  while (!m_rawstr.empty() && pos<m_rawstr.length()){
+  bool bEnded = false;
+  while (!bEnded && !m_rawstr.empty() && pos<m_rawstr.length()){
     // Unlike regular matching, wildcard and delimiter only match lines.
     opos = pos;
     string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
+    bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
-    if(sLine.empty() && opos == pos && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
+    pos = 0;
+    if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
     }
     trace(DEBUG, "Read '%s'\n", sLine.c_str());
+    trace(DEBUG, "m_rawstr '%s'\n", m_rawstr.c_str());
     vector<string>  matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable);
-    dumpVector(matcheddata);
-    if (matcheddata.size()==0 && opos == pos){
-      pos = 0;
+    //dumpVector(matcheddata);
+    if (matcheddata.size()==0 && bEnded)
       continue;
-    }
-    pos = 0;
     m_line++;
     if (m_nameline && m_line==1){ // use the first line as field names
       for (int i=0; i<matcheddata.size(); i++)

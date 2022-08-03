@@ -84,6 +84,7 @@ In any expression of select, filter, group, sort, variables can be used. The var
    - @line : The line sequence number of (regular expression) matched lines<br />
    - @row : The sequence number of output records<br />
    - @filedN : The field of a parsed line, N is the sequence number of the field. It matches to the Capturing Group in the regular expression.<br />
+   - @% : Number of the fields.<br />
 - Fields:<br />
 Fields are the Capturing Group or Named Capturing Group in the regular expression. If it's a Named Capturing Group, the name can be used as the field name, or a variable @N or @fieldN can be mapped to a Capturing Group. <br />
 - Functions:<br />

@@ -41,6 +41,35 @@ Returns result:<br/>
    bbb
    ccc
    ```
+- A very simple way to query apache/nginx logs.<br/>
+   ```
+   rq -q "p d/ /\"\"[]/ | s @6,count(1) |g @6 | o 1 " logs/g_access_log.log
+   ```
+   Returns result:<br/>
+   ```
+   200     626
+   302     4073
+   403     25
+   404     59
+   406     1
+   ```
+- Get fields number of each line using delmiter matching a file.<br/>
+   ```
+   rq -f on -q "p d/ /\"\"/ | select @% as filednum, strlen(@raw) as linelen" access.log
+   ```
+   Returns result:<br/>
+   ```
+   filednum        linelen
+   --------        -------
+   1       65
+   11      516
+   11      547
+   11      542
+   11      574
+   11      536
+   11      523
+   11      546
+   ```
 - Get the specific lines<br/>
    ```
    rq -q "select @raw | limit 5,7" test.cpp

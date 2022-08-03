@@ -1,5 +1,8 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.921] 2022-08-03
+   Fixed bug: wildcard/delmiter searching might cause infinite loop in very rare scenarios<br/>
+   New feature: new variable @% for the number of fields.
    # [0.92] 2022-08-03
    New feature: new function: countword(str,[ingnore_quoters]) -- Get the number of word in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br/>
    New feature: new function: getword(str,wordnum,[ingnore_quoters]) -- Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br/>

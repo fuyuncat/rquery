@@ -22,12 +22,12 @@ make %{?_smp_mflags}
 
 %install
 make install DESTDIR=%{buildroot}
-mkdir -p %{buildroot}/usr/local/bin/
-cp rq %{buildroot}/usr/local/bin/
+mkdir -p %{buildroot}/usr/bin/
+cp rq %{buildroot}/usr/bin/
 
 %files
 %defattr(755,root,root)
-/usr/local/bin/rq
+/usr/bin/rq
 %doc
 
 %changelog

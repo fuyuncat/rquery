@@ -119,7 +119,15 @@ using namespace std;
 #define LEAST 22
 #define REGMATCH 23
 #define COUNTWORD 24
-#define ZONECONVERT 25
+#define GETWORD 25
+#define ZONECONVERT 26
+#define RANDOM 27
+#define CAMELSTR 28
+#define SNAKESTR 29
+#define TRIMLEFT 30
+#define TRIMRIGHT 31
+#define TRIM 32
+#define RANDSTR 33
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103
@@ -203,8 +211,9 @@ void exitProgram(short int code);
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
-vector<string> split(const string & str, string delim = " ", string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+vector<string> split(const string & str, string delim = " ", string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+vector<string> split(const string & str, std::set<char> delims = {' ','\t','\n','\r'}, string quoters = "''\"\"", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 int findFirstCharacter(const string & str, std::set<char> lookfor, size_t pos=0, string quoters = "''()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 int findFirstSub(const string & str, const string & lookfor, size_t pos=0, string quoters = "''()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 string readLine(string str, size_t & pos); // read a line
@@ -249,6 +258,9 @@ int dateFormatLen(string fmt);
 string stripTimeZone(string str, int & iOffSet, string & sTimeZone);
 struct tm now();
 long int curtime();
+
+int random(int min=1, int max=100);
+string randstr(int len=8, const string & flags="uld");
 
 bool like(string str1, string str2); 
 bool reglike(string str, string regstr); 

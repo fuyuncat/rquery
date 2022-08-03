@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <sys/time.h>
 #include <math.h> 
+#include <random>
 //#include <cstdlib>
 //#include <chrono>
 //#include <sstream>
@@ -147,11 +148,11 @@ void trace(short level, const char *fmt, ...)
 string readQuotedStr(string str, int& pos, string quoters, char escape)
 {
   string trimmedStr="";
-  if (quoters.size()<2)
+  if (quoters.length()<2)
     return trimmedStr;
   int quoteStart = -1, i = pos, quoteDeep=0;
   bool quoted = false;
-  while(i < str.size()) {
+  while(i < str.length()) {
     if (quoteDeep > 0){ // checking right quoter only when the string is quoted.
       if (str[i]==escape && i<str.length()-1 && (str[i+1] == quoters[0] || str[i+1] == quoters[1])){ // skip escape
         i++;
@@ -199,9 +200,9 @@ int findFirstCharacter(const string & str, std::set<char> lookfor, size_t pos, s
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.size()/2); k++){
+      for (int k=0; k<(int)(quoters.length()/2); k++){
         if (str[i] == quoters[k*2])
-          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+          if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
             q.push_back(k*2+1); // quoted start, need to pair the right quoter
             break;
@@ -241,7 +242,7 @@ int findFirstSub(const string & str, const string & lookfor, size_t pos, string 
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
       for (int k=0; k<(int)(quoters.size()/2); k++){
         if (str[i] == quoters[k*2])
-          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+          if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
             q.push_back(k*2+1); // quoted start, need to pair the right quoter
             break;
@@ -316,7 +317,7 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
   size_t i = 0;
   string sReturn="";
   vector<int> q;
-  while(i < str.size()) {
+  while(i < str.length()) {
     bool bReplaced = false;
     if (str.substr(i,sReplace.length()).compare(sReplace) == 0 && i>=0 && q.size()==0) {
       sReturn.append(sNew);
@@ -337,9 +338,9 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.size()/2); k++){
+      for (int k=0; k<(int)(quoters.length()/2); k++){
         if (str[i] == quoters[k*2])
-          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+          if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
             q.push_back(k*2+1); // quoted start, need to pair the right quoter
             break;
@@ -354,26 +355,23 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
   str = sReturn;
 }
 
-// split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-vector<string> split(const string & str, char delim, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable) 
+vector<string> split(const string & str, std::set<char> delims, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable, bool skipemptyelement)
 {
+  //trace(DEBUG, "Splitting string:'%s', quoters: '%s'\n",str.c_str(), quoters.c_str());
   vector<string> v;
-  string element="";
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.length()) {
-    if (str[i] == delim && i>0 && str[i-1]!=escape && q.size()==0) {
-      //trace(DEBUG, "(1)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
-      //v.push_back(element);
-      element = "";
-      v.push_back(str.substr(begin, i-begin));
-      while(repeatable && i<str.length()-1 && str[i+1] == delim) // skip repeated delim
+    if (delims.find(str[i])!=delims.end() && (i==0 || (i>0 && str[i-1]!=escape)) && q.size()==0) {
+      trace(DEBUG, "(1)found delim '%s', split string:'%s' (%d to %d)\n",str.substr(i,1).c_str(),str.substr(begin, i-begin).c_str(), begin, i);
+      if (!skipemptyelement || i>begin)
+        v.push_back(str.substr(begin, i-begin));
+      while(repeatable && i<str.length()-1 && delims.find(str[i+1])!=delims.end()) // skip repeated delim
         i++;
       begin = i+1;
     }else{
       if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
         i++;
-      element.push_back(str[i]);
     }
     if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
       if (i>0 && str[i-1]!=escape){
@@ -383,9 +381,9 @@ vector<string> split(const string & str, char delim, string quoters, char escape
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.size()/2); k++){
+      for (int k=0; k<(int)(quoters.length()/2); k++){
         if (str[i] == quoters[k*2])
-          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+          if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
             q.push_back(k*2+1); // quoted start, need to pair the right quoter
             break;
@@ -393,8 +391,8 @@ vector<string> split(const string & str, char delim, string quoters, char escape
       }
     ++i;
   }
-  if (begin<str.size())
-    v.push_back(str.substr(begin, str.size()-begin));
+  if (begin<str.length() && (!skipemptyelement || str.length()>begin))
+    v.push_back(str.substr(begin, str.length()-begin));
 
   if (q.size() > 0)
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
@@ -403,29 +401,22 @@ vector<string> split(const string & str, char delim, string quoters, char escape
 }
 
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-vector<string> split(const string & str, string delim, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable) 
+vector<string> split(const string & str, char delim, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable, bool skipemptyelement) 
 {
-  if (delim.size()==1)
-    return split(str,delim[0],quoters,escape,nestedQuoters,repeatable);
   vector<string> v;
-  string element;
-  string upDelim = upper_copy(delim);
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.length()) {
-    if (str.length()>=i+upDelim.length() && upper_copy(str.substr(i,upDelim.length())).compare(upDelim)==0 && i>0 && q.size()==0) {
-      //trace(DEBUG, "(2)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
-      //v.push_back(element);
-      element = "";
-      v.push_back(str.substr(begin, i-begin));
-      while(repeatable && str.length()>=i+upDelim.length()*2 && upper_copy(str.substr(i+upDelim.length(),upDelim.length())).compare(upDelim)==0) // skip repeated delim
-        i+=upDelim.length();
-      begin = i+upDelim.length();
-      i+=(upDelim.length()-1);
+    if (str[i] == delim && (i==0 || (i>0 && str[i-1]!=escape)) && q.size()==0) {
+      //trace(DEBUG, "(1)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
+      if (!skipemptyelement || i>begin)
+        v.push_back(str.substr(begin, i-begin));
+      while(repeatable && i<str.length()-1 && str[i+1] == delim) // skip repeated delim
+        i++;
+      begin = i+1;
     }else{
       if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
         i++;
-      element.push_back(str[i]);
     }
     if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
       if (i>0 && str[i-1]!=escape){
@@ -435,9 +426,9 @@ vector<string> split(const string & str, string delim, string quoters, char esca
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.size()/2); k++){
+      for (int k=0; k<(int)(quoters.length()/2); k++){
         if (str[i] == quoters[k*2])
-          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+          if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
             q.push_back(k*2+1); // quoted start, need to pair the right quoter
             break;
@@ -445,8 +436,57 @@ vector<string> split(const string & str, string delim, string quoters, char esca
       }
     ++i;
   }
-  if (begin<str.size())
-    v.push_back(str.substr(begin, str.size()-begin));
+  if (begin<str.length() && (!skipemptyelement || str.length()>begin))
+    v.push_back(str.substr(begin, str.length()-begin));
+
+  if (q.size() > 0)
+    trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
+
+  return v;
+}
+
+// split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
+vector<string> split(const string & str, string delim, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable, bool skipemptyelement) 
+{
+  if (delim.length()==1)
+    return split(str,delim[0],quoters,escape,nestedQuoters,repeatable,skipemptyelement);
+  vector<string> v;
+  string upDelim = upper_copy(delim);
+  size_t i = 0, j = 0, begin = 0;
+  vector<int> q;
+  while(i < str.length()) {
+    if (str.length()>=i+upDelim.length() && upper_copy(str.substr(i,upDelim.length())).compare(upDelim)==0 && i>=0 && q.size()==0) {
+      //trace(DEBUG, "(2)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
+      if (!skipemptyelement || i>begin)
+        v.push_back(str.substr(begin, i-begin));
+      while(repeatable && str.length()>=i+upDelim.length()*2 && upper_copy(str.substr(i+upDelim.length(),upDelim.length())).compare(upDelim)==0) // skip repeated delim
+        i+=upDelim.length();
+      begin = i+upDelim.length();
+      i+=(upDelim.length()-1);
+    }else{
+      if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
+        i++;
+    }
+    if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+      if (i>0 && str[i-1]!=escape){
+        //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+        q.pop_back();
+        ++i;
+        continue;
+      }
+    if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
+      for (int k=0; k<(int)(quoters.length()/2); k++){
+        if (str[i] == quoters[k*2])
+          if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
+            //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+            q.push_back(k*2+1); // quoted start, need to pair the right quoter
+            break;
+          }
+      }
+    ++i;
+  }
+  if (begin<str.length() && (!skipemptyelement || str.length()>begin))
+    v.push_back(str.substr(begin, str.length()-begin));
 
   if (q.size() > 0)
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
@@ -456,8 +496,8 @@ vector<string> split(const string & str, string delim, string quoters, char esca
 
 string trim_pair(const string & str, const string & pair)
 {
-  if(str.size() > 1 && pair.size() == 2 && str[0] == pair[0] && str[str.size()-1] == pair[1])
-    return str.substr(1,str.size()-2);
+  if(str.length() > 1 && pair.length() == 2 && str[0] == pair[0] && str[str.length()-1] == pair[1])
+    return str.substr(1,str.length()-2);
   else
     return str;
 }
@@ -473,8 +513,8 @@ string trim(const string & str, char c)
 string trim_right(const string & str, char c)
 {
   string newstr = str;
-  if (newstr[newstr.size()-1] == c)
-    newstr = newstr.substr(0,newstr.size()-1);
+  if (newstr[newstr.length()-1] == c)
+    newstr = newstr.substr(0,newstr.length()-1);
   return newstr;
 }
 
@@ -491,8 +531,8 @@ string trim_one(const string & str, char c)
   string newstr = str;
   if (newstr[0] == c)
     newstr = newstr.substr(1);
-  if (newstr[newstr.size()-1] == c)
-    newstr = newstr.substr(0,newstr.size()-1);
+  if (newstr[newstr.length()-1] == c)
+    newstr = newstr.substr(0,newstr.length()-1);
   if (c == ' ')
     newstr = trim_one(str, '\t');
   return newstr;
@@ -573,6 +613,123 @@ string upper_copy(const string & str)
 string lower_copy(const string & str)
 {
   return boost::to_lower_copy<string>(str);
+}
+
+int random(int min, int max)
+{
+  //srand( (unsigned)time(NULL) );
+  //return rand()%max+min;
+  random_device dev;
+  mt19937 rng(dev());
+  uniform_int_distribution<mt19937::result_type> distribute(min,max);
+  return distribute(rng);
+}
+
+// Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(`~!@#$%^&*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice
+string randstr(int len, const string & flags)
+{
+  string genstr = "";
+  if (flags.empty()){
+    trace(ERROR,"Flag of randstr cannot be empty!\n");
+    return genstr;
+  }
+  std::set<char> validflags = {'U','u','L','l','D','d','M','m','U','u','S','s','X','x','B','b'};
+  string upper = "ABCDEFGHIJKLMOPQRSTUVWXYZ";
+  string lower = "abcdefghijklmopqrstuvwxyz";
+  string digit = "0123456789";
+  string minus = "-";
+  string unlderline = "-";
+  string space = " ";
+  string special = "`~!@#$%^&*+/\\|;:'\"?/";
+  string bracket = "[](){}<>";
+  
+  // generate compulsory characters first
+  for (int i=0;i<flags.length();i++){
+    if (validflags.find(flags[i])==validflags.end()){
+      trace(ERROR,"'%s' is a invlid flag of randstr!\n",flags.substr(i,1).c_str());
+      return genstr;
+    }
+    switch(flags[i]){
+    case 'U':
+      genstr.push_back(upper[random(0,upper.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'L':
+      genstr.push_back(lower[random(0,lower.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'D':
+      genstr.push_back(digit[random(0,digit.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'M':
+      genstr.push_back('-');
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'N':
+      genstr.push_back('_');
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'S':
+      genstr.push_back(' ');
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'X':
+      genstr.push_back(special[random(0,special.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    case 'B':
+      genstr.push_back(bracket[random(0,bracket.length()-1)]);
+      if (genstr.length()>=len)
+        return genstr;
+      break;
+    }
+  }
+  char flag;
+  for (int i=genstr.length()-1;i<len;i++){
+    flag = flags[random(0,flags.length()-1)];
+    switch(flag){
+    case 'U':
+    case 'u':
+      genstr.push_back(upper[random(0,upper.length()-1)]);
+      break;
+    case 'L':
+    case 'l':
+      genstr.push_back(lower[random(0,lower.length()-1)]);
+      break;
+    case 'D':
+    case 'd':
+      genstr.push_back(digit[random(0,digit.length()-1)]);
+      break;
+    case 'M':
+    case 'm':
+      genstr.push_back('-');
+      break;
+    case 'N':
+    case 'n':
+      genstr.push_back('_');
+      break;
+    case 'S':
+    case 's':
+      genstr.push_back(' ');
+      break;
+    case 'X':
+    case 'x':
+      genstr.push_back(special[random(0,special.length()-1)]);
+      break;
+    case 'B':
+    case 'b':
+      genstr.push_back(bracket[random(0,bracket.length()-1)]);
+      break;
+    }
+  }
 }
 
 bool isNumber(const string& str)
@@ -874,7 +1031,7 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
   sRaw = stripTimeZone(str, iOffSet, sTimeZone);
   if (sFm.length()>5 && sFm[sFm.length()-2]=='%' && sFm[sFm.length()-1]=='z'){
     // trace(DEBUG, "Trying timezone '%s' : '%s'\n", fmt.c_str(), sRaw.c_str());
-    sFm = trim_copy(sFm.substr(0,sFm.size()-2));
+    sFm = trim_copy(sFm.substr(0,sFm.length()-2));
   }else{
     if (!sTimeZone.empty()) { // no %z in the format, there should no timezone info in the datetime string
       //trace(DEBUG2, "'%s' (format: '%s') should not contain timezone '%s' \n", str.c_str(), sFm.c_str(), sTimeZone.c_str());
@@ -883,7 +1040,7 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
   }
   // bare in mind: strptime will ignore %z. means we need to treat its returned time as GMT time
   char * c = strptime(sRaw.c_str(), sFm.c_str(), &tm);
-  if (c && c == sRaw.c_str()+sRaw.size()){
+  if (c && c == sRaw.c_str()+sRaw.length()){
   //if (c && string(c).empty()){
     //trace(DEBUG2, "(1)Converting '%s' => %d %d %d %d %d %d %d offset %d format '%s' \n",sRaw.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, iOffSet, sFm.c_str());
     tm.tm_isdst = 0;
@@ -1074,7 +1231,7 @@ int detectDataType(string str, string & extrainfo)
   short int datatype = UNKNOWN;
   extrainfo = "";
   int iOffSet;
-  if (trimmedStr.size()>1 && ((trimmedStr[0]=='\'' && trimmedStr[trimmedStr.size()-1]=='\'' && matchQuoters(trimmedStr, 0, "''")==0) || (trimmedStr[0]=='/' && trimmedStr[trimmedStr.size()-1]=='/' && matchQuoters(trimmedStr, 0, "//")==0))){
+  if (trimmedStr.length()>1 && ((trimmedStr[0]=='\'' && trimmedStr[trimmedStr.length()-1]=='\'' && matchQuoters(trimmedStr, 0, "''")==0) || (trimmedStr[0]=='/' && trimmedStr[trimmedStr.length()-1]=='/' && matchQuoters(trimmedStr, 0, "//")==0))){
     datatype = STRING;
     //trace(DEBUG2, "'%s' has quoters\n", trimmedStr.c_str());
   //else if (matchQuoters(trimmedStr, 0, "{}"))
@@ -1400,8 +1557,24 @@ short int encodeFunction(string str)
     return REGMATCH;
   else if(sUpper.compare("COUNTWORD")==0)
     return COUNTWORD;
+  else if(sUpper.compare("GETWORD")==0)
+    return GETWORD;
   else if(sUpper.compare("ZONECONVERT")==0)
     return ZONECONVERT;
+  else if(sUpper.compare("RANDOM")==0)
+    return RANDOM;
+  else if(sUpper.compare("RANDSTR")==0)
+    return RANDSTR;
+  else if(sUpper.compare("CAMELSTR")==0)
+    return CAMELSTR;
+  else if(sUpper.compare("SNAKESTR")==0)
+    return SNAKESTR;
+  else if(sUpper.compare("TRIMLEFT")==0)
+    return TRIMLEFT;
+  else if(sUpper.compare("TRIMRIGHT")==0)
+    return TRIMRIGHT;
+  else if(sUpper.compare("TRIM")==0)
+    return TRIM;
   else if(sUpper.compare("ISNULL")==0)
     return ISNULL;
   else if(sUpper.compare("SWITCH")==0)

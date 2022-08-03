@@ -53,7 +53,7 @@ void usage()
 {
   printf("\nProgram Name: RQuery AKA RQ Version %s\n", VERSION);
   printf("Contact Email: fuyuncat@gmail.com\n");
-  printf("Search string block/file/folder using regular expression\n\n");
+  printf("Search string block/file/folder using regular/delmiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. \n\n");
   printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q \"parse /<regular expression>/ | select <expr>... | set field datatype,... | filter <filters> | group <expr>,... | sort <expr>,... | limit n[,topN] | unique \" \"file or string to be queried\"\n\n");
   printf("\t-q|--query <query string> -- The query string indicates how to query the content, valid query commands include parse,select,set,filter,group,sort,limit. One or more commands can be provide in the query, multiple commands are separated by |. They can be in any order. \n");
   printf("\t\tparse|p /<searching expression string>/ -- Choose one of three mode to match the content.\n\t\t\t// quotes a regular expression pattern string to parse the content; \n\t\t\t w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '*' stands for a field, e.g. w/*abc*,*/. substrings between two * are the spliters, spliter between quoters will be skipped;\n\t\t\td/<Delmiter>/[quoters/][r] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, r at the end of pattern means the delmiter is repeatable, e.g. d/ /\"\"/\n");
@@ -155,7 +155,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
       int readLines = 0;
       rq.setReadmode(READLINE);
       while (std::getline(ifile, strline)){
-        total += (strline.size()+1);
+        total += (strline.length()+1);
         if (readLines<iSkip){
           readLines++;
           continue;
@@ -282,7 +282,8 @@ void processQuery(string sQuery, QuerierC & rq)
   map<string,string> matches;
   vector<string> cmatches;
 
-  string patternStr = "/[^\n]*/"; // if no PARSE passed, search each lines
+  //string patternStr = "/[^\n]*/"; // if no PARSE passed, search each lines
+  string patternStr = "w/*/"; // if no PARSE passed, search each lines
   if (query.find("parse") != query.end())
     patternStr = query["parse"];
   else if (query.find("p") != query.end())
@@ -627,7 +628,7 @@ int main(int argc, char *argv[])
         cout << "var \"name1:value1[ name2:value2..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("load ")==0){
-        string strParam = trim_copy(lineInput).substr(string("load ").size());
+        string strParam = trim_copy(lineInput).substr(string("load ").length());
         readMode = checkReadMode(strParam);
         if (readMode != SINGLEFILE && readMode != FOLDER){
           cout << "Error: Cannot find the file or folder.\n";
@@ -638,7 +639,7 @@ int main(int argc, char *argv[])
         }
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("msglevel ")==0){
-        string strParam = trim_copy(lineInput).substr(string("msglevel ").size());
+        string strParam = trim_copy(lineInput).substr(string("msglevel ").length());
         int iLevel=encodeTracelevel(strParam);
         if (iLevel!=UNKNOWN){
           gv.g_tracelevel = iLevel;
@@ -650,7 +651,7 @@ int main(int argc, char *argv[])
         cout << decodeTracelevel(gv.g_tracelevel).c_str();
         cout << "\nrquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("logfile ")==0){
-        string strParam = trim_copy(lineInput).substr(string("logfile ").size());
+        string strParam = trim_copy(lineInput).substr(string("logfile ").length());
         ofstream* logfile = new ofstream(strParam);
         if (!(*logfile))
           delete logfile;
@@ -666,26 +667,26 @@ int main(int argc, char *argv[])
         cout << strParam.c_str();
         cout << "\nrquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("progress ")==0){
-        string strParam = trim_copy(lineInput).substr(string("progress ").size());
+        string strParam = trim_copy(lineInput).substr(string("progress ").length());
         gv.g_showprogress = (lower_copy(strParam).compare("on")==0);
         cout << "Process progress has been turned ";
         cout << strParam.c_str();
         cout << "\nrquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("format ")==0){
-        string strParam = trim_copy(lineInput).substr(string("format ").size());
+        string strParam = trim_copy(lineInput).substr(string("format ").length());
         gv.g_ouputformat = (strParam.compare("json")!=0?TEXT:JSON);
         cout << "Output format has been set to ";
         cout << strParam.c_str();
         cout << "\nrquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("filemode ")==0){
-        string strParam = trim_copy(lineInput).substr(string("filemode ").size());
+        string strParam = trim_copy(lineInput).substr(string("filemode ").length());
         if (lower_copy(strParam).compare("line")!=0)
           fileMode=READBUFF;
         cout << "File read mode is set to ";
         cout << (fileMode==READBUFF?"buffer.\n":"line.\n");
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("skip ")==0){
-        string strParam = trim_copy(lineInput).substr(string("skip ").size());
+        string strParam = trim_copy(lineInput).substr(string("skip ").length());
         if (!isInt(strParam)){
           cout << "Error: Please provide a valid number.\n";
         }else{
@@ -696,7 +697,7 @@ int main(int argc, char *argv[])
         }
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("buffsize ")==0){
-        string strParam = trim_copy(lineInput).substr(string("buffsize ").size());
+        string strParam = trim_copy(lineInput).substr(string("buffsize ").length());
         if (!isInt(strParam)){
           cout << "Error: Please provide a valid number.\n";
         }else{
@@ -707,22 +708,22 @@ int main(int argc, char *argv[])
         }
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("parse ")==0){
-        string strParam = trim_copy(lineInput).substr(string("parse ").size());
+        string strParam = trim_copy(lineInput).substr(string("parse ").length());
         rq.setregexp(strParam);
         cout << "Regular expression string is provided.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("set ")==0){
-        string strParam = trim_copy(lineInput).substr(string("set ").size());
+        string strParam = trim_copy(lineInput).substr(string("set ").length());
         rq.setFieldTypeFromStr(strParam);
         cout << "Fileds data type has been set up.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("var ")==0){
-        string strParam = trim_one(trim_copy(lineInput).substr(string("set ").size()),'"');
+        string strParam = trim_one(trim_copy(lineInput).substr(string("set ").length()),'"');
         rq.setUserVars(strParam);
         cout << "Variables have been set up.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("filter ")==0){
-        string strParam = trim_copy(lineInput).substr(string("filter ").size());
+        string strParam = trim_copy(lineInput).substr(string("filter ").length());
         //if (filter) // assignFilter will clear the existing filter
         //  delete filter;
         cout << "Filter condition is provided.\n";
@@ -730,17 +731,17 @@ int main(int argc, char *argv[])
         rq.assignFilter(filter);
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("group ")==0){
-        string strParam = trim_copy(lineInput).substr(string("group ").size());
+        string strParam = trim_copy(lineInput).substr(string("group ").length());
         rq.assignGroupStr(strParam);
         cout << "Group expressions are provided.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("select ")==0){
-        string strParam = trim_copy(lineInput).substr(string("select ").size());
+        string strParam = trim_copy(lineInput).substr(string("select ").length());
         rq.assignSelString(strParam);
         cout << "Selection is provided.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("sort ")==0){
-        string strParam = trim_copy(lineInput).substr(string("sort ").size());
+        string strParam = trim_copy(lineInput).substr(string("sort ").length());
         rq.assignSortStr(strParam);
         cout << "Sorting keys are provided.\n";
         cout << "rquery >";
@@ -753,17 +754,17 @@ int main(int argc, char *argv[])
         cout << "All query inputs have been cleared.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).compare("recursive ")==0){
-        string strParam = trim_copy(lineInput).substr(string("recursive ").size());
+        string strParam = trim_copy(lineInput).substr(string("recursive ").length());
         gv.g_recursiveread = (lower_copy(strParam).compare("yes")==0||(lower_copy(strParam).compare("y")==0));
         cout << "Set recursively read folder.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("limit ")==0){
-        string strParam = trim_copy(lineInput).substr(string("limit ").size());
+        string strParam = trim_copy(lineInput).substr(string("limit ").length());
         rq.assignLimitStr(strParam);
         cout << "Output limit has been set up.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("detecttyperows ")==0){
-        string strParam = trim_copy(lineInput).substr(string("detecttyperows ").size());
+        string strParam = trim_copy(lineInput).substr(string("detecttyperows ").length());
         if (!isInt(strParam)){
           cout << "Error: Please provide a valid number.\n";
         }else{
@@ -772,7 +773,7 @@ int main(int argc, char *argv[])
           cout << "rquery >";
         }
       }else if (lower_copy(trim_copy(lineInput)).find("nameline ")==0){
-        string strParam = trim_copy(lineInput).substr(string("nameline ").size());
+        string strParam = trim_copy(lineInput).substr(string("nameline ").length());
         if (lower_copy(strParam).compare("yes")==0||lower_copy(strParam).compare("y")==0){
           rq.setNameline(true);
           cout << "Row number of detecting data type has been set up.\n";
@@ -783,7 +784,7 @@ int main(int argc, char *argv[])
           if (readMode == SINGLEFILE || readMode == FOLDER)
             runQuery(sContent, readMode, rq, fileMode, iSkip);
         }else{
-          string strParam = trim_copy(lineInput).substr(string("run ").size());
+          string strParam = trim_copy(lineInput).substr(string("run ").length());
           processQuery(strParam, rq);
           if (readMode == SINGLEFILE || readMode == FOLDER)
             runQuery(sContent, readMode, rq, fileMode, iSkip);

@@ -1,28 +1,35 @@
 # Change Log
-All change logs will be documented here.
+All change logs will be documented here.<br/>
+   # [0.92] 2022-08-03
+   New feature: new function: countword(str,[ingnore_quoters]) -- Get the number of word in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br/>
+   New feature: new function: getword(str,wordnum,[ingnore_quoters]) -- Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br/>
+   New feature: new function: random([min,][max]) -- Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br/>
+   New feature: new function: randstr(len,flags) -- Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice<br/>
+   Fixed bug: wildcard/delmiter searching might read multiple lines in an once.<br/>
+   Fixed bug: wildcard/delmiter searching might skip empty lines.<br/>
    # [0.913] 2022-08-02
-   New feature: @N can be used for abbrevation of @fieldN
-   New option: --nameline | -n Yes/no : Specify the first line should be used for filed names (useful for csv files). Default is no.
-   Enhancement: Variable number of field can be searched & matched now.
-   Fixed bug: User defined variable is not set correctly.
-   Fixed bug: wildcard/delmiter searching might cause infinite loop in very rare scenarios
+   New feature: @N can be used for abbrevation of @fieldN<br/>
+   New option: --nameline | -n Yes/no : Specify the first line should be used for filed names (useful for csv files). Default is no.<br/>
+   Enhancement: Variable number of field can be searched & matched now.<br/>
+   Fixed bug: User defined variable is not set correctly.<br/>
+   Fixed bug: wildcard/delmiter searching might cause infinite loop in very rare scenarios<br/>
    # [0.913] 2022-08-01
-   Fixed bug: sorting doesnot work properly when multiple sort keys involved
-   Enhancement: // no long be used for regular expression string, {} no long be used for date string, they all use '' now.
-   New feature: New searching pattern: w/<WildCardExpr>/, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/
-   New feature: New searching pattern: d/<Delmiter>/[quoters/][r], Delmiter splits fields, delmiter between quoters will be skipped, r at the end of pattern means the delmiter is repeatable, e.g. d/ /""/
+   Fixed bug: sorting doesnot work properly when multiple sort keys involved<br/>
+   Enhancement: // no long be used for regular expression string, {} no long be used for date string, they all use '' now.<br/>
+   New feature: New searching pattern: w/<WildCardExpr>/, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/<br/>
+   New feature: New searching pattern: d/<Delmiter>/[quoters/][r], Delmiter splits fields, delmiter between quoters will be skipped, r at the end of pattern means the delmiter is repeatable, e.g. d/ /""/<br/>
    # [0.912] 2022-08-01
-   Enhancement: Query commands accept one letter abbrivation, e.g. s stands for 'select'
-   New feature: Macro function foreach(beginid,endid,macro_expr) is introduced.
+   Enhancement: Query commands accept one letter abbrivation, e.g. s stands for 'select'<br/>
+   New feature: Macro function foreach(beginid,endid,macro_expr) is introduced.<br/>
    # [0.912] 2022-07-31
-   Added Version Info
-   Added workflow actions to create CentOS7/8&MacOS rpm and zip files.
-   Enhancement: query option is optional now; Set select @raw when no "select" provided.
+   Added Version Info<br/>
+   Added workflow actions to create CentOS7/8&MacOS rpm and zip files.<br/>
+   Enhancement: query option is optional now; Set select @raw when no "select" provided.<br/>
    # [0.912] 2022-07-29
    New feature: New option: -c|--recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).<br/>
    # [0.911] 2022-07-29
    New feature: New option: -d | --detecttyperows How many matched rows will be used for detecting data types, default is 1<br/>
-   Added examples.md
+   Added examples.md<br/>
    Fixed bug: Incorrectly detected data type for @RAW<br/>
    Fixed bug: Some DATE data can not be detected the correct data type and date format<br/>
    Fixed bug: Functions without paramter dont work properly.<br/>

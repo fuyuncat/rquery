@@ -978,20 +978,23 @@ int QuerierC::searchNextWild()
 #endif // __DEBUG__
   trace(DEBUG, "Wild searching '%s'\n", m_regexstr.c_str());
   int found = 0;
-  size_t pos = 0;
+  size_t pos = 0, opos;
   while (!m_rawstr.empty() && pos<m_rawstr.length()){
     // Unlike regular matching, wildcard and delimiter only match lines.
+    opos = pos;
     string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
-    pos = 0;
-    if(sLine.empty() && pos<m_rawstr.length() && m_bEof) {// read the rest of content if file reached eof
+    if(sLine.empty() && opos == pos && m_bEof) {// read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
     }
     //trace(DEBUG, "Read '%s'\n", sLine.c_str());
     vector<string>  matcheddata = matchWildcard(sLine,m_regexstr,m_quoters,'\\',{});
-    if (matcheddata.size()==0)
+    if (matcheddata.size()==0 && opos == pos){
+      pos = 0;
       continue;
+    }
+    pos = 0;
     m_line++;
     if (m_nameline && m_line==1){ // use the first line as field names
       for (int i=0; i<matcheddata.size(); i++)
@@ -1036,21 +1039,24 @@ int QuerierC::searchNextDelm()
 #endif // __DEBUG__
   trace(DEBUG, "Delm searching '%s'\n", m_regexstr.c_str());
   int found = 0;
-  size_t pos = 0;
+  size_t pos = 0, opos;
   while (!m_rawstr.empty() && pos<m_rawstr.length()){
     // Unlike regular matching, wildcard and delimiter only match lines.
+    opos = pos;
     string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
-    pos = 0;
-    if(sLine.empty() && pos<m_rawstr.length() && m_bEof){ // read the rest of content if file reached eof
+    if(sLine.empty() && opos == pos && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
     }
     trace(DEBUG, "Read '%s'\n", sLine.c_str());
     vector<string>  matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable);
     dumpVector(matcheddata);
-    if (matcheddata.size()==0)
+    if (matcheddata.size()==0 && opos == pos){
+      pos = 0;
       continue;
+    }
+    pos = 0;
     m_line++;
     if (m_nameline && m_line==1){ // use the first line as field names
       for (int i=0; i<matcheddata.size(); i++)

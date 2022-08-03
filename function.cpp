@@ -127,6 +127,7 @@ bool FunctionC::analyzeExpStr()
     case REGMATCH:
     case DATEFORMAT:
     case PAD:
+    case GETWORD:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -139,6 +140,7 @@ bool FunctionC::analyzeExpStr()
     case COUNT:
     case UNIQUECOUNT:
     case ISNULL:
+    case COUNTWORD:
       m_datatype.datatype = LONG;
       break;
     case TIMEDIFF:
@@ -328,7 +330,7 @@ bool FunctionC::runSubstr(vector<string>* fieldvalues, map<string,string>* varva
         dts.datatype = STRING;
         return true;
       }else{
-        trace(ERROR, "Failed to run substr(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+        trace(ERROR, "(1)Failed to run substr(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
         return false;
       }
     }else{
@@ -337,7 +339,7 @@ bool FunctionC::runSubstr(vector<string>* fieldvalues, map<string,string>* varva
       return true;
     }      
   }else{
-    trace(ERROR, "Failed to run substr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "(2)Failed to run substr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
     return false;
   }
 }
@@ -460,6 +462,68 @@ bool FunctionC::runRegmatch(vector<string>* fieldvalues, map<string,string>* var
     return true;
   }else{
     trace(ERROR, "Failed to run regmatch(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runCountword(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1 && m_params.size() != 2){
+    trace(ERROR, "countword(str,[ingnore_quoters]) function accepts only one or two parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sQuoters=""; 
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sRaw, dts)){
+    if (m_params.size() == 2){
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sQuoters, dts)){
+        trace(ERROR, "(2)Failed to run countword(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        return false;
+      }
+    }
+    std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
+    vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true);
+    sResult = intToStr(vWords.size());
+    return true;
+  }else{
+    trace(ERROR, "(2)Failed to run countword(%s)!\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runGetword(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2 && m_params.size() != 3){
+    trace(ERROR, "getword(str,wordnum,[ingnore_quoters]) function accepts only two or three parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sPos, sQuoters=""; 
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sRaw, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sPos, dts) && isInt(sPos)){
+    int iPos = atoi(sPos.c_str());
+    if (iPos<=0){
+      trace(ERROR, "%s cannot be zero a negative number!\n", sPos.c_str(), m_params[0].m_expStr.c_str());
+      return false;
+    }
+    if (m_params.size() == 3){
+      if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, sQuoters, dts)){
+        trace(ERROR, "(1)Failed to run getword(%s,%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+        return false;
+      }
+    }
+    std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
+    vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true);
+    if (vWords.size() == 0){
+      trace(WARNING, "No word found in '%s'!\n", m_params[0].m_expStr.c_str());
+      return false;
+    }
+    if (iPos>0 && iPos<=vWords.size()){
+      sResult = vWords[iPos-1];
+      return true;
+    }else{
+      trace(WARNING, "%s is out of range of the word list in '%s'!\n", m_params[1].m_expStr.c_str(), m_params[0].m_expStr.c_str());
+      return false;
+    }
+  }else{
+    trace(ERROR, "(2)Failed to run getword(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
     return false;
   }
 }
@@ -739,111 +803,6 @@ bool FunctionC::runLeast(vector<string>* fieldvalues, map<string,string>* varval
   return true;
 }
 
-// run function and get result
-bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
-{
-  bool getResult = false;
-    switch(m_funcID){
-    case UPPER:
-      getResult = runUpper(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case LOWER:
-      getResult = runLower(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case SUBSTR:
-      getResult = runSubstr(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case FLOOR:
-      getResult = runFloor(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case CEIL:
-      getResult = runCeil(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case TIMEDIFF:
-      getResult = runTimediff(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case ISNULL:
-      getResult = runIsnull(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case INSTR:
-      getResult = runInstr(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case STRLEN:
-      getResult = runStrlen(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case COMPARESTR:
-      getResult = runComparestr(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case NOCASECOMPARESTR:
-      getResult = runNoCaseComparestr(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case REPLACE:
-      getResult = runReplace(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case REGREPLACE:
-      getResult = runRegreplace(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case REGMATCH:
-      getResult = runRegmatch(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case SWITCH:
-      getResult = runSwitch(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case PAD:
-      getResult = runPad(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case GREATEST:
-      getResult = runGreatest(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case LEAST:
-      getResult = runLeast(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case ROUND:
-      getResult = runRound(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case LOG:
-      getResult = runLog(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case DATEFORMAT:
-      getResult = runDateformat(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case TRUNCDATE:
-      getResult = runTruncdate(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case NOW:
-      getResult = runNow(fieldvalues, varvalues, aggFuncs, sResult, dts);
-      break;
-    case SUM:
-    case COUNT:
-    case UNIQUECOUNT:
-    case MAX:
-    case MIN:
-    case AVERAGE: {// aggregation function eval parameter expression only!
-      if (m_params.size() != 1){
-        trace(ERROR, "Aggregation (%s) function accepts only one parameter.\n", m_funcName.c_str());
-        return false;
-      }
-      if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, dts))
-        return true;
-      else{
-        trace(ERROR, "Failed to eval aggregation (%s) function parameter (%s).\n", m_funcName.c_str(),m_params[0].getEntireExpstr().c_str());
-        return false;
-      }
-      break;
-    }
-    case FOREACH:
-      break;
-      //trace(ERROR, "Internal error: Macro function '%s' is not parsed yet!\n", m_funcName.c_str());
-      //return false;
-    default:{
-      trace(ERROR, "Function(2) '%s' is not supported yet!\n", m_funcName.c_str());
-      return false;
-    }
-  }
-
-  return getResult;
-}
-
 // expand foreach to a vector of expression
 // foreach(beginid,endid,macro_expr). $ stands for field, # stands for field sequence, % stands for the largest field sequence ID.
 vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
@@ -926,4 +885,115 @@ vector<ExpressionC> FunctionC::expandForeach(vector<ExpressionC> vExps)
     trace(DEBUG,"(2)Expanded foreach element '%s'\n",expr.getEntireExpstr().c_str());
   }
   return vExpr;
+}
+
+// run function and get result
+bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  bool getResult = false;
+    switch(m_funcID){
+    case UPPER:
+      getResult = runUpper(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case LOWER:
+      getResult = runLower(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case SUBSTR:
+      getResult = runSubstr(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case FLOOR:
+      getResult = runFloor(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case CEIL:
+      getResult = runCeil(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case TIMEDIFF:
+      getResult = runTimediff(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case ISNULL:
+      getResult = runIsnull(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case INSTR:
+      getResult = runInstr(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case STRLEN:
+      getResult = runStrlen(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case COMPARESTR:
+      getResult = runComparestr(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case NOCASECOMPARESTR:
+      getResult = runNoCaseComparestr(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case REPLACE:
+      getResult = runReplace(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case REGREPLACE:
+      getResult = runRegreplace(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case REGMATCH:
+      getResult = runRegmatch(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case COUNTWORD:
+      getResult = runCountword(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case GETWORD:
+      getResult = runGetword(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case SWITCH:
+      getResult = runSwitch(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case PAD:
+      getResult = runPad(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case GREATEST:
+      getResult = runGreatest(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case LEAST:
+      getResult = runLeast(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case ROUND:
+      getResult = runRound(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case LOG:
+      getResult = runLog(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case DATEFORMAT:
+      getResult = runDateformat(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case TRUNCDATE:
+      getResult = runTruncdate(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case NOW:
+      getResult = runNow(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case SUM:
+    case COUNT:
+    case UNIQUECOUNT:
+    case MAX:
+    case MIN:
+    case AVERAGE: {// aggregation function eval parameter expression only!
+      if (m_params.size() != 1){
+        trace(ERROR, "Aggregation (%s) function accepts only one parameter.\n", m_funcName.c_str());
+        return false;
+      }
+      if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, dts))
+        return true;
+      else{
+        trace(ERROR, "Failed to eval aggregation (%s) function parameter (%s).\n", m_funcName.c_str(),m_params[0].getEntireExpstr().c_str());
+        return false;
+      }
+      break;
+    }
+    case FOREACH:
+      break;
+      //trace(ERROR, "Internal error: Macro function '%s' is not parsed yet!\n", m_funcName.c_str());
+      //return false;
+    default:{
+      trace(ERROR, "Function(2) '%s' is not supported yet!\n", m_funcName.c_str());
+      return false;
+    }
+  }
+
+  return getResult;
 }

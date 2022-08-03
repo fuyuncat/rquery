@@ -27,7 +27,7 @@
 
 using namespace std;
 
-#define VERSION "v0.912"
+#define VERSION "v0.92"
 
 #define UNKNOWN 0
 
@@ -119,7 +119,8 @@ using namespace std;
 #define LEAST 22
 #define REGMATCH 23
 #define COUNTWORD 24
-#define ZONECONVERT 25
+#define GETWORD 25
+#define ZONECONVERT 26
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103
@@ -205,6 +206,7 @@ string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); 
 int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
 vector<string> split(const string & str, string delim = " ", string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+vector<string> split(const string & str, std::set<char> delims = {' ','\t','\n','\r'}, string quoters = "''\"\"", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 int findFirstCharacter(const string & str, std::set<char> lookfor, size_t pos=0, string quoters = "''()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 int findFirstSub(const string & str, const string & lookfor, size_t pos=0, string quoters = "''()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 string readLine(string str, size_t & pos); // read a line

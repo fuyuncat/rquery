@@ -1,5 +1,8 @@
 # Change Log
 All change logs will be documented here.
+   # [0.92] 2022-08-03
+   New feature: new function: countword(str,[ingnore_quoters]) -- Get the number of word in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word
+   New feature: new function: getword(str,wordnum,[ingnore_quoters]) -- Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word
    # [0.913] 2022-08-02
    New feature: @N can be used for abbrevation of @fieldN
    New option: --nameline | -n Yes/no : Specify the first line should be used for filed names (useful for csv files). Default is no.

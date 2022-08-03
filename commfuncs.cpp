@@ -354,6 +354,54 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
   str = sReturn;
 }
 
+vector<string> split(const string & str, std::set<char> delims, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable)
+{
+  //trace(DEBUG, "Splitting string:'%s', quoters: '%s'\n",str.c_str(), quoters.c_str());
+  vector<string> v;
+  string element="";
+  size_t i = 0, j = 0, begin = 0;
+  vector<int> q;
+  while(i < str.length()) {
+    if (delims.find(str[i])!=delims.end() && i>0 && str[i-1]!=escape && q.size()==0) {
+      //trace(DEBUG, "(1)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
+      //v.push_back(element);
+      element = "";
+      v.push_back(str.substr(begin, i-begin));
+      while(repeatable && i<str.length()-1 && delims.find(str[i+1])!=delims.end()) // skip repeated delim
+        i++;
+      begin = i+1;
+    }else{
+      if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
+        i++;
+      element.push_back(str[i]);
+    }
+    if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+      if (i>0 && str[i-1]!=escape){
+        //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+        q.pop_back();
+        ++i;
+        continue;
+      }
+    if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
+      for (int k=0; k<(int)(quoters.size()/2); k++){
+        if (str[i] == quoters[k*2])
+          if (k*2+1<quoters.size() && (i==0 || (i>0 && str[i-1]!=escape))){
+            //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+            q.push_back(k*2+1); // quoted start, need to pair the right quoter
+            break;
+          }
+      }
+    ++i;
+  }
+  if (begin<str.size())
+    v.push_back(str.substr(begin, str.size()-begin));
+
+  if (q.size() > 0)
+    trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
+
+  return v;
+}
+
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
 vector<string> split(const string & str, char delim, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable) 
 {
@@ -1400,6 +1448,8 @@ short int encodeFunction(string str)
     return REGMATCH;
   else if(sUpper.compare("COUNTWORD")==0)
     return COUNTWORD;
+  else if(sUpper.compare("GETWORD")==0)
+    return GETWORD;
   else if(sUpper.compare("ZONECONVERT")==0)
     return ZONECONVERT;
   else if(sUpper.compare("ISNULL")==0)

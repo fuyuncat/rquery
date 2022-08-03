@@ -134,11 +134,11 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
           delete node->m_rightExpression;
         }
         node->m_rightExpression = NULL;
-        if (node->m_rightExpStr.size()<2 || node->m_rightExpStr[0]!='(' || node->m_rightExpStr[node->m_rightExpStr.size()-1]!=')'){
+        if (node->m_rightExpStr.length()<2 || node->m_rightExpStr[0]!='(' || node->m_rightExpStr[node->m_rightExpStr.length()-1]!=')'){
           trace(ERROR, "Invalid IN string '%s'\n", node->m_rightExpStr.c_str());
           return;
         }
-        string sElements = node->m_rightExpStr.substr(1,node->m_rightExpStr.size()-2);
+        string sElements = node->m_rightExpStr.substr(1,node->m_rightExpStr.length()-2);
         vector<string> vElements = split(sElements,',',"''()",'\\',{'(',')'});
         for (int i=0;i<vElements.size();i++){
           string sResult, sElement = trim_copy(vElements[i]);

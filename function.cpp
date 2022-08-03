@@ -481,7 +481,7 @@ bool FunctionC::runCountword(vector<string>* fieldvalues, map<string,string>* va
       }
     }
     std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
-    vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true);
+    vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true,true);
     sResult = intToStr(vWords.size());
     return true;
   }else{
@@ -510,7 +510,7 @@ bool FunctionC::runGetword(vector<string>* fieldvalues, map<string,string>* varv
       }
     }
     std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
-    vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true);
+    vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true,true);
     if (vWords.size() == 0){
       trace(WARNING, "No word found in '%s'!\n", m_params[0].m_expStr.c_str());
       return false;

@@ -209,22 +209,22 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
   try{
     ExpressionC* newNode = new ExpressionC();
     newNode->m_expstrAnalyzed = true;
-    if (expStr.size()>1 && expStr[0]=='/' && expStr[expStr.size()-1]=='/') { // regular expression string can NOT operate with any other expression!
+    if (expStr.length()>1 && expStr[0]=='/' && expStr[expStr.length()-1]=='/') { // regular expression string can NOT operate with any other expression!
       buildLeafNode(expStr, newNode);
       return newNode->getTopParent();
     }
     int iPos = findFirstCharacter(expStr, m_operators, 0, "''()", '\\',{'(',')'});
     if (iPos<0) { // didnt find any operator, reached the end
-      if (expStr.size()>1 && expStr[0]=='(' && expStr[expStr.size()-1]==')') { // quoted expression
+      if (expStr.length()>1 && expStr[0]=='(' && expStr[expStr.length()-1]==')') { // quoted expression
         newNode->clear();
         delete newNode;
-        newNode = BuildTree(expStr.substr(1,expStr.size()-2),NULL);
+        newNode = BuildTree(expStr.substr(1,expStr.length()-2),NULL);
       }else{ // atom expression to be built as a leaf
         buildLeafNode(expStr, newNode);
       }
     }else{ // got an operator, building a branch
       //trace(DEBUG, "Found '%s'(%d) in '%s'\n",expStr.substr(iPos,1).c_str(),iPos,expStr.c_str());
-      if (iPos == expStr.size() - 1){ // operator should NOT be the end
+      if (iPos == expStr.length() - 1){ // operator should NOT be the end
         newNode->clear();
         delete newNode;
         trace(ERROR, "Operator should NOT be the end of the expression!\n");
@@ -280,7 +280,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
     node->m_expstrAnalyzed = true;    
     // check if it is a variable
     if (expStr[0]=='@'){
-      if (expStr.size()>1){
+      if (expStr.length()>1){
         node->m_datatype.datatype = UNKNOWN;
         node->m_expType = VARIABLE;
         node->m_expstrAnalyzed = true;
@@ -290,7 +290,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         else if (node->m_expStr.compare("@LINE") == 0 || node->m_expStr.compare("@ROW") == 0 || node->m_expStr.compare("@ROWSORTED") == 0)
           node->m_datatype.datatype = LONG;
         else if (node->m_expStr.find("@FIELD") == 0){
-          string sColId = m_expStr.substr(string("@FIELD").size());
+          string sColId = m_expStr.substr(string("@FIELD").length());
           node->m_colId = isInt(sColId)?atoi(sColId.c_str())-1:-1;
         }else if (isInt(node->m_expStr.substr(1))){ // @N is abbreviasion of @fieldN
           string sColId = node->m_expStr.substr(1);
@@ -307,7 +307,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         return false;
       }
     //}else if (expStr[0] == '/'){
-    //  if (expStr.size()>1 && expStr[expStr.size()-1] == '/'){ // whole string is a regular expression string
+    //  if (expStr.length()>1 && expStr[expStr.length()-1] == '/'){ // whole string is a regular expression string
     //    node->m_datatype.datatype = STRING;
     //    node->m_expType = CONST;
     //    node->m_expStr = trim_pair(expStr,"//");
@@ -319,8 +319,8 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
     //  }
     //}else if (expStr[0] == '{'){ // checking DATE string
     //  int iOffSet;
-    //  if (expStr.size()>1 && expStr[expStr.size()-1] == '}'){ // whole string is a date string
-    //    if (isDate(expStr.substr(1,expStr.size()-2), iOffSet, node->m_datatype.extrainfo))
+    //  if (expStr.length()>1 && expStr[expStr.length()-1] == '}'){ // whole string is a date string
+    //    if (isDate(expStr.substr(1,expStr.length()-2), iOffSet, node->m_datatype.extrainfo))
     //      node->m_datatype.datatype = DATE;
     //    else{
     //      trace(ERROR, "Unrecognized date format of '%s'. \n", expStr.c_str());
@@ -336,7 +336,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
     //    return false;
     //  }
     }else if (expStr[0] == '\''){ // checking STRING string
-      if (expStr.size()>1 && expStr[expStr.size()-1] == '\''){ // whole string is a STRING string
+      if (expStr.length()>1 && expStr[expStr.length()-1] == '\''){ // whole string is a STRING string
         int iOffSet, iPos = 0;
         node->m_expStr = readQuotedStr(expStr, iPos, "''", '\\');
         if (isDate(node->m_expStr, iOffSet, node->m_datatype.extrainfo))
@@ -366,7 +366,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
       node->m_expType = CONST;
       node->m_expstrAnalyzed = true;
       return true;
-    }else if (expStr.find("(")>0 && expStr[expStr.size()-1]==')') { // checking FUNCTION
+    }else if (expStr.find("(")>0 && expStr[expStr.length()-1]==')') { // checking FUNCTION
       int iQuoteStart = expStr.find("(");
       string sFuncName = upper_copy(trim_copy(expStr.substr(0,iQuoteStart)));
       string sParams = trim_copy(expStr.substr(iQuoteStart));
@@ -592,7 +592,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
       }
       //m_expStr = trim_copy(m_expStr);
       // check if it is a variable
-      //if (m_expStr.size()>0 && m_expStr[0]=='@'){
+      //if (m_expStr.length()>0 && m_expStr[0]=='@'){
       if (m_expType == VARIABLE){
         m_expStr = upper_copy(trim_copy(m_expStr));
         //string strVarName = upper_copy(m_expStr);
@@ -603,7 +603,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0)
           m_datatype.datatype = LONG;
         else if (m_expStr.find("@FIELD") == 0){
-          string sColId = m_expStr.substr(string("@FIELD").size());
+          string sColId = m_expStr.substr(string("@FIELD").length());
           int iColID = isInt(sColId)?atoi(sColId.c_str())-1:-1;
           if (!sColId.empty() && iColID < fieldtypes->size()){
             m_expType = COLUMN;
@@ -627,13 +627,13 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
       if (m_datatype.datatype == UNKNOWN){
         // check if it is a function FUNCNAME(...)
         int lefParPos = m_expStr.find("(");
-        if (m_expStr.size()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.size()-1] == ')')
+        if (m_expStr.length()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.length()-1] == ')')
           m_expType = FUNCTION;
         if (m_expType == CONST){
           // check if it is a time, quoted by {}
           int iOffSet;
-          if (m_expStr.size()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.size()-1]=='}'){
-            if (isDate(m_expStr.substr(1,m_expStr.size()-2),iOffSet,m_datatype.extrainfo)){
+          if (m_expStr.length()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.length()-1]=='}'){
+            if (isDate(m_expStr.substr(1,m_expStr.length()-2),iOffSet,m_datatype.extrainfo)){
               m_datatype.datatype = DATE;
             }else{
               trace(ERROR,"Failed to get the date format from '%s'.\n", m_expStr.c_str());
@@ -645,13 +645,13 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
             return m_datatype;
           }
           // check if it is a string, quoted by ''
-          if (m_expStr.size()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.size()-1]=='\''){
+          if (m_expStr.length()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.length()-1]=='\''){
             m_datatype.datatype = STRING;
             trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
             return m_datatype;
           }
           // check if it is a regular expression string, quoted by //
-          if (m_expStr.size()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.size()-1]=='/'){
+          if (m_expStr.length()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.length()-1]=='/'){
             m_datatype.datatype = STRING;
             trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
             return m_datatype;

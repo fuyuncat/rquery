@@ -504,26 +504,27 @@ string trim_pair(const string & str, const string & pair)
 
 string trim(const string & str, char c)
 {
-  string newstr = trim_one(str, c);
-  while (newstr.length() != str.length())
-    newstr = trim_one(str, c);
-  return newstr;
+  //string newstr = trim_one(str, c);
+  //while (newstr.length() != str.length())
+  //  newstr = trim_one(str, c);
+  //return newstr;
+  return trim_left(trim_right(str,c,true),c,true);
 }
 
-string trim_right(const string & str, char c)
+string trim_right(const string & str, char c, bool repeat)
 {
-  string newstr = str;
-  if (newstr[newstr.length()-1] == c)
-    newstr = newstr.substr(0,newstr.length()-1);
-  return newstr;
+  size_t i = str.length()-1;
+  while ((str[i] == c || (c==' ' && str[i] == '\t')) && (i == str.length()-1 || repeat))
+    i--;
+  return str.substr(0,i+1);
 }
 
-string trim_left(const string & str, char c)
+string trim_left(const string & str, char c, bool repeat)
 {
-  string newstr = str;
-  if (newstr[0] == c)
-    newstr = newstr.substr(1);
-  return newstr;
+  size_t i = 0;
+  while ((str[i] == c || (c==' ' && str[i] == '\t')) && (i == 0 || repeat))
+    i++;
+  return str.substr(i);
 }
 
 string trim_one(const string & str, char c)
@@ -1577,6 +1578,8 @@ short int encodeFunction(string str)
     return TRIM;
   else if(sUpper.compare("ISNULL")==0)
     return ISNULL;
+  else if(sUpper.compare("DATATYPE")==0)
+    return DATATYPE;
   else if(sUpper.compare("SWITCH")==0)
     return SWITCH;
   else if(sUpper.compare("PAD")==0)
@@ -1607,8 +1610,12 @@ short int encodeFunction(string str)
     return MIN;
   else if(sUpper.compare("AVERAGE")==0)
     return AVERAGE;
+  else if(sUpper.compare("LISTAGG")==0)
+    return LISTAGG;
   else if(sUpper.compare("FOREACH")==0)
     return FOREACH;
+  else if(sUpper.compare("PREVIOUS")==0)
+    return PREVIOUS;
   else
     return UNKNOWN;
 }

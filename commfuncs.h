@@ -128,13 +128,16 @@ using namespace std;
 #define TRIMRIGHT 31
 #define TRIM 32
 #define RANDSTR 33
+#define DATATYPE 34
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103
 #define MAX 104
 #define MIN 105
 #define AVERAGE 106
+#define LISTAGG 107
 #define FOREACH 501
+#define PREVIOUS 502
 
 #define TEXT 1
 #define JSON 2
@@ -228,8 +231,8 @@ vector <string> getAllTokens(string str, string token); //get all matched regela
 bool matchToken(string str, string token); // check if matched regelar token
 
 string trim_pair(const string & str, const string & pair);
-string trim_left(const string & str, char c = ' ');
-string trim_right(const string & str, char c = ' ');
+string trim_left(const string & str, char c = ' ', bool repeat=false);
+string trim_right(const string & str, char c = ' ', bool repeat=false);
 string trim_one(const string & str, char c = ' ');
 string trim(const string & str, char c = ' ');
 string trim_copy(const string & str);

@@ -214,6 +214,22 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
       return newNode->getTopParent();
     }
     int iPos = findFirstCharacter(expStr, m_operators, 0, "''()", '\\',{'(',')'});
+    // check if is a scientific notation number, e.g.1.58e+8
+    if(iPos>1 && iPos<expStr.length()-1 && (expStr[iPos-1]=='e' || expStr[iPos-1]=='E') && (expStr[iPos]=='+' || expStr[iPos] == '-')){
+      trace(DEBUG, "Checking scientific notation number for base '%s'\n", expStr.substr(0,iPos-1).c_str());
+      //check left of +/1 is a double number
+      if (isDouble(expStr.substr(0,iPos-1))){
+        int iNextPos = findFirstCharacter(expStr, m_operators, iPos+1, "''()", '\\',{'(',')'});
+        string sNotation="";
+        if (iNextPos < 0)
+          sNotation = expStr.substr(iPos+1);
+        else
+          sNotation = expStr.substr(iPos+1,iNextPos-iPos-1);
+        trace(DEBUG, "Checking scientific notation number for notation '%s'\n", sNotation.c_str());
+        if (isInt(sNotation)) // this is a scientific notation number
+          iPos = iNextPos;
+      }
+    }
     if (iPos<0) { // didnt find any operator, reached the end
       if (expStr.length()>1 && expStr[0]=='(' && expStr[expStr.length()-1]==')') { // quoted expression
         newNode->clear();

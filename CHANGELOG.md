@@ -4,6 +4,11 @@ All change logs will be documented here.<br/>
    Fixed bug: Quoters is not escaped in string.<br/>
    Fixed bug: Quoters failed to be evaled in an expression.<br/>
    Fixed bug: Filed data type is not set correct when using @N abbrevation.<br/>
+   New feature: new function: trimleft(str[,char]) -- Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   New feature: new function: trimright(str[,char]) -- Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   New feature: new function: trim(str[,char]) -- Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   New feature: new function: datatype(expr) -- Return the date type of the expression.<br/>
+   Enhancement: scientific notation number, e.g.1.58e+8 can be recognized.<br/>
    # [0.921] 2022-08-03
    Fixed bug: wildcard/delmiter searching might cause infinite loop in very rare scenarios<br/>
    New feature: new variable @% for the number of fields.

@@ -1,14 +1,18 @@
 # Examples and scenarios
 - Get lines containing specific string (equal to grep)<br/>
-`rq -q "select @raw | filter @raw like '*strptime*'" test.cpp`<br/>
-Returns result:<br/>
+   ```
+   rq -q "select @raw | filter @raw like '*strptime*'" test.cpp
+   ```
+   Returns result:<br/>
    ```
      printf("strptime is defined!\n");
      char * c = strptime("20220728", "%Y%m%d", &tm);
    ```
 - Get lines matched a regular pattern (equal to grep -E or egrep)<br/>
-`rq -q "select @raw | filter @raw reglike '(struct|char)'" test.cpp`<br/>
-Returns result:<br/>
+   ```
+   rq -q "select @raw | filter @raw reglike '(struct|char)'" test.cpp
+   ```
+   Returns result:<br/>
    ```
     struct tm;
     char * c = strptime("20220728", "%Y%m%d", &tm);
@@ -55,7 +59,7 @@ Returns result:<br/>
    ```
    Another example: A simple way to search hourly hit counts from apache/nginx logs..<br/>
    ```
-   rq -q "p d/ /\"\"[]/ | t @4 date '[%d/%b/%Y:%H:%M:%S %z]' | s truncdate(@4,3600), count(1) | g truncdate(@4,3600) | o truncdate(@4,3600)" logs/g_access_log.log
+   rq -q "p d/ /\"\"[]/ | t @4 date '[%d/%b/%Y:%H:%M:%S %z]' | s truncdate(@4,3600), count(1) | g truncdate(@4,3600) | o 1" logs/g_access_log.log
    ```
    Returns result:<br/>
    ```
@@ -72,6 +76,37 @@ Returns result:<br/>
    [22/Jul/2022:18:00:00 +0000]    6
    [22/Jul/2022:19:00:00 +0000]    1
    [22/Jul/2022:23:00:00 +0000]    6
+   ```
+- Generate a simple hourly load graph by querying apache/nginx logs.<br/>
+   ```
+   rq -p on -q "p d/ /\"\"[]/ | t @5 date '[%d/%b/%Y:%H:%M:%S %z]' | select dateformat(truncdate(@5,3600))+':'+pad('#',round(count(1)/1000)) | group truncdate(@5,3600) | sort 1 asc " access.log.20220788
+   ```
+   Returns result:<br/>
+   ```
+   [08/Jul/2022:10:00:00 +0000]:#################################################################################
+   [08/Jul/2022:11:00:00 +0000]:##########################################################################################
+   [08/Jul/2022:12:00:00 +0000]:#################################################################################
+   [08/Jul/2022:13:00:00 +0000]:#################################################################################
+   [08/Jul/2022:14:00:00 +0000]:###################################################################################################
+   [08/Jul/2022:15:00:00 +0000]:################################################################################################
+   [08/Jul/2022:16:00:00 +0000]:#####################################################################
+   [08/Jul/2022:17:00:00 +0000]:###############################
+   [08/Jul/2022:18:00:00 +0000]:######################
+   [08/Jul/2022:19:00:00 +0000]:#####################
+   [08/Jul/2022:20:00:00 +0000]:######################
+   [08/Jul/2022:21:00:00 +0000]:###################
+   [08/Jul/2022:22:00:00 +0000]:###############
+   [08/Jul/2022:23:00:00 +0000]:################
+   [09/Jul/2022:00:00:00 +0000]:#############
+   [09/Jul/2022:01:00:00 +0000]:#############
+   [09/Jul/2022:02:00:00 +0000]:#############
+   [09/Jul/2022:03:00:00 +0000]:##############
+   [09/Jul/2022:04:00:00 +0000]:###########
+   [09/Jul/2022:05:00:00 +0000]:######
+   [09/Jul/2022:06:00:00 +0000]:############
+   [09/Jul/2022:07:00:00 +0000]:##########
+   [09/Jul/2022:08:00:00 +0000]:###########
+   [09/Jul/2022:09:00:00 +0000]:###################
    ```
 - Get fields number of each line using delmiter matching a file.<br/>
    ```
@@ -729,4 +764,36 @@ Returns result:<br/>
    Returns result:<br/>
    ```
    P@R32YOM*Z16R3R5`
+   ```
+- trimleft(str[,char]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   ```
+   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimleft(@2,' ')+'\''"
+   ```
+   Returns result:<br/>
+   ```
+     bbb   'bbb  '
+   ```
+- trimright(str[,char]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   ```
+   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimright(@2,' ')+'\''"
+   ```
+   Returns result:<br/>
+   ```
+     bbb   '  bbb'
+   ```
+- trim(str[,char]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   ```
+   echo "aaa,  bbb  " | ./rq -q "p d/,/ | s @2, '\''+trim(@2,' ')+'\''"
+   ```
+   Returns result:<br/>
+   ```
+     bbb   'bbb'
+   ```
+- datatype(expr) : Normal function. Return the date type of the expression.<br/>
+   ```
+   echo " " | ./rq -q "s 8+1.32e+8, datatype(1.32e+8), datatype('2009-12-08')"
+   ```
+   Returns result:<br/>
+   ```
+   132000008       DOUBLE  DATE
    ```

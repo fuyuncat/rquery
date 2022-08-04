@@ -129,6 +129,10 @@ bool FunctionC::analyzeExpStr()
     case PAD:
     case GETWORD:
     case RANDSTR:
+    case TRIMLEFT:
+    case TRIMRIGHT:
+    case TRIM:
+    case DATATYPE:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -531,6 +535,23 @@ bool FunctionC::runGetword(vector<string>* fieldvalues, map<string,string>* varv
   }
 }
 
+bool FunctionC::runDatatype(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "datatype() function accepts only one parameter.\n");
+    return false;
+  }
+  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, dts);
+  if (gotResult){
+    string extrainfo;
+    sResult = decodeDatatype(detectDataType(sResult, extrainfo));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run datatype(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
 bool FunctionC::runFloor(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 1){
@@ -653,7 +674,7 @@ bool FunctionC::runRandom(vector<string>* fieldvalues, map<string,string>* varva
 bool FunctionC::runRandstr(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() > 2){
-    trace(ERROR, "runRandstr([min,][max]) function accepts only one parameter.\n");
+    trace(ERROR, "runRandstr([min,][max]) function accepts two parameters at most.\n");
     return false;
   }
   string sLen="8", sFlags="uld";
@@ -670,6 +691,87 @@ bool FunctionC::runRandstr(vector<string>* fieldvalues, map<string,string>* varv
     }
   }
   sResult = randstr(atoi(sLen.c_str()),sFlags);
+  return true;
+}
+
+bool FunctionC::runTrimleft(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1 && m_params.size() != 2){
+    trace(ERROR, "trimleft(str[,char]) function accepts only one or two parameters.\n");
+    return false;
+  }
+  string sStr, sChar=" ";
+  if (m_params.size() > 0){
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sStr, dts)){ 
+      trace(ERROR, "Failed to run trimleft(%s)!\n", m_params[0].m_expStr.c_str());
+      return false;
+    }
+    if (m_params.size() > 1){ 
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sChar, dts)){ 
+        trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        return false;
+      }
+      if (sChar.length()!=1){
+        trace(ERROR, "The second parameter of trimleft should only be one char!\n");
+        return false;
+      }
+    }
+  }
+  sResult = trim_left(sStr, sChar[0], true);
+  return true;
+}
+
+bool FunctionC::runTrimright(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1 && m_params.size() != 2){
+    trace(ERROR, "trimright(str[,char]) function accepts only one or two parameters.\n");
+    return false;
+  }
+  string sStr, sChar=" ";
+  if (m_params.size() > 0){
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sStr, dts)){ 
+      trace(ERROR, "Failed to run trimright(%s)!\n", m_params[0].m_expStr.c_str());
+      return false;
+    }
+    if (m_params.size() > 1){ 
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sChar, dts)){ 
+        trace(ERROR, "Failed to run trimright(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        return false;
+      }
+      if (sChar.length()!=1){
+        trace(ERROR, "The second parameter of trimright should only be one char!\n");
+        return false;
+      }
+    }
+  }
+  sResult = trim_right(sStr, sChar[0], true);
+  return true;
+}
+
+bool FunctionC::runTrim(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1 && m_params.size() != 2){
+    trace(ERROR, "trim(str[,char]) function accepts only one or two parameters.\n");
+    return false;
+  }
+  string sStr, sChar=" ";
+  if (m_params.size() > 0){
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sStr, dts)){ 
+      trace(ERROR, "Failed to run trim(%s)!\n", m_params[0].m_expStr.c_str());
+      return false;
+    }
+    if (m_params.size() > 1){ 
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, sChar, dts)){ 
+        trace(ERROR, "Failed to run trim(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        return false;
+      }
+      if (sChar.length()!=1){
+        trace(ERROR, "The second parameter of trim should only be one char!\n");
+        return false;
+      }
+    }
+  }
+  sResult = trim(sStr, sChar[0]);
   return true;
 }
 
@@ -993,8 +1095,20 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
     case RANDSTR:
       getResult = runRandstr(fieldvalues, varvalues, aggFuncs, sResult, dts);
       break;
+    case TRIMLEFT:
+      getResult = runTrimleft(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case TRIMRIGHT:
+      getResult = runTrimright(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case TRIM:
+      getResult = runTrim(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
     case PAD:
       getResult = runPad(fieldvalues, varvalues, aggFuncs, sResult, dts);
+      break;
+    case DATATYPE:
+      getResult = runDatatype(fieldvalues, varvalues, aggFuncs, sResult, dts);
       break;
     case SWITCH:
       getResult = runSwitch(fieldvalues, varvalues, aggFuncs, sResult, dts);

@@ -1,5 +1,5 @@
 # rquery
-&nbsp;&nbsp;&nbsp;RQuery is a tool to search string block/file/folder using regular/delmiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. <br />
+&nbsp;&nbsp;&nbsp;RQuery is a tool to search string block/file/folder using regular/delimiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. <br />
 &nbsp;&nbsp;&nbsp;Contact Email: fuyuncat@gmail.com<br />
 <br />
 # Install
@@ -21,7 +21,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
 &nbsp;&nbsp;&nbsp; chmod ugo+x rq<br />
 &nbsp;&nbsp;&nbsp; cp rq /usr/bin/<br />
 &nbsp;&nbsp;&nbsp; or directly run it from local.<br />
-<br />
+
 # Usage & Help Doc
 - run modes
    - Command line mode:<br />
@@ -102,6 +102,10 @@ Functions can be used in the expression. We current provide some essential norma
    - NocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - countword(str,[ingnore_quoters]) : Normal function. Get the number of word in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br />
    - getword(str,wordnum,[ingnore_quoters]) : Normal function. Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br />
+   - trimleft(str[,char]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br />
+   - trimright(str[,char]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   - trim(str[,char]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   - datatype(expr) : Normal function. Return the date type of the expression.<br/>
    - pad(seed,len) : Normal function. Construct a new string from seed multiple len times.<br />
    - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
    - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
@@ -122,7 +126,8 @@ Functions can be used in the expression. We current provide some essential norma
    - Max(expr) : Aggregation function. Get the maximum value of expr.<br />
    - Min(expr) : Aggregation function. Get the minimum value of expr.<br />
    - Average(expr) : Aggregation function. Get the average value of expr.<br />
-   - foreach(beginid,endid,macro_expr) : Macro function. make a macro expression list for all fields from beginid to endid. $ stands for field ($ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID. For example, foreach(%,2,substr($,2,3)+#) will make this expression list: substr(@fieldN,2,3)+N..,substr(@field3,2,3)+3,substr(@field2,2,3)+2. It can only be used in "select" and "sort". It cannot be a part of expression.
+   - foreach(beginid,endid,macro_expr) : Macro function. make a macro expression list for all fields from beginid to endid. $ stands for field ($ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID. For example, foreach(%,2,substr($,2,3)+#) will make this expression list: substr(@fieldN,2,3)+N..,substr(@field3,2,3)+3,substr(@field2,2,3)+2. It can only be used in "select" and "sort". It cannot be a part of expression.<br />
+
 # Example and scenarios
 - Query an apache or nginx access log, to get the number of hits from different clients, and the browser is Chrome or Firefox<br />
 `./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '(Chrome|Firefox)' | select host, count(1) | group host | sort count(1) desc" < access.log`
@@ -155,30 +160,38 @@ Functions can be used in the expression. We current provide some essential norma
    303     6
    500     5
    ```
-- Get the hourly hits from nginx log
+- Generate a simple hourly load graph by querying apache/nginx logs.<br/>
    ```
-    rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/| select truncdate(time,3600), count(1) | group truncdate(time,3600)" /var/log/nginx/access.log-20220629
-    truncdate(time,3600)    count(1)
-    --------------------    --------
-    28/Jun/2022:10:00:00 +1000      261
-    28/Jun/2022:11:00:00 +1000      77
-    28/Jun/2022:12:00:00 +1000      250
-    28/Jun/2022:13:00:00 +1000      165
-    28/Jun/2022:14:00:00 +1000      42
-    28/Jun/2022:15:00:00 +1000      121
-    28/Jun/2022:16:00:00 +1000      238
-    28/Jun/2022:17:00:00 +1000      118
-    28/Jun/2022:18:00:00 +1000      81
-    28/Jun/2022:19:00:00 +1000      106
-    28/Jun/2022:20:00:00 +1000      311
-    28/Jun/2022:21:00:00 +1000      86
-    28/Jun/2022:22:00:00 +1000      64
-    28/Jun/2022:23:00:00 +1000      63
-    29/Jun/2022:00:00:00 +1000      51
-    29/Jun/2022:01:00:00 +1000      76
-    29/Jun/2022:02:00:00 +1000      32
+   rq -p on -q "p d/ /\"\"[]/ | t @5 date '[%d/%b/%Y:%H:%M:%S %z]' | select dateformat(truncdate(@5,3600))+':'+pad('#',round(count(1)/1000)) | group truncdate(@5,3600) | sort 1 asc " access.log.20220708
    ```
-   More examples can be found here: https://github.com/fuyuncat/rquery/blob/main/EXAMPLES.md <br />
+   Returns result:<br/>
+   ```
+   [08/Jul/2022:10:00:00 +0000]:#################################################################################
+   [08/Jul/2022:11:00:00 +0000]:##########################################################################################
+   [08/Jul/2022:12:00:00 +0000]:#################################################################################
+   [08/Jul/2022:13:00:00 +0000]:#################################################################################
+   [08/Jul/2022:14:00:00 +0000]:###################################################################################################
+   [08/Jul/2022:15:00:00 +0000]:################################################################################################
+   [08/Jul/2022:16:00:00 +0000]:#####################################################################
+   [08/Jul/2022:17:00:00 +0000]:###############################
+   [08/Jul/2022:18:00:00 +0000]:######################
+   [08/Jul/2022:19:00:00 +0000]:#####################
+   [08/Jul/2022:20:00:00 +0000]:######################
+   [08/Jul/2022:21:00:00 +0000]:###################
+   [08/Jul/2022:22:00:00 +0000]:###############
+   [08/Jul/2022:23:00:00 +0000]:################
+   [09/Jul/2022:00:00:00 +0000]:#############
+   [09/Jul/2022:01:00:00 +0000]:#############
+   [09/Jul/2022:02:00:00 +0000]:#############
+   [09/Jul/2022:03:00:00 +0000]:##############
+   [09/Jul/2022:04:00:00 +0000]:###########
+   [09/Jul/2022:05:00:00 +0000]:######
+   [09/Jul/2022:06:00:00 +0000]:############
+   [09/Jul/2022:07:00:00 +0000]:##########
+   [09/Jul/2022:08:00:00 +0000]:###########
+   [09/Jul/2022:09:00:00 +0000]:###################
+   ```
+More examples can be found here: https://github.com/fuyuncat/rquery/blob/main/EXAMPLES.md <br />
 # Dependencies
 &nbsp;&nbsp;&nbsp;This engine currently depends on boost, we are planning to remove this dependency in the near future.<br />
 <br />

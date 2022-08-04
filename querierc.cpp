@@ -449,23 +449,32 @@ bool QuerierC::analyzeSortStr(){
 bool QuerierC::setFieldTypeFromStr(string setstr)
 {
   vector<string> vSetFields = split(setstr,',',"''()",'\\',{'(',')'});
+  string fieldname = "";
   for (int i=0; i<vSetFields.size(); i++){
     vector<string> vField = split(vSetFields[i],' ',"''()",'\\',{'(',')'});
     vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"''()",'\\',{'(',')'});
+    if (vField[0].empty()){
+      trace(ERROR, "Field name is empty!\n");
+      return false;
+    }
     if (vField.size()<2){
       trace(ERROR, "SET field type failed! Correct format is SET <FIELD> <TYPE>!\n");
       return false;
     }
-    trace(DEBUG, "Setting field '%s' data type '%s'!\n", vField[0].c_str(), vField[1].c_str());
     int iType = encodeDatatype(vField[1]);
+    fieldname = vField[0];
+    if (vField[0][0]='@' && vField[0].length()>1 && isInt(vField[0].substr(1))) // convert filed abbrevasion
+      fieldname = "@FIELD"+vField[0].substr(1);
     if (iType == UNKNOWN){
       trace(ERROR, "Unknown data type %s!\n", vField[1].c_str());
       return false;
     }else if(iType == DATE && vField.size() >= 2){
-      //trace(DEBUG2, "SET field '%s' type '%s' extrainfor '%s'!\n",vField[0].c_str(),decodeDatatype(iType).c_str(),trim_pair(vField[2],"''").c_str());
-      setFieldDatatype(vField[0], iType, trim_pair(vField[2],"''"));
-    }else
-      setFieldDatatype(vField[0], iType);
+      trace(DEBUG, "SET field '%s' type '%s' extrainfor '%s'!\n",fieldname.c_str(),decodeDatatype(iType).c_str(),trim_pair(vField[2],"''").c_str());
+      setFieldDatatype(fieldname, iType, trim_pair(vField[2],"''"));
+    }else{
+      trace(DEBUG, "SET field '%s' data type '%s'!\n", fieldname.c_str(), vField[1].c_str());
+      setFieldDatatype(fieldname, iType);
+    }
   }
   return true;
 }
@@ -873,7 +882,7 @@ bool QuerierC::searchStopped()
 
 void QuerierC::trialAnalyze(vector<string> matcheddata)
 {
-  trace(DEBUG, "Detecing data types from the matched line '%s'\n", matcheddata[0].c_str());
+  trace(DEBUG, "Detecting data types from the matched line '%s'\n", matcheddata[0].c_str());
   analyzeFiledTypes(matcheddata);
   trace(DEBUG2,"Detected field type %d/%d\n", m_fieldtypes.size(), matcheddata.size());
   if (m_bToAnalyzeSelectMacro || m_selections.size()==0){

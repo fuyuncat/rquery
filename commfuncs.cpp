@@ -1941,7 +1941,8 @@ bool evalString(string str1, int operate, string str2, string& result)
 {
   switch(operate){
   case PLUS:
-    result = trim_right(str1,'\'') + trim_left(str2,'\'');
+    //result = trim_right(str1,'\'') + trim_left(str2,'\'');
+    result = str1 + str2;
     return true;
   default:
     trace(ERROR, "Operation %s is not supported for STRING data type!\n", decodeOperator(operate).c_str());

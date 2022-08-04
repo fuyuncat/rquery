@@ -339,6 +339,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
       if (expStr.length()>1 && expStr[expStr.length()-1] == '\''){ // whole string is a STRING string
         int iOffSet, iPos = 0;
         node->m_expStr = readQuotedStr(expStr, iPos, "''", '\\');
+        trace(DEBUG, "Read STRING \"%s\" . \n", expStr.c_str());
         if (isDate(node->m_expStr, iOffSet, node->m_datatype.extrainfo))
           node->m_datatype.datatype = DATE;
         else
@@ -521,7 +522,12 @@ void ExpressionC::dump()
 
 string ExpressionC::getEntireExpstr()
 {
-  return (m_leftNode?m_leftNode->getEntireExpstr():"")+m_expStr+(m_rightNode?m_rightNode->getEntireExpstr():"");
+  string expStr = m_expStr;
+  if (m_type==LEAF&&m_expType==CONST&&(m_datatype.datatype==STRING||m_datatype.datatype==DATE||m_datatype.datatype==TIMESTAMP)){
+    replacestr(expStr,"'","\\'");
+    expStr = "'"+expStr+"'";
+  }
+  return (m_leftNode?m_leftNode->getEntireExpstr():"")+expStr+(m_rightNode?m_rightNode->getEntireExpstr():"");
 }
 
 // detect if predication contains special colId    
@@ -1034,7 +1040,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
       //  return true;
       //}
       if (varvalues->find(m_expStr) != varvalues->end()){
-        //trace(DEBUG, "Assigning '%s' to '%s' ... \n", (*varvalues)[m_expStr].c_str(), m_expStr.c_str());
+        trace(DEBUG, "Assigning '%s' to '%s' ... \n", (*varvalues)[m_expStr].c_str(), m_expStr.c_str());
         //dumpMap(*varvalues);
         sResult = (*varvalues)[m_expStr];
         dts = m_datatype;
@@ -1060,7 +1066,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
     }
     //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
     if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
-      //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
+      trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
       dts = m_datatype;
       return true;
     }else
@@ -1076,7 +1082,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
   if (m_type == LEAF){
     if (m_expType == CONST){
       sResult = m_expStr;
-      trace(DEBUG,"Return CONST '%s'\n", m_expStr.c_str());
+      trace(DEBUG,"Return CONST '%s' (%s)\n", m_expStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
       return true;
     }else if (m_expType == FUNCTION){
       //if (containGroupFunc()) // skip aggregation functions

@@ -53,6 +53,26 @@ Returns result:<br/>
    404     59
    406     1
    ```
+   Another example: A simple way to search hourly hit counts from apache/nginx logs..<br/>
+   ```
+   rq -q "p d/ /\"\"[]/ | t @4 date '[%d/%b/%Y:%H:%M:%S %z]' | s truncdate(@4,3600), count(1) | g truncdate(@4,3600) | o truncdate(@4,3600)" logs/g_access_log.log
+   ```
+   Returns result:<br/>
+   ```
+   [22/Jul/2022:01:00:00 +0000]    40
+   [22/Jul/2022:03:00:00 +0000]    4
+   [22/Jul/2022:05:00:00 +0000]    108
+   [22/Jul/2022:07:00:00 +0000]    77
+   [22/Jul/2022:08:00:00 +0000]    74
+   [22/Jul/2022:09:00:00 +0000]    41
+   [22/Jul/2022:10:00:00 +0000]    4422
+   [22/Jul/2022:11:00:00 +0000]    2
+   [22/Jul/2022:12:00:00 +0000]    1
+   [22/Jul/2022:16:00:00 +0000]    2
+   [22/Jul/2022:18:00:00 +0000]    6
+   [22/Jul/2022:19:00:00 +0000]    1
+   [22/Jul/2022:23:00:00 +0000]    6
+   ```
 - Get fields number of each line using delmiter matching a file.<br/>
    ```
    rq -f on -q "p d/ /\"\"/ | select @% as filednum, strlen(@raw) as linelen" access.log

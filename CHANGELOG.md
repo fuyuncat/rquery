@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.922] 2022-08-03
+   Fixed bug: Quoters is not escaped in string.<br/>
+   Fixed bug: Quoters failed to be evaled in an expression.<br/>
+   Fixed bug: Filed data type is not set correct when using @N abbrevation.<br/>
    # [0.921] 2022-08-03
    Fixed bug: wildcard/delmiter searching might cause infinite loop in very rare scenarios<br/>
    New feature: new variable @% for the number of fields.

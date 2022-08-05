@@ -55,7 +55,7 @@ bool ParserC::isJunctionWord(string word)
 map<string,string> ParserC::parseparam(string parameterstr)
 {
   //trace(DEBUG, "Original string: %s\n", parameterstr.c_str());
-  vector<string> params = split(parameterstr,'|',"''()",'\\',{'(',')'});
+  vector<string> params = split(parameterstr,'|',"''()",'\\',{'(',')'},false,true);
   //dumpVector(params);
   for (int i = 0; i < params.size(); ++i){
     string trimmedstr = trim_copy(params[i]);

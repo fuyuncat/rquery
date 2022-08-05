@@ -117,7 +117,7 @@ void QuerierC::setregexp(string regexstr)
   }
   if ((regexstr[0] == 'w' || regexstr[0] == 'W')&& regexstr[1] == '/' && regexstr[regexstr.length()-1] == '/'){
     m_searchMode = WILDSEARCH;
-    vector<string> vSearchPattern = split(regexstr.substr(2,regexstr.length()-3),'/',"",'\\',{'(',')'});
+    vector<string> vSearchPattern = split(regexstr.substr(2,regexstr.length()-3),'/',"",'\\',{'(',')'},false,true);
     //dumpVector(vSearchPattern);
     m_regexstr = vSearchPattern[0];
     if (vSearchPattern.size()>1){
@@ -140,7 +140,7 @@ void QuerierC::setregexp(string regexstr)
         trace(FATAL, "'%s' is not a valid searching pattern\n",regexstr.c_str());
       spattern = regexstr.substr(2,regexstr.length()-4);
     }
-    vector<string> vSearchPattern = split(spattern,'/',"",'\\',{'(',')'});
+    vector<string> vSearchPattern = split(spattern,'/',"",'\\',{'(',')'},false,true);
     m_regexstr = vSearchPattern[0];
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
@@ -195,7 +195,7 @@ void QuerierC::setEof(bool bEof)
 
 bool QuerierC::assignGroupStr(string groupstr)
 {
-  vector<string> vGroups = split(groupstr,',',"''()",'\\',{'(',')'});
+  vector<string> vGroups = split(groupstr,',',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vGroups.size(); i++){
     trace(DEBUG, "Processing group (%d) '%s'!\n", i, vGroups[i].c_str());
     string sGroup = trim_copy(vGroups[i]);
@@ -230,7 +230,7 @@ void QuerierC::setNameline(bool nameline)
 
 bool QuerierC::assignLimitStr(string limitstr)
 {
-  vector<string> vLimits = split(limitstr,',',"''()",'\\',{'(',')'});
+  vector<string> vLimits = split(limitstr,',',"''()",'\\',{'(',')'},false,true);
   string sFirst = trim_copy(vLimits[0]);
   int iFirst = 0;
   if (isInt(sFirst))
@@ -278,7 +278,7 @@ bool QuerierC::analyzeSelString(){
   trace(DEBUG, "Analyzing selections from '%s'!\n", m_selstr.c_str());
   m_selections.clear();
   m_selnames.clear();
-  vector<string> vSelections = split(m_selstr,',',"''()",'\\',{'(',')'});
+  vector<string> vSelections = split(m_selstr,',',"''()",'\\',{'(',')'},false,true);
   bool bGroupFunc = false, bNonGroupFuncSel = false;
   for (int i=0; i<vSelections.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
@@ -287,7 +287,7 @@ bool QuerierC::analyzeSelString(){
       trace(ERROR, "Empty selection string!\n");
       continue;
     }
-    vector<string> vSelAlias = split(sSel," as ","''()",'\\',{'(',')'});
+    vector<string> vSelAlias = split(sSel," as ","''()",'\\',{'(',')'},false,true);
     string sAlias = "";
     if (vSelAlias.size()>1)
       sAlias = trim_copy(vSelAlias[1]);
@@ -383,7 +383,7 @@ bool QuerierC::analyzeSortStr(){
     return true;
   m_sorts.clear();
   trace(DEBUG, "Processing sorting string '%s'!\n", m_sortstr.c_str());
-  vector<string> vSorts = split(m_sortstr,',',"''()",'\\',{'(',')'});
+  vector<string> vSorts = split(m_sortstr,',',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vSorts.size(); i++){
     trace(DEBUG, "Processing sorting keys (%d) '%s'!\n", i, vSorts[i].c_str());
     string sSort = trim_copy(vSorts[i]);
@@ -392,7 +392,7 @@ bool QuerierC::analyzeSortStr(){
       return false;
     }
     SortProp keyProp;
-    vector<string> vKP = split(sSort,' ',"''()",'\\',{'(',')'});
+    vector<string> vKP = split(sSort,' ',"''()",'\\',{'(',')'},false,true);
     if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
       keyProp.direction = ASC;
     else
@@ -414,7 +414,7 @@ bool QuerierC::analyzeSortStr(){
           vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_fieldtypes.size());
         for (int j=0; j<vExpandedExpr.size(); j++){
           SortProp keyPropE;
-          vKP = split(vExpandedExpr[j].getEntireExpstr(),' ',"''()",'\\',{'(',')'});
+          vKP = split(vExpandedExpr[j].getEntireExpstr(),' ',"''()",'\\',{'(',')'},false,true);
           trace(DEBUG, "Splited from expanded expression '%s' to '%s'(%d)\n",vExpandedExpr[j].getEntireExpstr().c_str(),vKP[0].c_str(),vKP.size());
           if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
             keyPropE.direction = ASC;
@@ -448,11 +448,11 @@ bool QuerierC::analyzeSortStr(){
 
 bool QuerierC::setFieldTypeFromStr(string setstr)
 {
-  vector<string> vSetFields = split(setstr,',',"''()",'\\',{'(',')'});
+  vector<string> vSetFields = split(setstr,',',"''()",'\\',{'(',')'},false,true);
   string fieldname = "";
   for (int i=0; i<vSetFields.size(); i++){
-    vector<string> vField = split(vSetFields[i],' ',"''()",'\\',{'(',')'});
-    vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"''()",'\\',{'(',')'});
+    vector<string> vField = split(vSetFields[i],' ',"''()",'\\',{'(',')'},false,true);
+    vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"''()",'\\',{'(',')'},false,true);
     if (vField[0].empty()){
       trace(ERROR, "Field name is empty!\n");
       return false;
@@ -482,9 +482,9 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
 void QuerierC::setUserVars(string variables)
 {
   trace(DEBUG, "Setting variables from '%s' !\n", variables.c_str());
-  vector<string> vVariables = split(variables,' ',"''()",'\\',{'(',')'});
+  vector<string> vVariables = split(variables,' ',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vVariables.size(); i++){
-    vector<string> vNameVal = split(vVariables[i],':',"''()",'\\',{'(',')'});
+    vector<string> vNameVal = split(vVariables[i],':',"''()",'\\',{'(',')'},false,true);
     if (vNameVal.size()<2){
       trace(ERROR, "Incorrect variable format!\n", vVariables[i].c_str());
       continue;
@@ -1057,14 +1057,14 @@ int QuerierC::searchNextDelm()
     string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
-    pos = 0;
     if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
     }
-    trace(DEBUG, "Read '%s'\n", sLine.c_str());
-    trace(DEBUG, "m_rawstr '%s'\n", m_rawstr.c_str());
-    vector<string>  matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable);
+    vector<string>  matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
+    trace(DEBUG, "searchNextDelm Read '%s'(flag:%d; len:%d) vector size: %d \n", sLine.c_str(), sLine.empty()&&bEnded, sLine.length(), matcheddata.size());
+    trace(DEBUG, "searchNextDelm pos/size %d/%d\n", pos, m_rawstr.length());
+    pos = 0;
     //dumpVector(matcheddata);
     if (matcheddata.size()==0 && bEnded)
       continue;

@@ -103,7 +103,7 @@ bool FunctionC::analyzeExpStr()
   m_funcName = trim_copy(upper_copy(m_expStr.substr(0, m_expStr.find("("))));
   m_expStr = m_funcName+"("+strParams+")";
   //strParams = trim_pair(strParams, "()");
-  vector<string> vParams = split(strParams,',',"''()",'\\',{'(',')'});
+  vector<string> vParams = split(strParams,',',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vParams.size(); i++){
     trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
     string sParam = trim_copy(vParams[i]);

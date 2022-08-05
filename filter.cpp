@@ -139,7 +139,7 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
           return;
         }
         string sElements = node->m_rightExpStr.substr(1,node->m_rightExpStr.length()-2);
-        vector<string> vElements = split(sElements,',',"''()",'\\',{'(',')'});
+        vector<string> vElements = split(sElements,',',"''()",'\\',{'(',')'},false,true);
         for (int i=0;i<vElements.size();i++){
           string sResult, sElement = trim_copy(vElements[i]);
           if (sElement.empty()){

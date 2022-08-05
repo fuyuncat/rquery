@@ -357,7 +357,7 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
 
 vector<string> split(const string & str, std::set<char> delims, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable, bool skipemptyelement)
 {
-  //trace(DEBUG, "Splitting string:'%s', quoters: '%s'\n",str.c_str(), quoters.c_str());
+  trace(DEBUG, "Splitting string:'%s', quoters: '%s'\n",str.c_str(), quoters.c_str());
   vector<string> v;
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
@@ -391,8 +391,11 @@ vector<string> split(const string & str, std::set<char> delims, string quoters, 
       }
     ++i;
   }
-  if (begin<str.length() && (!skipemptyelement || str.length()>begin))
-    v.push_back(str.substr(begin, str.length()-begin));
+  trace(DEBUG, "(1)Split the end of the string:%d/%d\n",begin, str.length());
+  if (!skipemptyelement || str.length()>begin)
+    v.push_back(str.length()>begin?str.substr(begin, str.length()-begin):"");
+  //if (begin<str.length() && (!skipemptyelement || str.length()>begin))
+  //  v.push_back(str.substr(begin, str.length()-begin));
 
   if (q.size() > 0)
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
@@ -436,8 +439,11 @@ vector<string> split(const string & str, char delim, string quoters, char escape
       }
     ++i;
   }
-  if (begin<str.length() && (!skipemptyelement || str.length()>begin))
-    v.push_back(str.substr(begin, str.length()-begin));
+  trace(DEBUG, "(2)Split the end of the string:%d/%d\n",begin, str.length());
+  if (!skipemptyelement || str.length()>begin)
+    v.push_back(str.length()>begin?str.substr(begin, str.length()-begin):"");
+  //if (begin<str.length() && (!skipemptyelement || str.length()>begin))
+  //  v.push_back(str.substr(begin, str.length()-begin));
 
   if (q.size() > 0)
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
@@ -485,8 +491,11 @@ vector<string> split(const string & str, string delim, string quoters, char esca
       }
     ++i;
   }
-  if (begin<str.length() && (!skipemptyelement || str.length()>begin))
-    v.push_back(str.substr(begin, str.length()-begin));
+  trace(DEBUG, "(2)Split the end of the string:%d/%d\n",begin, str.length());
+  if (!skipemptyelement || str.length()>begin)
+    v.push_back(str.length()>begin?str.substr(begin, str.length()-begin):"");
+  //if (begin<str.length() && (!skipemptyelement || str.length()>begin))
+  //  v.push_back(str.substr(begin, str.length()-begin));
 
   if (q.size() > 0)
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());

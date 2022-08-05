@@ -1,6 +1,8 @@
 # Change Log
 All change logs will be documented here.<br/>
-   # [0.922] 2022-08-03
+   # [0.923] 2022-08-04
+   Enhancement: Delimiter pattern now parse end of line as an empty field if the line is ended with a delimiter <br/>
+   # [0.922] 2022-08-04
    Fixed bug: Quoters is not escaped in string.<br/>
    Fixed bug: Quoters failed to be evaled in an expression.<br/>
    Fixed bug: Filed data type is not set correct when using @N abbrevation.<br/>

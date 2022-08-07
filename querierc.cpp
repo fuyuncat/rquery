@@ -100,6 +100,7 @@ void QuerierC::init()
 #ifdef __DEBUG__
   m_searchtime = 0;
   m_filtertime = 0;
+  m_sorttime = 0;
   m_evalGroupKeytime = 0;
   m_filtercomptime = 0;
   m_prepAggGPtime = 0;
@@ -170,6 +171,7 @@ void QuerierC::assignFilter(FilterC* filter)
   }
   m_filter = filter;
   m_filter->getAggFuncs(m_initAggProps);
+  m_filter->getAnaFuncs(m_initAnaArray);
   //m_filter->dump();
 }
 
@@ -321,6 +323,7 @@ bool QuerierC::analyzeSelString(){
             bNonGroupFuncSel = true;
 
           vExpandedExpr[j].getAggFuncs(m_initAggProps);
+          vExpandedExpr[j].getAnaFuncs(m_initAnaArray);
           m_selections.push_back(vExpandedExpr[j]);
         }
         m_bToAnalyzeSelectMacro = false;
@@ -339,6 +342,7 @@ bool QuerierC::analyzeSelString(){
       bNonGroupFuncSel = true;
 
     eSel.getAggFuncs(m_initAggProps);
+    eSel.getAnaFuncs(m_initAnaArray);
     m_selections.push_back(eSel);
     //trace(DEBUG, "Selection: '%s'!\n", eSel.getEntireExpstr().c_str());
   }
@@ -424,6 +428,7 @@ bool QuerierC::analyzeSortStr(){
 
           checkSortGroupConflict(keyPropE.sortKey);
           keyPropE.sortKey.getAggFuncs(m_initAggProps);
+          keyPropE.sortKey.getAnaFuncs(m_initAnaArray);
           if (keyPropE.sortKey.m_type==BRANCH || keyPropE.sortKey.m_expType != CONST || (!isInt(keyPropE.sortKey.m_expStr) && !isLong(keyPropE.sortKey.m_expStr)) || atoi(keyPropE.sortKey.m_expStr.c_str())>=m_selections.size())
             m_sorts.push_back(keyPropE);
         }
@@ -433,6 +438,7 @@ bool QuerierC::analyzeSortStr(){
     }
     checkSortGroupConflict(keyProp.sortKey);
     keyProp.sortKey.getAggFuncs(m_initAggProps);
+    keyProp.sortKey.getAnaFuncs(m_initAnaArray);
     // discard non integer CONST
     // Any INTEGER number will be mapped to the correspond sequence of the selections.
     // Thus, m_selections should always be analyzed before m_sorts
@@ -511,7 +517,7 @@ void QuerierC::setOutputFormat(short int format)
 
 bool QuerierC::toGroupOrSort()
 {
-  return (m_groups.size()>0 || m_sorts.size()>0 || m_aggrOnly || m_bUniqueResult);
+  return (m_groups.size()>0 || m_sorts.size()>0 || m_initAnaArray.size()>0 || m_aggrOnly || m_bUniqueResult);
 }
 
 void QuerierC::pairFiledNames(namesaving_smatch matches)
@@ -594,8 +600,9 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
       continue;
     }
     DataTypeStruct dts;
+    unordered_map< string,vector<string> > anaFuncData;
     //trace(DEBUG2, "Eval aggregation function expression '%s'\n", ite->second.getEntireExpstr().c_str());
-    if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, sResult, dts)){
+    if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, &anaFuncData, sResult, dts)){
       if (!it->second.inited){
         switch(ite->second.m_funcID){
         case AVERAGE:
@@ -659,16 +666,19 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
 }
 
 // add a data row to a result set
-bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, vector< vector<string> > & resultSet)
+bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector<string> > & resultSet)
 {
     vector<string> vResults;
     //vResults.push_back(rowValue[0]);
     vResults.push_back(""); // save memory
+    vector<ExpressionC> anaEvaledExp;
     for (int i=0; i<expressions.size(); i++){
       string sResult;
       DataTypeStruct dts;
       if (!expressions[i].containGroupFunc()){
-        expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, dts);
+        expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
+        if (expressions[i].containAnaFunc()) // no actual result for analytic function yet. Keep the evaled expression
+          anaEvaledExp.push_back(expressions[i]);
         //trace(DEBUG, "eval '%s' => '%s'\n", expressions[i].getEntireExpstr().c_str(), sResult.c_str());
       }else{
         trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", expressions[i].getEntireExpstr().c_str());
@@ -677,6 +687,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
       vResults.push_back(sResult);
     }
     resultSet.push_back(vResults);
+    m_anaEvaledExp.push_back(anaEvaledExp);
     return true;
 }
 
@@ -709,9 +720,10 @@ bool QuerierC::matchFilter(vector<string> rowValue)
   varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
   unordered_map< string,GroupProp > aggGroupProp;
+  unordered_map< string,vector<string> > anaFuncData;
   //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
   //dumpMap(varValues);
-  bool matched = (!m_filter || m_filter->compareExpression(&fieldValues, &varValues, &aggGroupProp));
+  bool matched = (!m_filter || m_filter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData));
 #ifdef __DEBUG__
   m_filtercomptime += (curtime()-thistime);
   thistime = curtime();
@@ -719,9 +731,13 @@ bool QuerierC::matchFilter(vector<string> rowValue)
   //trace(DEBUG, " selected:%d (%d)! \n", matched, m_selections.size());
   if (matched){
     if (m_selections.size()>0){
+      for (unordered_map< string,vector<ExpressionC> >::iterator it=m_initAnaArray.begin(); it!=m_initAnaArray.end(); ++it){
+        vector<string> vEvaledParams;
+        anaFuncData.insert(pair< string,vector<string> >(it->first,vEvaledParams));
+      }
       if (m_groups.size() == 0 && m_initAggProps.size() == 0 && !m_aggrOnly){
         //trace(DEBUG, " No group! \n");
-        if (!addResultToSet(&fieldValues, &varValues, rowValue, m_selections, &aggGroupProp, m_results))
+        if (!addResultToSet(&fieldValues, &varValues, rowValue, m_selections, &aggGroupProp, &anaFuncData, m_results))
           return false;
 #ifdef __DEBUG__
   m_evalSeltime += (curtime()-thistime);
@@ -729,6 +745,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
 #endif // __DEBUG__
 
         vector<string> vResults;
+        vector<ExpressionC> anaEvaledExp;
         for (int i=0; i<m_sorts.size(); i++){
           string sResult;
           DataTypeStruct dts;
@@ -745,8 +762,11 @@ bool QuerierC::matchFilter(vector<string> rowValue)
             // if the sort key is a integer, get the result from the result set at the same sequence number
             else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size())
               sResult = m_results[m_results.size()-1][atoi(m_sorts[i].sortKey.m_expStr.c_str()) + 1];
-            else
-              m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, dts);
+            else{
+              m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts);
+              if (m_sorts[i].sortKey.containAnaFunc()) // no actual result for analytic function yet. Keep the evaled expression
+                anaEvaledExp.push_back(m_sorts[i].sortKey);
+            }
             //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
           }else{
             trace(ERROR, "(3)Invalid using aggregation function in '%s', no group involved!\n", m_sorts[i].sortKey.getEntireExpstr().c_str());
@@ -754,6 +774,8 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           }
           vResults.push_back(sResult);
         }
+        m_anaEvaledExp.push_back(anaEvaledExp);
+        //vResults.push_back(intToStr(m_sortKeys.size())); // add an index for the sort key
         m_sortKeys.push_back(vResults);
 #ifdef __DEBUG__
   m_evalSorttime += (curtime()-thistime);
@@ -770,7 +792,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           groupExps.push_back("");
         else // group expressions to the sorting keys
           for (int i=0; i<m_groups.size(); i++){
-            m_groups[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, dts);
+            m_groups[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts);
             trace(DEBUG2, "Adding '%s' for Group '%s', eval from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str(),rowValue[0].c_str());
             groupExps.push_back(sResult);
           }
@@ -804,18 +826,24 @@ bool QuerierC::matchFilter(vector<string> rowValue)
   m_evalAggExptime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
+        vector<ExpressionC> anaEvaledExp;
         for (int i=0; i<m_selections.size(); i++){
           string sResult;
           DataTypeStruct dts;
           //trace(DEBUG1, "Selection '%s': %d \n",m_selections[i].getEntireExpstr().c_str(), m_selections[i].containGroupFunc());
-          m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, dts);
+          // If the expression includes aggregation function, we still eval it, but eventually, only the last value in a group will be kept.
+          m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts);
           //trace(DEBUG2, "Eval selection '%s', get '%s', from '%s' \n",m_selections[i].getEntireExpstr().c_str(), sResult.c_str(), rowValue[0].c_str());
           aggSelResult.push_back(sResult);
+          if (m_selections[i].containAnaFunc()) // no actual result for analytic function yet. Keep the evaled expression
+            anaEvaledExp.push_back(m_selections[i]);
         }
+        m_anaEvaledExp.push_back(anaEvaledExp);
 #ifdef __DEBUG__
   m_evalSeltime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
+        anaEvaledExp.clear();
         for (int i=0; i<m_sorts.size(); i++){
           string sResult;
           DataTypeStruct dts;
@@ -830,16 +858,20 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           if (iSel >= 0 || (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()))
             continue;
           else{ // non aggregation function selections
-            m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, sResult, dts);
+            m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts);
             aggSelResult.push_back(sResult);
             //trace(DEBUG1, "Got non-aggr selection '%s' \n",sResult.c_str());
+            if (m_sorts[i].sortKey.containAnaFunc()) // no actual result for analytic function yet. Keep the evaled expression
+              anaEvaledExp.push_back(m_sorts[i].sortKey);
           }
         }
+        m_anaEvaledExp.push_back(anaEvaledExp);
 #ifdef __DEBUG__
   m_evalSorttime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
         // dateSet.nonAggSels.push_back(aggSelResult);
+        // make sure we only keep the last value of a group.
         if (dataSetExist){
           // m_aggFuncTaget.erase(groupExps);
           m_aggGroupProp.erase(groupExps);
@@ -851,6 +883,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
         //trace(DEBUG2, "sel: '%s' \n",aggSelResult[1].c_str());
         m_aggSelResults.insert( pair<vector<string>, vector<string> >(groupExps,aggSelResult));
         m_aggGroupProp.insert( pair<vector<string>, unordered_map< string,GroupProp > >(groupExps,aggGroupProp));
+        m_anaFuncData.push_back(anaFuncData);
 #ifdef __DEBUG__
   m_updateResulttime += (curtime()-thistime);
   thistime = curtime();
@@ -861,7 +894,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
       vector<ExpressionC> vKeys;
       for (int i=0;i<m_sorts.size();i++)
         vKeys.push_back(m_sorts[i].sortKey);
-      if (!addResultToSet(&fieldValues, &varValues, rowValue, vKeys, &aggGroupProp, m_sortKeys))
+      if (!addResultToSet(&fieldValues, &varValues, rowValue, vKeys, &aggGroupProp, &anaFuncData, m_sortKeys))
         return false;
     }
   }
@@ -1140,7 +1173,7 @@ int QuerierC::searchAll()
     totalfound+=found;
   }
 #ifdef __DEBUG__
-  trace(DEBUG2, "Searching time: %d, filtering time: %d, eval group key time: %d, filter compare time: %d, prepare Agg GP time: %d, eval agg expression time: %d, eval selection time: %d, eval sort time: %d, update restult time: %d, matched lines: %d, found: %d\n", m_searchtime, m_filtertime, m_evalGroupKeytime, m_filtercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_line, totalfound);
+  trace(DEBUG2, "Searching time: %d, filtering time: %d, sorting time: %d, eval group key time: %d, filter compare time: %d, prepare Agg GP time: %d, eval agg expression time: %d, eval selection time: %d, eval sort time: %d, update restult time: %d, matched lines: %d, found: %d\n", m_searchtime, m_filtertime, m_sorttime, m_evalGroupKeytime, m_filtercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_line, totalfound);
 #endif // __DEBUG__
   return totalfound;
 }
@@ -1153,11 +1186,68 @@ bool QuerierC::group()
 
   vector<string> vfieldvalues;
   map<string,string> mvarvalues;
+  unordered_map< string,vector<string> > anaFuncData;
   //trace(DEBUG2, "m_aggSelResults size: %d, m_groupKeys size: %d\n", m_aggSelResults.size(), m_groupKeys.size());
   //for (unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it=m_aggSelResults.begin(); it!=m_aggSelResults.end(); ++it)
   //  dumpVector(it->first);
   for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
-    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &m_aggGroupProp[*it]))
+    // filter aggregation function result
+    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &m_aggGroupProp[*it], &anaFuncData))
+      continue;
+    //dumpVector(*it);
+    //trace(DEBUG2,"Sel:'%s'\n",m_aggSelResults[*it][1].c_str());
+    vector<string> vResults;
+    vResults.push_back(m_aggSelResults[*it][0]);
+    int iAggSelID = 1;
+    //trace(DEBUG1, "Selection: %d:%d\n", m_selections.size(), m_aggSelResults[*it]].size());
+    for (int i=0; i<m_selections.size(); i++){
+      string sResult;
+      vResults.push_back(m_aggSelResults[*it][iAggSelID]);
+      iAggSelID++;
+    }
+    m_results.push_back(vResults);
+
+    vResults.clear();
+    for (int i=0; i<m_sorts.size(); i++){
+      string sResult;
+      //if it has the exact same expression as any selection, get the result from selection
+      int iSel = -1;
+      for (int j=0; j<m_selections.size(); j++)
+        if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
+          iSel = j;
+          break;
+        }
+      if (iSel >= 0){
+        vResults.push_back(m_results[m_results.size()-1][iSel + 1]);
+      // if the sort key is a integer, get the result from the result set at the same sequence number
+      }else if ((m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size())){
+        vResults.push_back(m_results[m_results.size()-1][atoi(m_sorts[i].sortKey.m_expStr.c_str()) + 1]);
+      }else{ // sort expressions
+        //trace(DEBUG1, "None aggr func selection: %s\n", m_aggSelResults[*it][iAggSelID].c_str());
+        vResults.push_back(m_aggSelResults[*it][iAggSelID]);
+        iAggSelID++;
+      }
+    }
+    m_sortKeys.push_back(vResults);
+  }
+  return true;
+}
+
+// group and sort analytic functions
+bool QuerierC::analytic()
+{
+  //if (m_initAnaArray.size() == 0)
+    return true;
+
+  vector<string> vfieldvalues;
+  map<string,string> mvarvalues;
+  unordered_map< string,vector<string> > anaFuncData;
+  //trace(DEBUG2, "m_aggSelResults size: %d, m_groupKeys size: %d\n", m_aggSelResults.size(), m_groupKeys.size());
+  //for (unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it=m_aggSelResults.begin(); it!=m_aggSelResults.end(); ++it)
+  //  dumpVector(it->first);
+  for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
+    // filter aggregation function result
+    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &m_aggGroupProp[*it], &anaFuncData))
       continue;
     //dumpVector(*it);
     //trace(DEBUG2,"Sel:'%s'\n",m_aggSelResults[*it][1].c_str());
@@ -1287,9 +1377,74 @@ void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
   }
 }
 
+// doing merging sort exchanging
+void QuerierC::mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, int iLeftB, int iLeftT, int iRightB, int iRightT)
+{
+  //trace(DEBUG2, "Mergeing %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
+  if (iLeftT >= iRightB || iLeftB > iLeftT || iRightB > iRightT)
+    return;
+  else{
+    mergeSort(dataSet, sortProps, sortKeys, iLeftB, max(iLeftB,iLeftB+(int)floor(iLeftT-iLeftB)/2-1), min(iLeftT,max(iLeftB,iLeftB+(int)floor(iLeftT-iLeftB)/2-1)+1), iLeftT);
+    mergeSort(dataSet, sortProps, sortKeys, iRightB, max(iRightB,iRightB+(int)floor(iRightT-iRightB)/2-1), min(iRightT,max(iRightB,iRightB+(int)floor(iRightT-iRightB)/2-1)+1), iRightT);
+//#ifdef __DEBUG__
+//  for (int i=0; i<sortKeys->size(); i++)
+//    printf("%s(%d) ", (*(sortKeys->begin()+i))[0].c_str(), i);
+//  printf("\n");
+//#endif // __DEBUG__
+    int iLPos = iLeftB, iRPos = iRightB, iCheckPos = iRightB;
+    while (iLPos<iCheckPos && iRPos<=iRightT){
+      //trace(DEBUG2, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRightT);
+      bool exchanged = false;
+      for (int i=0; i<sortProps->size(); i++){
+        //trace(DEBUG2, "Checking '%s' : '%s'\n", (*(sortKeys->begin()+iLPos))[i].c_str(), (*(sortKeys->begin()+iRPos))[i].c_str());
+//#ifdef __DEBUG__
+  //trace(DEBUG2, "Checking %s(L) %s(R) (%d %d %d) (%s) (%d)\n", (*(sortKeys->begin()+iLPos))[i].c_str(), (*(sortKeys->begin()+iRPos))[i].c_str(),iLPos,iCheckPos,iRPos,decodeDatatype((*sortProps)[i].sortKey.m_datatype.datatype).c_str(), (*sortProps)[i].direction);
+//#endif // __DEBUG__
+        //if (bToBeSwapped){
+        int iCompareRslt = anyDataCompare((*(sortKeys->begin()+iLPos))[i],(*(sortKeys->begin()+iRPos))[i],(*sortProps)[i].sortKey.m_datatype);
+        if (((*sortProps)[i].direction==ASC ? iCompareRslt>0 : iCompareRslt<0)){
+//#ifdef __DEBUG__
+  //trace(DEBUG2, "moving %s(R) before %s(L) (%d %d %d)\n", (*(sortKeys->begin()+iRPos))[i].c_str(), (*(sortKeys->begin()+iLPos))[i].c_str(),iLPos,iCheckPos,iRPos);
+//#endif // __DEBUG__
+          //trace(DEBUG2, "Before move: %s(%d) %s(%d)\n", (*(dataSet->begin()+iLPos))[1].c_str(), iLPos, (*(dataSet->begin()+iRPos))[1].c_str(), iRPos);
+          dataSet->insert(dataSet->begin()+iLPos,*(dataSet->begin()+iRPos));
+          dataSet->erase(dataSet->begin()+iRPos+1);
+          if (dataSet != sortKeys){ // dataset can also be sortkeys at the mean time
+            sortKeys->insert(sortKeys->begin()+iLPos,*(sortKeys->begin()+iRPos));
+            sortKeys->erase(sortKeys->begin()+iRPos+1);
+          }
+          //trace(DEBUG2, "After move: %s(%d) %s(%d)\n", (*(dataSet->begin()+iLPos))[1].c_str(), iLPos, (*(dataSet->begin()+iRPos))[1].c_str(), iRPos);
+          exchanged = true;
+          break;
+        }
+        if (iCompareRslt != 0) // Compare next key only when current keys equal
+          break;
+      }
+      if (exchanged){
+        iCheckPos++; // one element from right side insert to left side, check point needs to be moved 1 step to right.
+        iLPos++; // old left element moved 1 step to right. 
+        iRPos++; // compare the next right element
+      }else{
+        iLPos++;
+        //(*sortProps)[0].direction==ASC?iLPos++:iRPos++; // compare to the next left element
+      }
+    }
+//#ifdef __DEBUG__
+//  trace(DEBUG1, "Completed merging %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
+//  for (int i=0; i<m_sortKeys.size(); i++)
+//    printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
+//  printf("\n");
+//#endif // __DEBUG__
+  }
+}
+
 // sort result
 bool QuerierC::sort()
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
+
   for (int i=0; i<m_sorts.size(); i++)
     trace(DEBUG, "Sorting key '%s'(%d) !\n",m_sorts[i].sortKey.getEntireExpstr().c_str(),i);
   //trace(DEBUG2, "Sorting begins \n");
@@ -1305,8 +1460,33 @@ bool QuerierC::sort()
     trace(ERROR, "The sorting value number %d doesnot equal to the selected value number %d!\n",m_sortKeys.size(),m_results.size());
     return false;
   }
-  mergeSort(0,max(0,(int)floor(m_sortKeys.size())/2-1), min((int)(m_sortKeys.size()-1),max(0,(int)floor(m_sortKeys.size())/2-1)+1),m_sortKeys.size()-1);
+
+  //mergeSort(0,max(0,(int)floor(m_sortKeys.size())/2-1), min((int)(m_sortKeys.size()-1),max(0,(int)floor(m_sortKeys.size())/2-1)+1),m_sortKeys.size()-1);
+  //mergeSort(&m_results,&m_sorts,&m_sortKeys,0,max(0,(int)floor(m_sortKeys.size())/2-1), min((int)(m_sortKeys.size()-1),max(0,(int)floor(m_sortKeys.size())/2-1)+1),m_sortKeys.size()-1);
+
+  // add index for each sort key
+  for (int i=0; i<m_sortKeys.size(); i++)
+    m_sortKeys[i].push_back(intToStr(i));
+  vector<SortProp> sortProps = m_sorts;
+  auto sortVectorLambda = [sortProps] (vector<string> const& v1, vector<string> const& v2) -> bool
+  {
+    for (int i=0;i<sortProps.size();i++){
+      int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype);
+      if (iCompareRslt == 0) // Compare next key only when current keys equal
+        continue;
+      return (sortProps[i].direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
+    }
+    return false; // return false if all elements equal
+  };
+  std::sort(m_sortKeys.begin(), m_sortKeys.end(), sortVectorLambda);
+  vector< vector<string> > tmpResults = m_results;
+  for (int i=0; i<m_sortKeys.size(); i++)
+    m_results[i] = tmpResults[atoi(m_sortKeys[i][m_sortKeys[i].size()-1].c_str())];
+
   //trace(DEBUG1, "Sorting completed \n");
+#ifdef __DEBUG__
+  m_sorttime += (curtime()-thistime);
+#endif // __DEBUG__
   return true;
 }
 
@@ -1495,8 +1675,10 @@ void QuerierC::clear()
   //m_aggFuncTaget.clear();
   m_aggGroupProp.clear();
   m_initAggProps.clear();
+  m_initAnaArray.clear();
   m_aggFuncExps.clear();
   m_sortKeys.clear();
+  m_anaEvaledExp.clear();
   m_searchMode = REGSEARCH;
   m_readmode = READBUFF;
   m_quoters = "";

@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.923] 2022-08-07
+   Enhancement: Sorting performance is improved a lot! <br/>
    # [0.923] 2022-08-04
    Enhancement: Delimiter pattern now parse end of line as an empty field if the line is ended with a delimiter <br/>
    # [0.922] 2022-08-04

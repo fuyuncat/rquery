@@ -251,6 +251,7 @@ void printResult(QuerierC & rq, size_t total, short int fileMode)
 {
   long int thisTime,lastTime = curtime();
   if (rq.toGroupOrSort()){
+    rq.analytic();
     rq.group();
     thisTime = curtime();
     trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
@@ -358,6 +359,7 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
       //rq.searchNext();
       //trace(DEBUG,"(1)Processing: %s \n", sContent.c_str());
       rq.searchAll();
+      rq.analytic();
       rq.group();
       rq.unique();
       rq.sort();

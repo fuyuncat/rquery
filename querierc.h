@@ -88,6 +88,7 @@ class QuerierC
     bool toGroupOrSort();
     bool group();
     bool sort();
+    bool analytic();
     void unique();
     bool searchStopped();
     void output();
@@ -149,6 +150,7 @@ class QuerierC
     int m_limittop;     // output limit top, -1 means no limit
     vector< vector<string> > m_sortKeys;  // extra sorting keys. The sorting keys that are not a parts of selections, it could be aggregation functions
     vector< vector<string> > m_results; // Result set. First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
+    vector< vector< vector<string> > > m_analyticresults; // vector to store result set of agg functions, like rank(group, sort, equalincrease)
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     //map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
     std::set< vector<string> > m_groupKeys;  // group keys
@@ -157,6 +159,9 @@ class QuerierC
     unordered_map< string,ExpressionC > m_aggFuncExps; // aggregation function expressions map retrieved from the selection&sort expressions. mapping funcExpStr:ExpressionC
     unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > > m_aggGroupProp; // mapping group keys: group properties
     bool m_aggrOnly; // the selection has aggregation functions only, no matter if there is any group field.
+    unordered_map< string,vector<ExpressionC> > m_initAnaArray; // an initial analytic function vector retrieved from the selection&sort expressions. Map analytic_func_str(including params):vector of param expressions
+    vector< vector<ExpressionC> > m_anaEvaledExp; // Evaled selection/sort expression including analytic function grouping&sorting.
+    vector< unordered_map< string,vector<string> > > m_anaFuncData; // Evaled data sets being used for analytic function grouping&sorting. Map analytic_func_str(including params):evaled param expressions
 
     bool analyzeSelString();
     bool analyzeSortStr();
@@ -164,9 +169,10 @@ class QuerierC
     bool checkSortGroupConflict(ExpressionC eSort);
     bool matchFilter(vector<string> rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp);  // eval expression in aggregation paramter and store in a data set
-    bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, vector< vector<string> > & resultSet); // add a data row to a result set
+    bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector<string> > & resultSet); // add a data row to a result set
     //void mergeSort(int iLeft, int iMid, int iRight);
     void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);
+    void mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, int iLeftB, int iLeftT, int iRightB, int iRightT);
     int searchNextReg();
     int searchNextWild();
     int searchNextDelm();
@@ -174,6 +180,7 @@ class QuerierC
 #ifdef __DEBUG__
     long int m_searchtime;
     long int m_filtertime;
+    long int m_sorttime;
     long int m_filtercomptime;
     long int m_evalGroupKeytime;
     long int m_prepAggGPtime;

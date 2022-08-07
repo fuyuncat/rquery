@@ -135,9 +135,12 @@ using namespace std;
 #define MAX 104
 #define MIN 105
 #define AVERAGE 106
-#define LISTAGG 107
+#define COMLIST 107
+#define RANK 201
+#define PREVIOUS 202
+#define NEXT 203
+#define SEQNUM 204
 #define FOREACH 501
-#define PREVIOUS 502
 
 #define TEXT 1
 #define JSON 2

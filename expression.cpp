@@ -966,8 +966,9 @@ void ExpressionC::alignChildrenDataType()
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
-bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, string & sResult, DataTypeStruct & dts){
-  if (!fieldvalues || !varvalues || !aggFuncs){
+bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (!fieldvalues || !varvalues || !aggFuncs || !anaFuncs){
     trace(ERROR, "Insufficient metadata!\n");
     return false;
   }
@@ -1023,8 +1024,23 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             trace(ERROR, "Failed to find aggregation function '%s' dataset when evaling '%s'!\n", m_Function->m_expStr.c_str(), getTopParent()->getEntireExpstr().c_str());
             return false;
           }
+        }else if (m_Function->isAnalytic()){
+          unordered_map< string,vector<string> >::iterator it = anaFuncs->find(m_Function->m_expStr);
+          if (it != anaFuncs->end()){
+            unordered_map< string,vector<string> > dummyAnaFuncs;
+            string tmpRslt;
+            // eval parameter expressions
+            for (int i=0;i<m_Function->m_params.size();i++){
+              m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, tmpRslt, dts);
+              it->second.push_back(tmpRslt);
+            }
+            dts = m_Function->m_datatype;
+          }else{
+            trace(ERROR, "Failed to find analytic function '%s' dataset when evaling '%s'!\n", m_Function->m_expStr.c_str(), getTopParent()->getEntireExpstr().c_str());
+            return false;
+          }
         }else{
-          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, sResult, dts);
+          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
           m_datatype = dts;
           return gotResult;
         }
@@ -1056,7 +1072,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
       //  return true;
       //}
       if (varvalues->find(m_expStr) != varvalues->end()){
-        trace(DEBUG, "Assigning '%s' to '%s' ... \n", (*varvalues)[m_expStr].c_str(), m_expStr.c_str());
+        //trace(DEBUG, "Assigning '%s' to '%s' ... \n", (*varvalues)[m_expStr].c_str(), m_expStr.c_str());
         //dumpMap(*varvalues);
         sResult = (*varvalues)[m_expStr];
         dts = m_datatype;
@@ -1072,16 +1088,19 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
   }else{
     string leftRst = "", rightRst = "";
     DataTypeStruct leftDts, rightDts;
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, leftRst, leftDts)){
+    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, leftRst, leftDts)){
       trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
       return false;
     }
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, rightRst, rightDts)){
+    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, rightRst, rightDts)){
       trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
       return false;
     }
     //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
-    if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
+    if ((m_leftNode->m_type==LEAF && m_leftNode->m_expType==FUNCTION && m_leftNode->m_Function && m_leftNode->m_Function->isAnalytic()) || (m_rightNode->m_type==LEAF && m_rightNode->m_expType==FUNCTION && m_rightNode->m_Function && m_rightNode->m_Function->isAnalytic())) { // if left or right expression is analytic function, we dont do the operation
+      trace(DEBUG,"Skip to eval analytic function. Left: '%s'; Right: '%s'\n", m_leftNode->getEntireExpstr().c_str(),m_rightNode->getEntireExpstr().c_str());
+      return true;
+    }else if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
       trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
       dts = m_datatype;
       return true;
@@ -1112,9 +1131,10 @@ bool ExpressionC::mergeConstNodes(string & sResult)
           vector<string> vfieldvalues;
           map<string,string> mvarvalues;
           unordered_map< string,GroupProp > aggFuncs;
+          unordered_map< string,vector<string> > anaFuncs;
           m_Function->analyzeColumns(&vfieldnames, &fieldtypes, &rawDatatype);
           DataTypeStruct dts;
-          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,sResult,dts);
+          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,&anaFuncs,sResult,dts);
           if (gotResult){
             m_expStr = sResult;
             m_expType = CONST;
@@ -1190,22 +1210,53 @@ bool ExpressionC::getAggFuncs(unordered_map< string,GroupProp > & aggFuncs)
   }
 }
 
+bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs)
+{
+  //trace(DEBUG2,"Checking '%s'(%d %d %d)\n",getEntireExpstr().c_str(),m_type,m_expType,m_Function?m_Function->isAggFunc():-1);
+  if (m_type == LEAF && m_expType == FUNCTION && m_Function){
+    if (m_Function->isAnalytic()){
+      if (anaFuncs.find(m_Function->m_expStr) == anaFuncs.end()){
+        vector<ExpressionC> vParams;
+        for (int i=0; i<m_Function->m_params.size();i++)
+          vParams.push_back(m_Function->m_params[i]);
+        //trace(DEBUG2,"Adding aggregation function '%s' properties \n",m_Function->m_expStr.c_str());
+        anaFuncs.insert(pair< string,vector<ExpressionC> >(m_Function->m_expStr,vParams));
+      }
+      return true; // the parameter expressions of an aggregation function should not include another aggregation function
+    }else { // check the paramters of normal functions
+      //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
+      bool bGotAnaFunc = false;
+      for (int i=0;i<m_Function->m_params.size();i++){
+        //trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
+        bGotAnaFunc = m_Function->m_params[i].getAnaFuncs(anaFuncs)||bGotAnaFunc;
+      }
+      return bGotAnaFunc;
+    }
+  }else{
+    bool bGotAnaFunc = (m_leftNode && m_leftNode->getAnaFuncs(anaFuncs));
+    bGotAnaFunc = (m_rightNode && m_rightNode->getAnaFuncs(anaFuncs));
+    return bGotAnaFunc;
+  }
+}
+
 bool ExpressionC::containGroupFunc()
 {
   if (m_type == LEAF){
-    if (m_expType == FUNCTION){
-      size_t nPos = m_expStr.find("(");
-      if (nPos == string::npos)
-        return false;
-      string sFuncName=trim_copy(upper_copy(m_expStr.substr(0,nPos)));
-      if (sFuncName.compare("SUM")==0 || sFuncName.compare("COUNT")==0 || sFuncName.compare("UNIQUECOUNT")==0 || sFuncName.compare("AVERAGE")==0 || sFuncName.compare("MAX")==0 || sFuncName.compare("MIN")==0)
-        return true;
-      if (m_Function){
-        for (int i=0;i<m_Function->m_params.size();i++)
-          if (m_Function->m_params[i].containGroupFunc())
-            return true;
-      }
-    }
+    if (m_expType == FUNCTION && m_Function && m_Function->isAggFunc())
+      return true;
+  }else{
+    if ((m_leftNode && m_leftNode->containGroupFunc()) || (m_rightNode && m_rightNode->containGroupFunc()))
+      return true;
+    return false;
+  }
+  return false;
+}
+
+bool ExpressionC::containAnaFunc()
+{
+  if (m_type == LEAF){
+    if (m_expType == FUNCTION && m_Function && m_Function->isAnalytic())
+      return true;
   }else{
     if ((m_leftNode && m_leftNode->containGroupFunc()) || (m_rightNode && m_rightNode->containGroupFunc()))
       return true;

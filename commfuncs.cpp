@@ -1619,12 +1619,18 @@ short int encodeFunction(string str)
     return MIN;
   else if(sUpper.compare("AVERAGE")==0)
     return AVERAGE;
-  else if(sUpper.compare("LISTAGG")==0)
-    return LISTAGG;
-  else if(sUpper.compare("FOREACH")==0)
-    return FOREACH;
+  else if(sUpper.compare("COMLIST")==0)
+    return COMLIST;
+  else if(sUpper.compare("RANK")==0)
+    return RANK;
   else if(sUpper.compare("PREVIOUS")==0)
     return PREVIOUS;
+  else if(sUpper.compare("NEXT")==0)
+    return NEXT;
+  else if(sUpper.compare("SEQNUM")==0)
+    return SEQNUM;
+  else if(sUpper.compare("FOREACH")==0)
+    return FOREACH;
   else
     return UNKNOWN;
 }

@@ -13,7 +13,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
 - Install method 2<br />
 &nbsp;&nbsp;&nbsp; download the rpm file <br />
 &nbsp;&nbsp;&nbsp; unzip the rpm file <br />
-&nbsp;&nbsp;&nbsp; sudo rpm -ihv <downloaded_rpm_file> <br />
+&nbsp;&nbsp;&nbsp; sudo rpm -Uhv <downloaded_rpm_file> <br />
 
 - Install method 3<br />
 &nbsp;&nbsp;&nbsp; download the compiled zip file <br />
@@ -126,6 +126,7 @@ Functions can be used in the expression. We current provide some essential norma
    - Max(expr) : Aggregation function. Get the maximum value of expr.<br />
    - Min(expr) : Aggregation function. Get the minimum value of expr.<br />
    - Average(expr) : Aggregation function. Get the average value of expr.<br />
+   - Rank(group,sort1[,sort_direction1(1|-1)][,sort2,[,sort_direction2(1|-1)]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
    - foreach(beginid,endid,macro_expr) : Macro function. make a macro expression list for all fields from beginid to endid. $ stands for field ($ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID. For example, foreach(%,2,substr($,2,3)+#) will make this expression list: substr(@fieldN,2,3)+N..,substr(@field3,2,3)+3,substr(@field2,2,3)+2. It can only be used in "select" and "sort". It cannot be a part of expression.<br />
 
 # Example and scenarios
@@ -193,7 +194,7 @@ Functions can be used in the expression. We current provide some essential norma
    ```
 More examples can be found here: https://github.com/fuyuncat/rquery/blob/main/EXAMPLES.md <br />
 # Dependencies
-&nbsp;&nbsp;&nbsp;This engine currently depends on boost, we are planning to remove this dependency in the near future.<br />
+&nbsp;&nbsp;&nbsp;No dependency required. <br />
 <br />
 # Compile Environment
 &nbsp;&nbsp;&nbsp;The alpha version has been compiled in CentOS 7.<br />

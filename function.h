@@ -35,7 +35,8 @@ class FunctionC
     string m_funcName; // analyzed function name, upper case
     short int m_funcID; // function ID
     vector<ExpressionC> m_params; // parameter expressions.
-    
+    int m_anaGroupNum; // The first N parameters are analytic function groups. 
+
     bool runFunction(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts);
     bool isConst();   // if all parameters are const
     void setExpStr(string expStr);

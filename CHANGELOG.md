@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.93] 2022-08-08
+   New feature: new analytic function: Rank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
+   # [0.93] 2022-08-07
+   Enhancement: Slightly improve performance when no matching pattern(parse) provided! <br/>
    # [0.923] 2022-08-07
    Enhancement: Sorting performance is improved a lot! <br/>
    # [0.923] 2022-08-04

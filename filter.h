@@ -70,7 +70,7 @@ class FilterC
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     void mergeExprConstNodes();  // merge const in the expressions
     bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
-    bool getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs); // get the full list of analytic functions in the expression.
+    bool getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string,int > & anaGroupNums); // get the full list of analytic functions in the expression.
 
     bool compareExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs); // calculate an expression prediction. no predication or comparasion failed means alway false
 

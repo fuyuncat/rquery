@@ -706,15 +706,15 @@ bool FilterC::getAggFuncs(unordered_map< string,GroupProp > & aggFuncs)
   }
 }
 
-bool FilterC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs)
+bool FilterC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string,int > & anaGroupNums)
 {
   if (m_type == LEAF){
-    bool bGotAnnFunc = (m_leftExpression && m_leftExpression->getAnaFuncs(anaFuncs));
-    bGotAnnFunc = (m_rightExpression && m_rightExpression->getAnaFuncs(anaFuncs));
+    bool bGotAnnFunc = (m_leftExpression && m_leftExpression->getAnaFuncs(anaFuncs, anaGroupNums));
+    bGotAnnFunc = (m_rightExpression && m_rightExpression->getAnaFuncs(anaFuncs, anaGroupNums));
     return bGotAnnFunc;
   }else{
-    bool bGotAnnFunc = (m_leftNode && m_leftNode->getAnaFuncs(anaFuncs));
-    bGotAnnFunc = (m_rightNode && m_rightNode->getAnaFuncs(anaFuncs));
+    bool bGotAnnFunc = (m_leftNode && m_leftNode->getAnaFuncs(anaFuncs, anaGroupNums));
+    bGotAnnFunc = (m_rightNode && m_rightNode->getAnaFuncs(anaFuncs, anaGroupNums));
     return bGotAnnFunc;
   }
 }

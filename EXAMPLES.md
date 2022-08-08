@@ -1,3 +1,427 @@
+# Functions usage
+- isnull(expr) - Return the position of a sub string in a string. Return -1 if caannot find the sub string<br/> 
+   ```
+   echo "aaa,bbb,,ddd,eee"|rq -f on -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s @field1 as f1,isnull(@field1) as f1n,@field3 as f3,isnull(@field3) as f3n"
+   ```
+   Returns result:<br/>
+   ```
+   f1      f1n     f3      f3n
+   --      ---     --      ---
+   aaa     0               1
+   Pattern matched 1 line(s).
+   Selected 1 row(s).
+   ```
+- upper(str) - Convert a string to upper case<br/>
+   ```
+   echo "asdasAWdsfasfsafsdaf, ssadflsdfSOFSF{SFLDF "|rq -q "s upper(@raw)"
+   ```
+   Returns result:<br/>
+   ```
+   ASDASAWDSFASFSAFSDAF, SSADFLSDFSOFSF{SFLDF 
+   ```
+   Anothe example:<br/>
+   ```
+   echo "aaa,bbb,,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s upper(@1)"
+   ```
+   Returns result:<br/>
+   ```
+   AAA
+   ```
+- lower(str) - Convert a string to lower case<br/>
+   ```
+   echo "AAA,BBB,,DDD,EEE"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s lower(@1)"
+   ```
+   Returns result:<br/>
+   ```
+   aaa
+   ```
+- substr(str,startpos[,len]) - Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string<br/>
+   ```
+   echo "AAABBBcccDDDEEE"|rq -q "s substr(@raw,6,3)"
+   ```
+   Returns result:<br/>
+   ```
+   ccc
+   ```
+   Another example,
+   ```
+   echo "AAABBBcccDDDEEE"|rq -q "s substr(@raw,6)"
+   ```
+   Returns result:<br/>
+   ```
+   cccDDDEEE
+   ```
+- instr(str,substr) - Return the position of a sub string in a string. Return -1 if caannot find the sub string<br/>
+   ```
+   echo "AAABBBcccDDDEEE"|rq -q "s instr(@raw,'ccc')"
+   ```
+   Returns result:<br/>
+   ```
+   6
+   ```
+- strlen(str) - Return the length of a string<br/>
+   ```
+   echo "AAABBBcccDDDEEE"|rq -q "s strlen(@raw,)"
+   ```
+   Returns result:<br/>
+   ```
+   15
+   ```
+- comparestr(str1, str2) - Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br/>
+   ```
+   echo "Abc,aBC"|rq -q "p /(?P<col1>[^,]*),(?P<col2>[^,^\n]*)/ | s col1,col2,comparestr(col1,col2)"
+   ```
+   Returns result:<br/>
+   ```
+   Abc     aBC     -32
+   ```
+- nocasecomparestr(str1, str2) - Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br/>
+   ```
+   echo "Abc,aBC"|rq -q "p /(?P<col1>[^,]*),(?P<col2>[^,^\n]*)/ | s col1,col2,nocasecomparestr(col1,col2)"
+   ```
+   Returns result:<br/>
+   ```
+   Abc     aBC     0
+   ```
+- replace(str, sub, new) - Replace all sub1 in a string with sub2<br/>
+   ```
+   echo "AAABBBcccDDDEEE"|rq -q "s replace(@raw,'ccc','333')"
+   ```
+   Returns result:<br/>
+   ```
+   AAABBB333DDDEEE
+   ```
+- regreplace(str, pattern, new) - Replace all regular pattern in a string with sub (capturing group supported).<br/>
+   ```
+   echo "AAABBBcccDDDEEE"|rq -q "s regreplace(@raw,'(AAA|EEE)','333')"
+   ```
+   Returns result:<br/>
+   ```
+   333BBBcccDDD333
+   ```
+- regmatch(str, pattern, return_expr) - Return an expression including the capturing groups matched a regular pattern. Use {N} to stand for the matched groups<br/>
+   ```
+   echo "AAA,111,ccc,222,EEE"|rq -q "s regmatch(@raw,'[^1]*111([^2]*)222[^\n]*','I found \"{1}\" .')"
+   ```
+   Returns result:<br/>
+   ```
+   I found ",ccc," .
+   ```
+- pad(seed, times) - Construct a new string from seed multiple len times<br/>
+   ```
+   echo ""|rq -q "s pad('abcde',3)"
+   ```
+   Returns result:<br/>
+   ```
+   abcdeabcdeabcde
+   ```
+- countword(str,[ingnore_quoters]) : Normal function. Get the number of word in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br/>
+   ```
+   echo "'adasd wqe ' aaa,weq;\"qqeq?eqe12\" qw" | ./rq -q "s countword(@raw,'\'\'\"\"')"
+   ```
+   Returns result:<br/>
+   ```
+   5
+   ```
+- getword(str,wordnum,[ingnore_quoters]) : Normal function. Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br/>
+   ```
+   echo "'adasd wqe ' aaa,weq;\"qqeq?eqe12\" qw" | ./rq -q "s getword(@raw,3,'\'\'\"\"')"
+   ```
+   Returns result:<br/>
+   ```
+   weq
+   ```
+- switch(expr, case1, return1[, case2, return2 ...][, default]) - if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br/>
+   ```
+   echo "aaa
+   bbb
+   ccc
+   aaa
+   ccc"| rq -q "s switch(@raw,'aaa',111,'bbb',222)"
+   ```
+   Returns result:<br/>
+   ```
+   111
+   222
+   ccc
+   111
+   ccc
+   ```
+   Another example:<br/>
+   ```
+   echo "aaa
+   bbb
+   ccc
+   aaa
+   ccc"| rq -q "s switch(@raw,'aaa',111,'bbb',222,000)"
+   ```
+   Returns result:<br/>
+   ```
+   111
+   222
+   000
+   111
+   000
+   ```
+- greatest(expr1, expr2[, expr3...]) - Return the largest one of the given expressions<br/>
+   ```
+   echo "aaa,bbb,,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s greatest(@1,@2,@3,@4,@5)"
+   ```
+   Returns result:<br/>
+   ```
+   eee
+   ```
+- least(expr1, expr2[, expr3...]) - urn the smallest one of the given expressions<br/>
+   ```
+   echo "aaa,bbb,ccc,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s least(@1,@2,@3,@4,@5)"
+   ```
+   Returns result:<br/>
+   ```
+   aaa
+   ```
+- floor(floatNum) - Get the floor integer number of a given float number<br/>
+   ```
+   echo "3.1415926"|rq -q "s floor(@raw)"
+   ```
+   Returns result:<br/>
+   ```
+   3
+   ```
+- ceil(floatNum) - Get the ceil integer number of a given float number<br/>
+   ```
+   echo "3.1415926"|rq -q "s ceil(@raw)"
+   ```
+   Returns result:<br/>
+   ```
+   4
+   ```
+- round(floatNum) - Round a given float number<br/>
+   ```
+   echo "3.1415926"|rq -q "s round(@raw*10)/10"
+   ```
+   Returns result:<br/>
+   ```
+   3
+   ```
+- log(num) - Get the log result of a given float number<br/>
+   ```
+   echo "1000"|rq -q "s log(@raw)"
+   ```
+   Returns result:<br/>
+   ```
+   3
+   ```
+- timediff(datetime1,datetime2) - Get the difference (in seconds) of two date<br/>
+   ```
+   echo "2022-07-29:18:00:00 2022-07-28:08:18:00"|rq -q "p /([^ ]*) ([^\n]*)/ | s @1,@2,timediff(@1,@2)"
+   ```
+   Returns result:<br/>
+   ```
+   2022-07-29:18:00:00     2022-07-28:08:18:00     121320
+   ```
+- dateformat(datetime,format) - Convert a date data to a string with the given format<br/>
+   ```
+   echo "2022-07-29:18:00:00"|rq -q "s @raw,dateformat(@raw,'%d/%b/%Y')"
+   ```
+   Returns result:<br/>
+   ```
+   2022-07-29:18:00:00     29/Jul/2022
+   ```
+- truncdate(datetime,seconds) - Truncate a date a number is multiple of the given second number<br/>
+   ```
+   echo "2022-07-29:18:56:36"|rq -q "s @raw,truncdate(@raw,3600)"
+   ```
+   Returns result:<br/>
+   ```
+   2022-07-29:18:56:36     2022-07-29:18:00:00
+   ```
+- now() - Get current date time<br/>
+   ```
+   echo ""|rq -q "s now()"
+   ```
+   Returns result:<br/>
+   ```
+   2022-07-29:18:56:36     2022-07-29:18:00:00
+   ```
+- sum(expr) - Aggregation function. Sum the number of expr<br/>
+   ```
+   echo "deptA 2022Jun 123
+   deptB 2022Jun 22
+   deptC 2022Jun 33
+   deptA 2022Jul 56
+   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,sum(completed) | g depar"
+   ```
+   Returns result:<br/>
+   ```
+   deptA   179
+   deptB   22
+   deptC   111
+   ```
+- count(expr) - Aggregation function. Count the number of expr<br/>
+   ```
+   echo "deptA 2022Jun 123
+   deptB 2022Jun 22
+   deptC 2022Jun 33
+   deptA 2022Jul 56
+   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,count(completed) | g depar"
+   ```
+   Returns result:<br/>
+   ```
+   deptA   2
+   deptB   1
+   deptC   2
+   ```
+- average(expr) - Aggregation function. Get the average value of expr<br/>
+   ```
+   echo "deptA 2022Jun 123
+   deptB 2022Jun 22
+   deptC 2022Jun 33
+   deptA 2022Jul 56
+   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,average(completed) | g depar"
+   ```
+   Returns result:<br/>
+   ```
+   deptA   89.5
+   deptB   22
+   deptC   55.5
+   ```
+- max(expr) - Aggregation function. Get the maximum value of expr<br/>
+   ```
+   echo "deptA 2022Jun 123
+   deptB 2022Jun 22
+   deptC 2022Jun 33
+   deptA 2022Jul 56
+   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,max(completed) | g depar"
+   ```
+   Returns result:<br/>
+   ```
+   deptA   123
+   deptB   22
+   deptC   78
+   ```
+- min(expr) - Aggregation function. Get the minimum value of expr<br/>
+   ```
+   echo "deptA 2022Jun 123
+   deptB 2022Jun 22
+   deptC 2022Jun 33
+   deptA 2022Jul 56
+   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,min(completed) | g depar"
+   ```
+   Returns result:<br/>
+   ```
+   deptA   56
+   deptB   22
+   deptC   33
+   ```
+- uniquecount(expr) - Aggregation function. Count the number of distinct expr.<br/>
+   ```
+   echo "   echo "deptA 2022Jun 123
+   deptB 2022Jun 22
+   deptC 2022Jun 33
+   deptA 2022Jul 56
+   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s uniquecount(depar)"
+   ```
+   Returns result:<br/>
+   ```
+   3
+   ```
+- random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br/>
+   ```
+   rq -q "s random()" " "
+   ```
+   Returns result:<br/>
+   ```
+   58
+   ```
+   Another example:<br/>
+   ```
+   rq -q "s random(101,108)" " "
+   ```
+   Returns result:<br/>
+   ```
+   106
+   ```
+   One more example:<br/>
+   ```
+   rq -q "s random(8)" " "
+   ```
+   Returns result:<br/>
+   ```
+   6
+   ```
+- randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br/>
+   ```
+   rq -q "s randstr(16,'Udx')" " "
+   ```
+   Returns result:<br/>
+   ```
+   P@R32YOM*Z16R3R5`
+   ```
+- trimleft(str[,char]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   ```
+   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimleft(@2,' ')+'\''"
+   ```
+   Returns result:<br/>
+   ```
+     bbb   'bbb  '
+   ```
+- trimright(str[,char]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   ```
+   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimright(@2,' ')+'\''"
+   ```
+   Returns result:<br/>
+   ```
+     bbb   '  bbb'
+   ```
+- trim(str[,char]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   ```
+   echo "aaa,  bbb  " | ./rq -q "p d/,/ | s @2, '\''+trim(@2,' ')+'\''"
+   ```
+   Returns result:<br/>
+   ```
+     bbb   'bbb'
+   ```
+- datatype(expr) : Normal function. Return the date type of the expression.<br/>
+   ```
+   echo " " | ./rq -q "s 8+1.32e+8, datatype(1.32e+8), datatype('2009-12-08')"
+   ```
+   Returns result:<br/>
+   ```
+   132000008       DOUBLE  DATE
+   ```
+- Rank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
+   ```
+   rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1) | o @4,@1 " timezone.log
+   ```
+   Returns result:<br/>
+   ```
+   [22/Jul/2022:01:10:41 +0700]    192.168.1.1     1
+   [22/Jul/2022:01:10:41 +0700]    192.168.1.1     2
+   [22/Jul/2022:01:10:41 +1000]    192.168.1.1     1
+   [22/Jul/2022:01:10:41 +1100]    192.168.1.1     1
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.2     1
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.2     2
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.3     3
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.1     1
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.2     2
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3
+   ```
+   Another example:<br/>
+   ```
+   rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1),count(1) | g @4,@1 | o @4,@1 " timezone.log
+   ```
+   Returns result:<br/>
+   ```
+   [22/Jul/2022:01:10:41 +0700]    192.168.1.1     1       2
+   [22/Jul/2022:01:10:41 +1000]    192.168.1.1     1       1
+   [22/Jul/2022:01:10:41 +1100]    192.168.1.1     1       1
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.2     1       2
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.3     2       1
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.1     1       1
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.2     2       1
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3       1
+   ```
+
 # Examples and scenarios
 - Get lines containing specific string (equal to grep)<br/>
    ```
@@ -406,394 +830,3 @@
     29/Jun/2022:02:00:00 +1000      32
    ```
 
-# Functions usage
-- isnull(expr) - Return the position of a sub string in a string. Return -1 if caannot find the sub string<br/> 
-   ```
-   echo "aaa,bbb,,ddd,eee"|rq -f on -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s @field1 as f1,isnull(@field1) as f1n,@field3 as f3,isnull(@field3) as f3n"
-   ```
-   Returns result:<br/>
-   ```
-   f1      f1n     f3      f3n
-   --      ---     --      ---
-   aaa     0               1
-   Pattern matched 1 line(s).
-   Selected 1 row(s).
-   ```
-- upper(str) - Convert a string to upper case<br/>
-   ```
-   echo "asdasAWdsfasfsafsdaf, ssadflsdfSOFSF{SFLDF "|rq -q "s upper(@raw)"
-   ```
-   Returns result:<br/>
-   ```
-   ASDASAWDSFASFSAFSDAF, SSADFLSDFSOFSF{SFLDF 
-   ```
-   Anothe example:<br/>
-   ```
-   echo "aaa,bbb,,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s upper(@1)"
-   ```
-   Returns result:<br/>
-   ```
-   AAA
-   ```
-- lower(str) - Convert a string to lower case<br/>
-   ```
-   echo "AAA,BBB,,DDD,EEE"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s lower(@1)"
-   ```
-   Returns result:<br/>
-   ```
-   aaa
-   ```
-- substr(str,startpos[,len]) - Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string<br/>
-   ```
-   echo "AAABBBcccDDDEEE"|rq -q "s substr(@raw,6,3)"
-   ```
-   Returns result:<br/>
-   ```
-   ccc
-   ```
-   Another example,
-   ```
-   echo "AAABBBcccDDDEEE"|rq -q "s substr(@raw,6)"
-   ```
-   Returns result:<br/>
-   ```
-   cccDDDEEE
-   ```
-- instr(str,substr) - Return the position of a sub string in a string. Return -1 if caannot find the sub string<br/>
-   ```
-   echo "AAABBBcccDDDEEE"|rq -q "s instr(@raw,'ccc')"
-   ```
-   Returns result:<br/>
-   ```
-   6
-   ```
-- strlen(str) - Return the length of a string<br/>
-   ```
-   echo "AAABBBcccDDDEEE"|rq -q "s strlen(@raw,)"
-   ```
-   Returns result:<br/>
-   ```
-   15
-   ```
-- comparestr(str1, str2) - Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br/>
-   ```
-   echo "Abc,aBC"|rq -q "p /(?P<col1>[^,]*),(?P<col2>[^,^\n]*)/ | s col1,col2,comparestr(col1,col2)"
-   ```
-   Returns result:<br/>
-   ```
-   Abc     aBC     -32
-   ```
-- nocasecomparestr(str1, str2) - Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br/>
-   ```
-   echo "Abc,aBC"|rq -q "p /(?P<col1>[^,]*),(?P<col2>[^,^\n]*)/ | s col1,col2,nocasecomparestr(col1,col2)"
-   ```
-   Returns result:<br/>
-   ```
-   Abc     aBC     0
-   ```
-- replace(str, sub, new) - Replace all sub1 in a string with sub2<br/>
-   ```
-   echo "AAABBBcccDDDEEE"|rq -q "s replace(@raw,'ccc','333')"
-   ```
-   Returns result:<br/>
-   ```
-   AAABBB333DDDEEE
-   ```
-- regreplace(str, pattern, new) - Replace all regular pattern in a string with sub (capturing group supported).<br/>
-   ```
-   echo "AAABBBcccDDDEEE"|rq -q "s regreplace(@raw,'(AAA|EEE)','333')"
-   ```
-   Returns result:<br/>
-   ```
-   333BBBcccDDD333
-   ```
-- regmatch(str, pattern, return_expr) - Return an expression including the capturing groups matched a regular pattern. Use {N} to stand for the matched groups<br/>
-   ```
-   echo "AAA,111,ccc,222,EEE"|rq -q "s regmatch(@raw,'[^1]*111([^2]*)222[^\n]*','I found \"{1}\" .')"
-   ```
-   Returns result:<br/>
-   ```
-   I found ",ccc," .
-   ```
-- pad(seed, times) - Construct a new string from seed multiple len times<br/>
-   ```
-   echo ""|rq -q "s pad('abcde',3)"
-   ```
-   Returns result:<br/>
-   ```
-   abcdeabcdeabcde
-   ```
-- countword(str,[ingnore_quoters]) : Normal function. Get the number of word in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br/>
-   ```
-   echo "'adasd wqe ' aaa,weq;\"qqeq?eqe12\" qw" | ./rq -q "s countword(@raw,'\'\'\"\"')"
-   ```
-   Returns result:<br/>
-   ```
-   5
-   ```
-- getword(str,wordnum,[ingnore_quoters]) : Normal function. Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br/>
-   ```
-   echo "'adasd wqe ' aaa,weq;\"qqeq?eqe12\" qw" | ./rq -q "s getword(@raw,3,'\'\'\"\"')"
-   ```
-   Returns result:<br/>
-   ```
-   weq
-   ```
-- switch(expr, case1, return1[, case2, return2 ...][, default]) - if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br/>
-   ```
-   echo "aaa
-   bbb
-   ccc
-   aaa
-   ccc"| rq -q "s switch(@raw,'aaa',111,'bbb',222)"
-   ```
-   Returns result:<br/>
-   ```
-   111
-   222
-   ccc
-   111
-   ccc
-   ```
-   Another example:<br/>
-   ```
-   echo "aaa
-   bbb
-   ccc
-   aaa
-   ccc"| rq -q "s switch(@raw,'aaa',111,'bbb',222,000)"
-   ```
-   Returns result:<br/>
-   ```
-   111
-   222
-   000
-   111
-   000
-   ```
-- greatest(expr1, expr2[, expr3...]) - Return the largest one of the given expressions<br/>
-   ```
-   echo "aaa,bbb,,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s greatest(@1,@2,@3,@4,@5)"
-   ```
-   Returns result:<br/>
-   ```
-   eee
-   ```
-- least(expr1, expr2[, expr3...]) - urn the smallest one of the given expressions<br/>
-   ```
-   echo "aaa,bbb,ccc,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s least(@1,@2,@3,@4,@5)"
-   ```
-   Returns result:<br/>
-   ```
-   aaa
-   ```
-- floor(floatNum) - Get the floor integer number of a given float number<br/>
-   ```
-   echo "3.1415926"|rq -q "s floor(@raw)"
-   ```
-   Returns result:<br/>
-   ```
-   3
-   ```
-- ceil(floatNum) - Get the ceil integer number of a given float number<br/>
-   ```
-   echo "3.1415926"|rq -q "s ceil(@raw)"
-   ```
-   Returns result:<br/>
-   ```
-   4
-   ```
-- round(floatNum) - Round a given float number<br/>
-   ```
-   echo "3.1415926"|rq -q "s round(@raw*10)/10"
-   ```
-   Returns result:<br/>
-   ```
-   3
-   ```
-- log(num) - Get the log result of a given float number<br/>
-   ```
-   echo "1000"|rq -q "s log(@raw)"
-   ```
-   Returns result:<br/>
-   ```
-   3
-   ```
-- timediff(datetime1,datetime2) - Get the difference (in seconds) of two date<br/>
-   ```
-   echo "2022-07-29:18:00:00 2022-07-28:08:18:00"|rq -q "p /([^ ]*) ([^\n]*)/ | s @1,@2,timediff(@1,@2)"
-   ```
-   Returns result:<br/>
-   ```
-   2022-07-29:18:00:00     2022-07-28:08:18:00     121320
-   ```
-- dateformat(datetime,format) - Convert a date data to a string with the given format<br/>
-   ```
-   echo "2022-07-29:18:00:00"|rq -q "s @raw,dateformat(@raw,'%d/%b/%Y')"
-   ```
-   Returns result:<br/>
-   ```
-   2022-07-29:18:00:00     29/Jul/2022
-   ```
-- truncdate(datetime,seconds) - Truncate a date a number is multiple of the given second number<br/>
-   ```
-   echo "2022-07-29:18:56:36"|rq -q "s @raw,truncdate(@raw,3600)"
-   ```
-   Returns result:<br/>
-   ```
-   2022-07-29:18:56:36     2022-07-29:18:00:00
-   ```
-- now() - Get current date time<br/>
-   ```
-   echo ""|rq -q "s now()"
-   ```
-   Returns result:<br/>
-   ```
-   2022-07-29:18:56:36     2022-07-29:18:00:00
-   ```
-- sum(expr) - Aggregation function. Sum the number of expr<br/>
-   ```
-   echo "deptA 2022Jun 123
-   deptB 2022Jun 22
-   deptC 2022Jun 33
-   deptA 2022Jul 56
-   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,sum(completed) | g depar"
-   ```
-   Returns result:<br/>
-   ```
-   deptA   179
-   deptB   22
-   deptC   111
-   ```
-- count(expr) - Aggregation function. Count the number of expr<br/>
-   ```
-   echo "deptA 2022Jun 123
-   deptB 2022Jun 22
-   deptC 2022Jun 33
-   deptA 2022Jul 56
-   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,count(completed) | g depar"
-   ```
-   Returns result:<br/>
-   ```
-   deptA   2
-   deptB   1
-   deptC   2
-   ```
-- average(expr) - Aggregation function. Get the average value of expr<br/>
-   ```
-   echo "deptA 2022Jun 123
-   deptB 2022Jun 22
-   deptC 2022Jun 33
-   deptA 2022Jul 56
-   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,average(completed) | g depar"
-   ```
-   Returns result:<br/>
-   ```
-   deptA   89.5
-   deptB   22
-   deptC   55.5
-   ```
-- max(expr) - Aggregation function. Get the maximum value of expr<br/>
-   ```
-   echo "deptA 2022Jun 123
-   deptB 2022Jun 22
-   deptC 2022Jun 33
-   deptA 2022Jul 56
-   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,max(completed) | g depar"
-   ```
-   Returns result:<br/>
-   ```
-   deptA   123
-   deptB   22
-   deptC   78
-   ```
-- min(expr) - Aggregation function. Get the minimum value of expr<br/>
-   ```
-   echo "deptA 2022Jun 123
-   deptB 2022Jun 22
-   deptC 2022Jun 33
-   deptA 2022Jul 56
-   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s depar,min(completed) | g depar"
-   ```
-   Returns result:<br/>
-   ```
-   deptA   56
-   deptB   22
-   deptC   33
-   ```
-- uniquecount(expr) - Aggregation function. Count the number of distinct expr.<br/>
-   ```
-   echo "   echo "deptA 2022Jun 123
-   deptB 2022Jun 22
-   deptC 2022Jun 33
-   deptA 2022Jul 56
-   deptC 2022Jul 78"|rq -q "p /(?P<depar>[^ ]*) (?P<date>[^ ]*) (?P<completed>[^\n]*)/ | s uniquecount(depar)"
-   ```
-   Returns result:<br/>
-   ```
-   3
-   ```
-- random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br/>
-   ```
-   rq -q "s random()" " "
-   ```
-   Returns result:<br/>
-   ```
-   58
-   ```
-   Another example:<br/>
-   ```
-   rq -q "s random(101,108)" " "
-   ```
-   Returns result:<br/>
-   ```
-   106
-   ```
-   One more example:<br/>
-   ```
-   rq -q "s random(8)" " "
-   ```
-   Returns result:<br/>
-   ```
-   6
-   ```
-- randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br/>
-   ```
-   rq -q "s randstr(16,'Udx')" " "
-   ```
-   Returns result:<br/>
-   ```
-   P@R32YOM*Z16R3R5`
-   ```
-- trimleft(str[,char]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
-   ```
-   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimleft(@2,' ')+'\''"
-   ```
-   Returns result:<br/>
-   ```
-     bbb   'bbb  '
-   ```
-- trimright(str[,char]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
-   ```
-   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimright(@2,' ')+'\''"
-   ```
-   Returns result:<br/>
-   ```
-     bbb   '  bbb'
-   ```
-- trim(str[,char]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
-   ```
-   echo "aaa,  bbb  " | ./rq -q "p d/,/ | s @2, '\''+trim(@2,' ')+'\''"
-   ```
-   Returns result:<br/>
-   ```
-     bbb   'bbb'
-   ```
-- datatype(expr) : Normal function. Return the date type of the expression.<br/>
-   ```
-   echo " " | ./rq -q "s 8+1.32e+8, datatype(1.32e+8), datatype('2009-12-08')"
-   ```
-   Returns result:<br/>
-   ```
-   132000008       DOUBLE  DATE
-   ```

@@ -54,6 +54,15 @@ private:
 struct SortProp{
   ExpressionC sortKey;
   short int direction; //1 ASC; 2 DESC
+
+  SortProp& operator=(SortProp other)
+  {
+    if (this != &other){
+      other.sortKey.copyTo(&(sortKey));
+      direction=other.direction;
+    }
+    return *this;
+  }
 };
 
 class ExpressionC;
@@ -160,8 +169,12 @@ class QuerierC
     unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > > m_aggGroupProp; // mapping group keys: group properties
     bool m_aggrOnly; // the selection has aggregation functions only, no matter if there is any group field.
     unordered_map< string,vector<ExpressionC> > m_initAnaArray; // an initial analytic function vector retrieved from the selection&sort expressions. Map analytic_func_str(including params):vector of param expressions
+    unordered_map< vector<string>,int, hash_container< vector<string> > > m_aggGroupDataidMap; // map the aggregation function groups to the id of the first matched data row. mapping groups:id. Need to map to retrieve the analytic data & eval expression when doing grouping.
     vector< vector<ExpressionC> > m_anaEvaledExp; // Evaled selection/sort expression including analytic function grouping&sorting.
-    vector< unordered_map< string,vector<string> > > m_anaFuncData; // Evaled data sets being used for analytic function grouping&sorting. Map analytic_func_str(including params):evaled param expressions
+    vector< unordered_map< string,string > > m_anaFuncResult; // the result of each evolved analytic function. The value will be empty during searching&matching, it will be assigned actually in the final analytic() function
+    unordered_map< string,vector< vector<string> > > m_anaSortData; // data to be sorted for analytic function
+    unordered_map< string,vector<SortProp> > m_anaSortProps; // sort props of sorting data for analytic function
+    unordered_map< string,int > m_anaGroupNums; // number of groups in each analytic function
 
     bool analyzeSelString();
     bool analyzeSortStr();
@@ -169,10 +182,11 @@ class QuerierC
     bool checkSortGroupConflict(ExpressionC eSort);
     bool matchFilter(vector<string> rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp);  // eval expression in aggregation paramter and store in a data set
-    bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector<string> > & resultSet); // add a data row to a result set
+    bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, vector< vector<string> > & resultSet); // add a data row to a result set
     //void mergeSort(int iLeft, int iMid, int iRight);
     void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);
     void mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, int iLeftB, int iLeftT, int iRightB, int iRightT);
+    void addAnaFuncData(unordered_map< string,vector<string> > anaFuncData);
     int searchNextReg();
     int searchNextWild();
     int searchNextDelm();

@@ -251,8 +251,8 @@ void printResult(QuerierC & rq, size_t total, short int fileMode)
 {
   long int thisTime,lastTime = curtime();
   if (rq.toGroupOrSort()){
-    rq.analytic();
     rq.group();
+    rq.analytic();
     thisTime = curtime();
     trace(DEBUG2, "Grouping: %u\n", thisTime-lastTime);
     lastTime = thisTime;
@@ -284,7 +284,8 @@ void processQuery(string sQuery, QuerierC & rq)
   vector<string> cmatches;
 
   //string patternStr = "/[^\n]*/"; // if no PARSE passed, search each lines
-  string patternStr = "w/*/"; // if no PARSE passed, search each lines
+  //string patternStr = "w/*/"; // if no PARSE passed, search each lines
+  string patternStr = ""; // an empty pattern mean each line matches.
   if (query.find("parse") != query.end())
     patternStr = query["parse"];
   else if (query.find("p") != query.end())
@@ -359,8 +360,8 @@ void runQuery(string sContent, short int readMode, QuerierC & rq, short int file
       //rq.searchNext();
       //trace(DEBUG,"(1)Processing: %s \n", sContent.c_str());
       rq.searchAll();
-      rq.analytic();
       rq.group();
+      rq.analytic();
       rq.unique();
       rq.sort();
       rq.setOutputFormat(gv.g_ouputformat);

@@ -605,7 +605,7 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
     DataTypeStruct dts;
     unordered_map< string,vector<string> > anaFuncData;
     //trace(DEBUG2, "Eval aggregation function expression '%s'\n", ite->second.getEntireExpstr().c_str());
-    if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, &anaFuncData, sResult, dts)){
+    if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, &anaFuncData, sResult, dts, true)){
       if (!it->second.inited){
         switch(ite->second.m_funcID){
         case AVERAGE:
@@ -678,9 +678,20 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
       string sResult;
       DataTypeStruct dts;
       if (!expressions[i].containGroupFunc()){
-        expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
-        if (expressions[i].containAnaFunc()) // no actual result for analytic function yet. Keep the evaled expression
-          anaEvaledExp->push_back(expressions[i]);
+        ExpressionC tmpExp;// = expressions[i];
+        tmpExp = expressions[i];
+        //expressions[i].copyTo(&tmpExp);
+        //trace(DEBUG, "addResultToSet: Before eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
+        //tmpExp.dump();
+        //expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true);
+        if (expressions[i].containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
+          tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, false);
+          anaEvaledExp->push_back(tmpExp);
+          trace(DEBUG, "addResultToSet: adding analytic function involved expression '%s':\n",expressions[i].getEntireExpstr().c_str());
+        }else
+          tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true);
+        //trace(DEBUG, "addResultToSet: After eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
+        //tmpExp.dump();
         //trace(DEBUG, "eval '%s' => '%s'\n", expressions[i].getEntireExpstr().c_str(), sResult.c_str());
       }else{
         trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", expressions[i].getEntireExpstr().c_str());
@@ -694,7 +705,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
 
 void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData)
 {
-  // convert the stored analytic data to this format: <analytic_func_str:vector of analytic data>
+  // convert the stored analytic data to this format: <analytic_func_str:vector of analytic data> 
   for (unordered_map< string,vector<string> >::iterator it=anaFuncData.begin(); it!=anaFuncData.end(); it++){
     vector<string> sortKey;
     if (m_anaSortData.find(it->first) != m_anaSortData.end()){
@@ -716,6 +727,8 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData
           vector<ExpressionC> funcExps = m_anaEvaledExp[0];
           ExpressionC funExp;
           for (int i=0; i<funcExps.size();i++){
+            //trace(DEBUG,"Searching analytic function '%s' from '%s'\n",it->first.c_str(),funcExps[i].getEntireExpstr().c_str());
+            //funcExps[i].dump();
             anaFunc = funcExps[i].getAnaFunc(it->first);
             if (anaFunc)
               break;
@@ -792,6 +805,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
         vector<string> vEvaledParams;
         anaFuncData.insert(pair< string,vector<string> >(it->first,vEvaledParams));
       }
+      ExpressionC tmpExp;
       if (m_groups.size() == 0 && m_initAggProps.size() == 0 && !m_aggrOnly){
         vector<ExpressionC> anaEvaledExp;
         //trace(DEBUG, " No group! \n");
@@ -816,18 +830,28 @@ bool QuerierC::matchFilter(vector<string> rowValue)
               }
             if (iSel >= 0){
               sResult = m_results[m_results.size()-1][iSel + 1];
-              if (m_selections[iSel].containAnaFunc()) // add a evaled expression from the mapped selections for analytic function involved expression
-                anaEvaledExp.push_back(m_selections[iSel]);
+              if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
+                tmpExp = m_selections[iSel];
+                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
+                anaEvaledExp.push_back(tmpExp);
+              }
             // if the sort key is a integer, get the result from the result set at the same sequence number
             }else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()){
               int iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str());
               sResult = m_results[m_results.size()-1][iSel + 1];
-              if (m_selections[iSel].containAnaFunc()) // add a evaled expression from the mapped selections for analytic function involved expression
-                anaEvaledExp.push_back(m_selections[iSel]);
+              if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
+                tmpExp = m_selections[iSel];
+                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
+                anaEvaledExp.push_back(tmpExp);
+              }
             }else{
-              m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts);
-              if (m_sorts[i].sortKey.containAnaFunc()) // no actual result for analytic function yet. Keep the evaled expression
-                anaEvaledExp.push_back(m_sorts[i].sortKey);
+              tmpExp = m_sorts[i].sortKey;
+             // m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
+              if (m_sorts[i].sortKey.containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
+                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
+                anaEvaledExp.push_back(tmpExp);
+              }else
+                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
             }
             //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
           }else{
@@ -855,7 +879,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           groupExps.push_back("");
         else // group expressions to the sorting keys
           for (int i=0; i<m_groups.size(); i++){
-            m_groups[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts);
+            m_groups[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
             trace(DEBUG2, "Adding '%s' for Group '%s', eval from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str(),rowValue[0].c_str());
             groupExps.push_back(sResult);
           }
@@ -895,11 +919,15 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           DataTypeStruct dts;
           //trace(DEBUG1, "Selection '%s': %d \n",m_selections[i].getEntireExpstr().c_str(), m_selections[i].containGroupFunc());
           // If the expression includes aggregation function, we still eval it, but eventually, only the last value in a group will be kept.
-          m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts);
+          tmpExp = m_selections[i];
+          //m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
           //trace(DEBUG2, "Eval selection '%s', get '%s', from '%s' \n",m_selections[i].getEntireExpstr().c_str(), sResult.c_str(), rowValue[0].c_str());
+          if (m_selections[i].containAnaFunc()){ // no actual result for analytic function yet. Keep the evaled expression
+            tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
+            anaEvaledExp.push_back(tmpExp);
+          }else
+            tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
           aggSelResult.push_back(sResult);
-          if (m_selections[i].containAnaFunc()) // no actual result for analytic function yet. Keep the evaled expression
-            anaEvaledExp.push_back(m_selections[i]);
         }
 #ifdef __DEBUG__
   m_evalSeltime += (curtime()-thistime);
@@ -919,11 +947,15 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           if (iSel >= 0 || (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()))
             continue;
           else{ // non aggregation function selections
-            m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts);
-            aggSelResult.push_back(sResult);
+            tmpExp = m_sorts[i].sortKey;
+            //m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
             //trace(DEBUG1, "Got non-aggr selection '%s' \n",sResult.c_str());
-            if (m_sorts[i].sortKey.containAnaFunc()) // no actual result for analytic function yet. Keep the evaled expression
-              anaEvaledExp.push_back(m_sorts[i].sortKey);
+            if (m_sorts[i].sortKey.containAnaFunc()) { // no actual result for analytic function yet. Keep the evaled expression
+              tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
+              anaEvaledExp.push_back(tmpExp);
+            }else
+              tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
+            aggSelResult.push_back(sResult);
           }
         }
 #ifdef __DEBUG__
@@ -1354,8 +1386,18 @@ bool QuerierC::analytic()
       return false; // return false if all elements equal
     };
     trace(DEBUG,"sortProps size: %d; sort keys size: %d\n",sortProps.size(), it->second[0].size());
+    //printf("sortProps size: %d\n",sortProps.size());
+    //for (int i=0;i<sortProps.size();i++)
+    //  printf("%d:%s %d\t",i,decodeDatatype(sortProps[i].sortKey.m_datatype.datatype).c_str(),sortProps[i].direction);
+    //printf("\n");
+    //printf("Before sorting analytic function data [%d][%d]\n",it->second.size(), it->second[0].size());
+    //for (int i=0;i<it->second.size();i++){
+    //  for (int j=0;j<it->second[i].size();j++)
+    //    printf("%d:%s\t",j,it->second[i][j].c_str());
+    //  printf("\n");
+    //}
     std::sort(it->second.begin(), it->second.end(), sortVectorLambda);
-    //trace(DEBUG,"Sorted analytic function data [%d][%d]\n",it->second.size(), it->second[0].size());
+    //printf("Sorted analytic function data [%d][%d]\n",it->second.size(), it->second[0].size());
     //for (int i=0;i<it->second.size();i++){
     //  for (int j=0;j<it->second[i].size();j++)
     //    printf("%d:%s\t",j,it->second[i][j].c_str());
@@ -1368,21 +1410,25 @@ bool QuerierC::analytic()
         bool bNewGroup = false;
         if (preGroup.size() == 0){
           bNewGroup = true;
-          for (int j=0;j<m_anaGroupNums[it->first];j++)
+          for (int j=0;j<m_anaGroupNums[it->first];j++){
             preGroup.push_back(it->second[i][j]);
+            //printf("%d:%s\t",j,it->second[i][j].c_str());
+          }
         }else {
           for (int j=0;j<m_anaGroupNums[it->first];j++){
             if (it->second[i][j].compare(preGroup[j])!=0)
               bNewGroup = true;
             preGroup[j] = it->second[i][j];
+            //printf("%d:%s\t",j,it->second[i][j].c_str());
           }
         }
         if (bNewGroup)
           iRank = 1;
         else
           iRank += 1;
+        //printf(" === %d\n",iRank);
         //dumpVector(it->second[i]);
-        trace(DEBUG,"Checking analytic function '%s' pre group size: %d. Check result: %d. Rank: %d \n",it->first.c_str(), m_anaGroupNums[it->first], bNewGroup, iRank);
+        trace(DEBUG,"Checking analytic function '%s' group size: %d. Check result: %d. Rank: %d \n",it->first.c_str(), m_anaGroupNums[it->first], bNewGroup, iRank);
         m_anaFuncResult[atoi(it->second[i][it->second[i].size()-1].c_str())][it->first] = intToStr(iRank);
       }
     }

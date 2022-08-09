@@ -34,6 +34,7 @@ class ExpressionC
     ExpressionC(int operate, int colId, string data); // construct a leaf
 
     ~ExpressionC();
+    ExpressionC& operator=(ExpressionC other);
 
     short int m_type;       // 1: BRANCH; 2: LEAF
     short int m_operate;    // if type is BRANCH, 1: +; 2: -; 3: *; 4: /; 5: ^; . Otherwise, it's meaningless
@@ -72,7 +73,7 @@ class ExpressionC
     bool remove(ExpressionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     bool evalAnalyticFunc(unordered_map< string,string > * anaResult, string & sResult);
-    bool evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
+    bool evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts, bool getresultonly); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
     bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.
     bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
     bool getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string,int > & anaGroupNums); // get the full list of analytic functions in the expression.

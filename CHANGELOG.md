@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.931] 2022-08-09
+   Fixed bug: analytic function doesnot get correct result if it is involved in an expression<br />
    # [0.93] 2022-08-08
    New feature: new analytic function: Rank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
    # [0.93] 2022-08-07

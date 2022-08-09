@@ -1623,6 +1623,8 @@ short int encodeFunction(string str)
     return COMLIST;
   else if(sUpper.compare("RANK")==0)
     return RANK;
+  else if(sUpper.compare("DENSERANK")==0)
+    return DENSERANK;
   else if(sUpper.compare("PREVIOUS")==0)
     return PREVIOUS;
   else if(sUpper.compare("NEXT")==0)

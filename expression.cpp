@@ -114,6 +114,13 @@ ExpressionC::ExpressionC(int operate, int colId, string data)
   m_expStr = data;
 }
 
+ExpressionC& ExpressionC::operator=(ExpressionC other)
+{
+  if (this != &other)
+    other.copyTo(this);
+  return *this;
+}
+
 bool ExpressionC::expstrAnalyzed()
 {
   return m_expstrAnalyzed;
@@ -976,12 +983,12 @@ FunctionC* ExpressionC::getAnaFunc(string funcExpStr)
     return m_Function;
   else if (m_type == BRANCH){
     FunctionC* leftF;
-    if (!m_leftNode){
+    if (m_leftNode){
       leftF = m_leftNode->getAnaFunc(funcExpStr);
       if (leftF)
         return leftF;
     }
-    if (!m_rightNode)
+    if (m_rightNode)
       return m_rightNode->getAnaFunc(funcExpStr);
   }
   return NULL;
@@ -993,7 +1000,7 @@ bool ExpressionC::evalAnalyticFunc(unordered_map< string,string > * anaResult, s
     if (m_expType == CONST){
       sResult = m_expStr;
       return true;
-    }else if (m_expType == FUNCTION){
+    }else if (m_expType == FUNCTION && m_Function && m_Function->isAnalytic()){
       unordered_map< string,string >::iterator it = anaResult->find(m_Function->m_expStr);
       if (it == anaResult->end()){
         trace(ERROR, "Failed to find analytic function '%s' result!\n", m_Function->m_expStr.c_str());
@@ -1026,7 +1033,7 @@ bool ExpressionC::evalAnalyticFunc(unordered_map< string,string > * anaResult, s
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
-bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts)
+bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts, bool getresultonly)
 {
   if (!fieldvalues || !varvalues || !aggFuncs || !anaFuncs){
     trace(ERROR, "Insufficient metadata!\n");
@@ -1089,12 +1096,14 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
           if (it != anaFuncs->end()){
             unordered_map< string,vector<string> > dummyAnaFuncs;
             string tmpRslt;
-            // eval parameter expressions
-            for (int i=0;i<m_Function->m_params.size();i++){
-              m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, tmpRslt, dts);
-              it->second.push_back(tmpRslt);
-            }
+            // eval parameter expressions. Only retrieve once for each analytic function (depends on its expression str)
+            if (it->second.size()==0)
+              for (int i=0;i<m_Function->m_params.size();i++){
+                m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, tmpRslt, dts, getresultonly);
+                it->second.push_back(tmpRslt);
+              }
             dts = m_Function->m_datatype;
+            return true;
           }else{
             trace(ERROR, "Failed to find analytic function '%s' dataset when evaling '%s'!\n", m_Function->m_expStr.c_str(), getTopParent()->getEntireExpstr().c_str());
             return false;
@@ -1102,6 +1111,10 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
         }else{
           bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
           m_datatype = dts;
+          if (!getresultonly && gotResult){
+            m_expType = CONST;
+            m_expStr = sResult;
+          }
           return gotResult;
         }
       }
@@ -1110,6 +1123,10 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
         sResult = (*fieldvalues)[m_colId];
         dts = (*m_fieldtypes)[m_colId];
         m_datatype = dts;
+        if (!getresultonly){
+          m_expType = CONST;
+          m_expStr = sResult;
+        }
         return true;
       }else{
         int i=0;
@@ -1120,6 +1137,10 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
           sResult = (*fieldvalues)[i];
           dts = (*m_fieldtypes)[i];
           m_datatype = dts;
+          if (!getresultonly){
+            m_expType = CONST;
+            m_expStr = sResult;
+          }
           return true;
         }else{
           trace(ERROR, "Cannot find COLUMN '%s'\n",m_expStr.c_str());
@@ -1136,6 +1157,10 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
         //dumpMap(*varvalues);
         sResult = (*varvalues)[m_expStr];
         dts = m_datatype;
+        if (!getresultonly){
+          m_expType = CONST;
+          m_expStr = sResult;
+        }
         return true;
       }else{
         trace(ERROR, "Cannot find VARIABLE '%s'\n",m_expStr.c_str());
@@ -1148,21 +1173,29 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
   }else{
     string leftRst = "", rightRst = "";
     DataTypeStruct leftDts, rightDts;
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, leftRst, leftDts)){
+    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, leftRst, leftDts, getresultonly)){
       trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
       return false;
     }
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, rightRst, rightDts)){
+    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, rightRst, rightDts, getresultonly)){
       trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
       return false;
     }
     //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
-    if ((m_leftNode->m_type==LEAF && m_leftNode->m_expType==FUNCTION && m_leftNode->m_Function && m_leftNode->m_Function->isAnalytic()) || (m_rightNode->m_type==LEAF && m_rightNode->m_expType==FUNCTION && m_rightNode->m_Function && m_rightNode->m_Function->isAnalytic())) { // if left or right expression is analytic function, we dont do the operation
+    //if ((m_leftNode->m_type==LEAF && m_leftNode->m_expType==FUNCTION && m_leftNode->m_Function && m_leftNode->m_Function->isAnalytic()) || (m_rightNode->m_type==LEAF && m_rightNode->m_expType==FUNCTION && m_rightNode->m_Function && m_rightNode->m_Function->isAnalytic())) { // if left or right expression is analytic function, we dont do the operation
+    if (m_leftNode->containAnaFunc() || m_rightNode->containAnaFunc()) { // if left or right expression is analytic function, we dont do the operation
       trace(DEBUG,"Skip to eval analytic function. Left: '%s'; Right: '%s'\n", m_leftNode->getEntireExpstr().c_str(),m_rightNode->getEntireExpstr().c_str());
       return true;
     }else if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
       trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
       dts = m_datatype;
+      if (!getresultonly){
+        clear();
+        m_type = LEAF;
+        m_expType = CONST;
+        m_expStr = sResult;
+        m_datatype = dts;
+      }
       return true;
     }else
       return false;
@@ -1320,7 +1353,7 @@ bool ExpressionC::containAnaFunc()
     if (m_expType == FUNCTION && m_Function && m_Function->isAnalytic())
       return true;
   }else{
-    if ((m_leftNode && m_leftNode->containGroupFunc()) || (m_rightNode && m_rightNode->containGroupFunc()))
+    if ((m_leftNode && m_leftNode->containAnaFunc()) || (m_rightNode && m_rightNode->containAnaFunc()))
       return true;
     return false;
   }

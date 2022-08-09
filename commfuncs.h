@@ -27,7 +27,7 @@
 
 using namespace std;
 
-#define VERSION "v0.93"
+#define VERSION "v0.931"
 
 #define UNKNOWN 0
 
@@ -140,6 +140,7 @@ using namespace std;
 #define PREVIOUS 202
 #define NEXT 203
 #define SEQNUM 204
+#define DENSERANK 205
 #define FOREACH 501
 
 #define TEXT 1

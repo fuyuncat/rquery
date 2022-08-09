@@ -86,7 +86,7 @@ bool FunctionC::isMacro()
 
 bool FunctionC::isAnalytic()
 {
-  return (m_funcID==RANK || m_funcID==PREVIOUS || m_funcID==NEXT || m_funcID==SEQNUM);
+  return (m_funcID==RANK || m_funcID==DENSERANK || m_funcID==PREVIOUS || m_funcID==NEXT || m_funcID==SEQNUM);
 }
 
 // analyze expression string to get the function name (upper case) and parameter expression (classes)
@@ -328,7 +328,7 @@ bool FunctionC::runIsnull(vector<string>* fieldvalues, map<string,string>* varva
     trace(ERROR, "isnull() function accepts only one parameter.\n");
     return false;
   }
-  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
+  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true);
   if (gotResult){
     dts.datatype = INTEGER;
     sResult = intToStr(sResult.length()==0?1:0);
@@ -343,7 +343,7 @@ bool FunctionC::runUpper(vector<string>* fieldvalues, map<string,string>* varval
     trace(ERROR, "Upper() function accepts only one parameter.\n");
     return false;
   }
-  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
+  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true);
   if (gotResult){
     sResult = upper_copy(sResult);
     return true;
@@ -357,7 +357,7 @@ bool FunctionC::runLower(vector<string>* fieldvalues, map<string,string>* varval
     trace(ERROR, "lower() function accepts only one parameter.\n");
     return false;
   }
-  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
+  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true);
   if (gotResult){
     sResult = lower_copy(sResult);
     return true;
@@ -374,14 +374,14 @@ bool FunctionC::runSubstr(vector<string>* fieldvalues, map<string,string>* varva
     return false;
   }
   string sRaw, sPos, sLen; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sRaw, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sPos, dts) && isInt(sPos)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sRaw, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sPos, dts, true) && isInt(sPos)){
     int iPos = atoi(sPos.c_str());
     if (iPos<0 || iPos>=sRaw.length()){
       trace(ERROR, "%s is out of length of %s!\n", sPos.c_str(), m_params[0].m_expStr.c_str());
       return false;
     }
     if (m_params.size() == 3){
-      if (m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sLen, dts) && isInt(sLen)){
+      if (m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sLen, dts, true) && isInt(sLen)){
         int iLen = atoi(sLen.c_str());
         if (iLen<0 || iLen+iPos>sRaw.length()){
           trace(ERROR, "%s is out of length of %s starting from %s!\n", sLen.c_str(), m_params[0].m_expStr.c_str(), sPos.c_str());
@@ -412,7 +412,7 @@ bool FunctionC::runInstr(vector<string>* fieldvalues, map<string,string>* varval
     return false;
   }
   string sRaw, sSub; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sRaw, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sSub, dts)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sRaw, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sSub, dts, true)){
     trace(DEBUG2,"Searching '%s' in '%s'\n",sSub.c_str(),sRaw.c_str());
     sResult = intToStr(sRaw.find(sSub));
     dts.datatype = LONG;
@@ -429,7 +429,7 @@ bool FunctionC::runStrlen(vector<string>* fieldvalues, map<string,string>* varva
     trace(ERROR, "strlen() function accepts only one parameter.\n");
     return false;
   }
-  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
+  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true);
   if (gotResult){
     sResult = intToStr(sResult.length());
     dts.datatype = LONG;
@@ -447,7 +447,7 @@ bool FunctionC::runComparestr(vector<string>* fieldvalues, map<string,string>* v
     return false;
   }
   string str1, str2; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str1, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str2, dts)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str1, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str2, dts, true)){
     sResult = intToStr(str1.compare(str2));
     dts.datatype = LONG;
     return true;
@@ -464,7 +464,7 @@ bool FunctionC::runNoCaseComparestr(vector<string>* fieldvalues, map<string,stri
     return false;
   }
   string str1, str2; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str1, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str2, dts)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str1, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str2, dts, true)){
     str1=upper_copy(str1);
     str2=upper_copy(str2);
     sResult = intToStr(str1.compare(str2));
@@ -483,7 +483,7 @@ bool FunctionC::runReplace(vector<string>* fieldvalues, map<string,string>* varv
     return false;
   }
   string sReplace, sNew; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sReplace, dts) && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNew, dts)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sReplace, dts, true) && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNew, dts, true)){
     replacestr(sResult, sReplace, sNew);
     dts.datatype = STRING;
     return true;
@@ -500,7 +500,7 @@ bool FunctionC::runRegreplace(vector<string>* fieldvalues, map<string,string>* v
     return false;
   }
   string sReplace, sNew; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sReplace, dts) && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNew, dts)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sReplace, dts, true) && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNew, dts, true)){
     regreplacestr(sResult, sReplace, sNew);
     dts.datatype = STRING;
     return true;
@@ -517,7 +517,7 @@ bool FunctionC::runRegmatch(vector<string>* fieldvalues, map<string,string>* var
     return false;
   }
   string str, sPattern; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sPattern, dts) && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, str, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sPattern, dts, true) && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true)){
     regmatchstr(str, sPattern, sResult);
     dts.datatype = STRING;
     return true;
@@ -534,9 +534,9 @@ bool FunctionC::runCountword(vector<string>* fieldvalues, map<string,string>* va
     return false;
   }
   string sRaw, sQuoters=""; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sRaw, dts)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sRaw, dts, true)){
     if (m_params.size() == 2){
-      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sQuoters, dts)){
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sQuoters, dts, true)){
         trace(ERROR, "(2)Failed to run countword(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
         return false;
       }
@@ -558,14 +558,14 @@ bool FunctionC::runGetword(vector<string>* fieldvalues, map<string,string>* varv
     return false;
   }
   string sRaw, sPos, sQuoters=""; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sRaw, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sPos, dts) && isInt(sPos)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sRaw, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sPos, dts, true) && isInt(sPos)){
     int iPos = atoi(sPos.c_str());
     if (iPos<=0){
       trace(ERROR, "%s cannot be zero a negative number!\n", sPos.c_str(), m_params[0].m_expStr.c_str());
       return false;
     }
     if (m_params.size() == 3){
-      if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sQuoters, dts)){
+      if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sQuoters, dts, true)){
         trace(ERROR, "(1)Failed to run getword(%s,%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
         return false;
       }
@@ -595,7 +595,7 @@ bool FunctionC::runDatatype(vector<string>* fieldvalues, map<string,string>* var
     trace(ERROR, "datatype() function accepts only one parameter.\n");
     return false;
   }
-  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
+  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true);
   if (gotResult){
     string extrainfo;
     sResult = decodeDatatype(detectDataType(sResult, extrainfo));
@@ -613,7 +613,7 @@ bool FunctionC::runFloor(vector<string>* fieldvalues, map<string,string>* varval
     return false;
   }
   string sNum; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNum, dts) && isDouble(sNum)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNum, dts, true) && isDouble(sNum)){
     sResult = intToStr(floor(atof(sNum.c_str())));
     dts.datatype = LONG;
     return true;
@@ -630,7 +630,7 @@ bool FunctionC::runCeil(vector<string>* fieldvalues, map<string,string>* varvalu
     return false;
   }
   string sNum; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNum, dts) && isDouble(sNum)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNum, dts, true) && isDouble(sNum)){
     sResult = intToStr(ceil(atof(sNum.c_str())));
     dts.datatype = LONG;
     return true;
@@ -649,7 +649,7 @@ bool FunctionC::runTimediff(vector<string>* fieldvalues, map<string,string>* var
   string sTm1, sTm2; 
   DataTypeStruct dts1, dts2;
   int offSet1, offSet2;
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sTm1, dts1) && isDate(sTm1, offSet1, dts1.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sTm2, dts2) && isDate(sTm2, offSet2, dts2.extrainfo)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sTm1, dts1, true) && isDate(sTm1, offSet1, dts1.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sTm2, dts2, true) && isDate(sTm2, offSet2, dts2.extrainfo)){
     struct tm tm1, tm2;
     if (strToDate(sTm1, tm1, offSet1, dts1.extrainfo) && strToDate(sTm2, tm2, offSet2, dts2.extrainfo)){
       time_t t1 = mktime(&tm1);
@@ -674,7 +674,7 @@ bool FunctionC::runRound(vector<string>* fieldvalues, map<string,string>* varval
     return false;
   }
   string sNum; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNum, dts) && isDouble(sNum)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNum, dts, true) && isDouble(sNum)){
     sResult = intToStr(round(atof(sNum.c_str())));
     dts.datatype = LONG;
     return true;
@@ -691,7 +691,7 @@ bool FunctionC::runLog(vector<string>* fieldvalues, map<string,string>* varvalue
     return false;
   }
   string sNum; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNum, dts) && isDouble(sNum)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sNum, dts, true) && isDouble(sNum)){
     sResult = doubleToStr(log10(atof(sNum.c_str())));
     dts.datatype = DOUBLE;
     return true;
@@ -709,13 +709,13 @@ bool FunctionC::runRandom(vector<string>* fieldvalues, map<string,string>* varva
   }
   string sMin="1", sMax="100";
   if (m_params.size() > 0){
-    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sMax, dts) || !isDouble(sMax)){ // the parameter is the maximum range if only one parameter provided
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sMax, dts, true) || !isDouble(sMax)){ // the parameter is the maximum range if only one parameter provided
       trace(ERROR, "Failed to run random(%s)!\n", m_params[0].m_expStr.c_str());
       return false;
     }
     if (m_params.size() > 1){ // the first parameter is the minimum range and the second parameter is the maximum range if two parameters provided
       sMin = sMax;
-      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sMax, dts) || !isDouble(sMax)){ 
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sMax, dts, true) || !isDouble(sMax)){ 
         trace(ERROR, "Failed to run random(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
         return false;
       }
@@ -733,12 +733,12 @@ bool FunctionC::runRandstr(vector<string>* fieldvalues, map<string,string>* varv
   }
   string sLen="8", sFlags="uld";
   if (m_params.size() > 0){
-    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sLen, dts) || !isDouble(sLen)){ 
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sLen, dts, true) || !isDouble(sLen)){ 
       trace(ERROR, "Failed to run runRandstr(%s)!\n", m_params[0].m_expStr.c_str());
       return false;
     }
     if (m_params.size() > 1){ 
-      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sFlags, dts)){ 
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sFlags, dts, true)){ 
         trace(ERROR, "Failed to run runRandstr(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
         return false;
       }
@@ -756,12 +756,12 @@ bool FunctionC::runTrimleft(vector<string>* fieldvalues, map<string,string>* var
   }
   string sStr, sChar=" ";
   if (m_params.size() > 0){
-    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sStr, dts)){ 
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sStr, dts, true)){ 
       trace(ERROR, "Failed to run trimleft(%s)!\n", m_params[0].m_expStr.c_str());
       return false;
     }
     if (m_params.size() > 1){ 
-      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sChar, dts)){ 
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sChar, dts, true)){ 
         trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
         return false;
       }
@@ -783,12 +783,12 @@ bool FunctionC::runTrimright(vector<string>* fieldvalues, map<string,string>* va
   }
   string sStr, sChar=" ";
   if (m_params.size() > 0){
-    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sStr, dts)){ 
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sStr, dts, true)){ 
       trace(ERROR, "Failed to run trimright(%s)!\n", m_params[0].m_expStr.c_str());
       return false;
     }
     if (m_params.size() > 1){ 
-      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sChar, dts)){ 
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sChar, dts, true)){ 
         trace(ERROR, "Failed to run trimright(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
         return false;
       }
@@ -810,12 +810,12 @@ bool FunctionC::runTrim(vector<string>* fieldvalues, map<string,string>* varvalu
   }
   string sStr, sChar=" ";
   if (m_params.size() > 0){
-    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sStr, dts)){ 
+    if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sStr, dts, true)){ 
       trace(ERROR, "Failed to run trim(%s)!\n", m_params[0].m_expStr.c_str());
       return false;
     }
     if (m_params.size() > 1){ 
-      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sChar, dts)){ 
+      if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sChar, dts, true)){ 
         trace(ERROR, "Failed to run trim(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
         return false;
       }
@@ -839,7 +839,7 @@ bool FunctionC::runTruncdate(vector<string>* fieldvalues, map<string,string>* va
   struct tm tm;
   DataTypeStruct tmpDts;
   int iOffSet;
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sTm, dts) && strToDate(sTm, tm, iOffSet, dts.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sSeconds, tmpDts) && isInt(sSeconds)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sTm, dts, true) && strToDate(sTm, tm, iOffSet, dts.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sSeconds, tmpDts, true) && isInt(sSeconds)){
     long iSeconds = atol(sSeconds.c_str());
     time_t t1 = mktime(&tm) - timezone; // adjust timezone
     time_t t2 = (time_t)(trunc((long double)t1/iSeconds))*iSeconds - timezone; // adjust timezone for gmtime
@@ -867,9 +867,9 @@ bool FunctionC::runDateformat(vector<string>* fieldvalues, map<string,string>* v
   string sTm, sFmt;
   DataTypeStruct tmpDts;
   int iOffSet;
-  if (m_params.size() == 2 && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sFmt, tmpDts))
+  if (m_params.size() == 2 && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sFmt, tmpDts, true))
     dts.extrainfo = sFmt;
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sTm, dts) && isDate(sTm, iOffSet, dts.extrainfo)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sTm, dts, true) && isDate(sTm, iOffSet, dts.extrainfo)){
     struct tm tm;
     if (strToDate(sTm, tm, iOffSet, dts.extrainfo)){
       sResult = dateToStr(tm, iOffSet, m_params.size()==1?dts.extrainfo:sFmt);
@@ -905,18 +905,18 @@ bool FunctionC::runSwitch(vector<string>* fieldvalues, map<string,string>* varva
     return false;
   }
   DataTypeStruct dts1, dts2, dts3;
-  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts1)){
+  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts1, true)){
     trace(ERROR, "(0)Eval expression '%s' failed.\n",m_params[0].getEntireExpstr().c_str());
     return false;
   }
   string scase,sreturn;
   for (int i=1;i<m_params.size();i++){
-    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, scase, dts2)){
+    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, scase, dts2, true)){
       trace(ERROR, "(1)Eval expression '%s' failed.\n",m_params[i].getEntireExpstr().c_str());
       return false;
     }
     if (i+1<m_params.size()){
-      if (!m_params[i+1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sreturn, dts)){
+      if (!m_params[i+1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sreturn, dts, true)){
         trace(ERROR, "(2)Eval expression '%s' failed.\n",m_params[i+1].getEntireExpstr().c_str());
         return false;
       }
@@ -949,7 +949,7 @@ bool FunctionC::runPad(vector<string>* fieldvalues, map<string,string>* varvalue
     return false;
   }
   string seed, sLen;
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, seed, dts) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sLen, dts)){
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, seed, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sLen, dts, true)){
     if (!isInt(sLen))
       return false;
     sResult = "";
@@ -968,11 +968,11 @@ bool FunctionC::runGreatest(vector<string>* fieldvalues, map<string,string>* var
     return false;
   }
   DataTypeStruct dts1, dts2;
-  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts1))
+  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts1, true))
     return false;
   string scomp;
   for (int i=1;i<m_params.size();i++){
-    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, scomp, dts2))
+    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, scomp, dts2, true))
       return false;
     dts = getCompatibleDataType(dts1, dts2);
     if (dts.datatype == ANY || dts.datatype == UNKNOWN)
@@ -993,11 +993,11 @@ bool FunctionC::runLeast(vector<string>* fieldvalues, map<string,string>* varval
     return false;
   }
   DataTypeStruct dts1, dts2;
-  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts1))
+  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts1, true))
     return false;
   string scomp;
   for (int i=1;i<m_params.size();i++){
-    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, scomp, dts2))
+    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, scomp, dts2, true))
       return false;
     dts = getCompatibleDataType(dts1, dts2);
     if (dts.datatype == ANY)
@@ -1201,7 +1201,7 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
         trace(ERROR, "Aggregation (%s) function accepts only one parameter.\n", m_funcName.c_str());
         return false;
       }
-      if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts))
+      if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true))
         return true;
       else{
         trace(ERROR, "Failed to eval aggregation (%s) function parameter (%s).\n", m_funcName.c_str(),m_params[0].getEntireExpstr().c_str());
@@ -1211,11 +1211,12 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
     }
     case COMLIST:
     case RANK:
+    case DENSERANK:
     case PREVIOUS:
     case NEXT:
     case SEQNUM:{
       for (int i=0; i<m_params.size(); i++)
-        if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts)){
+        if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true)){
           trace(ERROR, "Failed to eval function (%s) N.O. %d parameter (%s).\n", m_funcName.c_str(),i,m_params[i].getEntireExpstr().c_str());
           return false;
         }

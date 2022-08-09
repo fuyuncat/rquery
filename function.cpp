@@ -28,7 +28,7 @@ void FunctionC::init()
   m_expstrAnalyzed = false;
   m_fieldnames = NULL;
   m_fieldtypes = NULL;
-  m_anaGroupNum = 0;
+  m_anaFirstParamNum = 0;
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
 }
@@ -47,6 +47,13 @@ FunctionC::FunctionC(string expStr)
 FunctionC::~FunctionC()
 {
 
+}
+
+FunctionC& FunctionC::operator=(FunctionC other)
+{
+  if (this != &other)
+    other.copyTo(this);
+  return *this;
 }
 
 void FunctionC::setExpStr(string expStr)
@@ -119,13 +126,13 @@ bool FunctionC::analyzeExpStr()
     }
     vector<string> vAnaPara = split(trim_copy(vParams[0]),';',"''()",'\\',{'(',')'},false,true);
     if (vAnaPara.size()==0){ // need a param for group, if not provided, give it a ""
-      m_anaGroupNum = 1;
+      m_anaFirstParamNum = 1;
       ExpressionC eParam = ExpressionC("");
       m_params.push_back(eParam);
       eParam = ExpressionC("1"); // group always get asc
       m_params.push_back(eParam);
     }else{
-      m_anaGroupNum = vAnaPara.size();
+      m_anaFirstParamNum = vAnaPara.size();
       for (int i=0;i<vAnaPara.size();i++){
         ExpressionC eParam = ExpressionC(trim_copy(vAnaPara[i]));
         m_params.push_back(eParam);
@@ -148,7 +155,7 @@ bool FunctionC::analyzeExpStr()
         }
       }
     }
-    trace(DEBUG, "FunctionC: The analytic function '%s' group size is %d, param size %d \n", m_expStr.c_str(), m_anaGroupNum, m_params.size());
+    trace(DEBUG, "FunctionC: The analytic function '%s' group size is %d, param size %d \n", m_expStr.c_str(), m_anaFirstParamNum, m_params.size());
   }else{
     for (int i=0; i<vParams.size(); i++){
       trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
@@ -194,6 +201,7 @@ bool FunctionC::analyzeExpStr()
     case COUNTWORD:
     case RANDOM:
     case RANK:
+    case DENSERANK:
     case SEQNUM:
       m_datatype.datatype = LONG;
       break;
@@ -269,7 +277,7 @@ FunctionC* FunctionC::cloneMe(){
   node->m_funcName = m_funcName;
   node->m_funcID = m_funcID;
   node->m_params = m_params;
-  node->m_anaGroupNum = m_anaGroupNum;
+  node->m_anaFirstParamNum = m_anaFirstParamNum;
   node->m_fieldnames = m_fieldnames;
   node->m_fieldtypes = m_fieldtypes;
 
@@ -287,7 +295,7 @@ void FunctionC::copyTo(FunctionC* node){
     node->m_funcName = m_funcName;
     node->m_funcID = m_funcID;
     node->m_params = m_params;
-    node->m_anaGroupNum = m_anaGroupNum;
+    node->m_anaFirstParamNum = m_anaFirstParamNum;
     node->m_fieldnames = m_fieldnames;
     node->m_fieldtypes = m_fieldtypes;
   }
@@ -305,7 +313,7 @@ void FunctionC::clear(){
   m_expstrAnalyzed = false;
   m_fieldnames = NULL;
   m_fieldtypes = NULL;
-  m_anaGroupNum = 0;
+  m_anaFirstParamNum = 0;
   init();
 }
 

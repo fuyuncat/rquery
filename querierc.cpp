@@ -297,7 +297,7 @@ bool QuerierC::analyzeSelString(){
     //trace(DEBUG2,"Selection expression: '%s'\n",vSelAlias[0].c_str());
     ExpressionC eSel = ExpressionC(vSelAlias[0]);
     if (eSel.m_type == LEAF && eSel.m_expType == FUNCTION && eSel.m_Function && eSel.m_Function->isAnalytic())
-      trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", eSel.m_Function->m_expStr.c_str(),eSel.m_Function->m_anaGroupNum,eSel.m_Function->m_params.size());
+      trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", eSel.m_Function->m_expStr.c_str(),eSel.m_Function->m_anaFirstParamNum,eSel.m_Function->m_params.size());
     //trace(DEBUG, "Got selection expression '%s'!\n", eSel.getEntireExpstr().c_str());
     
     // if macro function is involved, need to wait util the first data analyzed to analyze select expression
@@ -705,6 +705,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
 
 void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData)
 {
+  unordered_map< string,string > anaFuncResult;
   // convert the stored analytic data to this format: <analytic_func_str:vector of analytic data> 
   for (unordered_map< string,vector<string> >::iterator it=anaFuncData.begin(); it!=anaFuncData.end(); it++){
     vector<string> sortKey;
@@ -755,10 +756,10 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData
       m_anaSortData.insert(pair<string, vector< vector<string> > >(it->first, newData) );
       //m_anaGroupNums.insert(pair<string, int >(it->first, iGroupNum) );
     }
-    unordered_map< string,string > anaFuncResult;
     anaFuncResult.insert(pair<string,string>(it->first,""));
-    m_anaFuncResult.push_back(anaFuncResult);
   }
+  if (anaFuncResult.size()>0)
+    m_anaFuncResult.push_back(anaFuncResult);
 }
 
 // filt a row data by filter. no predication mean true. comparasion failed means alway false
@@ -1365,7 +1366,7 @@ bool QuerierC::analytic()
     return false;
   }
   if (m_results.size() != m_anaFuncResult.size() || m_results.size() != m_anaEvaledExp.size() || m_anaFuncResult.size() != m_anaEvaledExp.size()){
-    trace(ERROR, "Result data size %d, analytic function result size %d or analytic function expression size %d do not match!\n", m_results.size(), m_anaFuncResult.size(), m_anaEvaledExp.size());
+    trace(ERROR, "Result data size %d, analytic, function result size %d, analytic function expression size %d do not match!\n", m_results.size(), m_anaFuncResult.size(), m_anaEvaledExp.size());
     return false;
   }
 
@@ -1403,33 +1404,39 @@ bool QuerierC::analytic()
     //    printf("%d:%s\t",j,it->second[i][j].c_str());
     //  printf("\n");
     //}
-    vector<string> preGroup;
-    int iRank = 1;
+    vector<string> preRow;
+    int iRank = 1, iDenseRank = 1;
     for (int i=0; i<m_anaFuncResult.size(); i++){
-      if (it->first.find("RANK(")==0){
-        bool bNewGroup = false;
-        if (preGroup.size() == 0){
+      if (it->first.find("RANK(")==0 || it->first.find("DENSERANK(")==0){
+        bool bNewGroup = false, bSortValueChanged=false;
+        if (preRow.size() == 0){
           bNewGroup = true;
-          for (int j=0;j<m_anaGroupNums[it->first];j++){
-            preGroup.push_back(it->second[i][j]);
+          for (int j=0;j<it->second[i].size()-1;j++){
+            preRow.push_back(it->second[i][j]);
             //printf("%d:%s\t",j,it->second[i][j].c_str());
           }
         }else {
-          for (int j=0;j<m_anaGroupNums[it->first];j++){
-            if (it->second[i][j].compare(preGroup[j])!=0)
+          for (int j=0;j<it->second[i].size()-1;j++){
+            if (j<m_anaGroupNums[it->first] && it->second[i][j].compare(preRow[j])!=0)
               bNewGroup = true;
-            preGroup[j] = it->second[i][j];
+            if (j>=m_anaGroupNums[it->first] && it->second[i][j].compare(preRow[j])!=0)
+              bSortValueChanged = true;
+            preRow[j] = it->second[i][j];
             //printf("%d:%s\t",j,it->second[i][j].c_str());
           }
         }
-        if (bNewGroup)
+        if (bNewGroup){
           iRank = 1;
-        else
+          iDenseRank = 1;
+        }else{
           iRank += 1;
-        //printf(" === %d\n",iRank);
+          if (bSortValueChanged)
+            iDenseRank = iRank;
+        }
+        //printf(" === %d %d (%d %d)\n",iRank, iDenseRank, bNewGroup, bSortValueChanged);
         //dumpVector(it->second[i]);
-        trace(DEBUG,"Checking analytic function '%s' group size: %d. Check result: %d. Rank: %d \n",it->first.c_str(), m_anaGroupNums[it->first], bNewGroup, iRank);
-        m_anaFuncResult[atoi(it->second[i][it->second[i].size()-1].c_str())][it->first] = intToStr(iRank);
+        trace(DEBUG,"Checking analytic function '%s' group size: %d. Check result: %d %d. Rank: %d \n",it->first.c_str(), m_anaGroupNums[it->first], bNewGroup, bSortValueChanged, iRank);
+        m_anaFuncResult[atoi(it->second[i][it->second[i].size()-1].c_str())][it->first] = intToStr(it->first.find("RANK(")==0?iRank:iDenseRank);
       }
     }
   }

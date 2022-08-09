@@ -401,7 +401,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_Function = new FunctionC(node->m_expStr);
         trace(DEBUG, "(1)New function from '%s'\n",node->m_expStr.c_str());
       }
-      trace(DEBUG, "(1)ExpressionC: The analytic function '%s' group size is %d, param size %d \n", node->m_Function->m_expStr.c_str(), node->m_Function->m_anaGroupNum, node->m_Function->m_params.size());
+      trace(DEBUG, "(1)ExpressionC: The analytic function '%s' group size is %d, param size %d \n", node->m_Function->m_expStr.c_str(), node->m_Function->m_anaFirstParamNum, node->m_Function->m_params.size());
       node->m_datatype = node->m_Function->m_datatype;
       node->m_funcID = node->m_Function->m_funcID;
       node->m_expstrAnalyzed = true;
@@ -1315,8 +1315,8 @@ bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaF
         //trace(DEBUG2,"Adding aggregation function '%s' properties \n",m_Function->m_expStr.c_str());
         anaFuncs.insert(pair< string,vector<ExpressionC> >(m_Function->m_expStr,vParams));
       }
-      anaGroupNums.insert(pair< string,int >(m_Function->m_expStr,m_Function->m_anaGroupNum));
-      trace(DEBUG, "(2)ExpressionC: The analytic function '%s' group size is %d, param size %d \n", m_Function->m_expStr.c_str(), m_Function->m_anaGroupNum, m_Function->m_params.size());
+      anaGroupNums.insert(pair< string,int >(m_Function->m_expStr,m_Function->m_anaFirstParamNum));
+      trace(DEBUG, "(2)ExpressionC: The analytic function '%s' group size is %d, param size %d \n", m_Function->m_expStr.c_str(), m_Function->m_anaFirstParamNum, m_Function->m_params.size());
       return true; // the parameter expressions of an aggregation function should not include another aggregation function
     }else { // check the paramters of normal functions
       //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());

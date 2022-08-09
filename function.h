@@ -29,13 +29,14 @@ class FunctionC
     FunctionC(string expStr);
 
     ~FunctionC();
+    FunctionC& operator=(FunctionC other);
 
     DataTypeStruct m_datatype;   // 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
     string m_expStr;  // it's the full function string, including function name and parameters
     string m_funcName; // analyzed function name, upper case
     short int m_funcID; // function ID
     vector<ExpressionC> m_params; // parameter expressions.
-    int m_anaGroupNum; // The first N parameters are analytic function groups. 
+    int m_anaFirstParamNum; // The number of first part (splitted by ;) parameters of analytic function . 
 
     bool runFunction(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts);
     bool isConst();   // if all parameters are const

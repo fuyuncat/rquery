@@ -389,7 +389,7 @@
    ```
    132000008       DOUBLE  DATE
    ```
-- Rank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
+- Rank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The rank of a sorted expression in a group.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1) | o @4,@1 " timezone.log
    ```
@@ -420,6 +420,23 @@
    [22/Jul/2022:01:10:41 -0800]    192.168.1.1     1       1
    [22/Jul/2022:01:10:41 -0800]    192.168.1.2     2       1
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3       1
+   ```
+- Denserank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The dense rank of a sorted expression in a group.<br />
+   ```
+   rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1),denserank(@4,@1) | o @4,@2,@3,@1,rank(@4,@1)" timezone.log 
+   ```
+   Returns result:<br/>
+   ```
+   [22/Jul/2022:01:10:41 +0700]    192.168.1.1     1       1
+   [22/Jul/2022:01:10:41 +0700]    192.168.1.1     2       1
+   [22/Jul/2022:01:10:41 +1000]    192.168.1.1     1       1
+   [22/Jul/2022:01:10:41 +1100]    192.168.1.1     1       1
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.2     1       1
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.2     2       1
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.3     3       3
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.1     1       1
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.2     2       2
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3       3
    ```
 
 # Examples and scenarios

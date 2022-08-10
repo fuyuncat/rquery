@@ -1625,6 +1625,8 @@ short int encodeFunction(string str)
     return RANK;
   else if(sUpper.compare("DENSERANK")==0)
     return DENSERANK;
+  else if(sUpper.compare("NEARBY")==0)
+    return NEARBY;
   else if(sUpper.compare("PREVIOUS")==0)
     return PREVIOUS;
   else if(sUpper.compare("NEXT")==0)

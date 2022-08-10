@@ -1065,12 +1065,13 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
           if (it != anaFuncs->end()){
             unordered_map< string,vector<string> > dummyAnaFuncs;
             string tmpRslt;
-            // eval parameter expressions. Only retrieve once for each analytic function (depends on its expression str)
-            if (it->second.size()==0)
+            if (it->second.size()==0)// Empty vector means it's still doing raw data matching, only need to eval parameter expressions. Only retrieve once for each analytic function (identified by its expression str)
               for (int i=0;i<m_Function->m_params.size();i++){
                 m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, tmpRslt, dts, true);
                 it->second.push_back(tmpRslt);
               }
+            else // otherwise, the passed-in vector is analytic function result, need to return it to do other operation, e.g. filter
+              sResult = it->second[0];
             dts = m_Function->m_datatype;
             return true;
           }else{

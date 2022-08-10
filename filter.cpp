@@ -165,9 +165,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
 {
   //System.out.println(String.format("%d",deep) +":"+m_expStr);
   if (m_expStr.empty()){
-    printf("\n");
-    printf("Error: No statement found!\n");
-    printf("\n");
+    trace(ERROR,"buildFilter: No statement found!\n");
     return false;
   }else
     m_expStr = trim_copy(m_expStr);
@@ -175,7 +173,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
   char stringQuoter = '\'';
   if (quoters.empty() || quoters.length() != 2)
       quoters = "()";
-  //printf("Building: %s; splitor: %s; quoters: %s\n", m_expStr.c_str(), splitor.c_str(), quoters.c_str());
+  //trace(DEBUG, "Building: %s; splitor: %s; quoters: %s\n", m_expStr.c_str(), splitor.c_str(), quoters.c_str());
   int quoteDeep = 0;
   int quoteStart = -1;  // top quoter start position
   int quoteEnd = -1;;   // top quoter end position
@@ -196,9 +194,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
       if (quoteDeep == 0 && quoteEnd < 0)
         quoteEnd = i;
       if  (quoteDeep < 0){
-        printf("\n");
-        printf("Error: Left quoter missed!\n");
-        printf("\n");;
+        trace(ERROR, "buildFilter: Left quoter missed!\n");
       }
     }else if(m_expStr[i] == '\\' && i<m_expStr.length()-1 && 
             ((m_expStr[i+1] == quoters[0] || m_expStr[i+1] == quoters[1] || m_expStr[i+1] == ' '))){
@@ -210,7 +206,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
         m_junction = encodeJunction(trim_copy(splitor));
         m_leftNode = new FilterC(m_expStr.substr(0, i));
         m_leftNode->m_parentNode = this;
-        //printf("Building leftNode\n");
+        //trace(DEBUG,"Building leftNode\n");
         if (!m_leftNode->buildFilter(" OR ",quoters)) { // OR priority higher than AND
           m_leftNode->clear();
           delete m_leftNode;
@@ -219,7 +215,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
         }
         m_rightNode = new FilterC(m_expStr.substr(i+splitor.length()));
         m_rightNode->m_parentNode = this;
-        //printf("Building rightNode\n");
+        //trace(DEBUG,"Building rightNode\n");
         if (!m_rightNode->buildFilter(" OR ",quoters)){
           m_rightNode->clear();
           delete m_rightNode;
@@ -774,10 +770,10 @@ bool FilterC::compareExpression(vector<string>* fieldvalues, map<string,string>*
       return compareIn(fieldvalues, varvalues, aggFuncs, anaFuncs)?(m_comparator == IN?true:false):(m_comparator == IN?false:true);
     }
     else{
-      if (aggFuncs && aggFuncs->size()==0){ // in the matching the raw data process, dont compare aggregation function
+      if (aggFuncs && aggFuncs->size()==0 && anaFuncs && anaFuncs->size()==0){ // in the matching the raw data process, dont compare aggregation function
         if (m_leftExpression && m_rightExpression){
           // do not filter if aggregation function involved
-          if (m_leftExpression->containGroupFunc() || m_rightExpression->containGroupFunc())
+          if (m_leftExpression->containGroupFunc() || m_rightExpression->containGroupFunc() || m_leftExpression->containAnaFunc() || m_rightExpression->containAnaFunc())
             return true;
           else{ // no aggregation function in either left or right expression. do filter comparasion
             string leftRst = "", rightRst = "";
@@ -790,12 +786,12 @@ bool FilterC::compareExpression(vector<string>* fieldvalues, map<string,string>*
           }
         }else
           return false;
-      }else{ // matching the aggregation functions only
+      }else{ // matching the aggregation/analytic functions only
         if (m_leftExpression && m_rightExpression){
-          // do not filter if no aggregation function involved (exemp const)
-          if ((!m_leftExpression->containGroupFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)) || (m_rightExpression->containGroupFunc() && !(m_rightExpression->m_type==LEAF&&m_rightExpression->m_expType==CONST)))
+          // do not filter if no aggregation/analytic function involved (exempt const)
+          if ((!m_leftExpression->containGroupFunc() && !m_leftExpression->containAnaFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)) || (m_rightExpression->containGroupFunc() && m_rightExpression->containAnaFunc() && !(m_rightExpression->m_type==LEAF&&m_rightExpression->m_expType==CONST)))
             return true;
-          else{ // aggregation function in either left or right expression. do filter comparasion
+          else{ // aggregation/analytic function in either left or right expression. do filter comparasion
             string leftRst = "", rightRst = "";
             DataTypeStruct dts1, dts2;
             if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, leftRst, dts1, true) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, rightRst, dts2, true)){

@@ -141,6 +141,7 @@ using namespace std;
 #define NEXT 203
 #define SEQNUM 204
 #define DENSERANK 205
+#define NEARBY 206
 #define FOREACH 501
 
 #define TEXT 1

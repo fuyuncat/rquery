@@ -192,9 +192,14 @@ class QuerierC
     int searchNextDelm();
 
 #ifdef __DEBUG__
+    long int m_querystartat;
+    long int m_totaltime;
     long int m_searchtime;
     long int m_filtertime;
     long int m_sorttime;
+    long int m_uniquetime;
+    long int m_grouptime;
+    long int m_analytictime;
     long int m_filtercomptime;
     long int m_evalGroupKeytime;
     long int m_prepAggGPtime;

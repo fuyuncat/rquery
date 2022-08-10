@@ -2,6 +2,7 @@
 All change logs will be documented here.<br/>
    # [0.931] 2022-08-10
    Enhancement: Make the data structure of analytic function more optimized, saved memory. <br/>
+   New feature: new analytic function: Nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />
    # [0.931] 2022-08-09
    Fixed bug: analytic function doesnot get correct result if it is involved in an expression<br />
    New feature: new analytic function: denserank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />

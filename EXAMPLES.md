@@ -389,7 +389,7 @@
    ```
    132000008       DOUBLE  DATE
    ```
-- Rank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The rank of a sorted expression in a group.<br />
+- Rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1) | o @4,@1 " timezone.log
    ```
@@ -421,7 +421,7 @@
    [22/Jul/2022:01:10:41 -0800]    192.168.1.2     2       1
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3       1
    ```
-- Denserank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The dense rank of a sorted expression in a group.<br />
+- Denserank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1),denserank(@4,@1) | o @4,@2,@3,@1,rank(@4,@1)" timezone.log 
    ```
@@ -437,6 +437,23 @@
    [22/Jul/2022:01:10:41 -0800]    192.168.1.1     1       1
    [22/Jul/2022:01:10:41 -0800]    192.168.1.2     2       2
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3       3
+   ```
+- Nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />
+   ```
+   rq -q "p d/ /\"\"[]/r | s @4,@1,nearby(@1;@4,@1;-1;'NULL'),nearby(@1;@4,@1;2;'NULL') | o @1,@4" timezone.log
+   ```
+   Returns result:<br/>
+   ```
+   [22/Jul/2022:01:10:41 +0700]    192.168.1.1     NULL    192.168.1.1
+   [22/Jul/2022:01:10:41 +0700]    192.168.1.1     192.168.1.1     192.168.1.1
+   [22/Jul/2022:01:10:41 +1000]    192.168.1.1     192.168.1.1     192.168.1.1
+   [22/Jul/2022:01:10:41 +1100]    192.168.1.1     192.168.1.1     192.168.1.2
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.1     192.168.1.1     192.168.1.2
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.2     192.168.1.1     192.168.1.2
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.2     192.168.1.2     192.168.1.3
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.2     192.168.1.2     192.168.1.3
+   [22/Jul/2022:01:10:41 -0700]    192.168.1.3     192.168.1.2     NULL
+   [22/Jul/2022:01:10:41 -0800]    192.168.1.3     192.168.1.3     NULL
    ```
 
 # Examples and scenarios

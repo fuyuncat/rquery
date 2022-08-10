@@ -92,7 +92,7 @@ bool FunctionC::isMacro()
 
 bool FunctionC::isAnalytic()
 {
-  return (m_funcID==RANK || m_funcID==DENSERANK || m_funcID==PREVIOUS || m_funcID==NEXT || m_funcID==SEQNUM);
+  return (m_funcID==RANK || m_funcID==DENSERANK || m_funcID==PREVIOUS || m_funcID==NEXT || m_funcID==NEARBY || m_funcID==SEQNUM);
 }
 
 // analyze expression string to get the function name (upper case) and parameter expression (classes)
@@ -214,6 +214,7 @@ bool FunctionC::analyzeExpStr()
     case FOREACH:
     case PREVIOUS:
     case NEXT:
+    case NEARBY:
       m_datatype.datatype = ANY;
       break;
     default:{
@@ -1210,6 +1211,7 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
     case COMLIST:
     case RANK:
     case DENSERANK:
+    case NEARBY:
     case PREVIOUS:
     case NEXT:
     case SEQNUM:{

@@ -98,9 +98,14 @@ void QuerierC::init()
   m_detectTypeMaxRowNum = 1;
   m_detectedTypeRows = 0;
 #ifdef __DEBUG__
+  m_querystartat = curtime();
+  m_totaltime = 0;
   m_searchtime = 0;
   m_filtertime = 0;
   m_sorttime = 0;
+  m_uniquetime = 0;
+  m_grouptime = 0;
+  m_analytictime = 0;
   m_evalGroupKeytime = 0;
   m_filtercomptime = 0;
   m_prepAggGPtime = 0;
@@ -1292,15 +1297,15 @@ int QuerierC::searchAll()
     found = searchNext();
     totalfound+=found;
   }
-#ifdef __DEBUG__
-  trace(DEBUG2, "Searching time: %d, filtering time: %d, sorting time: %d, eval group key time: %d, filter compare time: %d, prepare Agg GP time: %d, eval agg expression time: %d, eval selection time: %d, eval sort time: %d, update restult time: %d, matched lines: %d, found: %d\n", m_searchtime, m_filtertime, m_sorttime, m_evalGroupKeytime, m_filtercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_line, totalfound);
-#endif // __DEBUG__
   return totalfound;
 }
 
 // group result
 bool QuerierC::group()
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   if ((m_groups.size() == 0 && !m_aggrOnly) || m_groupKeys.size() == 0)
     return true;
 
@@ -1370,11 +1375,17 @@ bool QuerierC::group()
     m_sortKeys.push_back(vResults);
   }
   return true;
+#ifdef __DEBUG__
+  m_grouptime += (curtime()-thistime);
+#endif // __DEBUG__
 }
 
 // group and sort analytic functions
 bool QuerierC::analytic()
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   if (m_initAnaArray.size() == 0)
     return true;
   if (m_anaSortData.size() != m_anaSortProps.size() || m_anaSortProps.size() != m_anaFuncParaNums.size() || m_anaFuncParaNums.size() != m_anaSortData.size()){
@@ -1388,18 +1399,26 @@ bool QuerierC::analytic()
 
   vector< unordered_map< string,string > > anaFuncResult;
   for (unordered_map< string,vector< vector<string> > >::iterator it=m_anaSortData.begin(); it!=m_anaSortData.end(); it++){
+    short int iFuncID = encodeFunction(it->first.substr(0,it->first.find("(")));
+    if (iFuncID == UNKNOWN){
+      trace(ERROR, "Failed to find analytic function '%s'\n", it->first.c_str());
+      continue;
+    }
     // add index for each sort key
     for (int i=0; i<it->second.size(); i++)
       it->second[i].push_back(intToStr(i));
     vector<SortProp> sortProps;
-    if (it->first.find("RANK(")==0 || it->first.find("DENSERANK(")==0){ // For RANK/DENSERANK, the first part parameters are groups, which also need to be sorted (before sort keys).
+    if (iFuncID==RANK || iFuncID==DENSERANK){ // For RANK/DENSERANK, the first part parameters are groups, which also need to be sorted (before sort keys).
       int iAnaGroupNum = 0;
       unordered_map< string,vector<int> >::iterator itn = m_anaFuncParaNums.find(it->first);
-      if (itn == m_anaFuncParaNums.end())
+      if (itn == m_anaFuncParaNums.end()){
         trace(ERROR, "(1)Failed to find analytic function parameter numbers '%s'\n", it->first.c_str());
-      else{
-        if (itn->second.size() < 2)
+        continue;
+      }else{
+        if (itn->second.size() < 2){
           trace(ERROR, "(1)The analytic function parameter numbers size %d is smaller than 2\n", it->first.c_str(), itn->second.size());
+          continue;
+        }
         iAnaGroupNum = itn->second[0];
       }
       for (int j=0;j<iAnaGroupNum;j++){
@@ -1460,10 +1479,39 @@ bool QuerierC::analytic()
       printf("\n");
     }
 #endif
+    // variables for RANK/DENSERANK
     vector<string> preRow;
     int iRank = 1, iDenseRank = 1;
+    // variables for NEARBY
+    int iAnaExprNum = 0, iAnaSortNum = 0, iDistParaNum = 0, iDefaultParaNum = 0;
+    if (iFuncID==NEARBY){
+      unordered_map< string,vector<int> >::iterator itn = m_anaFuncParaNums.find(it->first);
+      if (itn->second.size()<4){
+        trace(ERROR, "NEARBY requires 4 parts parameters, only got %d\n", itn->second.size());
+        continue;
+      }
+      iAnaExprNum = itn->second[0], iAnaSortNum = itn->second[1], iDistParaNum = itn->second[2], iDefaultParaNum = itn->second[3];
+      if (iAnaExprNum < 1){
+        trace(ERROR, "NEARBY target expression is not provided!\n");
+        //continue;
+      }else if (iAnaExprNum > 1)
+        trace(WARNING, "NEARBY target expression only need one parameter, will use the first one, the other will be discarded!\n");
+      if (iDistParaNum < 1){
+        trace(ERROR, "NEARBY distiance is not provided!\n");
+        //continue;
+      }else if (iDistParaNum > 1)
+        trace(WARNING, "NEARBY distiance only need one parameter, will use the first one, the other will be discarded!\n");
+      if (iDefaultParaNum < 1){
+        trace(ERROR, "NEARBY default value is not provided!\n");
+        //continue;
+      }else if (iDefaultParaNum > 1)
+        trace(WARNING, "NEARBY default value only need one parameter, will use the first one, the other will be discarded!\n");
+      if (it->second[0].size() != iAnaExprNum+iAnaSortNum*2+iDistParaNum)
+        trace(ERROR, "NEARBY processing data size %d doesnot match parameter group total number %d+%d*2+%d !\n",it->second[0].size(), iAnaExprNum, iAnaSortNum, iDistParaNum);
+    }
     for (int i=0; i<m_anaFuncResult.size(); i++){
-      if (it->first.find("RANK(")==0 || it->first.find("DENSERANK(")==0){
+      int iPosBeforeSorted = atoi(it->second[i][it->second[i].size()-1].c_str());
+      if (iFuncID==RANK || iFuncID==DENSERANK){
         bool bNewGroup = false, bSortValueChanged=false;
         if (preRow.size() == 0){
           bNewGroup = true;
@@ -1495,40 +1543,78 @@ bool QuerierC::analytic()
         }
 #ifdef DEBUG_ANALYTIC
         printf(" === %d %d (%d %d)\n",iRank, iDenseRank, bNewGroup, bSortValueChanged);
-#endif
         dumpVector(it->second[i]);
+#endif
         trace(DEBUG,"Checking analytic function '%s' group size: %d. Check result: %d %d. Rank: %d \n",it->first.c_str(), m_anaFuncParaNums[it->first][0], bNewGroup, bSortValueChanged, iRank);
-        m_anaFuncResult[atoi(it->second[i][it->second[i].size()-1].c_str())][it->first] = intToStr(it->first.find("RANK(")==0?iRank:iDenseRank);
+        m_anaFuncResult[iPosBeforeSorted][it->first] = intToStr(iFuncID==RANK?iRank:iDenseRank);
+      }else if (iFuncID==NEARBY){
+        int iDistance = 0;
+        if (!isInt(it->second[i][iAnaExprNum+iAnaSortNum]))
+          trace(ERROR, "NEARBY distiance '%s' is not a valid number!\n", it->second[i][iAnaExprNum+iAnaSortNum].c_str());
+        else
+          iDistance = atoi(it->second[i][iAnaExprNum+iAnaSortNum].c_str());
+        m_anaFuncResult[iPosBeforeSorted][it->first] = (i+iDistance>=0&&i+iDistance<it->second.size())?it->second[i+iDistance][0]:it->second[i][iAnaExprNum+iAnaSortNum+iDistParaNum];
       }
     }
   }
+#ifdef __DEBUG__
+  trace(DEBUG2,"Analytic sorting time %d\n", curtime()-thistime);
+  m_analytictime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
 
   trace(DEBUG, "m_anaEvaledExp size is %d, dimension is %d . \n", m_anaEvaledExp.size(),m_anaEvaledExp[0].size());
-  for (int i=0; i<m_results.size();i++){
+  vector<string> vfieldvalues;
+  map<string,string> mvarvalues;
+  unordered_map< string,GroupProp > dummyAggGroupProp;
+  vector< vector<string> > tmpResults = m_results;
+  vector< vector<string> > tmpSortKeys = m_sortKeys;
+  m_results.clear();
+  m_sortKeys.clear();
+  for (int i=0; i<tmpResults.size();i++){
+    // create the map for the filter
+    unordered_map< string,vector<string> > anaFinalResult;
+    for (unordered_map< string,string >::iterator it=m_anaFuncResult[i].begin(); it!=m_anaFuncResult[i].end(); it++){
+      vector<string> anaThisResult;
+      anaThisResult.push_back(it->second);
+      anaFinalResult.insert(pair< string,vector<string> >(it->first,anaThisResult));
+    }
+    // filter by analytic function results
+    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &dummyAggGroupProp, &anaFinalResult))
+      continue;
     int anaExpID = 0;
     for (int j=0; j<m_selections.size(); j++)
       if (m_selections[j].containAnaFunc()){
         string sResult;
         m_anaEvaledExp[i][anaExpID].evalAnalyticFunc(&(m_anaFuncResult[i]), sResult);
         anaExpID++;
-        trace(DEBUG, "Selection '%s'(%d) contains analytic function, assign result '%s' (was '%s')\n", m_selections[j].getEntireExpstr().c_str(),j,sResult.c_str(),m_results[i][j+1].c_str());
-        m_results[i][j+1] = sResult;
+        trace(DEBUG, "Selection '%s'(%d) contains analytic function, assign result '%s' (was '%s')\n", m_selections[j].getEntireExpstr().c_str(),j,sResult.c_str(),tmpResults[i][j+1].c_str());
+        tmpResults[i][j+1] = sResult;
       }
     for (int j=0; j<m_sorts.size(); j++)
       if (m_sorts[j].sortKey.containAnaFunc()){
         string sResult;
         m_anaEvaledExp[i][anaExpID].evalAnalyticFunc(&(m_anaFuncResult[i]), sResult);
         anaExpID++;
-        trace(DEBUG, "Selection '%s'(%d) contains analytic function, assign result '%s' (was '%s')\n", m_sorts[j].sortKey.getEntireExpstr().c_str(),j,sResult.c_str(),m_results[i][j+1].c_str());
-        m_sortKeys[i][j] = sResult;
+        trace(DEBUG, "Selection '%s'(%d) contains analytic function, assign result '%s' (was '%s')\n", m_sorts[j].sortKey.getEntireExpstr().c_str(),j,sResult.c_str(),tmpResults[i][j+1].c_str());
+        tmpSortKeys[i][j] = sResult;
       }
+    m_results.push_back(tmpResults[i]); 
+    m_sortKeys.push_back(tmpSortKeys[i]);
   }
-
+#ifdef __DEBUG__
+  trace(DEBUG2,"Analytic reorder result time %d\n", curtime()-thistime);
+  m_analytictime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
   return true;
 }
 
 void QuerierC::unique()
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   trace(DEBUG, "Result number before unique: %d.\n",m_results.size());
   if (!m_bUniqueResult)
     return;
@@ -1550,6 +1636,9 @@ void QuerierC::unique()
   for (int i=0;i<tmpResult.size();i++)
     m_results.push_back(tmpResult[i]);
   trace(DEBUG, "Result number after unique: %d.\n",m_results.size());
+#ifdef __DEBUG__
+  m_uniquetime += (curtime()-thistime);
+#endif // __DEBUG__
 }
 
 // doing merging sort exchanging
@@ -1875,6 +1964,10 @@ void QuerierC::outputAndClean()
 {
   output();
   m_results.clear();
+#ifdef __DEBUG__
+  m_totaltime = curtime() - m_querystartat;
+  trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, filtering time: %d\n, sorting time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_filtertime, m_sorttime, m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_line);
+#endif // __DEBUG__
 }
 
 void QuerierC::outputExtraInfo(size_t total, short int mode, bool bPrintHeader)

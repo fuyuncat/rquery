@@ -706,7 +706,7 @@ bool FilterC::getAggFuncs(unordered_map< string,GroupProp > & aggFuncs)
   }
 }
 
-bool FilterC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string,int > & anaGroupNums)
+bool FilterC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string, vector<int> > & anaGroupNums)
 {
   if (m_type == LEAF){
     bool bGotAnnFunc = (m_leftExpression && m_leftExpression->getAnaFuncs(anaFuncs, anaGroupNums));

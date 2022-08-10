@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.931] 2022-08-10
+   Enhancement: Make the data structure of analytic function more optimized, saved memory. <br/>
    # [0.931] 2022-08-09
    Fixed bug: analytic function doesnot get correct result if it is involved in an expression<br />
    New feature: new analytic function: denserank([group1[;group2]...],[sort1 [asc|desc][;sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />

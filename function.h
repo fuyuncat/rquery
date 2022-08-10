@@ -36,7 +36,8 @@ class FunctionC
     string m_funcName; // analyzed function name, upper case
     short int m_funcID; // function ID
     vector<ExpressionC> m_params; // parameter expressions.
-    int m_anaFirstParamNum; // The number of first part (splitted by ;) parameters of analytic function . 
+    vector<int> m_anaParaNums; // The number of parameter (splitted by ;) in each part (splitted by ,) of analytic function
+    //int m_anaFirstParamNum; // The number of first part  parameters of analytic function . 
 
     bool runFunction(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts);
     bool isConst();   // if all parameters are const

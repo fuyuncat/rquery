@@ -401,7 +401,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_Function = new FunctionC(node->m_expStr);
         trace(DEBUG, "(1)New function from '%s'\n",node->m_expStr.c_str());
       }
-      trace(DEBUG, "(1)ExpressionC: The analytic function '%s' group size is %d, param size %d \n", node->m_Function->m_expStr.c_str(), node->m_Function->m_anaFirstParamNum, node->m_Function->m_params.size());
+      trace(DEBUG, "(1)ExpressionC: The analytic function '%s' param size %d \n", node->m_Function->m_expStr.c_str(), node->m_Function->m_params.size());
       node->m_datatype = node->m_Function->m_datatype;
       node->m_funcID = node->m_Function->m_funcID;
       node->m_expstrAnalyzed = true;
@@ -867,37 +867,6 @@ int ExpressionC::size(){
   return size;
 }
 
-// clear expression
-void ExpressionC::clear(){
-  if (m_leftNode){
-    m_leftNode->clear();
-    delete m_leftNode;
-    m_leftNode = NULL;
-  }
-  if (m_rightNode){
-    m_rightNode->clear();
-    delete m_rightNode;
-    m_rightNode = NULL;
-  }
-  if (m_Function){
-    m_Function->clear();
-    delete m_Function;
-    m_Function = NULL;
-  }
-  m_fieldnames = NULL;  // dont delete, as it points to an variable address
-  m_fieldtypes = NULL;  // dont delete, as it points to an variable address
-  m_expstrAnalyzed = false;
-  m_metaDataAnzlyzed = false;
-  m_type = UNKNOWN;
-  m_datatype.datatype = UNKNOWN;
-  m_datatype.extrainfo = "";
-  m_operate = UNKNOWN;
-  m_expType = UNKNOWN;
-  m_funcID = UNKNOWN;
-  m_colId = -1;
-  m_expStr = "";
-}
-
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
 //   0                      0                  2                 1
 //  1  2  (remove 3) =>   4   2 (remove 1) =>      (remove 2)  3   4
@@ -1099,7 +1068,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             // eval parameter expressions. Only retrieve once for each analytic function (depends on its expression str)
             if (it->second.size()==0)
               for (int i=0;i<m_Function->m_params.size();i++){
-                m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, tmpRslt, dts, getresultonly);
+                m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, tmpRslt, dts, true);
                 it->second.push_back(tmpRslt);
               }
             dts = m_Function->m_datatype;
@@ -1190,7 +1159,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
       trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
       dts = m_datatype;
       if (!getresultonly){
-        clear();
+        //clear();
         m_type = LEAF;
         m_expType = CONST;
         m_expStr = sResult;
@@ -1303,7 +1272,7 @@ bool ExpressionC::getAggFuncs(unordered_map< string,GroupProp > & aggFuncs)
   }
 }
 
-bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string,int > & anaGroupNums)
+bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string, vector<int> > & anaParaNums)
 {
   //trace(DEBUG2,"Checking '%s'(%d %d %d)\n",getEntireExpstr().c_str(),m_type,m_expType,m_Function?m_Function->isAggFunc():-1);
   if (m_type == LEAF && m_expType == FUNCTION && m_Function){
@@ -1315,21 +1284,21 @@ bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaF
         //trace(DEBUG2,"Adding aggregation function '%s' properties \n",m_Function->m_expStr.c_str());
         anaFuncs.insert(pair< string,vector<ExpressionC> >(m_Function->m_expStr,vParams));
       }
-      anaGroupNums.insert(pair< string,int >(m_Function->m_expStr,m_Function->m_anaFirstParamNum));
-      trace(DEBUG, "(2)ExpressionC: The analytic function '%s' group size is %d, param size %d \n", m_Function->m_expStr.c_str(), m_Function->m_anaFirstParamNum, m_Function->m_params.size());
+      anaParaNums.insert(pair< string,vector<int> >(m_Function->m_expStr,m_Function->m_anaParaNums));
+      trace(DEBUG, "(2)ExpressionC: The analytic function '%s' group size is %d, param size %d \n", m_Function->m_expStr.c_str(), m_Function->m_anaParaNums[0], m_Function->m_params.size());
       return true; // the parameter expressions of an aggregation function should not include another aggregation function
     }else { // check the paramters of normal functions
       //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
       bool bGotAnaFunc = false;
       for (int i=0;i<m_Function->m_params.size();i++){
         //trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
-        bGotAnaFunc = m_Function->m_params[i].getAnaFuncs(anaFuncs, anaGroupNums)||bGotAnaFunc;
+        bGotAnaFunc = m_Function->m_params[i].getAnaFuncs(anaFuncs, anaParaNums)||bGotAnaFunc;
       }
       return bGotAnaFunc;
     }
   }else{
-    bool bGotAnaFunc = (m_leftNode && m_leftNode->getAnaFuncs(anaFuncs, anaGroupNums));
-    bGotAnaFunc = (m_rightNode && m_rightNode->getAnaFuncs(anaFuncs, anaGroupNums));
+    bool bGotAnaFunc = (m_leftNode && m_leftNode->getAnaFuncs(anaFuncs, anaParaNums));
+    bGotAnaFunc = (m_rightNode && m_rightNode->getAnaFuncs(anaFuncs, anaParaNums));
     return bGotAnaFunc;
   }
 }
@@ -1454,4 +1423,35 @@ bool ExpressionC::inColNamesRange(vector<string> fieldnames)
   }
   trace(DEBUG,"FFFFFF '%s' \n", m_expStr.c_str());
   return false;
+}
+
+// clear expression
+void ExpressionC::clear(){
+  if (m_leftNode){
+    m_leftNode->clear();
+    delete m_leftNode;
+    m_leftNode = NULL;
+  }
+  if (m_rightNode){
+    m_rightNode->clear();
+    delete m_rightNode;
+    m_rightNode = NULL;
+  }
+  if (m_Function){
+    m_Function->clear();
+    delete m_Function;
+    m_Function = NULL;
+  }
+  m_fieldnames = NULL;  // dont delete, as it points to an variable address
+  m_fieldtypes = NULL;  // dont delete, as it points to an variable address
+  m_expstrAnalyzed = false;
+  m_metaDataAnzlyzed = false;
+  m_type = UNKNOWN;
+  m_datatype.datatype = UNKNOWN;
+  m_datatype.extrainfo = "";
+  m_operate = UNKNOWN;
+  m_expType = UNKNOWN;
+  m_funcID = UNKNOWN;
+  m_colId = -1;
+  m_expStr = "";
 }

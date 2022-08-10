@@ -28,7 +28,6 @@ void FunctionC::init()
   m_expstrAnalyzed = false;
   m_fieldnames = NULL;
   m_fieldtypes = NULL;
-  m_anaFirstParamNum = 0;
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
 }
@@ -119,43 +118,34 @@ bool FunctionC::analyzeExpStr()
   //strParams = trim_pair(strParams, "()");
   vector<string> vParams = split(strParams,',',"''()",'\\',{'(',')'},false,true);
   if (isAnalytic()){ // analyze analytic function parameters: (group1[;group2]...[,sort1 [asc|desc][;sort2 [asc|desc]]...]). sParam of analytic function can be empty
-    if (vParams.size()!=1&&vParams.size()!=2){
-      trace(ERROR, "There should be two part parameters for an analytic function '%s', a comma should be provided even no value applied, for example rank(,)!\n",m_funcName.c_str());
+    vParams = split(strParams,';',"''()",'\\',{'(',')'},false,false);
+    if (vParams.size()<2){
+      trace(ERROR, "There should be at least two part parameters for an analytic function '%s', sort key is compulsory, for example rank(;sortkey)!\n",m_funcName.c_str());
       m_expstrAnalyzed = false;
       return false;
     }
-    vector<string> vAnaPara = split(trim_copy(vParams[0]),';',"''()",'\\',{'(',')'},false,true);
-    if (vAnaPara.size()==0){ // need a param for group, if not provided, give it a ""
-      m_anaFirstParamNum = 1;
-      ExpressionC eParam = ExpressionC("");
-      m_params.push_back(eParam);
-      eParam = ExpressionC("1"); // group always get asc
-      m_params.push_back(eParam);
-    }else{
-      m_anaFirstParamNum = vAnaPara.size();
-      for (int i=0;i<vAnaPara.size();i++){
-        ExpressionC eParam = ExpressionC(trim_copy(vAnaPara[i]));
-        m_params.push_back(eParam);
-        eParam = ExpressionC("1"); // group always get asc
-        m_params.push_back(eParam);
-      }
-    }
-    if (vParams.size()==2){
-      vAnaPara = split(trim_copy(vParams[1]),';',"''()",'\\',{'(',')'},false,true);
-      for (int i=0;i<vAnaPara.size();i++){
-        vector<string> vSortPara = split(trim_copy(vAnaPara[i]),' ',"''()",'\\',{'(',')'},true,true);
-        ExpressionC eParam = ExpressionC(trim_copy(vSortPara[0]));
-        m_params.push_back(eParam);
-        if (vSortPara.size()>1){ // sort direction; 1:asc;-1:desc
-          eParam = ExpressionC(upper_copy(trim_copy(vSortPara[1])).compare("DESC")==0?"-1":"1");
+    for (int i=0; i<vParams.size(); i++){
+      vector<string> vAnaPara = split(trim_copy(vParams[i]),',',"''()",'\\',{'(',')'},false,true);
+      m_anaParaNums.push_back(vAnaPara.size());
+      for (int j=0;j<vAnaPara.size();j++){
+        if (i==1){// The second part should always be sort keys for ALL analytic functions.
+          vector<string> vSortPara = split(trim_copy(vAnaPara[j]),' ',"''()",'\\',{'(',')'},true,true);
+          ExpressionC eParam = ExpressionC(trim_copy(vSortPara[0]));
           m_params.push_back(eParam);
+          if (vSortPara.size()>1){ // sort direction; 1:asc;-1:desc
+            eParam = ExpressionC(upper_copy(trim_copy(vSortPara[1])).compare("DESC")==0?"-1":"1");
+            m_params.push_back(eParam);
+          }else{
+            eParam = ExpressionC("1"); // default is asc
+            m_params.push_back(eParam);
+          }
         }else{
-          eParam = ExpressionC("1"); // default is asc
+          ExpressionC eParam = ExpressionC(trim_copy(vAnaPara[j]));
           m_params.push_back(eParam);
         }
       }
     }
-    trace(DEBUG, "FunctionC: The analytic function '%s' group size is %d, param size %d \n", m_expStr.c_str(), m_anaFirstParamNum, m_params.size());
+    trace(DEBUG, "FunctionC: The analytic function '%s' group size is %d, param size %d \n", m_expStr.c_str(), m_anaParaNums[0], m_params.size());
   }else{
     for (int i=0; i<vParams.size(); i++){
       trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
@@ -277,7 +267,7 @@ FunctionC* FunctionC::cloneMe(){
   node->m_funcName = m_funcName;
   node->m_funcID = m_funcID;
   node->m_params = m_params;
-  node->m_anaFirstParamNum = m_anaFirstParamNum;
+  node->m_anaParaNums = m_anaParaNums;
   node->m_fieldnames = m_fieldnames;
   node->m_fieldtypes = m_fieldtypes;
 
@@ -295,7 +285,7 @@ void FunctionC::copyTo(FunctionC* node){
     node->m_funcName = m_funcName;
     node->m_funcID = m_funcID;
     node->m_params = m_params;
-    node->m_anaFirstParamNum = m_anaFirstParamNum;
+    node->m_anaParaNums = m_anaParaNums;
     node->m_fieldnames = m_fieldnames;
     node->m_fieldtypes = m_fieldtypes;
   }
@@ -313,7 +303,7 @@ void FunctionC::clear(){
   m_expstrAnalyzed = false;
   m_fieldnames = NULL;
   m_fieldtypes = NULL;
-  m_anaFirstParamNum = 0;
+  m_anaParaNums.clear();
   init();
 }
 

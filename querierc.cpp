@@ -172,7 +172,7 @@ void QuerierC::assignFilter(FilterC* filter)
   }
   m_filter = filter;
   m_filter->getAggFuncs(m_initAggProps);
-  m_filter->getAnaFuncs(m_initAnaArray, m_anaGroupNums);
+  m_filter->getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
   //m_filter->dump();
 }
 
@@ -297,7 +297,7 @@ bool QuerierC::analyzeSelString(){
     //trace(DEBUG2,"Selection expression: '%s'\n",vSelAlias[0].c_str());
     ExpressionC eSel = ExpressionC(vSelAlias[0]);
     if (eSel.m_type == LEAF && eSel.m_expType == FUNCTION && eSel.m_Function && eSel.m_Function->isAnalytic())
-      trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", eSel.m_Function->m_expStr.c_str(),eSel.m_Function->m_anaFirstParamNum,eSel.m_Function->m_params.size());
+      trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", eSel.m_Function->m_expStr.c_str(),eSel.m_Function->m_anaParaNums[0],eSel.m_Function->m_params.size());
     //trace(DEBUG, "Got selection expression '%s'!\n", eSel.getEntireExpstr().c_str());
     
     // if macro function is involved, need to wait util the first data analyzed to analyze select expression
@@ -326,7 +326,7 @@ bool QuerierC::analyzeSelString(){
             bNonGroupFuncSel = true;
 
           vExpandedExpr[j].getAggFuncs(m_initAggProps);
-          vExpandedExpr[j].getAnaFuncs(m_initAnaArray, m_anaGroupNums);
+          vExpandedExpr[j].getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
           m_selections.push_back(vExpandedExpr[j]);
         }
         m_bToAnalyzeSelectMacro = false;
@@ -345,7 +345,7 @@ bool QuerierC::analyzeSelString(){
       bNonGroupFuncSel = true;
 
     eSel.getAggFuncs(m_initAggProps);
-    eSel.getAnaFuncs(m_initAnaArray, m_anaGroupNums);
+    eSel.getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
     m_selections.push_back(eSel);
     //trace(DEBUG, "Selection: '%s'!\n", eSel.getEntireExpstr().c_str());
   }
@@ -431,7 +431,7 @@ bool QuerierC::analyzeSortStr(){
 
           checkSortGroupConflict(keyPropE.sortKey);
           keyPropE.sortKey.getAggFuncs(m_initAggProps);
-          keyPropE.sortKey.getAnaFuncs(m_initAnaArray, m_anaGroupNums);
+          keyPropE.sortKey.getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
           if (keyPropE.sortKey.m_type==BRANCH || keyPropE.sortKey.m_expType != CONST || (!isInt(keyPropE.sortKey.m_expStr) && !isLong(keyPropE.sortKey.m_expStr)) || atoi(keyPropE.sortKey.m_expStr.c_str())>=m_selections.size())
             m_sorts.push_back(keyPropE);
         }
@@ -441,7 +441,7 @@ bool QuerierC::analyzeSortStr(){
     }
     checkSortGroupConflict(keyProp.sortKey);
     keyProp.sortKey.getAggFuncs(m_initAggProps);
-    keyProp.sortKey.getAnaFuncs(m_initAnaArray, m_anaGroupNums);
+    keyProp.sortKey.getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
     // discard non integer CONST
     // Any INTEGER number will be mapped to the correspond sequence of the selections.
     // Thus, m_selections should always be analyzed before m_sorts
@@ -709,43 +709,60 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData
   // convert the stored analytic data to this format: <analytic_func_str:vector of analytic data> 
   for (unordered_map< string,vector<string> >::iterator it=anaFuncData.begin(); it!=anaFuncData.end(); it++){
     vector<string> sortKey;
+    int iAnaGroupNum = 0, iAnaSortNum = 0;
+    unordered_map< string,vector<int> >::iterator itn = m_anaFuncParaNums.find(it->first);
+    if (itn == m_anaFuncParaNums.end())
+      trace(ERROR, "(1)Failed to find analytic function parameter numbers '%s'\n", it->first.c_str());
+    else{
+      if (itn->second.size() < 2)
+        trace(ERROR, "(1)The analytic function parameter numbers size %d is smaller than 2\n", it->first.c_str(), itn->second.size());
+      iAnaGroupNum = itn->second[0];
+      iAnaSortNum = itn->second[1];
+    }
     if (m_anaSortData.find(it->first) != m_anaSortData.end()){
       //group1,group2...,sort1[,sort_direction1(1|-1)][,sort2,[,sort_direction2(1|-1)]...], group number
-      for(int j=0;j<(it->second.size())/2;j++)
-        sortKey.push_back(it->second[j*2]);
+      for(int j=0;j<it->second.size();j++)
+        if (j<iAnaGroupNum || j>=iAnaGroupNum+iAnaSortNum*2) // all parts except the second part of analytic function parameters
+          sortKey.push_back(it->second[j]);
+        else{ // second part of analytic function parameters, which are always sort keys for all analytic functions
+          if ((j-iAnaGroupNum)%2==0)
+            sortKey.push_back(it->second[j]);
+        }
       trace(DEBUG, "addAnaFuncData: Added %d sort keys. Raw data size: %d\n", sortKey.size(),it->second.size());
       m_anaSortData[it->first].push_back(sortKey);
     }else{
       vector< vector<string> > newData;
       vector<SortProp> sortProps;
-      //group1,group2...,sort1[,sort_direction1(1|-1)][,sort2,[,sort_direction2(1|-1)]...], group number
+      //Add sort props, the second part of parameters of analytic functions is the sort keys.
       for(int j=0;j<it->second.size();j++){
-        if (j%2==0)
+        if (j<iAnaGroupNum || j>=iAnaGroupNum+iAnaSortNum*2) // all parts except the second part of analytic function parameters
           sortKey.push_back(it->second[j]);
-        else{
-          SortProp sp;
-          FunctionC* anaFunc = NULL;
-          vector<ExpressionC> funcExps = m_anaEvaledExp[0];
-          ExpressionC funExp;
-          for (int i=0; i<funcExps.size();i++){
-            //trace(DEBUG,"Searching analytic function '%s' from '%s'\n",it->first.c_str(),funcExps[i].getEntireExpstr().c_str());
-            //funcExps[i].dump();
-            anaFunc = funcExps[i].getAnaFunc(it->first);
-            if (anaFunc)
-              break;
+        else { // second part of analytic function parameters, which are always sort keys for all analytic functions
+          if ((j-iAnaGroupNum)%2==0)
+            sortKey.push_back(it->second[j]);
+          else{
+            SortProp sp;
+            FunctionC* anaFunc = NULL;
+            vector<ExpressionC> funcExps = m_anaEvaledExp[0];
+            ExpressionC funExp;
+            for (int i=0; i<funcExps.size();i++){
+              //trace(DEBUG,"Searching analytic function '%s' from '%s'\n",it->first.c_str(),funcExps[i].getEntireExpstr().c_str());
+              //funcExps[i].dump();
+              anaFunc = funcExps[i].getAnaFunc(it->first);
+              if (anaFunc)
+                break;
+            }
+            if (!anaFunc){
+              trace(ERROR, "(1)Failed to find analytic function expression '%s'\n", it->first.c_str());
+            }else{
+              if (anaFunc->m_params.size() != it->second.size())
+                trace(ERROR, "(1)Analytic function '%s' sortkey size %d doesnot match the function parameter size %d!\n", it->first.c_str(), it->second.size(), anaFunc->m_params.size());
+              funExp = anaFunc->m_params[j-1];
+            }
+            sp.sortKey = funExp;
+            sp.direction = isInt(it->second[j])&&atoi(it->second[j].c_str())<0?DESC:ASC;
+            sortProps.push_back(sp);
           }
-          if (!anaFunc){
-            trace(ERROR, "Failed to find analytic function expression '%s'\n", it->first.c_str());
-            funExp = ExpressionC(it->second[j-1]);
-            funExp.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-          }else{
-            if (anaFunc->m_params.size() != it->second.size())
-              trace(ERROR, "Analytic function '%s' sortkey size %d doesnot match the function parameter size %d!\n", it->first.c_str(), it->second.size(), anaFunc->m_params.size());
-            funExp = anaFunc->m_params[j-1];
-          }
-          sp.sortKey = funExp;
-          sp.direction = isInt(it->second[j])&&atoi(it->second[j].c_str())<0?DESC:ASC;
-          sortProps.push_back(sp);
         }
       }
       trace(DEBUG, "addAnaFuncData: Added %d sort keys. Raw data size: %d\n", sortKey.size(),it->second.size());
@@ -754,7 +771,6 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData
       m_anaSortProps.insert(pair<string, vector<SortProp> >(it->first, sortProps) );
       newData.push_back(sortKey);
       m_anaSortData.insert(pair<string, vector< vector<string> > >(it->first, newData) );
-      //m_anaGroupNums.insert(pair<string, int >(it->first, iGroupNum) );
     }
     anaFuncResult.insert(pair<string,string>(it->first,""));
   }
@@ -1361,8 +1377,8 @@ bool QuerierC::analytic()
 {
   if (m_initAnaArray.size() == 0)
     return true;
-  if (m_anaSortData.size() != m_anaSortProps.size() || m_anaSortProps.size() != m_anaGroupNums.size() || m_anaGroupNums.size() != m_anaSortData.size()){
-    trace(ERROR, "Analytic functions sorting data size %d, sorting prop size %d, group number size %d do not match!\n", m_anaSortData.size(), m_anaSortProps.size(), m_anaGroupNums.size());
+  if (m_anaSortData.size() != m_anaSortProps.size() || m_anaSortProps.size() != m_anaFuncParaNums.size() || m_anaFuncParaNums.size() != m_anaSortData.size()){
+    trace(ERROR, "Analytic functions sorting data size %d, sorting prop size %d, group number size %d do not match!\n", m_anaSortData.size(), m_anaSortProps.size(), m_anaFuncParaNums.size());
     return false;
   }
   if (m_results.size() != m_anaFuncResult.size() || m_results.size() != m_anaEvaledExp.size() || m_anaFuncResult.size() != m_anaEvaledExp.size()){
@@ -1375,7 +1391,42 @@ bool QuerierC::analytic()
     // add index for each sort key
     for (int i=0; i<it->second.size(); i++)
       it->second[i].push_back(intToStr(i));
-    vector<SortProp> sortProps = m_anaSortProps[it->first];
+    vector<SortProp> sortProps;
+    if (it->first.find("RANK(")==0 || it->first.find("DENSERANK(")==0){ // For RANK/DENSERANK, the first part parameters are groups, which also need to be sorted (before sort keys).
+      int iAnaGroupNum = 0;
+      unordered_map< string,vector<int> >::iterator itn = m_anaFuncParaNums.find(it->first);
+      if (itn == m_anaFuncParaNums.end())
+        trace(ERROR, "(1)Failed to find analytic function parameter numbers '%s'\n", it->first.c_str());
+      else{
+        if (itn->second.size() < 2)
+          trace(ERROR, "(1)The analytic function parameter numbers size %d is smaller than 2\n", it->first.c_str(), itn->second.size());
+        iAnaGroupNum = itn->second[0];
+      }
+      for (int j=0;j<iAnaGroupNum;j++){
+        SortProp sp;
+        FunctionC* anaFunc = NULL;
+        vector<ExpressionC> funcExps = m_anaEvaledExp[0];
+        ExpressionC funExp;
+        for (int i=0; i<funcExps.size();i++){
+          //trace(DEBUG,"(2)Searching analytic function '%s' from '%s'\n",it->first.c_str(),funcExps[i].getEntireExpstr().c_str());
+          //funcExps[i].dump();
+          anaFunc = funcExps[i].getAnaFunc(it->first);
+          if (anaFunc)
+            break;
+        }
+        if (!anaFunc){
+          trace(ERROR, "(2)Failed to find analytic function expression '%s'\n", it->first.c_str());
+        }else{
+          if (anaFunc->m_params.size() < j)
+            trace(ERROR, "(2)Analytic function '%s' parameter size %d is smaller than expected!\n", it->first.c_str(), anaFunc->m_params.size());
+          funExp = anaFunc->m_params[j];
+        }
+        sp.sortKey = funExp;
+        sp.direction = ASC;
+        sortProps.push_back(sp);
+      }
+    }
+    sortProps.insert(sortProps.end(),m_anaSortProps[it->first].begin(),m_anaSortProps[it->first].end());
     auto sortVectorLambda = [sortProps] (vector<string> const& v1, vector<string> const& v2) -> bool
     {
       for (int i=0;i<sortProps.size();i++){
@@ -1387,23 +1438,28 @@ bool QuerierC::analytic()
       return false; // return false if all elements equal
     };
     trace(DEBUG,"sortProps size: %d; sort keys size: %d\n",sortProps.size(), it->second[0].size());
-    //printf("sortProps size: %d\n",sortProps.size());
-    //for (int i=0;i<sortProps.size();i++)
-    //  printf("%d:%s %d\t",i,decodeDatatype(sortProps[i].sortKey.m_datatype.datatype).c_str(),sortProps[i].direction);
-    //printf("\n");
-    //printf("Before sorting analytic function data [%d][%d]\n",it->second.size(), it->second[0].size());
-    //for (int i=0;i<it->second.size();i++){
-    //  for (int j=0;j<it->second[i].size();j++)
-    //    printf("%d:%s\t",j,it->second[i][j].c_str());
-    //  printf("\n");
-    //}
+//#define DEBUG_ANALYTIC
+#ifdef DEBUG_ANALYTIC
+    printf("sortProps size: %d\n",sortProps.size());
+    for (int i=0;i<sortProps.size();i++)
+      printf("%d:%s %d\t",i,decodeDatatype(sortProps[i].sortKey.m_datatype.datatype).c_str(),sortProps[i].direction);
+    printf("\n");
+    printf("Before sorting analytic function data [%d][%d]\n",it->second.size(), it->second[0].size());
+    for (int i=0;i<it->second.size();i++){
+      for (int j=0;j<it->second[i].size();j++)
+        printf("%d:%s\t",j,it->second[i][j].c_str());
+      printf("\n");
+    }
+#endif
     std::sort(it->second.begin(), it->second.end(), sortVectorLambda);
-    //printf("Sorted analytic function data [%d][%d]\n",it->second.size(), it->second[0].size());
-    //for (int i=0;i<it->second.size();i++){
-    //  for (int j=0;j<it->second[i].size();j++)
-    //    printf("%d:%s\t",j,it->second[i][j].c_str());
-    //  printf("\n");
-    //}
+#ifdef DEBUG_ANALYTIC
+    printf("Sorted analytic function data [%d][%d]\n",it->second.size(), it->second[0].size());
+    for (int i=0;i<it->second.size();i++){
+      for (int j=0;j<it->second[i].size();j++)
+        printf("%d:%s\t",j,it->second[i][j].c_str());
+      printf("\n");
+    }
+#endif
     vector<string> preRow;
     int iRank = 1, iDenseRank = 1;
     for (int i=0; i<m_anaFuncResult.size(); i++){
@@ -1413,16 +1469,20 @@ bool QuerierC::analytic()
           bNewGroup = true;
           for (int j=0;j<it->second[i].size()-1;j++){
             preRow.push_back(it->second[i][j]);
-            //printf("%d:%s\t",j,it->second[i][j].c_str());
+#ifdef DEBUG_ANALYTIC
+            printf("%d:%s\t",j,it->second[i][j].c_str());
+#endif
           }
         }else {
           for (int j=0;j<it->second[i].size()-1;j++){
-            if (j<m_anaGroupNums[it->first] && it->second[i][j].compare(preRow[j])!=0)
+            if (j<m_anaFuncParaNums[it->first][0] && it->second[i][j].compare(preRow[j])!=0)
               bNewGroup = true;
-            if (j>=m_anaGroupNums[it->first] && it->second[i][j].compare(preRow[j])!=0)
+            if (j>=m_anaFuncParaNums[it->first][0] && it->second[i][j].compare(preRow[j])!=0)
               bSortValueChanged = true;
             preRow[j] = it->second[i][j];
-            //printf("%d:%s\t",j,it->second[i][j].c_str());
+#ifdef DEBUG_ANALYTIC
+            printf("%d:%s\t",j,it->second[i][j].c_str());
+#endif
           }
         }
         if (bNewGroup){
@@ -1433,9 +1493,11 @@ bool QuerierC::analytic()
           if (bSortValueChanged)
             iDenseRank = iRank;
         }
-        //printf(" === %d %d (%d %d)\n",iRank, iDenseRank, bNewGroup, bSortValueChanged);
-        //dumpVector(it->second[i]);
-        trace(DEBUG,"Checking analytic function '%s' group size: %d. Check result: %d %d. Rank: %d \n",it->first.c_str(), m_anaGroupNums[it->first], bNewGroup, bSortValueChanged, iRank);
+#ifdef DEBUG_ANALYTIC
+        printf(" === %d %d (%d %d)\n",iRank, iDenseRank, bNewGroup, bSortValueChanged);
+#endif
+        dumpVector(it->second[i]);
+        trace(DEBUG,"Checking analytic function '%s' group size: %d. Check result: %d %d. Rank: %d \n",it->first.c_str(), m_anaFuncParaNums[it->first][0], bNewGroup, bSortValueChanged, iRank);
         m_anaFuncResult[atoi(it->second[i][it->second[i].size()-1].c_str())][it->first] = intToStr(it->first.find("RANK(")==0?iRank:iDenseRank);
       }
     }

@@ -174,7 +174,7 @@ class QuerierC
     vector< unordered_map< string,string > > m_anaFuncResult; // the result of each evolved analytic function. The value will be empty during searching&matching, it will be assigned actually in the final analytic() function
     unordered_map< string,vector< vector<string> > > m_anaSortData; // data to be sorted for analytic function
     unordered_map< string,vector<SortProp> > m_anaSortProps; // sort props of sorting data for analytic function
-    unordered_map< string,int > m_anaGroupNums; // number of groups in each analytic function
+    unordered_map< string,vector<int> > m_anaFuncParaNums; // The number of parameter (splitted by ;) in each part (splitted by ,) of analytic function
 
     bool analyzeSelString();
     bool analyzeSortStr();

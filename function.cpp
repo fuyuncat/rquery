@@ -24,17 +24,26 @@ void FunctionC::init()
   m_expStr = "";          // it's the full function string, including function name and parameters
   m_funcName = "";        // analyzed function name, upper case
   m_funcID = UNKNOWN;
-  m_params.clear();       // parameter expressions
+  m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;
   m_fieldnames = NULL;
   m_fieldtypes = NULL;
-
-  m_metaDataAnzlyzed = false; // analyze column name to column id.
+  m_anaParaNums.clear();
+  m_params.clear();       // parameter expressions
 }
 
 FunctionC::FunctionC()
 {
   init();
+}
+
+// Rule one Copy Constructor
+FunctionC::FunctionC(const FunctionC& other)
+{
+  if (this != &other){
+    init();
+    other.copyTo(this);
+  }
 }
 
 FunctionC::FunctionC(string expStr)
@@ -43,16 +52,46 @@ FunctionC::FunctionC(string expStr)
   setExpStr(expStr);
 }
 
+// Rule two Destructor
 FunctionC::~FunctionC()
 {
-
+  clear();
 }
 
-FunctionC& FunctionC::operator=(FunctionC other)
+// Rule one Copy Assignment Operator
+FunctionC& FunctionC::operator=(const FunctionC& other)
 {
-  if (this != &other)
+  if (this != &other){
+    clear();
     other.copyTo(this);
+  }
   return *this;
+}
+
+void FunctionC::copyTo(FunctionC* node) const 
+{
+  if (!node || node==this)
+    return;
+  else{
+    node->clear();
+    node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+    node->m_expstrAnalyzed = m_expstrAnalyzed;
+    node->m_datatype = m_datatype;
+    node->m_expStr = m_expStr;
+    node->m_funcName = m_funcName;
+    node->m_funcID = m_funcID;
+    node->m_params = m_params;
+    node->m_anaParaNums = m_anaParaNums;
+    node->m_fieldnames = m_fieldnames;
+    node->m_fieldtypes = m_fieldtypes;
+  }
+}
+
+// clear expression
+void FunctionC::clear(){
+  m_anaParaNums.clear();
+  m_params.clear();
+  init();
 }
 
 void FunctionC::setExpStr(string expStr)
@@ -127,10 +166,11 @@ bool FunctionC::analyzeExpStr()
     for (int i=0; i<vParams.size(); i++){
       vector<string> vAnaPara = split(trim_copy(vParams[i]),',',"''()",'\\',{'(',')'},false,true);
       m_anaParaNums.push_back(vAnaPara.size());
+      ExpressionC eParam;
       for (int j=0;j<vAnaPara.size();j++){
         if (i==1){// The second part should always be sort keys for ALL analytic functions.
           vector<string> vSortPara = split(trim_copy(vAnaPara[j]),' ',"''()",'\\',{'(',')'},true,true);
-          ExpressionC eParam = ExpressionC(trim_copy(vSortPara[0]));
+          eParam = ExpressionC(trim_copy(vSortPara[0]));
           m_params.push_back(eParam);
           if (vSortPara.size()>1){ // sort direction; 1:asc;-1:desc
             eParam = ExpressionC(upper_copy(trim_copy(vSortPara[1])).compare("DESC")==0?"-1":"1");
@@ -147,6 +187,7 @@ bool FunctionC::analyzeExpStr()
     }
     trace(DEBUG, "FunctionC: The analytic function '%s' group size is %d, param size %d \n", m_expStr.c_str(), m_anaParaNums[0], m_params.size());
   }else{
+    ExpressionC eParam;
     for (int i=0; i<vParams.size(); i++){
       trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
       string sParam = trim_copy(vParams[i]);
@@ -155,7 +196,7 @@ bool FunctionC::analyzeExpStr()
         m_expstrAnalyzed = false;
         return false;
       }
-      ExpressionC eParam = ExpressionC(sParam);
+      eParam = ExpressionC(sParam);
       //trace(DEBUG2,"'%s' merged const to '%s'.\n",sParam.c_str(),eParam.getEntireExpstr().c_str());
       //eParam.analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype);
       m_params.push_back(eParam);
@@ -248,6 +289,8 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
     m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype);
     //trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
   }
+  if (m_funcID == TRUNCDATE)
+    m_datatype = m_params[0].m_datatype;
   return m_datatype;
 }
 
@@ -273,39 +316,6 @@ FunctionC* FunctionC::cloneMe(){
   node->m_fieldtypes = m_fieldtypes;
 
   return node;
-}
-
-void FunctionC::copyTo(FunctionC* node){
-  if (!node)
-    return;
-  else{
-    node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
-    node->m_expstrAnalyzed = m_expstrAnalyzed;
-    node->m_datatype = m_datatype;
-    node->m_expStr = m_expStr;
-    node->m_funcName = m_funcName;
-    node->m_funcID = m_funcID;
-    node->m_params = m_params;
-    node->m_anaParaNums = m_anaParaNums;
-    node->m_fieldnames = m_fieldnames;
-    node->m_fieldtypes = m_fieldtypes;
-  }
-}
-
-// clear expression
-void FunctionC::clear(){
-  m_datatype.datatype = UNKNOWN;
-  m_datatype.extrainfo = "";
-  m_expStr = "";
-  m_funcName = "";
-  m_funcID = UNKNOWN;
-  m_params.clear();
-  m_metaDataAnzlyzed = false;
-  m_expstrAnalyzed = false;
-  m_fieldnames = NULL;
-  m_fieldtypes = NULL;
-  m_anaParaNums.clear();
-  init();
 }
 
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction

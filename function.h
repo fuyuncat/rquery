@@ -27,9 +27,12 @@ class FunctionC
 
     FunctionC();
     FunctionC(string expStr);
+    FunctionC(const FunctionC& other);
 
     ~FunctionC();
-    FunctionC& operator=(FunctionC other);
+    FunctionC& operator=(const FunctionC& other);
+
+    void copyTo(FunctionC* node) const;
 
     DataTypeStruct m_datatype;   // 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
     string m_expStr;  // it's the full function string, including function name and parameters
@@ -50,7 +53,6 @@ class FunctionC
     bool isAnalytic();
     void dump();
     FunctionC* cloneMe();
-    void copyTo(FunctionC* node);
     void clear(); // clear predictin
     bool remove(FunctionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
     vector<ExpressionC> expandForeach(int maxFieldNum); // expand foreach to a vector of expression

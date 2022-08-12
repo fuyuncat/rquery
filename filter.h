@@ -30,8 +30,12 @@ class FilterC
     FilterC(FilterC* node);
     FilterC(int junction, FilterC* leftNode, FilterC* rightNode); // construct a branch
     FilterC(int comparator, int colId, string data); // construct a leaf
+    FilterC(const FilterC& other);
 
     ~FilterC();
+    FilterC& operator=(const FilterC& other);
+
+    void copyTo(FilterC* node) const;
 
     int m_type;       // 1: branch; 2: leaf
     int m_junction;   // if type is BRANCH, 1: and; 2: or. Otherwise, it's meaningless
@@ -61,7 +65,6 @@ class FilterC
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     FilterC* cloneMe();
-    void copyTo(FilterC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
     int size(); // get all involved colIDs in this prediction

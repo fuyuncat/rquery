@@ -1,5 +1,8 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.931] 2022-08-12
+   Fixed bug: sorting large data may crashed when date type involved<br />
+   Enhancement: Optimized memory usage and solved potential memory leak issue<br />
    # [0.931] 2022-08-10
    Enhancement: Make the data structure of analytic function more optimized, saved memory. <br/>
    New feature: new analytic function: Nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />

@@ -151,6 +151,20 @@ using namespace std;
 #define WILDSEARCH 2
 #define DELMSEARCH 3
 
+template< class T > void SafeDelete( T*& pVal )
+{
+  if (pVal)
+    delete pVal;
+  pVal = NULL;
+}
+
+template< class T > void SafeDeleteArray( T*& pVal )
+{
+  if (pVal)
+    delete[] pVal;
+  pVal = NULL;
+}
+
 struct DataTypeStruct{
   int datatype=UNKNOWN;
   string extrainfo="";  // for DATE type only so far, the format of the DATE 
@@ -209,6 +223,7 @@ struct GroupProp{
   string max;
   string min;
   std::set <string> uniquec;
+  //vector <string> varray;
   bool inited = false;
 };
 

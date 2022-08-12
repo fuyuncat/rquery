@@ -159,7 +159,7 @@ class QuerierC
     int m_limittop;     // output limit top, -1 means no limit
     vector< vector<string> > m_sortKeys;  // extra sorting keys. The sorting keys that are not a parts of selections, it could be aggregation functions
     vector< vector<string> > m_results; // Result set. First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
-    vector< vector< vector<string> > > m_analyticresults; // vector to store result set of agg functions, like rank(group, sort, equalincrease)
+    //vector< vector< vector<string> > > m_analyticresults; // vector to store result set of agg functions, like rank(group, sort, equalincrease)
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     //map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
     std::set< vector<string> > m_groupKeys;  // group keys
@@ -178,8 +178,8 @@ class QuerierC
 
     bool analyzeSelString();
     bool analyzeSortStr();
-    bool checkSelGroupConflict(ExpressionC eSel);
-    bool checkSortGroupConflict(ExpressionC eSort);
+    bool checkSelGroupConflict(const ExpressionC & eSel);
+    bool checkSortGroupConflict(const ExpressionC & eSort);
     bool matchFilter(vector<string> rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp);  // eval expression in aggregation paramter and store in a data set
     bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, vector< vector<string> > & resultSet); // add a data row to a result set
@@ -190,6 +190,10 @@ class QuerierC
     int searchNextReg();
     int searchNextWild();
     int searchNextDelm();
+    void clearGroup();
+    void clearSort();
+    void clearAnalytic();
+    void clearFilter();
 
 #ifdef __DEBUG__
     long int m_querystartat;

@@ -38,13 +38,9 @@ void FilterC::init()
   m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;
 
+  m_inExpressions.clear();
+  m_comparators.clear();
   m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back("=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back(" LIKE ");m_comparators.push_back(" REGLIKE ");m_comparators.push_back(" NOLIKE ");m_comparators.push_back(" NOREGLIKE ");m_comparators.push_back(" IN ");m_comparators.push_back(" NOIN "); // "=", "<", ">" should be put after "<=" ">=" "!="
-}
-
-void FilterC::setExpstr(string expStr)
-{
-  m_expStr = expStr;
-  buildFilter();
 }
 
 FilterC::FilterC()
@@ -52,9 +48,76 @@ FilterC::FilterC()
   init();
 }
 
+// Rule one Copy Constructor
+FilterC::FilterC(const FilterC& other)
+{
+  if (this != &other){
+    init();
+    other.copyTo(this);
+  }
+}
+
+// Rule two Destructor
 FilterC::~FilterC()
 {
+  clear();
+}
 
+// Rule one Copy Assignment Operator
+FilterC& FilterC::operator=(const FilterC& other)
+{
+  if (this != &other){
+    clear();
+    other.copyTo(this);
+  }
+  return *this;
+}
+
+void FilterC::copyTo(FilterC* node) const
+{
+  if (!node || this==node)
+    return;
+  else{
+    node->clear();
+    node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+    node->m_expstrAnalyzed = m_expstrAnalyzed;
+    //node->predStr = predStr;
+    node->m_type = m_type;
+    node->m_datatype = m_datatype;
+    node->m_junction = m_junction;
+    node->m_comparator = m_comparator;
+    node->m_leftColId = m_leftColId;
+    node->m_rightColId = m_rightColId;
+    node->m_rightExpStr = m_rightExpStr;
+    node->m_leftExpStr = m_leftExpStr;
+    node->m_expStr = m_expStr;
+    if (m_type == BRANCH){
+      if (m_leftNode){
+        node->m_leftNode = new FilterC();
+        m_leftNode->copyTo(node->m_leftNode);
+        node->m_leftNode->m_parentNode = node;
+      }else
+        node->m_leftNode = NULL;
+
+      if (m_rightNode){
+        node->m_rightNode = new FilterC();
+        m_rightNode->copyTo(node->m_rightNode);
+        node->m_rightNode->m_parentNode = node;
+      }else
+        node->m_rightNode = NULL;
+      node->m_leftExpression = NULL;
+      node->m_rightExpression = NULL;
+    }else{
+      if (m_leftExpression){
+        node->m_leftExpression = new ExpressionC(m_leftExpStr);
+        m_leftExpression->copyTo(node->m_leftExpression);
+      }
+      if (m_rightExpression){
+        node->m_rightExpression = new ExpressionC(m_rightExpStr);
+        m_rightExpression->copyTo(node->m_rightExpression);
+      }
+    }
+  }
 }
 
 FilterC::FilterC(string expStr)
@@ -65,25 +128,10 @@ FilterC::FilterC(string expStr)
 
 FilterC::FilterC(FilterC* node)
 {
-  init();
-
-  m_type = node->m_type;
-  m_junction = node->m_junction;
-  m_comparator = node->m_comparator;
-  m_datatype = node->m_datatype;
-  m_leftColId = node->m_leftColId;
-  m_rightColId = node->m_rightColId;
-  m_expStr = node->m_expStr;
-  m_leftExpStr = node->m_leftExpStr;
-  m_rightExpStr = node->m_rightExpStr;
-  m_leftExpression = node->m_leftExpression;
-  m_rightExpression = node->m_rightExpression;
-  m_leftNode = node->m_leftNode;
-  m_rightNode = node->m_rightNode;
-  m_parentNode = node->m_parentNode;
-  m_metaDataAnzlyzed = node->m_metaDataAnzlyzed;
-  m_expstrAnalyzed = node->m_expstrAnalyzed;
-  //predStr = node.predStr;
+  if (node && node!=this){
+    init();
+    node->copyTo(this);
+  }
 }
 
 FilterC::FilterC(int junction, FilterC* leftNode, FilterC* rightNode)
@@ -93,8 +141,6 @@ FilterC::FilterC(int junction, FilterC* leftNode, FilterC* rightNode)
   m_junction = junction;
   m_leftNode = leftNode;
   m_rightNode = rightNode;
-  //m_leftNode = leftNode==NULL?NULL:new Prediction(leftNode);
-  //m_rightNode = rightNode==NULL?NULL:new Prediction(rightNode);;
 }
 
 FilterC::FilterC(int comparator, int colId, string data)
@@ -104,6 +150,35 @@ FilterC::FilterC(int comparator, int colId, string data)
   m_comparator = comparator;
   m_leftColId = colId;
   m_rightExpStr = data;
+}
+
+void FilterC::setExpstr(string expStr)
+{
+  m_expStr = expStr;
+  buildFilter();
+}
+
+// clear predictin
+void FilterC::clear(){
+  if (m_leftNode){
+    m_leftNode->clear();
+    SafeDelete(m_leftNode);
+  }
+  if (m_rightNode){
+    m_rightNode->clear();
+    SafeDelete(m_rightNode);
+  }
+  if (m_leftExpression){
+    m_leftExpression->clear();
+    SafeDelete(m_leftExpression);
+  }
+  if (m_rightExpression){
+    m_rightExpression->clear();
+    SafeDelete(m_rightExpression);
+  }
+  m_comparators.clear();
+  m_inExpressions.clear();
+  init();
 }
 
 // build a leaf node
@@ -131,7 +206,7 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
       if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
         if (node->m_rightExpression){
           node->m_rightExpression->clear();
-          delete node->m_rightExpression;
+          SafeDelete(node->m_rightExpression);
         }
         node->m_rightExpression = NULL;
         if (node->m_rightExpStr.length()<2 || node->m_rightExpStr[0]!='(' || node->m_rightExpStr[node->m_rightExpStr.length()-1]!=')'){
@@ -140,13 +215,14 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
         }
         string sElements = node->m_rightExpStr.substr(1,node->m_rightExpStr.length()-2);
         vector<string> vElements = split(sElements,',',"''()",'\\',{'(',')'},false,true);
+        ExpressionC eElement;
         for (int i=0;i<vElements.size();i++){
           string sResult, sElement = trim_copy(vElements[i]);
           if (sElement.empty()){
             trace(ERROR, "Empty IN element string!\n");
             return;
           }
-          ExpressionC eElement(sElement);
+          eElement = ExpressionC(sElement);
           if (!eElement.expstrAnalyzed()){
             trace(ERROR, "Failed to analyze the expression of %s!\n", sElement.c_str());
             return;
@@ -209,8 +285,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
         //trace(DEBUG,"Building leftNode\n");
         if (!m_leftNode->buildFilter(" OR ",quoters)) { // OR priority higher than AND
           m_leftNode->clear();
-          delete m_leftNode;
-          m_leftNode = NULL;
+          SafeDelete(m_leftNode);
           return false;
         }
         m_rightNode = new FilterC(m_expStr.substr(i+splitor.length()));
@@ -218,8 +293,7 @@ bool FilterC::buildFilter(string splitor, string quoters)
         //trace(DEBUG,"Building rightNode\n");
         if (!m_rightNode->buildFilter(" OR ",quoters)){
           m_rightNode->clear();
-          delete m_rightNode;
-          m_rightNode = NULL;
+          SafeDelete(m_rightNode);
           return false;
         }
         //trace(DEBUG2, "(1)Filter expression '%s' \n",m_expStr.c_str());
@@ -432,7 +506,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
     if (m_leftExpression){
       if (!m_leftExpression->expstrAnalyzed()){
         m_leftExpression->clear();
-        delete m_leftExpression;
+        SafeDelete(m_leftExpression);
         m_leftExpression = new ExpressionC(m_leftExpStr);
       }
     }else
@@ -440,8 +514,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
     if (!m_leftExpression->expstrAnalyzed()){
       trace(ERROR, "Failed to analyze m_leftExpression of filter '%s'!\n", m_leftExpression->getEntireExpstr().c_str());
       m_leftExpression->clear();
-      delete m_leftExpression;
-      m_leftExpression = NULL;
+      SafeDelete(m_leftExpression);
       return false;
     }
     m_leftExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype);
@@ -464,7 +537,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
       if (m_rightExpression){
         if (!m_rightExpression->expstrAnalyzed()){
           m_rightExpression->clear();
-          delete m_rightExpression;
+          SafeDelete(m_rightExpression);
           m_rightExpression = new ExpressionC(m_leftExpStr);
         }
       }else
@@ -472,8 +545,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
       if (!m_rightExpression->expstrAnalyzed()){
         trace(ERROR, "Failed to analyze m_rightExpression of filter '%s'!\n", m_rightExpression->getEntireExpstr().c_str());
         m_rightExpression->clear();
-        delete m_rightExpression;
-        m_rightExpression = NULL;
+        SafeDelete(m_rightExpression);
         return false;
       }
       m_rightExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype);
@@ -524,51 +596,6 @@ FilterC* FilterC::cloneMe(){
     node->m_rightNode = NULL;
   }
   return node;
-}
-
-void FilterC::copyTo(FilterC* node){
-  if (!node)
-    return;
-  else{
-    node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
-    node->m_expstrAnalyzed = m_expstrAnalyzed;
-    //node->predStr = predStr;
-    node->m_type = m_type;
-    node->m_datatype = m_datatype;
-    node->m_junction = m_junction;
-    node->m_comparator = m_comparator;
-    node->m_leftColId = m_leftColId;
-    node->m_rightColId = m_rightColId;
-    node->m_rightExpStr = m_rightExpStr;
-    node->m_leftExpStr = m_leftExpStr;
-    node->m_expStr = m_expStr;
-    if (m_type == BRANCH){
-      if (m_leftNode){
-        node->m_leftNode = new FilterC();
-        m_leftNode->copyTo(node->m_leftNode);
-        node->m_leftNode->m_parentNode = node;
-      }else
-        node->m_leftNode = NULL;
-
-      if (m_rightNode){
-        node->m_rightNode = new FilterC();
-        m_rightNode->copyTo(node->m_rightNode);
-        node->m_rightNode->m_parentNode = node;
-      }else
-        node->m_rightNode = NULL;
-      node->m_leftExpression = NULL;
-      node->m_rightExpression = NULL;
-    }else{
-      if (m_leftExpression){
-        node->m_leftExpression = new ExpressionC(m_leftExpStr);
-        m_leftExpression->copyTo(node->m_leftExpression);
-      }
-      if (m_rightExpression){
-        node->m_rightExpression = new ExpressionC(m_rightExpStr);
-        m_rightExpression->copyTo(node->m_rightExpression);
-      }
-    }
-  }
 }
 
 // get all involved colIDs in this prediction
@@ -626,32 +653,6 @@ int FilterC::size(){
   return size;
 }
 
-// clear predictin
-void FilterC::clear(){
-  if (m_leftNode){
-    m_leftNode->clear();
-    delete m_leftNode;
-    m_leftNode = NULL;
-  }
-  if (m_rightNode){
-    m_rightNode->clear();
-    delete m_rightNode;
-    m_rightNode = NULL;
-  }
-  m_type = UNKNOWN;
-  m_datatype.datatype = UNKNOWN;
-  m_datatype.extrainfo = "";
-  m_junction = UNKNOWN;
-  m_comparator = UNKNOWN;
-  m_leftColId = -1;
-  m_rightColId = -1;
-  m_rightExpStr = "";
-  m_leftExpStr = "";
-  m_expStr = "";
-  m_metaDataAnzlyzed = false;
-  m_expstrAnalyzed = false;
-}
-
 // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
 //   0                      0                  2                 1
 //  1  2  (remove 3) =>   4   2 (remove 1) =>      (remove 2)  3   4
@@ -661,8 +662,7 @@ bool FilterC::remove(FilterC* node){
   if (m_leftNode){
     if (m_leftNode == node){
       m_leftNode->clear();
-      delete m_leftNode;
-      m_leftNode = NULL;
+      SafeDelete(m_leftNode);
       return true;
     }else{
       removed = removed || m_leftNode->remove(node);
@@ -673,8 +673,7 @@ bool FilterC::remove(FilterC* node){
   if (m_rightNode){
     if (m_rightNode == node){
       m_rightNode->clear();
-      delete m_rightNode;
-      m_rightNode = NULL;
+      SafeDelete(m_rightNode);
       return true;
     }else{
       removed = removed || m_rightNode->remove(node);

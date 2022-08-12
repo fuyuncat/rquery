@@ -471,12 +471,12 @@ int main(int argc, char *argv[])
       }
       ofstream* logfile = new ofstream(string(argv[i+1]));
       if (!(*logfile))
-        delete logfile;
+        SafeDelete(logfile);
       else{
         if (gv.g_logfile){
           if ((*gv.g_logfile))
             gv.g_logfile->close();
-          delete gv.g_logfile;
+          SafeDelete(gv.g_logfile);
         }
         gv.g_logfile = logfile;
       }
@@ -657,12 +657,12 @@ int main(int argc, char *argv[])
         string strParam = trim_copy(lineInput).substr(string("logfile ").length());
         ofstream* logfile = new ofstream(strParam);
         if (!(*logfile))
-          delete logfile;
+          SafeDelete(logfile);
         else{
           if (gv.g_logfile){
             if ((*gv.g_logfile))
               gv.g_logfile->close();
-            delete gv.g_logfile;
+            SafeDelete(gv.g_logfile);
           }
           gv.g_logfile = logfile;
         }
@@ -728,7 +728,7 @@ int main(int argc, char *argv[])
       }else if (lower_copy(trim_copy(lineInput)).find("filter ")==0){
         string strParam = trim_copy(lineInput).substr(string("filter ").length());
         //if (filter) // assignFilter will clear the existing filter
-        //  delete filter;
+        //  SafeDelete(filter);
         cout << "Filter condition is provided.\n";
         filter = new FilterC(strParam);
         rq.assignFilter(filter);

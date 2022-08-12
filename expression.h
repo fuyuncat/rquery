@@ -32,9 +32,12 @@ class ExpressionC
     ExpressionC(ExpressionC* node);
     ExpressionC(ExpressionC* leftNode, ExpressionC* rightNode); // construct a branch
     ExpressionC(int operate, int colId, string data); // construct a leaf
+    ExpressionC(const ExpressionC& other);
 
     ~ExpressionC();
-    ExpressionC& operator=(ExpressionC other);
+    ExpressionC& operator=(const ExpressionC& other);
+
+    void copyTo(ExpressionC* node) const;
 
     short int m_type;       // 1: BRANCH; 2: LEAF
     short int m_operate;    // if type is BRANCH, 1: +; 2: -; 3: *; 4: /; 5: ^; . Otherwise, it's meaningless
@@ -59,13 +62,12 @@ class ExpressionC
     DataTypeStruct analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype); // analyze column ID & name from metadata, return data type of current node
     bool columnsAnalyzed();
     bool expstrAnalyzed();
-    bool groupFuncOnly(); // check if the expression contains group (aggregation) function only except CONST
-    bool containGroupFunc(); // check if the expression contains group (aggregation) function
-    bool containAnaFunc(); // check if the expression contains analytic function
+    bool groupFuncOnly() const; // check if the expression contains group (aggregation) function only except CONST
+    bool containGroupFunc() const; // check if the expression contains group (aggregation) function
+    bool containAnaFunc() const; // check if the expression contains analytic function
     void getAllColumnNames(vector<string> & fieldnames);  // get all potential column/variable (upper case)
-    bool inColNamesRange(vector<string> fieldnames); // check if all column/variable in a given list of names (upper case).
+    bool inColNamesRange(vector<string> fieldnames) const; // check if all column/variable in a given list of names (upper case).
     ExpressionC* cloneMe();
-    void copyTo(ExpressionC* node);
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
     int size(); // get all involved colIDs in this prediction

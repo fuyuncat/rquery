@@ -39,7 +39,142 @@ void ExpressionC::init()
   m_expstrAnalyzed = false;   // if expression string analyzed
 
   //m_operators = {'^','*','/','+','-'};
+  m_operators.clear();
   m_operators.insert('^');m_operators.insert('*');m_operators.insert('/');m_operators.insert('+');m_operators.insert('-'); // "^", "*", "/" should be before "+", "-"
+}
+
+ExpressionC::ExpressionC()
+{
+  init();
+}
+
+ExpressionC::ExpressionC(string expString)
+{
+  init();
+  setExpstr(expString);
+}
+
+// Rule one Copy Constructor
+ExpressionC::ExpressionC(const ExpressionC& other)
+{
+  if (this != &other){
+    init();
+    other.copyTo(this);
+  }
+}
+
+// Rule two Destructor
+ExpressionC::~ExpressionC()
+{
+  clear();
+}
+
+// Rule one Copy Assignment Operator
+ExpressionC& ExpressionC::operator=(const ExpressionC& other)
+{
+  if (this != &other){
+    clear();
+    other.copyTo(this);
+  }
+  return *this;
+}
+
+ExpressionC::ExpressionC(ExpressionC* node)
+{
+  if (node && node!=this){
+    init();
+    node->copyTo(this);
+  }
+}
+
+void ExpressionC::copyTo(ExpressionC* node) const
+{
+  if (!node || this==node)
+    return;
+  else{
+    node->clear();
+    node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+    node->m_expstrAnalyzed = m_expstrAnalyzed;
+    node->m_type = m_type;
+    node->m_operate = m_operate;
+    node->m_colId = m_colId;
+    node->m_datatype = m_datatype;
+    node->m_expType = m_expType;
+    node->m_funcID = m_funcID;
+    node->m_expStr = m_expStr;
+    node->m_fieldnames = m_fieldnames;
+    node->m_fieldtypes = m_fieldtypes;
+    if(m_Function){
+      if (node->m_Function){
+        node->m_Function->clear();
+        SafeDelete(node->m_Function);
+      }
+      node->m_Function = new FunctionC();
+      m_Function->copyTo(node->m_Function);
+    }else
+      node->m_Function = NULL;
+    if (m_type == BRANCH){
+      if (m_leftNode){
+        if (node->m_leftNode){
+          node->m_leftNode->clear();
+          SafeDelete(node->m_leftNode);
+        }
+        node->m_leftNode = new ExpressionC();
+        m_leftNode->copyTo(node->m_leftNode);
+        node->m_leftNode->m_parentNode = node;
+      }else
+        node->m_leftNode = NULL;
+      
+      if (m_rightNode){
+        if (node->m_rightNode){
+          node->m_rightNode->clear();
+          SafeDelete(node->m_rightNode);
+        }
+        node->m_rightNode = new ExpressionC();
+        m_rightNode->copyTo(node->m_rightNode);
+        node->m_rightNode->m_parentNode = node;
+      }else
+        node->m_rightNode = NULL;
+    }
+  }
+}
+
+// clear expression
+void ExpressionC::clear(){
+  if (m_leftNode){
+    m_leftNode->clear();
+    SafeDelete(m_leftNode);
+  }
+  if (m_rightNode){
+    m_rightNode->clear();
+    SafeDelete(m_rightNode);
+  }
+  if (m_Function){
+    m_Function->clear();
+    SafeDelete(m_Function);
+  }
+  m_operators.clear();
+  
+  init();
+}
+
+ExpressionC::ExpressionC(ExpressionC* m_leftNode, ExpressionC* m_rightNode)
+{
+  clear();
+  m_type = BRANCH;
+  m_leftNode = m_leftNode;
+  m_rightNode = m_rightNode;
+  //m_leftNode = m_leftNode==NULL?NULL:new Prediction(m_leftNode);
+  //m_rightNode = m_rightNode==NULL?NULL:new Prediction(m_rightNode);;
+}
+
+ExpressionC::ExpressionC(int operate, int colId, string data)
+{
+  clear();
+  m_type = LEAF;
+  m_operate = operate;
+  m_colId = colId;
+  m_expStr = data;
 }
 
 void ExpressionC::setExpstr(string expString)
@@ -55,70 +190,6 @@ void ExpressionC::setExpstr(string expString)
     m_expStr = sResult;
     m_expType = CONST;
   }
-}
-
-ExpressionC::ExpressionC()
-{
-  init();
-}
-
-ExpressionC::ExpressionC(string expString)
-{
-  init();
-  setExpstr(expString);
-}
-
-ExpressionC::~ExpressionC()
-{
-
-}
-
-ExpressionC::ExpressionC(ExpressionC* node)
-{
-  init();
-
-  m_type = node->m_type;
-  m_operate = node->m_operate;
-  m_colId = node->m_colId;
-  m_datatype = node->m_datatype;
-  m_expType = node->m_expType;
-  m_funcID = node->m_funcID;
-  m_expStr = node->m_expStr;
-  m_leftNode = node->m_leftNode;
-  m_rightNode = node->m_rightNode;
-  m_parentNode = node->m_parentNode;
-  m_Function = node->m_Function;
-  m_metaDataAnzlyzed = node->m_metaDataAnzlyzed;
-  m_expstrAnalyzed = node->m_expstrAnalyzed;
-  m_fieldnames = node->m_fieldnames; // all nodes
-  m_fieldtypes = node->m_fieldtypes;
-  //predStr = node.predStr;
-}
-
-ExpressionC::ExpressionC(ExpressionC* m_leftNode, ExpressionC* m_rightNode)
-{
-  init();
-  m_type = BRANCH;
-  m_leftNode = m_leftNode;
-  m_rightNode = m_rightNode;
-  //m_leftNode = m_leftNode==NULL?NULL:new Prediction(m_leftNode);
-  //m_rightNode = m_rightNode==NULL?NULL:new Prediction(m_rightNode);;
-}
-
-ExpressionC::ExpressionC(int operate, int colId, string data)
-{
-  init();
-  m_type = LEAF;
-  m_operate = operate;
-  m_colId = colId;
-  m_expStr = data;
-}
-
-ExpressionC& ExpressionC::operator=(ExpressionC other)
-{
-  if (this != &other)
-    other.copyTo(this);
-  return *this;
 }
 
 bool ExpressionC::expstrAnalyzed()
@@ -240,7 +311,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
     if (iPos<0) { // didnt find any operator, reached the end
       if (expStr.length()>1 && expStr[0]=='(' && expStr[expStr.length()-1]==')') { // quoted expression
         newNode->clear();
-        delete newNode;
+        SafeDelete(newNode);
         newNode = BuildTree(expStr.substr(1,expStr.length()-2),NULL);
       }else{ // atom expression to be built as a leaf
         buildLeafNode(expStr, newNode);
@@ -249,7 +320,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
       //trace(DEBUG, "Found '%s'(%d) in '%s'\n",expStr.substr(iPos,1).c_str(),iPos,expStr.c_str());
       if (iPos == expStr.length() - 1){ // operator should NOT be the end
         newNode->clear();
-        delete newNode;
+        SafeDelete(newNode);
         trace(ERROR, "Operator should NOT be the end of the expression!\n");
         return NULL;
       }
@@ -429,7 +500,7 @@ bool ExpressionC::buildExpression()
   if (root){
     root->copyTo(this);
     root->clear();
-    delete root;
+    SafeDelete(root);
     return true;
   }
   return false;
@@ -758,6 +829,8 @@ ExpressionC* ExpressionC::cloneMe(){
   node->m_fieldtypes = m_fieldtypes;
   if (m_Function)
     node->m_Function = m_Function->cloneMe();
+  else
+    node->m_Function = NULL;
   if (m_type == BRANCH){
     node->m_leftNode = new ExpressionC();
     node->m_leftNode = m_leftNode->cloneMe();
@@ -770,48 +843,6 @@ ExpressionC* ExpressionC::cloneMe(){
     node->m_rightNode = NULL;
   }
   return node;
-}
-
-void ExpressionC::copyTo(ExpressionC* node){
-  if (!node)
-    return;
-  else{
-    node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
-    node->m_expstrAnalyzed = m_expstrAnalyzed;
-    //node->predStr = predStr;
-    node->m_type = m_type;
-    node->m_operate = m_operate;
-    node->m_colId = m_colId;
-    node->m_datatype = m_datatype;
-    node->m_expType = m_expType;
-    node->m_funcID = m_funcID;
-    node->m_expStr = m_expStr;
-    node->m_fieldnames = m_fieldnames;
-    node->m_fieldtypes = m_fieldtypes;
-    if(m_Function){
-      if (node->m_Function){
-        node->m_Function->clear();
-        delete node->m_Function;
-      }
-      node->m_Function = new FunctionC();
-      m_Function->copyTo(node->m_Function);
-    }
-    if (m_type == BRANCH){
-      if (m_leftNode){
-        node->m_leftNode = new ExpressionC();
-        m_leftNode->copyTo(node->m_leftNode);
-        node->m_leftNode->m_parentNode = node;
-      }else
-        node->m_leftNode = NULL;
-      
-      if (m_rightNode){
-        node->m_rightNode = new ExpressionC();
-        m_rightNode->copyTo(node->m_rightNode);
-        node->m_rightNode->m_parentNode = node;
-      }else
-        node->m_rightNode = NULL;
-    }
-  }
 }
 
 // get all involved colIDs in this expression
@@ -876,8 +907,7 @@ bool ExpressionC::remove(ExpressionC* node){
   if (m_leftNode){
     if (m_leftNode == node){
       m_leftNode->clear();
-      delete m_leftNode;
-      m_leftNode = NULL;
+      SafeDelete(m_leftNode);
       return true;
     }else{
       removed = removed || m_leftNode->remove(node);
@@ -888,8 +918,7 @@ bool ExpressionC::remove(ExpressionC* node){
   if (m_rightNode){
     if (m_rightNode == node){
       m_rightNode->clear();
-      delete m_rightNode;
-      m_rightNode = NULL;
+      SafeDelete(m_rightNode);
       return true;
     }else{
       removed = removed || m_rightNode->remove(node);
@@ -1038,10 +1067,12 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
                 case COUNT:
                   sResult = longToStr(it->second.count);
                   break;
-                case UNIQUECOUNT:
+                case UNIQUECOUNT:{
                   sResult = longToStr(it->second.uniquec.size());
+                  //std::set <string> uniquec(it->second.varray.begin(), it->second.varray.end());
+                  //sResult = longToStr(uniquec.size());
                   break;
-                case MAX:
+                }case MAX:
                   sResult = it->second.max;
                   break;
                 case MIN:
@@ -1222,11 +1253,9 @@ bool ExpressionC::mergeConstNodes(string & sResult)
     bool gotResult = anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult);
     if (gotResult){
       m_leftNode->clear();
-      delete m_leftNode;
-      m_leftNode = NULL;
+      SafeDelete(m_leftNode);
       m_rightNode->clear();
-      delete m_rightNode;
-      m_rightNode = NULL;
+      SafeDelete(m_rightNode);
       m_expType = CONST;
       m_type = LEAF;
       m_expStr = sResult;
@@ -1251,8 +1280,9 @@ bool ExpressionC::getAggFuncs(unordered_map< string,GroupProp > & aggFuncs)
   //trace(DEBUG2,"Checking '%s'(%d %d %d)\n",getEntireExpstr().c_str(),m_type,m_expType,m_Function?m_Function->isAggFunc():-1);
   if (m_type == LEAF && m_expType == FUNCTION && m_Function){
     if (m_Function->isAggFunc()){
+      GroupProp gp;
       if (aggFuncs.find(m_Function->m_expStr) == aggFuncs.end()){
-        GroupProp gp;
+        gp = GroupProp();
         //trace(DEBUG2,"Adding aggregation function '%s' properties \n",m_Function->m_expStr.c_str());
         aggFuncs.insert(pair<string,GroupProp>(m_Function->m_expStr,gp));
       }
@@ -1278,8 +1308,9 @@ bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaF
   //trace(DEBUG2,"Checking '%s'(%d %d %d)\n",getEntireExpstr().c_str(),m_type,m_expType,m_Function?m_Function->isAggFunc():-1);
   if (m_type == LEAF && m_expType == FUNCTION && m_Function){
     if (m_Function->isAnalytic()){
+      vector<ExpressionC> vParams;
       if (anaFuncs.find(m_Function->m_expStr) == anaFuncs.end()){
-        vector<ExpressionC> vParams;
+        vParams.clear();
         for (int i=0; i<m_Function->m_params.size();i++)
           vParams.push_back(m_Function->m_params[i]);
         //trace(DEBUG2,"Adding aggregation function '%s' properties \n",m_Function->m_expStr.c_str());
@@ -1304,7 +1335,7 @@ bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaF
   }
 }
 
-bool ExpressionC::containGroupFunc()
+bool ExpressionC::containGroupFunc() const
 {
   if (m_type == LEAF){
     if (m_expType == FUNCTION && m_Function && m_Function->isAggFunc())
@@ -1317,7 +1348,7 @@ bool ExpressionC::containGroupFunc()
   return false;
 }
 
-bool ExpressionC::containAnaFunc()
+bool ExpressionC::containAnaFunc() const
 {
   if (m_type == LEAF){
     if (m_expType == FUNCTION && m_Function && m_Function->isAnalytic())
@@ -1330,7 +1361,7 @@ bool ExpressionC::containAnaFunc()
   return false;
 }
 
-bool ExpressionC::groupFuncOnly()
+bool ExpressionC::groupFuncOnly() const
 {
   if (m_type == LEAF){
     if (m_expType == CONST)
@@ -1378,7 +1409,7 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
   }
 }
 
-bool ExpressionC::inColNamesRange(vector<string> fieldnames)
+bool ExpressionC::inColNamesRange(vector<string> fieldnames)  const
 {
   if (m_type == LEAF){
     if (m_expType == CONST){
@@ -1424,35 +1455,4 @@ bool ExpressionC::inColNamesRange(vector<string> fieldnames)
   }
   trace(DEBUG,"FFFFFF '%s' \n", m_expStr.c_str());
   return false;
-}
-
-// clear expression
-void ExpressionC::clear(){
-  if (m_leftNode){
-    m_leftNode->clear();
-    delete m_leftNode;
-    m_leftNode = NULL;
-  }
-  if (m_rightNode){
-    m_rightNode->clear();
-    delete m_rightNode;
-    m_rightNode = NULL;
-  }
-  if (m_Function){
-    m_Function->clear();
-    delete m_Function;
-    m_Function = NULL;
-  }
-  m_fieldnames = NULL;  // dont delete, as it points to an variable address
-  m_fieldtypes = NULL;  // dont delete, as it points to an variable address
-  m_expstrAnalyzed = false;
-  m_metaDataAnzlyzed = false;
-  m_type = UNKNOWN;
-  m_datatype.datatype = UNKNOWN;
-  m_datatype.extrainfo = "";
-  m_operate = UNKNOWN;
-  m_expType = UNKNOWN;
-  m_funcID = UNKNOWN;
-  m_colId = -1;
-  m_expStr = "";
 }

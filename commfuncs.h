@@ -22,12 +22,13 @@
 #include <string>
 #include <set>
 #include <map>
+#include <unordered_map>
 #include <ctime>
 #include <fstream>
 
 using namespace std;
 
-#define VERSION "v0.931"
+#define VERSION "v0.932"
 
 #define UNKNOWN 0
 
@@ -218,19 +219,30 @@ struct hash_container
 };
 
 struct GroupProp{
+public:
+  short int funcID = UNKNOWN;
   long count;
   long double sum;
   string max;
   string min;
-  std::set <string> uniquec;
-  //vector <string> varray;
+  std::set <string> * uniquec;
+  //vector <string> * varray;
   bool inited = false;
+  
+  void init();
+  GroupProp();
+  GroupProp(const GroupProp& other);
+  ~GroupProp();
+  GroupProp& operator=(const GroupProp& other);
+  void clear();
 };
 
 extern GlobalVars gv;
 
 void trace(short level, const char *fmt, ...);
 void exitProgram(short int code);
+void clearGroupPropMap(unordered_map< string,GroupProp > & aggProps); // manually free the memory of GroupProp, as it's not freed in the destructor to improve performance. 
+
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.

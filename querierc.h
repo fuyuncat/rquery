@@ -18,7 +18,6 @@
 #include <regex.h>
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include "commfuncs.h"
 #include "filter.h"
 #include <boost/xpressive/xpressive.hpp>

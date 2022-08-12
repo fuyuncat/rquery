@@ -618,6 +618,7 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
     unordered_map< string,vector<string> > anaFuncData;
     //trace(DEBUG2, "Eval aggregation function expression '%s'\n", ite->second.getEntireExpstr().c_str());
     if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, &anaFuncData, sResult, dts, true)){
+      it->second.funcID = ite->second.m_funcID;
       if (!it->second.inited){
         switch(ite->second.m_funcID){
         case AVERAGE:
@@ -633,8 +634,12 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
           it->second.count = 1;
           break;
         case UNIQUECOUNT:
-          it->second.uniquec.insert(sResult);
-          //it->second.varray.push_back(sResult);
+          if (!it->second.uniquec)
+            it->second.uniquec = new std::set <string>;
+          it->second.uniquec->insert(sResult);
+          //if (!it->second.varray)
+          //  it->second.varray = new vector <string>;
+          //it->second.varray->push_back(sResult);
           break;
         case MAX:
           it->second.max = sResult;
@@ -660,8 +665,12 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
           //trace(DEBUG2," count increasing 1 => %d\n",it->second.count);
           break;
         case UNIQUECOUNT:
-          it->second.uniquec.insert(sResult);
-          //it->second.varray.push_back(sResult);
+          if (!it->second.uniquec){
+          //if (!it->second.varray){
+            trace(ERROR,"Aggregation uniquec is not initialized! \n");
+          }else
+            it->second.uniquec->insert(sResult);
+            //it->second.varray->push_back(sResult);
           break;
         case MAX:
           //trace(DEBUG2,"Comparing '%s' : '%s' ... ",sResult.c_str(),it->second.max.c_str());
@@ -1002,6 +1011,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
         // make sure we only keep the last value of a group.
         if (dataSetExist){
           // m_aggFuncTaget.erase(groupExps);
+          // clearGroupPropMap(m_aggGroupProp[groupExps]); // free memory before erase it
           m_aggGroupProp.erase(groupExps);
           m_aggSelResults.erase(groupExps);
         }else{
@@ -2019,6 +2029,12 @@ void QuerierC::outputExtraInfo(size_t total, short int mode, bool bPrintHeader)
 
 void QuerierC::clearGroup()
 {
+  // need to manually free the memory of GroupProp, as it's not freed in the destructor to improve performance.
+  for (unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > >::iterator it=m_aggGroupProp.begin(); it!=m_aggGroupProp.end(); ++it){
+    clearGroupPropMap(it->second);
+  }
+  clearGroupPropMap(m_initAggProps);
+
   m_groups.clear();
   m_aggSelResults.clear();
   m_groupKeys.clear();

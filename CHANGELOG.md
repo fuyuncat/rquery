@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.932] 2022-08-12
+   Enhancement: Improved performance of uniquecount()<br />
    # [0.931] 2022-08-12
    Fixed bug: sorting large data may crashed when date type involved<br />
    Enhancement: Optimized memory usage and solved potential memory leak issue<br />

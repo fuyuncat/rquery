@@ -66,6 +66,82 @@ void GlobalVars::setVars(size_t inputbuffer, short tracelevel, bool printheader)
   g_printheader = printheader;
 }
 
+void GroupProp::init()
+{
+  funcID = UNKNOWN;
+  count = 0;
+  sum = 0;
+  uniquec = NULL;
+  //varray = NULL;
+  inited = false;
+}
+
+GroupProp::GroupProp()
+{
+  init();
+}
+
+GroupProp::GroupProp(const GroupProp& other)
+{
+  if (this != &other){
+    inited = other.inited;
+    funcID = other.funcID;
+    sum = other.sum;
+    max = other.max;
+    min = other.min;
+    count = other.count;
+    //varray = other.varray;
+    uniquec = other.uniquec; // To improve performance, reuse the point of the source object, this can avoid the set copy
+    //if (other.uniquec){
+    //  uniquec = new std::set <string>;
+    //  uniquec->insert(other.uniquec->begin(),other.uniquec->end());
+    //}else
+    //  uniquec = NULL;
+  }
+}
+
+GroupProp::~GroupProp()
+{
+  // To improve performance, we dont delete the pointer in the destructor, so the address can be reused by the assigned or Copy constructed target
+  //SafeDelete(uniquec);
+}
+
+GroupProp& GroupProp::operator=(const GroupProp& other)
+{
+  if (this != &other){
+    SafeDelete(uniquec);
+    //SafeDelete(varray);
+    inited = other.inited;
+    funcID = other.funcID;
+    sum = other.sum;
+    max = other.max;
+    min = other.min;
+    count = other.count;
+    //varray = other.varray;
+    uniquec = other.uniquec; // To improve performance, reuse the point of the source object, this can avoid the set copy
+    //if (other.uniquec){
+    //  uniquec = new std::set <string>;
+    //  uniquec->insert(other.uniquec->begin(),other.uniquec->end());
+    //}else
+    //  uniquec = NULL;
+  }
+  return *this;
+}
+
+void GroupProp::clear()
+{
+  SafeDelete(uniquec);
+  //sSafeDelete(varray);
+  init();
+}
+
+// manually free the memory of GroupProp, as it's not freed in the destructor to improve performance.
+void clearGroupPropMap(unordered_map< string,GroupProp > & aggProps)
+{
+  for (unordered_map< string,GroupProp >::iterator it=aggProps.begin(); it!=aggProps.end(); ++it)
+    it->second.clear();
+}
+
 short int encodeTracelevel(string str)
 {
   string sUpper = upper_copy(str);

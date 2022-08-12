@@ -1057,6 +1057,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
               // we dont bother with the paramter, as it has already been evaled in querierc.evalAggExpNode()
               // calculate the parameter here will cause duplicated calculation if the same aggregation function involved multiple times in the selection/sort
               //m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, extrainfo);
+              it->second.funcID = m_Function->m_funcID;
               switch (m_Function->m_funcID){
                 case AVERAGE:
                   sResult = doubleToStr(it->second.sum/(double)it->second.count);
@@ -1068,8 +1069,8 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
                   sResult = longToStr(it->second.count);
                   break;
                 case UNIQUECOUNT:{
-                  sResult = longToStr(it->second.uniquec.size());
-                  //std::set <string> uniquec(it->second.varray.begin(), it->second.varray.end());
+                  sResult = longToStr(it->second.uniquec->size());
+                  //std::set <string> uniquec(it->second.varray->begin(), it->second->varray.end());
                   //sResult = longToStr(uniquec.size());
                   break;
                 }case MAX:

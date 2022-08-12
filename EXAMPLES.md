@@ -381,6 +381,22 @@
    ```
      bbb   'bbb'
    ```
+- camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
+   ```
+   rq -q "s camelstr(@raw)" "asdfWd,sfsea2123wd"
+   ```
+   Returns result:<br/>
+   ```
+   Asdfwd,Sfsea2123Wd
+   ```
+- snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
+   ```
+   rq -q "s snakestr(@raw)" "asdfWd,sfsea2123wd"
+   ```
+   Returns result:<br/>
+   ```
+   Asdfwd,sfsea2123wd
+   ```
 - datatype(expr) : Normal function. Return the date type of the expression.<br/>
    ```
    echo " " | ./rq -q "s 8+1.32e+8, datatype(1.32e+8), datatype('2009-12-08')"

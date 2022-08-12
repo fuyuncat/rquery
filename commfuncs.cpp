@@ -701,6 +701,54 @@ string lower_copy(const string & str)
   return boost::to_lower_copy<string>(str);
 }
 
+string camelstr(const string & str)
+{
+  string sCamel = "";
+  bool preIsLetter = false;
+  for (int i=0; i<str.length(); i++){
+    if ((str[i]>='a' && str[i]<='z') || (str[i]>='A' && str[i]<='Z')){
+      if (!preIsLetter){
+        if (str[i]>='a' && str[i]<='z')
+          sCamel.push_back(char(int(str[i]-32)));
+        else
+          sCamel.push_back(str[i]);
+      }else{
+        if (str[i]>='A' && str[i]<='Z')
+          sCamel.push_back(char(int(str[i]+32)));
+        else
+          sCamel.push_back(str[i]);
+      }
+      preIsLetter = true;
+    }else{
+      sCamel.push_back(str[i]);
+      preIsLetter = false;
+    }
+  }
+  return sCamel;
+}
+
+string snakestr(const string & str)
+{
+  string sSnake = "";
+  for (int i=0; i<str.length(); i++){
+    if ((str[i]>='a' && str[i]<='z') || (str[i]>='A' && str[i]<='Z')){
+      if (i==0){
+        if (str[i]>='a' && str[i]<='z')
+          sSnake.push_back(char(int(str[i]-32)));
+        else
+          sSnake.push_back(str[i]);
+      }else{
+        if (str[i]>='A' && str[i]<='Z')
+          sSnake.push_back(char(int(str[i]+32)));
+        else
+          sSnake.push_back(str[i]);
+      }
+    }else
+      sSnake.push_back(str[i]);
+  }
+  return sSnake;
+}
+
 int random(int min, int max)
 {
   //srand( (unsigned)time(NULL) );
@@ -1651,6 +1699,10 @@ short int encodeFunction(string str)
     return RANDOM;
   else if(sUpper.compare("RANDSTR")==0)
     return RANDSTR;
+  else if(sUpper.compare("REVERTSTR")==0)
+    return REVERTSTR;
+  else if(sUpper.compare("FINDNTH")==0)
+    return FINDNTH;
   else if(sUpper.compare("CAMELSTR")==0)
     return CAMELSTR;
   else if(sUpper.compare("SNAKESTR")==0)

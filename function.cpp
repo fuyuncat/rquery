@@ -217,6 +217,9 @@ bool FunctionC::analyzeExpStr()
     case TRIMRIGHT:
     case TRIM:
     case DATATYPE:
+    case CAMELSTR:
+    case SNAKESTR:
+    case REVERTSTR:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -234,6 +237,7 @@ bool FunctionC::analyzeExpStr()
     case RANK:
     case DENSERANK:
     case SEQNUM:
+    case FINDNTH:
       m_datatype.datatype = LONG;
       break;
     case TIMEDIFF:
@@ -838,6 +842,36 @@ bool FunctionC::runTrim(vector<string>* fieldvalues, map<string,string>* varvalu
   return true;
 }
 
+bool FunctionC::runCamelstr(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "camelstr(str) function accepts only one or two parameters.\n");
+    return false;
+  }
+  string sStr;
+  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sStr, dts, true)){ 
+    trace(ERROR, "Failed to run camelstr(%s)!\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+  sResult = camelstr(sStr);
+  return true;
+}
+
+bool FunctionC::runSnakestr(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "snakestr(str) function accepts only one or two parameters.\n");
+    return false;
+  }
+  string sStr;
+  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sStr, dts, true)){ 
+    trace(ERROR, "Failed to run snakestr(%s)!\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+  sResult = snakestr(sStr);
+  return true;
+}
+
 bool FunctionC::runTruncdate(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 2){
@@ -1169,6 +1203,12 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case PAD:
       getResult = runPad(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
+      break;
+    case CAMELSTR:
+      getResult = runCamelstr(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
+      break;
+    case SNAKESTR:
+      getResult = runSnakestr(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
       break;
     case DATATYPE:
       getResult = runDatatype(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);

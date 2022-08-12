@@ -2,6 +2,8 @@
 All change logs will be documented here.<br/>
    # [0.932] 2022-08-12
    Enhancement: Improved performance of uniquecount()<br />
+   New feature: New function: camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
+   New feature: New function: snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
    # [0.931] 2022-08-12
    Fixed bug: sorting large data may crashed when date type involved<br />
    Enhancement: Optimized memory usage and solved potential memory leak issue<br />

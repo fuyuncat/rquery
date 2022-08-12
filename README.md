@@ -113,6 +113,8 @@ Functions can be used in the expression. We current provide some essential norma
    - log(num) : Normal function. Get the log result of a given float number.<br />
    - random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br />
    - randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br />
+   - camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
+   - snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
    - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
    - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />
    - now() : Normal function. Get current date time.<br />

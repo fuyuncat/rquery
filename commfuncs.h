@@ -130,6 +130,8 @@ using namespace std;
 #define TRIM 32
 #define RANDSTR 33
 #define DATATYPE 34
+#define REVERTSTR 35
+#define FINDNTH 36
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103
@@ -270,6 +272,8 @@ string trim(const string & str, char c = ' ');
 string trim_copy(const string & str);
 string upper_copy(const string & str);
 string lower_copy(const string & str);
+string camelstr(const string & str); // convert a string to camel string
+string snakestr(const string & str); // convert a string to snake string
 void replacestr(string & sRaw, const string & sReplace, const string & sNew);
 void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'});
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew);

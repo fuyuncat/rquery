@@ -634,12 +634,12 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
           it->second.count = 1;
           break;
         case UNIQUECOUNT:
-          if (!it->second.uniquec)
-            it->second.uniquec = new std::set <string>;
-          it->second.uniquec->insert(sResult);
-          //if (!it->second.varray)
-          //  it->second.varray = new vector <string>;
-          //it->second.varray->push_back(sResult);
+          //if (!it->second.uniquec)
+          //  it->second.uniquec = new std::set <string>;
+          //it->second.uniquec->insert(sResult);
+          if (!it->second.varray)
+            it->second.varray = new vector <string>;
+          it->second.varray->push_back(sResult);
           break;
         case MAX:
           it->second.max = sResult;
@@ -665,12 +665,12 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
           //trace(DEBUG2," count increasing 1 => %d\n",it->second.count);
           break;
         case UNIQUECOUNT:
-          if (!it->second.uniquec){
-          //if (!it->second.varray){
+          //if (!it->second.uniquec){
+          if (!it->second.varray){
             trace(ERROR,"Aggregation uniquec is not initialized! \n");
           }else
-            it->second.uniquec->insert(sResult);
-            //it->second.varray->push_back(sResult);
+            //it->second.uniquec->insert(sResult);
+            it->second.varray->push_back(sResult);
           break;
         case MAX:
           //trace(DEBUG2,"Comparing '%s' : '%s' ... ",sResult.c_str(),it->second.max.c_str());
@@ -923,7 +923,6 @@ bool QuerierC::matchFilter(vector<string> rowValue)
         vector<string> aggSelResult;
         string sResult;
         DataTypeStruct dts;
-        bool dataSetExist = false;
         if (m_aggrOnly) // has aggregation function without any group, give an empty string as the key
           groupExps.push_back("");
         else // group expressions to the sorting keys
@@ -938,93 +937,17 @@ bool QuerierC::matchFilter(vector<string> rowValue)
   thistime = curtime();
 #endif // __DEBUG__
         m_groupKeys.insert(groupExps);
-        unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it1 = m_aggSelResults.find(groupExps);
+        unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it1 = m_aggRowValues.find(groupExps);
         unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > >::iterator it2 = m_aggGroupProp.find(groupExps);
-        if (it1 != m_aggSelResults.end() && it2 != m_aggGroupProp.end()){
-          // We dont need to grab the existing aggSelResult, as we only need keep one aggSelResult for each groupExps
-          // aggSelResult = it1->second; 
-          for (unordered_map< string,GroupProp >::iterator it=it2->second.begin(); it!=it2->second.end(); ++it)
-            aggGroupProp.insert(pair< string,GroupProp >(it->first,it->second));
-          dataSetExist = true;
-        }else{
+        if (it1 == m_aggRowValues.end())
+          m_aggRowValues.insert( pair<vector<string>, vector<string> >(groupExps,fieldValues));
+        if (it2 == m_aggGroupProp.end()){
           for (unordered_map< string,GroupProp >::iterator it=m_initAggProps.begin(); it!=m_initAggProps.end(); ++it)
             aggGroupProp.insert(pair< string,GroupProp >(it->first,it->second));
-        }
-#ifdef __DEBUG__
-  m_prepAggGPtime += (curtime()-thistime);
-  thistime = curtime();
-#endif // __DEBUG__
-        // get data sets
-        //if (!dataSetExist) // only need keep one aggSelResult for each groupExps
-        aggSelResult.push_back(""); // save memory!! no point to store a whole raw string any more        
-        evalAggExpNode(&fieldValues, &varValues, aggGroupProp);
-#ifdef __DEBUG__
-  m_evalAggExptime += (curtime()-thistime);
-  thistime = curtime();
-#endif // __DEBUG__
-        vector<ExpressionC> anaEvaledExp;
-        for (int i=0; i<m_selections.size(); i++){
-          //trace(DEBUG1, "Selection '%s': %d \n",m_selections[i].getEntireExpstr().c_str(), m_selections[i].containGroupFunc());
-          // If the expression includes aggregation function, we still eval it, but eventually, only the last value in a group will be kept.
-          tmpExp = m_selections[i];
-          //m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
-          //trace(DEBUG2, "Eval selection '%s', get '%s', from '%s' \n",m_selections[i].getEntireExpstr().c_str(), sResult.c_str(), rowValue[0].c_str());
-          if (m_selections[i].containAnaFunc()){ // no actual result for analytic function yet. Keep the evaled expression
-            tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
-            anaEvaledExp.push_back(tmpExp);
-          }else
-            tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
-          aggSelResult.push_back(sResult);
-        }
-#ifdef __DEBUG__
-  m_evalSeltime += (curtime()-thistime);
-  thistime = curtime();
-#endif // __DEBUG__
-        for (int i=0; i<m_sorts.size(); i++){
-          //if it has the exact same expression as any selection, get the result from selection
-          int iSel = -1;
-          for (int j=0; j<m_selections.size(); j++)
-            if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
-              iSel = j;
-              break;
-            }
-          // if the sort key is a integer, get the result from the result set at the same sequence number
-          if (iSel >= 0 || (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()))
-            continue;
-          else{ // non aggregation function selections
-            tmpExp = m_sorts[i].sortKey;
-            //m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
-            //trace(DEBUG1, "Got non-aggr selection '%s' \n",sResult.c_str());
-            if (m_sorts[i].sortKey.containAnaFunc()) { // no actual result for analytic function yet. Keep the evaled expression
-              tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
-              anaEvaledExp.push_back(tmpExp);
-            }else
-              tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
-            aggSelResult.push_back(sResult);
-          }
-        }
-#ifdef __DEBUG__
-  m_evalSorttime += (curtime()-thistime);
-  thistime = curtime();
-#endif // __DEBUG__
-        // dateSet.nonAggSels.push_back(aggSelResult);
-        // make sure we only keep the last value of a group.
-        if (dataSetExist){
-          // m_aggFuncTaget.erase(groupExps);
-          // clearGroupPropMap(m_aggGroupProp[groupExps]); // free memory before erase it
-          m_aggGroupProp.erase(groupExps);
-          m_aggSelResults.erase(groupExps);
-        }else{
-          m_anaEvaledExp.push_back(anaEvaledExp);
-          addAnaFuncData(anaFuncData);
-          m_aggGroupDataidMap.insert(pair< vector<string>,int >(groupExps,m_anaEvaledExp.size()-1));
-        }
-        // m_aggFuncTaget.insert( pair<vector<string>, unordered_map< string,vector<string> > >(groupExps,aggFuncTaget));
-        //trace(DEBUG2, "adding result .. \n");
-        //dumpVector(groupExps);
-        //trace(DEBUG2, "sel: '%s' \n",aggSelResult[1].c_str());
-        m_aggSelResults.insert( pair<vector<string>, vector<string> >(groupExps,aggSelResult));
-        m_aggGroupProp.insert( pair<vector<string>, unordered_map< string,GroupProp > >(groupExps,aggGroupProp));
+          evalAggExpNode(&fieldValues, &varValues, aggGroupProp);
+          m_aggGroupProp.insert( pair<vector<string>, unordered_map< string,GroupProp > >(groupExps,aggGroupProp));
+        }else
+          evalAggExpNode(&fieldValues, &varValues, it2->second);
 #ifdef __DEBUG__
   m_updateResulttime += (curtime()-thistime);
   thistime = curtime();
@@ -1341,8 +1264,8 @@ bool QuerierC::group()
   vector<string> vfieldvalues;
   map<string,string> mvarvalues;
   unordered_map< string,vector<string> > anaFuncData;
-  //trace(DEBUG2, "m_aggSelResults size: %d, m_groupKeys size: %d\n", m_aggSelResults.size(), m_groupKeys.size());
-  //for (unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it=m_aggSelResults.begin(); it!=m_aggSelResults.end(); ++it)
+  //trace(DEBUG2, "m_aggRowValues size: %d, m_groupKeys size: %d\n", m_aggRowValues.size(), m_groupKeys.size());
+  //for (unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it=m_aggRowValues.begin(); it!=m_aggRowValues.end(); ++it)
   //  dumpVector(it->first);
   vector< vector<ExpressionC> > tmpanaEvaledExp = m_anaEvaledExp;
   vector< unordered_map< string,string > > tmpanaFuncResult = m_anaFuncResult;
@@ -1352,21 +1275,32 @@ bool QuerierC::group()
   m_anaFuncResult.clear();
   for (unordered_map< string,vector< vector<string> > >::iterator ita=m_anaSortData.begin(); ita!=m_anaSortData.end(); ita++)
     ita->second.clear();
+  map<string, string> varValues;
+  varValues.insert( pair<string,string>("@FILE",m_filename));
+  varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
+  varValues.insert(m_uservariables.begin(), m_uservariables.end());
   vector<string> vResults;
+  string sResult;
+  DataTypeStruct dts;
+  int iRow = 0;
   for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
+    varValues.insert( pair<string,string>("@RAW",m_aggRowValues[*it][0]));
+    varValues.insert( pair<string,string>("@LINE",intToStr(iRow)));
+    varValues.insert( pair<string,string>("@ROW",intToStr(iRow)));
     // filter aggregation function result
     if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &m_aggGroupProp[*it], &anaFuncData))
       continue;
     //dumpVector(*it);
-    //trace(DEBUG2,"Sel:'%s'\n",m_aggSelResults[*it][1].c_str());
+    //trace(DEBUG2,"Sel:'%s'\n",m_aggRowValues[*it][1].c_str());
     vResults.clear();
-    vResults.push_back(m_aggSelResults[*it][0]);
-    int iAggSelID = 1;
-    //trace(DEBUG1, "Selection: %d:%d\n", m_selections.size(), m_aggSelResults[*it]].size());
+    vResults.push_back(m_aggRowValues[*it][0]);
+    //int iAggSelID = 1;
+    //trace(DEBUG1, "Selection: %d:%d\n", m_selections.size(), m_aggRowValues[*it]].size());
     for (int i=0; i<m_selections.size(); i++){
-      string sResult;
-      vResults.push_back(m_aggSelResults[*it][iAggSelID]);
-      iAggSelID++;
+      m_selections[i].evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, true);
+      vResults.push_back(sResult);
+      //vResults.push_back(m_aggRowValues[*it][iAggSelID]);
+      //iAggSelID++;
     }
     m_results.push_back(vResults);
     if (tmpanaEvaledExp.size()>m_aggGroupDataidMap[*it])
@@ -1393,9 +1327,11 @@ bool QuerierC::group()
       }else if ((m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size())){
         vResults.push_back(m_results[m_results.size()-1][atoi(m_sorts[i].sortKey.m_expStr.c_str()) + 1]);
       }else{ // sort expressions
-        //trace(DEBUG1, "None aggr func selection: %s\n", m_aggSelResults[*it][iAggSelID].c_str());
-        vResults.push_back(m_aggSelResults[*it][iAggSelID]);
-        iAggSelID++;
+        //trace(DEBUG1, "None aggr func selection: %s\n", m_aggRowValues[*it][iAggSelID].c_str());
+        m_sorts[i].sortKey.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, true);
+        vResults.push_back(sResult);
+        //vResults.push_back(m_aggRowValues[*it][iAggSelID]);
+        //iAggSelID++;
       }
     }
     m_sortKeys.push_back(vResults);
@@ -2036,7 +1972,7 @@ void QuerierC::clearGroup()
   clearGroupPropMap(m_initAggProps);
 
   m_groups.clear();
-  m_aggSelResults.clear();
+  m_aggRowValues.clear();
   m_groupKeys.clear();
   m_aggGroupProp.clear();
   m_initAggProps.clear();

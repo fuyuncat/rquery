@@ -1069,9 +1069,9 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
                   sResult = longToStr(it->second.count);
                   break;
                 case UNIQUECOUNT:{
-                  sResult = longToStr(it->second.uniquec->size());
-                  //std::set <string> uniquec(it->second.varray->begin(), it->second->varray.end());
-                  //sResult = longToStr(uniquec.size());
+                  //sResult = longToStr(it->second.uniquec->size());
+                  std::set <string> uniquec(it->second.varray->begin(), it->second.varray->end());
+                  sResult = longToStr(uniquec.size());
                   break;
                 }case MAX:
                   sResult = it->second.max;

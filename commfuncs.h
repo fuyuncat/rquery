@@ -227,8 +227,8 @@ public:
   long double sum;
   string max;
   string min;
-  std::set <string> * uniquec;
-  //vector <string> * varray;
+  //std::set <string> * uniquec;
+  vector <string> * varray;
   bool inited = false;
   
   void init();

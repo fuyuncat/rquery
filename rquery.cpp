@@ -195,7 +195,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
       while(!ifile.eof()) {
         if (rq.searchStopped())
           break;
-        ifile.read(cachebuffer, cache_length);
+        ifile.read(cachebuffer, cache_length-1);
         //ifile.seekg(pos, ios::beg);
         if (ifile.eof())
           rq.setEof(true);

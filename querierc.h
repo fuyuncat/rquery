@@ -162,7 +162,7 @@ class QuerierC
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     //map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
     std::set< vector<string> > m_groupKeys;  // group keys
-    unordered_map< vector<string>, vector<string>, hash_container< vector<string> > > m_aggSelResults;  // temp results for all selections if aggregation functions or group involed. mapping group keys:selections, it should be 1:1
+    unordered_map< vector<string>, vector<string>, hash_container< vector<string> > > m_aggRowValues;  // Matched row values for each group. mapping group keys:selections, it should be 1:1
     unordered_map< string,GroupProp > m_initAggProps; // an initial aggregation function properties map retrieved from the selection&sort expressions
     unordered_map< string,ExpressionC > m_aggFuncExps; // aggregation function expressions map retrieved from the selection&sort expressions. mapping funcExpStr:ExpressionC
     unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > > m_aggGroupProp; // mapping group keys: group properties

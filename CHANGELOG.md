@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.932] 2022-08-15
+   Enhancement: Optimized aggregation function implement.<br />
+   # [0.932] 2022-08-13
+   Fixed bug: Messy code when reading large files.<br />
    # [0.932] 2022-08-12
    Enhancement: Improved performance of uniquecount()<br />
    New feature: New function: camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />

@@ -71,8 +71,8 @@ void GroupProp::init()
   funcID = UNKNOWN;
   count = 0;
   sum = 0;
-  uniquec = NULL;
-  //varray = NULL;
+  //uniquec = NULL;
+  varray = NULL;
   inited = false;
 }
 
@@ -90,8 +90,8 @@ GroupProp::GroupProp(const GroupProp& other)
     max = other.max;
     min = other.min;
     count = other.count;
-    //varray = other.varray;
-    uniquec = other.uniquec; // To improve performance, reuse the point of the source object, this can avoid the set copy
+    varray = other.varray;
+    //uniquec = other.uniquec; // To improve performance, reuse the point of the source object, this can avoid the set copy
     //if (other.uniquec){
     //  uniquec = new std::set <string>;
     //  uniquec->insert(other.uniquec->begin(),other.uniquec->end());
@@ -109,16 +109,16 @@ GroupProp::~GroupProp()
 GroupProp& GroupProp::operator=(const GroupProp& other)
 {
   if (this != &other){
-    SafeDelete(uniquec);
-    //SafeDelete(varray);
+    //SafeDelete(uniquec);
+    SafeDelete(varray);
     inited = other.inited;
     funcID = other.funcID;
     sum = other.sum;
     max = other.max;
     min = other.min;
     count = other.count;
-    //varray = other.varray;
-    uniquec = other.uniquec; // To improve performance, reuse the point of the source object, this can avoid the set copy
+    varray = other.varray;
+    //uniquec = other.uniquec; // To improve performance, reuse the point of the source object, this can avoid the set copy
     //if (other.uniquec){
     //  uniquec = new std::set <string>;
     //  uniquec->insert(other.uniquec->begin(),other.uniquec->end());
@@ -130,8 +130,8 @@ GroupProp& GroupProp::operator=(const GroupProp& other)
 
 void GroupProp::clear()
 {
-  SafeDelete(uniquec);
-  //sSafeDelete(varray);
+  //SafeDelete(uniquec);
+  SafeDelete(varray);
   init();
 }
 

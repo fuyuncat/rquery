@@ -28,6 +28,7 @@ void FunctionC::init()
   m_expstrAnalyzed = false;
   m_fieldnames = NULL;
   m_fieldtypes = NULL;
+  m_bDistinct = false;
   m_anaParaNums.clear();
   m_params.clear();       // parameter expressions
 }
@@ -82,6 +83,7 @@ void FunctionC::copyTo(FunctionC* node) const
     node->m_funcID = m_funcID;
     node->m_params = m_params;
     node->m_anaParaNums = m_anaParaNums;
+    node->m_bDistinct = m_bDistinct;
     node->m_fieldnames = m_fieldnames;
     node->m_fieldtypes = m_fieldtypes;
   }
@@ -121,7 +123,7 @@ bool FunctionC::isConst()
 
 bool FunctionC::isAggFunc()
 {
-  return (m_funcID==SUM || m_funcID==COUNT || m_funcID==UNIQUECOUNT || m_funcID==MAX || m_funcID==MIN || m_funcID==AVERAGE || m_funcID==SEQNUM);
+  return (m_funcID==SUM || m_funcID==COUNT || m_funcID==UNIQUECOUNT || m_funcID==MAX || m_funcID==MIN || m_funcID==AVERAGE || m_funcID==GROUPLIST);
 }
 
 bool FunctionC::isMacro()
@@ -196,10 +198,33 @@ bool FunctionC::analyzeExpStr()
         m_expstrAnalyzed = false;
         return false;
       }
-      eParam = ExpressionC(sParam);
-      //trace(DEBUG2,"'%s' merged const to '%s'.\n",sParam.c_str(),eParam.getEntireExpstr().c_str());
-      //eParam.analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype);
-      m_params.push_back(eParam);
+      if (m_funcID == GROUPLIST){ // GROUPLIST([distinct ]expr[,delimiter][,asc|desc])
+        if (i == 0){ // check distinct keyword for GROUPLIST
+          vector<string> vGLExprPara = split(trim_copy(sParam),' ',"''()",'\\',{'(',')'},true,true);
+          if (vGLExprPara.size() == 2){
+            if (upper_copy(trim_copy(vGLExprPara[0])).compare("DISTINCT") == 0)
+              m_bDistinct = true;
+            else
+              trace(WARNING, "'%s' is not a correct keywork, do you mean DISTINCT?\n", vGLExprPara[0].c_str());
+            sParam = trim_copy(vGLExprPara[1]);
+          }
+          eParam = ExpressionC(sParam);
+          m_params.push_back(eParam);
+        }else if(i == 1){ // delimiter for GROUPLIST
+          eParam = ExpressionC(sParam);
+          if (eParam.m_type!=LEAF || eParam.m_expType!=CONST){
+            trace(WARNING, "delimiter for GROUPLIST only accept const, '%s' is not a const. Will use a SPACE as delimiter!\n", sParam.c_str());
+            eParam = ExpressionC(" ");
+          }
+          m_params.push_back(eParam);
+        }else{
+          eParam = ExpressionC(sParam);
+          m_params.push_back(eParam);
+        }
+      }else{
+        eParam = ExpressionC(sParam);
+        m_params.push_back(eParam);
+      }
     }
   }
   switch(m_funcID){
@@ -220,6 +245,7 @@ bool FunctionC::analyzeExpStr()
     case CAMELSTR:
     case SNAKESTR:
     case REVERTSTR:
+    case GROUPLIST:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -293,7 +319,7 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
     m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype);
     //trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
   }
-  if (m_funcID == TRUNCDATE)
+  if (m_funcID == TRUNCDATE || m_funcID==GROUPLIST)
     m_datatype = m_params[0].m_datatype;
   return m_datatype;
 }
@@ -316,6 +342,7 @@ FunctionC* FunctionC::cloneMe(){
   node->m_funcID = m_funcID;
   node->m_params = m_params;
   node->m_anaParaNums = m_anaParaNums;
+  node->m_bDistinct = m_bDistinct;
   node->m_fieldnames = m_fieldnames;
   node->m_fieldtypes = m_fieldtypes;
 
@@ -1258,7 +1285,7 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       }
       break;
     }
-    case COMLIST:
+    case GROUPLIST:
     case RANK:
     case DENSERANK:
     case NEARBY:

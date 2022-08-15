@@ -243,6 +243,86 @@
    ```
    2022-07-29:18:56:36     2022-07-29:18:00:00
    ```
+- random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br/>
+   ```
+   rq -q "s random()" " "
+   ```
+   Returns result:<br/>
+   ```
+   58
+   ```
+   Another example:<br/>
+   ```
+   rq -q "s random(101,108)" " "
+   ```
+   Returns result:<br/>
+   ```
+   106
+   ```
+   One more example:<br/>
+   ```
+   rq -q "s random(8)" " "
+   ```
+   Returns result:<br/>
+   ```
+   6
+   ```
+- randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br/>
+   ```
+   rq -q "s randstr(16,'Udx')" " "
+   ```
+   Returns result:<br/>
+   ```
+   P@R32YOM*Z16R3R5`
+   ```
+- trimleft(str[,char]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   ```
+   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimleft(@2,' ')+'\''"
+   ```
+   Returns result:<br/>
+   ```
+     bbb   'bbb  '
+   ```
+- trimright(str[,char]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   ```
+   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimright(@2,' ')+'\''"
+   ```
+   Returns result:<br/>
+   ```
+     bbb   '  bbb'
+   ```
+- trim(str[,char]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   ```
+   echo "aaa,  bbb  " | ./rq -q "p d/,/ | s @2, '\''+trim(@2,' ')+'\''"
+   ```
+   Returns result:<br/>
+   ```
+     bbb   'bbb'
+   ```
+- camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
+   ```
+   rq -q "s camelstr(@raw)" "asdfWd,sfsea2123wd"
+   ```
+   Returns result:<br/>
+   ```
+   Asdfwd,Sfsea2123Wd
+   ```
+- snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
+   ```
+   rq -q "s snakestr(@raw)" "asdfWd,sfsea2123wd"
+   ```
+   Returns result:<br/>
+   ```
+   Asdfwd,sfsea2123wd
+   ```
+- datatype(expr) : Normal function. Return the date type of the expression.<br/>
+   ```
+   echo " " | ./rq -q "s 8+1.32e+8, datatype(1.32e+8), datatype('2009-12-08')"
+   ```
+   Returns result:<br/>
+   ```
+   132000008       DOUBLE  DATE
+   ```
 - sum(expr) - Aggregation function. Sum the number of expr<br/>
    ```
    echo "deptA 2022Jun 123
@@ -325,85 +405,17 @@
    ```
    3
    ```
-- random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br/>
+- grouplist([distinct ]expr[,delimiter][,asc|desc]) - Aggregation function. Combine the specific expr in a group to a string. distinct is a key word to indicate if the elements should be distinct, delimiter is a string to be the delimiter, asc|desc keywords indicate whether do sorting.<br />
    ```
-   rq -q "s random()" " "
-   ```
-   Returns result:<br/>
-   ```
-   58
-   ```
-   Another example:<br/>
-   ```
-   rq -q "s random(101,108)" " "
+   rq -q "p d/ /\"\"[]/r | s @4,grouplist(distinct 'ip:'+@1,', ',asc),count(1),uniquecount(@1) | g @4" timezone.log
    ```
    Returns result:<br/>
    ```
-   106
-   ```
-   One more example:<br/>
-   ```
-   rq -q "s random(8)" " "
-   ```
-   Returns result:<br/>
-   ```
-   6
-   ```
-- randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br/>
-   ```
-   rq -q "s randstr(16,'Udx')" " "
-   ```
-   Returns result:<br/>
-   ```
-   P@R32YOM*Z16R3R5`
-   ```
-- trimleft(str[,char]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
-   ```
-   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimleft(@2,' ')+'\''"
-   ```
-   Returns result:<br/>
-   ```
-     bbb   'bbb  '
-   ```
-- trimright(str[,char]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
-   ```
-   echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimright(@2,' ')+'\''"
-   ```
-   Returns result:<br/>
-   ```
-     bbb   '  bbb'
-   ```
-- trim(str[,char]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
-   ```
-   echo "aaa,  bbb  " | ./rq -q "p d/,/ | s @2, '\''+trim(@2,' ')+'\''"
-   ```
-   Returns result:<br/>
-   ```
-     bbb   'bbb'
-   ```
-- camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
-   ```
-   rq -q "s camelstr(@raw)" "asdfWd,sfsea2123wd"
-   ```
-   Returns result:<br/>
-   ```
-   Asdfwd,Sfsea2123Wd
-   ```
-- snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
-   ```
-   rq -q "s snakestr(@raw)" "asdfWd,sfsea2123wd"
-   ```
-   Returns result:<br/>
-   ```
-   Asdfwd,sfsea2123wd
-   ```
-- datatype(expr) : Normal function. Return the date type of the expression.<br/>
-   ```
-   echo " " | ./rq -q "s 8+1.32e+8, datatype(1.32e+8), datatype('2009-12-08')"
-   ```
-   Returns result:<br/>
-   ```
-   132000008       DOUBLE  DATE
+   [22/Jul/2022:01:10:41 +0700]    ip:192.168.1.1  2       1
+   [22/Jul/2022:01:10:41 +1000]    ip:192.168.1.1  1       1
+   [22/Jul/2022:01:10:41 +1100]    ip:192.168.1.1  1       1
+   [22/Jul/2022:01:10:41 -0700]    ip:192.168.1.2, ip:192.168.1.3  3       2
+   [22/Jul/2022:01:10:41 -0800]    ip:192.168.1.1, ip:192.168.1.2, ip:192.168.1.3  3       3
    ```
 - Rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
    ```

@@ -13,6 +13,7 @@
 *******************************************************************************/
 #include <stdio.h>
 #include <string.h>
+#include <algorithm>
 #include "expression.h"
 #include "function.h"
 
@@ -1079,6 +1080,34 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
                 case MIN:
                   sResult = it->second.min;
                   break;
+                case GROUPLIST:{
+                  sResult = "";
+                  trace(DEBUG, "varray size: %d\n", it->second.varray->size());
+                  if (m_Function->m_bDistinct){ // do distinct
+                    std::set <string> uniquec(it->second.varray->begin(), it->second.varray->end());
+                    it->second.varray->clear();
+                    std::copy(uniquec.begin(), uniquec.end(), std::back_inserter(*(it->second.varray)));
+                  }
+                  if (m_Function->m_params.size()>2){ // sort parameter provided, do sorting
+                    struct SortType{
+                      DataTypeStruct dts;
+                      short int direction;
+                    };
+                    SortType sortKey;
+                    sortKey.dts = m_Function->m_datatype;
+                    sortKey.direction = upper_copy(trim_copy(m_Function->m_params[2].m_expStr)).compare("DESC")==0?DESC:ASC;
+                    auto sortVectorLambda = [sortKey] (string const& v1, string const& v2) -> bool
+                    {
+                      int iCompareRslt = anyDataCompare(v1,v2,sortKey.dts);
+                      return (sortKey.direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
+                    };
+                    std::sort(it->second.varray->begin(), it->second.varray->end(), sortVectorLambda);
+                  }
+                  for (int i=0;i<it->second.varray->size();i++)
+                    sResult.append((i>0?(m_Function->m_params.size()>1?m_Function->m_params[1].m_expStr:" "):"")+(*it->second.varray)[i]);
+                  m_Function->m_datatype.datatype = STRING;
+                  break;
+                }
                 default:{
                   trace(ERROR, "Invalid aggregation function '%s'\n",m_Function->m_expStr.c_str());
                   return false;

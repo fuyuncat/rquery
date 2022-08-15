@@ -138,7 +138,7 @@ using namespace std;
 #define MAX 104
 #define MIN 105
 #define AVERAGE 106
-#define COMLIST 107
+#define GROUPLIST 107
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203

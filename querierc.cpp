@@ -633,6 +633,7 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
         case COUNT:
           it->second.count = 1;
           break;
+        case GROUPLIST:
         case UNIQUECOUNT:
           //if (!it->second.uniquec)
           //  it->second.uniquec = new std::set <string>;
@@ -664,6 +665,7 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
           it->second.count += 1;
           //trace(DEBUG2," count increasing 1 => %d\n",it->second.count);
           break;
+        case GROUPLIST:
         case UNIQUECOUNT:
           //if (!it->second.uniquec){
           if (!it->second.varray){

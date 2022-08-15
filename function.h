@@ -40,6 +40,7 @@ class FunctionC
     short int m_funcID; // function ID
     vector<ExpressionC> m_params; // parameter expressions.
     vector<int> m_anaParaNums; // The number of parameter (splitted by ;) in each part (splitted by ,) of analytic function
+    bool m_bDistinct;  // distinct flag for aggregation function
     //int m_anaFirstParamNum; // The number of first part  parameters of analytic function . 
 
     bool runFunction(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts);

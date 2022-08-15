@@ -1747,8 +1747,8 @@ short int encodeFunction(string str)
     return MIN;
   else if(sUpper.compare("AVERAGE")==0)
     return AVERAGE;
-  else if(sUpper.compare("COMLIST")==0)
-    return COMLIST;
+  else if(sUpper.compare("GROUPLIST")==0)
+    return GROUPLIST;
   else if(sUpper.compare("RANK")==0)
     return RANK;
   else if(sUpper.compare("DENSERANK")==0)

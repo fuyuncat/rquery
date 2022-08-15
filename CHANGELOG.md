@@ -2,6 +2,7 @@
 All change logs will be documented here.<br/>
    # [0.932] 2022-08-15
    Enhancement: Optimized aggregation function implement.<br />
+   New feature: New function: Grouplist([distinct ]expr[,delimiter][,asc|desc]) : Aggregation function. Combine the specific expr in a group to a string. distinct is a key word to indicate if the elements should be distinct, delimiter is a string to be the delimiter, asc|desc keywords indicate whether do sorting<br />
    # [0.932] 2022-08-13
    Fixed bug: Messy code when reading large files.<br />
    # [0.932] 2022-08-12

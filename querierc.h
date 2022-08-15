@@ -168,7 +168,7 @@ class QuerierC
     unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > > m_aggGroupProp; // mapping group keys: group properties
     bool m_aggrOnly; // the selection has aggregation functions only, no matter if there is any group field.
     unordered_map< string,vector<ExpressionC> > m_initAnaArray; // an initial analytic function vector retrieved from the selection&sort expressions. Map analytic_func_str(including params):vector of param expressions
-    unordered_map< vector<string>,int, hash_container< vector<string> > > m_aggGroupDataidMap; // map the aggregation function groups to the id of the first matched data row. mapping groups:id. Need to map to retrieve the analytic data & eval expression when doing grouping.
+    unordered_map< int, vector<string> > m_aggGroupDataidMap; // map the aggregation function groups to the id of the first matched data row. mapping id:groups. Need to eval the filter in analytic final calculating function
     vector< vector<ExpressionC> > m_anaEvaledExp; // Evaled selection/sort expression including analytic function grouping&sorting.
     vector< unordered_map< string,string > > m_anaFuncResult; // the result of each evolved analytic function. The value will be empty during searching&matching, it will be assigned actually in the final analytic() function
     unordered_map< string,vector< vector<string> > > m_anaSortData; // data to be sorted for analytic function

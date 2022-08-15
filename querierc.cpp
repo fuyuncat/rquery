@@ -1265,8 +1265,6 @@ bool QuerierC::group()
   if ((m_groups.size() == 0 && !m_aggrOnly) || m_groupKeys.size() == 0)
     return true;
 
-  vector<string> vfieldvalues;
-  map<string,string> mvarvalues;
   unordered_map< string,vector<string> > anaFuncData;
   map<string, string> varValues;
   varValues.insert( pair<string,string>("@FILE",m_filename));
@@ -1278,8 +1276,11 @@ bool QuerierC::group()
   ExpressionC tmpExp;
   int iRow = 0;
   for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
+    varValues.insert( pair<string,string>("@RAW",m_aggRowValues[*it][0]));
+    varValues.insert( pair<string,string>("@LINE",intToStr(iRow)));
+    varValues.insert( pair<string,string>("@ROW",intToStr(iRow)));
     anaFuncData.clear();
-    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &m_aggGroupProp[*it], &anaFuncData))
+    if (m_filter && !m_filter->compareExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData))
       continue;
     iRow++;
     vector<string> vEvaledParams;
@@ -1287,9 +1288,6 @@ bool QuerierC::group()
       vEvaledParams.clear();
       anaFuncData.insert(pair< string,vector<string> >(it->first,vEvaledParams));
     }
-    varValues.insert( pair<string,string>("@RAW",m_aggRowValues[*it][0]));
-    varValues.insert( pair<string,string>("@LINE",intToStr(iRow)));
-    varValues.insert( pair<string,string>("@ROW",intToStr(iRow)));
     // filter aggregation function result
     vResults.clear();
     vResults.push_back(m_aggRowValues[*it][0]);
@@ -1334,10 +1332,11 @@ bool QuerierC::group()
 
     m_anaEvaledExp.push_back(anaEvaledExp);
     addAnaFuncData(anaFuncData);
-    m_aggGroupDataidMap.insert(pair< vector<string>,int >(*it,m_anaEvaledExp.size()-1));
+    //m_aggGroupDataidMap.insert(pair< vector<string>,int >(*it,m_anaEvaledExp.size()-1));
+    m_aggGroupDataidMap.insert(pair< int, vector<string> >(m_anaEvaledExp.size()-1, *it));
   }
 
-  clearGroup();
+  //clearGroup();
 #ifdef __DEBUG__
   m_grouptime += (curtime()-thistime);
 #endif // __DEBUG__
@@ -1529,15 +1528,22 @@ bool QuerierC::analytic()
   thistime = curtime();
 #endif // __DEBUG__
 
+  map<string, string> varValues;
+  varValues.insert( pair<string,string>("@FILE",m_filename));
+  varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
+  varValues.insert(m_uservariables.begin(), m_uservariables.end());
+  int iRow = 0;
   trace(DEBUG, "m_anaEvaledExp size is %d, dimension is %d . \n", m_anaEvaledExp.size(),m_anaEvaledExp[0].size());
   vector<string> vfieldvalues;
-  map<string,string> mvarvalues;
   unordered_map< string,GroupProp > dummyAggGroupProp;
   vector< vector<string> > tmpResults = m_results;
   vector< vector<string> > tmpSortKeys = m_sortKeys;
   m_results.clear();
   m_sortKeys.clear();
   for (int i=0; i<tmpResults.size();i++){
+    varValues.insert( pair<string,string>("@RAW",tmpResults[i][0]));
+    varValues.insert( pair<string,string>("@LINE",intToStr(iRow)));
+    varValues.insert( pair<string,string>("@ROW",intToStr(iRow)));
     // create the map for the filter
     unordered_map< string,vector<string> > anaFinalResult;
     vector<string> anaThisResult;
@@ -1547,8 +1553,9 @@ bool QuerierC::analytic()
       anaFinalResult.insert(pair< string,vector<string> >(it->first,anaThisResult));
     }
     // filter by analytic function results
-    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &dummyAggGroupProp, &anaFinalResult))
+    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &varValues, ((m_aggGroupProp.size()>0 && m_aggGroupDataidMap.size()==tmpResults.size())?(&m_aggGroupProp[m_aggGroupDataidMap[i]]):&dummyAggGroupProp), &anaFinalResult))
       continue;
+    iRow++;
     int anaExpID = 0;
     for (int j=0; j<m_selections.size(); j++)
       if (m_selections[j].containAnaFunc()){

@@ -1,6 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
    # [0.933] 2022-08-15
+   Enhancement: Analytic function and aggregation function can be compared in the filter.<br />
    Fixed bug: Analytic function doesnt work with aggregation function after aggregation function optimized.<br />
    # [0.932] 2022-08-15
    Enhancement: Optimized aggregation function implement.<br />

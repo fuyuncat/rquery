@@ -1031,6 +1031,65 @@ bool ExpressionC::evalAnalyticFunc(unordered_map< string,string > * anaResult, s
   return false;
 }
 
+bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function, string & sResult)
+{
+  switch (aggGroupProp.funcID){
+    case AVERAGE:
+      sResult = doubleToStr(aggGroupProp.sum/(double)aggGroupProp.count);
+      break;
+    case SUM:
+      sResult = doubleToStr(aggGroupProp.sum);
+      break;
+    case COUNT:
+      sResult = longToStr(aggGroupProp.count);
+      break;
+    case UNIQUECOUNT:{
+      //sResult = longToStr(aggGroupProp.uniquec->size());
+      std::set <string> uniquec(aggGroupProp.varray->begin(), aggGroupProp.varray->end());
+      sResult = longToStr(uniquec.size());
+      break;
+    }case MAX:
+      sResult = aggGroupProp.max;
+      break;
+    case MIN:
+      sResult = aggGroupProp.min;
+      break;
+    case GROUPLIST:{
+      sResult = "";
+      trace(DEBUG, "varray size: %d\n", aggGroupProp.varray->size());
+      if (function->m_bDistinct){ // do distinct
+        std::set <string> uniquec(aggGroupProp.varray->begin(), aggGroupProp.varray->end());
+        aggGroupProp.varray->clear();
+        std::copy(uniquec.begin(), uniquec.end(), std::back_inserter(*(aggGroupProp.varray)));
+      }
+      if (function->m_params.size()>2){ // sort parameter provided, do sorting
+        struct SortType{
+          DataTypeStruct dts;
+          short int direction;
+        };
+        SortType sortKey;
+        sortKey.dts = function->m_datatype;
+        sortKey.direction = upper_copy(trim_copy(function->m_params[2].m_expStr)).compare("DESC")==0?DESC:ASC;
+        auto sortVectorLambda = [sortKey] (string const& v1, string const& v2) -> bool
+        {
+          int iCompareRslt = anyDataCompare(v1,v2,sortKey.dts);
+          return (sortKey.direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
+        };
+        std::sort(aggGroupProp.varray->begin(), aggGroupProp.varray->end(), sortVectorLambda);
+      }
+      for (int i=0;i<aggGroupProp.varray->size();i++)
+        sResult.append((i>0?(function->m_params.size()>1?function->m_params[1].m_expStr:" "):"")+(*aggGroupProp.varray)[i]);
+      function->m_datatype.datatype = STRING;
+      break;
+    }
+    default:{
+      trace(ERROR, "Invalid aggregation function '%s'\n",function->m_expStr.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
 bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts, bool getresultonly)
 {
@@ -1059,62 +1118,13 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
               // calculate the parameter here will cause duplicated calculation if the same aggregation function involved multiple times in the selection/sort
               //m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, extrainfo);
               it->second.funcID = m_Function->m_funcID;
-              switch (m_Function->m_funcID){
-                case AVERAGE:
-                  sResult = doubleToStr(it->second.sum/(double)it->second.count);
-                  break;
-                case SUM:
-                  sResult = doubleToStr(it->second.sum);
-                  break;
-                case COUNT:
-                  sResult = longToStr(it->second.count);
-                  break;
-                case UNIQUECOUNT:{
-                  //sResult = longToStr(it->second.uniquec->size());
-                  std::set <string> uniquec(it->second.varray->begin(), it->second.varray->end());
-                  sResult = longToStr(uniquec.size());
-                  break;
-                }case MAX:
-                  sResult = it->second.max;
-                  break;
-                case MIN:
-                  sResult = it->second.min;
-                  break;
-                case GROUPLIST:{
-                  sResult = "";
-                  trace(DEBUG, "varray size: %d\n", it->second.varray->size());
-                  if (m_Function->m_bDistinct){ // do distinct
-                    std::set <string> uniquec(it->second.varray->begin(), it->second.varray->end());
-                    it->second.varray->clear();
-                    std::copy(uniquec.begin(), uniquec.end(), std::back_inserter(*(it->second.varray)));
-                  }
-                  if (m_Function->m_params.size()>2){ // sort parameter provided, do sorting
-                    struct SortType{
-                      DataTypeStruct dts;
-                      short int direction;
-                    };
-                    SortType sortKey;
-                    sortKey.dts = m_Function->m_datatype;
-                    sortKey.direction = upper_copy(trim_copy(m_Function->m_params[2].m_expStr)).compare("DESC")==0?DESC:ASC;
-                    auto sortVectorLambda = [sortKey] (string const& v1, string const& v2) -> bool
-                    {
-                      int iCompareRslt = anyDataCompare(v1,v2,sortKey.dts);
-                      return (sortKey.direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
-                    };
-                    std::sort(it->second.varray->begin(), it->second.varray->end(), sortVectorLambda);
-                  }
-                  for (int i=0;i<it->second.varray->size();i++)
-                    sResult.append((i>0?(m_Function->m_params.size()>1?m_Function->m_params[1].m_expStr:" "):"")+(*it->second.varray)[i]);
-                  m_Function->m_datatype.datatype = STRING;
-                  break;
-                }
-                default:{
-                  trace(ERROR, "Invalid aggregation function '%s'\n",m_Function->m_expStr.c_str());
-                  return false;
-                }
-              }
               dts = m_Function->m_datatype;
-              return true;
+              if (calAggFunc(it->second, m_Function, sResult)){
+                //m_expType = CONST;
+                //SafeDelete(m_Function);
+                return true;
+              }else
+                return false;
             }else
               trace(ERROR, "Missing paramters for aggregation function '%s'\n",m_Function->m_expStr.c_str());
           }else{

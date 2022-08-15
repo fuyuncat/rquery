@@ -797,7 +797,7 @@ bool FilterC::compareExpression(vector<string>* fieldvalues, map<string,string>*
               return true;
             string leftRst = "", rightRst = "";
             DataTypeStruct dts1, dts2;
-            if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, leftRst, dts1, true) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, rightRst, dts2, true)){
+            if (m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, leftRst, dts1, true) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, rightRst, dts2, true)){
               //trace(DEBUG2, "(2)Comparing '%s' %s '%s' (data type: %s)\n", leftRst.c_str(), decodeComparator(m_comparator).c_str(), rightRst.c_str(), decodeDatatype(m_datatype.datatype).c_str());
               return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
             }else

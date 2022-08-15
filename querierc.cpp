@@ -730,6 +730,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
     return true;
 }
 
+// add evaled analytic function processing data to m_anaSortProps&m_anaSortData&m_anaFuncResult
 void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData)
 {
   unordered_map< string,string > anaFuncResult;
@@ -941,8 +942,9 @@ bool QuerierC::matchFilter(vector<string> rowValue)
         m_groupKeys.insert(groupExps);
         unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it1 = m_aggRowValues.find(groupExps);
         unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > >::iterator it2 = m_aggGroupProp.find(groupExps);
-        if (it1 == m_aggRowValues.end())
+        if (it1 == m_aggRowValues.end()){
           m_aggRowValues.insert( pair<vector<string>, vector<string> >(groupExps,fieldValues));
+        }
         if (it2 == m_aggGroupProp.end()){
           for (unordered_map< string,GroupProp >::iterator it=m_initAggProps.begin(); it!=m_initAggProps.end(); ++it)
             aggGroupProp.insert(pair< string,GroupProp >(it->first,it->second));
@@ -1266,17 +1268,6 @@ bool QuerierC::group()
   vector<string> vfieldvalues;
   map<string,string> mvarvalues;
   unordered_map< string,vector<string> > anaFuncData;
-  //trace(DEBUG2, "m_aggRowValues size: %d, m_groupKeys size: %d\n", m_aggRowValues.size(), m_groupKeys.size());
-  //for (unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it=m_aggRowValues.begin(); it!=m_aggRowValues.end(); ++it)
-  //  dumpVector(it->first);
-  vector< vector<ExpressionC> > tmpanaEvaledExp = m_anaEvaledExp;
-  vector< unordered_map< string,string > > tmpanaFuncResult = m_anaFuncResult;
-  unordered_map< string,vector< vector<string> > > tmpanaSortData = m_anaSortData;
-  //int iAnaID = 0;
-  m_anaEvaledExp.clear();
-  m_anaFuncResult.clear();
-  for (unordered_map< string,vector< vector<string> > >::iterator ita=m_anaSortData.begin(); ita!=m_anaSortData.end(); ita++)
-    ita->second.clear();
   map<string, string> varValues;
   varValues.insert( pair<string,string>("@FILE",m_filename));
   varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
@@ -1284,34 +1275,35 @@ bool QuerierC::group()
   vector<string> vResults;
   string sResult;
   DataTypeStruct dts;
+  ExpressionC tmpExp;
   int iRow = 0;
   for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
+    anaFuncData.clear();
+    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &m_aggGroupProp[*it], &anaFuncData))
+      continue;
+    iRow++;
+    vector<string> vEvaledParams;
+    for (unordered_map< string,vector<ExpressionC> >::iterator it=m_initAnaArray.begin(); it!=m_initAnaArray.end(); ++it){
+      vEvaledParams.clear();
+      anaFuncData.insert(pair< string,vector<string> >(it->first,vEvaledParams));
+    }
     varValues.insert( pair<string,string>("@RAW",m_aggRowValues[*it][0]));
     varValues.insert( pair<string,string>("@LINE",intToStr(iRow)));
     varValues.insert( pair<string,string>("@ROW",intToStr(iRow)));
     // filter aggregation function result
-    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &mvarvalues, &m_aggGroupProp[*it], &anaFuncData))
-      continue;
-    //dumpVector(*it);
-    //trace(DEBUG2,"Sel:'%s'\n",m_aggRowValues[*it][1].c_str());
     vResults.clear();
     vResults.push_back(m_aggRowValues[*it][0]);
-    //int iAggSelID = 1;
-    //trace(DEBUG1, "Selection: %d:%d\n", m_selections.size(), m_aggRowValues[*it]].size());
+    vector<ExpressionC> anaEvaledExp;
     for (int i=0; i<m_selections.size(); i++){
-      m_selections[i].evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, true);
+      if (m_selections[i].containAnaFunc()){ // eval analytic function processing data anaFuncData
+        tmpExp = m_selections[i];
+        tmpExp.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, false);
+        anaEvaledExp.push_back(tmpExp);
+      }else
+        m_selections[i].evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, true);
       vResults.push_back(sResult);
-      //vResults.push_back(m_aggRowValues[*it][iAggSelID]);
-      //iAggSelID++;
     }
     m_results.push_back(vResults);
-    if (tmpanaEvaledExp.size()>m_aggGroupDataidMap[*it])
-      m_anaEvaledExp.push_back(tmpanaEvaledExp[m_aggGroupDataidMap[*it]]);
-    if (tmpanaFuncResult.size()>m_aggGroupDataidMap[*it])
-      m_anaFuncResult.push_back(tmpanaFuncResult[m_aggGroupDataidMap[*it]]);
-    for (unordered_map< string,vector< vector<string> > >::iterator ita=m_anaSortData.begin(); ita!=m_anaSortData.end(); ita++)
-      ita->second.push_back(tmpanaSortData[ita->first][m_aggGroupDataidMap[*it]]);
-    trace(DEBUG,"Group: pushing %d to %d \n",m_anaEvaledExp.size()-1,m_aggGroupDataidMap[*it]);
 
     vResults.clear();
     for (int i=0; i<m_sorts.size(); i++){
@@ -1329,15 +1321,22 @@ bool QuerierC::group()
       }else if ((m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size())){
         vResults.push_back(m_results[m_results.size()-1][atoi(m_sorts[i].sortKey.m_expStr.c_str()) + 1]);
       }else{ // sort expressions
-        //trace(DEBUG1, "None aggr func selection: %s\n", m_aggRowValues[*it][iAggSelID].c_str());
-        m_sorts[i].sortKey.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, true);
+        if (m_sorts[i].sortKey.containAnaFunc()){ // eval analytic function processing data anaFuncData
+          tmpExp = m_sorts[i].sortKey;
+          tmpExp.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, false);
+          anaEvaledExp.push_back(tmpExp);
+        }else
+          m_sorts[i].sortKey.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, true);
         vResults.push_back(sResult);
-        //vResults.push_back(m_aggRowValues[*it][iAggSelID]);
-        //iAggSelID++;
       }
     }
     m_sortKeys.push_back(vResults);
+
+    m_anaEvaledExp.push_back(anaEvaledExp);
+    addAnaFuncData(anaFuncData);
+    m_aggGroupDataidMap.insert(pair< vector<string>,int >(*it,m_anaEvaledExp.size()-1));
   }
+
   clearGroup();
 #ifdef __DEBUG__
   m_grouptime += (curtime()-thistime);

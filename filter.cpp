@@ -791,6 +791,10 @@ bool FilterC::compareExpression(vector<string>* fieldvalues, map<string,string>*
           if ((!m_leftExpression->containGroupFunc() && !m_leftExpression->containAnaFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)) || (m_rightExpression->containGroupFunc() && m_rightExpression->containAnaFunc() && !(m_rightExpression->m_type==LEAF&&m_rightExpression->m_expType==CONST)))
             return true;
           else{ // aggregation/analytic function in either left or right expression. do filter comparasion
+            if ((m_leftExpression->containGroupFunc() || m_rightExpression->containGroupFunc()) && aggFuncs->size()==0) // return true if aggFuncs is empty when comparing aggregation function
+              return true;
+            if ((m_leftExpression->containAnaFunc() || m_rightExpression->containAnaFunc()) && anaFuncs->size()==0) // return true if anaFuncs is empty when comparing analytic function
+              return true;
             string leftRst = "", rightRst = "";
             DataTypeStruct dts1, dts2;
             if (m_leftExpression && m_rightExpression && m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, leftRst, dts1, true) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, rightRst, dts2, true)){

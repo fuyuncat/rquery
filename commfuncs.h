@@ -145,6 +145,12 @@ using namespace std;
 #define SEQNUM 204
 #define DENSERANK 205
 #define NEARBY 206
+#define SUMA 207
+#define COUNTA 208
+#define UNIQUECOUNTA 209
+#define MAXA 210
+#define MINA 211
+#define AVERAGEA 212
 #define FOREACH 501
 
 #define TEXT 1

@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.933] 2022-08-16
+   New feature: New analytic functions: counta([group1,group2...];expr), uniquecounta([group1,group2...];expr), suma([group1,group2...];expr), averagea([group1,group2...];expr), maxa([group1,group2...];expr), mina([group1,group2...];expr)<br />
    # [0.933] 2022-08-15
    Enhancement: Analytic function and aggregation function can be compared in the filter.<br />
    Fixed bug: Analytic function doesnt work with aggregation function after aggregation function optimized.<br />

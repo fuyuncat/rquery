@@ -132,6 +132,12 @@ Functions can be used in the expression. We current provide some essential norma
    - Rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
    - Denserank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />
    - Nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />
+   - Counta([group1,group2...];expr) : Analytic function. Count the number of expr of each group.<br />
+   - Uniquecounta([group1,group2...];expr) : Analytic function. Count the number of unique expr of each group.<br />
+   - Suma([group1,group2...];expr) : Analytic function. Sum the expr of each group.<br />
+   - Averagea([group1,group2...];expr) : Analytic function. Caluclate average of expr of each group.<br />
+   - maxa([group1,group2...];expr) : Analytic function. Get the maximum value of expr of each group.<br />
+   - mina([group1,group2...];expr) : Analytic function. Get the minimum value of expr of each group.<br />
    - foreach(beginid,endid,macro_expr) : Macro function. make a macro expression list for all fields from beginid to endid. $ stands for field ($ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID. For example, foreach(%,2,substr($,2,3)+#) will make this expression list: substr(@fieldN,2,3)+N..,substr(@field3,2,3)+3,substr(@field2,2,3)+2. It can only be used in "select" and "sort". It cannot be a part of expression.<br />
 
 # Example and scenarios

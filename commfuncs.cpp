@@ -1761,6 +1761,18 @@ short int encodeFunction(string str)
     return NEXT;
   else if(sUpper.compare("SEQNUM")==0)
     return SEQNUM;
+  else if(sUpper.compare("SUMA")==0)
+    return SUMA;
+  else if(sUpper.compare("COUNTA")==0)
+    return COUNTA;
+  else if(sUpper.compare("UNIQUECOUNTA")==0)
+    return UNIQUECOUNTA;
+  else if(sUpper.compare("MAXA")==0)
+    return MAXA;
+  else if(sUpper.compare("MINA")==0)
+    return MINA;
+  else if(sUpper.compare("AVERAGEA")==0)
+    return AVERAGEA;
   else if(sUpper.compare("FOREACH")==0)
     return FOREACH;
   else

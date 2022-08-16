@@ -133,7 +133,7 @@ bool FunctionC::isMacro()
 
 bool FunctionC::isAnalytic()
 {
-  return (m_funcID==RANK || m_funcID==DENSERANK || m_funcID==PREVIOUS || m_funcID==NEXT || m_funcID==NEARBY || m_funcID==SEQNUM);
+  return (m_funcID==RANK || m_funcID==DENSERANK || m_funcID==PREVIOUS || m_funcID==NEXT || m_funcID==NEARBY || m_funcID==SEQNUM || m_funcID==SUMA || m_funcID==COUNTA || m_funcID==UNIQUECOUNTA || m_funcID==MAXA || m_funcID==MINA || m_funcID==AVERAGEA);
 }
 
 // analyze expression string to get the function name (upper case) and parameter expression (classes)
@@ -264,12 +264,16 @@ bool FunctionC::analyzeExpStr()
     case DENSERANK:
     case SEQNUM:
     case FINDNTH:
+    case COUNTA:
+    case UNIQUECOUNTA:
       m_datatype.datatype = LONG;
       break;
     case TIMEDIFF:
     case LOG:
     case AVERAGE:
     case SUM:
+    case AVERAGEA:
+    case SUMA:
       m_datatype.datatype = DOUBLE;
       break;
     case NOW:
@@ -286,6 +290,8 @@ bool FunctionC::analyzeExpStr()
     case PREVIOUS:
     case NEXT:
     case NEARBY:
+    case MAXA:
+    case MINA:
       m_datatype.datatype = ANY;
       break;
     default:{
@@ -1291,6 +1297,12 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
     case NEARBY:
     case PREVIOUS:
     case NEXT:
+    case SUMA:
+    case COUNTA:
+    case UNIQUECOUNTA:
+    case MAXA:
+    case MINA:
+    case AVERAGEA:
     case SEQNUM:{
       for (int i=0; i<m_params.size(); i++)
         if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true)){

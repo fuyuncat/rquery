@@ -247,7 +247,7 @@ void processFolder(string foldername, QuerierC & rq, size_t& total, short int fi
   total += this_total;
 }
 
-void printResult(QuerierC & rq, size_t total, short int fileMode)
+void printResult(QuerierC & rq, size_t total)
 {
   long int thisTime,lastTime = curtime();
   if (rq.toGroupOrSort()){
@@ -269,7 +269,7 @@ void printResult(QuerierC & rq, size_t total, short int fileMode)
     trace(DEBUG2, "Printing: %u\n", thisTime-lastTime);
     lastTime = thisTime;
   }
-  rq.outputExtraInfo(total, fileMode, gv.g_printheader);
+  rq.outputExtraInfo(total, gv.g_printheader);
   rq.clear();
 }
 
@@ -348,82 +348,83 @@ void processQuery(string sQuery, QuerierC & rq)
   }
 }
 
-void runQuery(string sContent, short int readMode, QuerierC & rq, short int fileMode=READBUFF, int iSkip=0)
+void runQuery(vector<string> vContent, QuerierC & rq, short int fileMode=READBUFF, int iSkip=0)
 {
-  //trace(DEBUG,"(0)Processing(mode:%d): %s \n", readMode, sContent.c_str());
-  switch (readMode){
-    case PARAMETER:{
-      //trace(DEBUG1,"Processing content from parameter \n");
-      rq.setReadmode(READBUFF);
-      rq.setEof(true);
-      rq.setrawstr(sContent);
-      //rq.searchNext();
-      //trace(DEBUG,"(1)Processing: %s \n", sContent.c_str());
-      rq.searchAll();
-      rq.group();
-      rq.analytic();
-      rq.unique();
-      rq.sort();
-      rq.setOutputFormat(gv.g_ouputformat);
-      if (gv.g_printheader && gv.g_ouputformat==TEXT)
-        rq.printFieldNames();
-      rq.outputAndClean();
-      rq.clear();
-      break;
-    }
-    case SINGLEFILE:{
-      //trace(DEBUG1,"Processing content from file \n");
-      rq.setOutputFormat(gv.g_ouputformat);
-      size_t total = 0;
-      processFile(sContent, rq, total, fileMode, iSkip);
-      printResult(rq, total, fileMode);
-      break;
-    }
-    case FOLDER:{
-      //trace(DEBUG1,"Processing content from folder \n");
-      rq.setOutputFormat(gv.g_ouputformat);
-      size_t total = 0;
-      processFolder(sContent, rq, total, fileMode, iSkip);
-      printResult(rq, total, fileMode);
-      break;
-    }
-    case PROMPT:{
-      //trace(DEBUG1,"Processing content from input or pipe \n");
-      long int thisTime,lastTime = curtime();
-      const size_t cache_length = gv.g_inputbuffer;
-      //char cachebuffer[cache_length];
-      rq.setOutputFormat(gv.g_ouputformat);
-      char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
-      size_t howmany = 0, reads = 0;
-      rq.setReadmode(READBUFF);
-      while(std::cin) {
-        if (rq.searchStopped())
-          break;
-        memset( cachebuffer, '\0', sizeof(char)*cache_length );
-        std::cin.read(cachebuffer, cache_length);
-        if (!std::cin)
-          rq.setEof(true);
-        rq.appendrawstr(string(cachebuffer));
-        //trace(DEBUG,"(2)Processing: %s \n", cachebuffer);
+  size_t total = 0;
+  for (int i=0;i<vContent.size();i++){
+    short int readMode = checkReadMode(vContent[i]);
+    trace(DEBUG,"(0)Processing(mode:%d): %s \n", readMode, vContent[i].c_str());
+    switch (readMode){
+      case PARAMETER:{
+        //trace(DEBUG1,"Processing content from parameter \n");
+        rq.setReadmode(READBUFF);
+        rq.setEof(true);
+        rq.setrawstr(vContent[i]);
+        //rq.searchNext();
+        //trace(DEBUG,"(1)Processing: %s \n", vContent[i].c_str());
         rq.searchAll();
+        rq.group();
+        rq.analytic();
+        rq.unique();
+        rq.sort();
+        rq.setOutputFormat(gv.g_ouputformat);
         if (gv.g_printheader && gv.g_ouputformat==TEXT)
           rq.printFieldNames();
-        if (!rq.toGroupOrSort())
-          rq.outputAndClean();
-        howmany += std::cin.gcount();
+        rq.outputAndClean();
+        rq.clear();
+        break;
       }
-      free(cachebuffer);
-      thisTime = curtime();
-      trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
-      printResult(rq, howmany, READBUFF);
-      break;
-    }
-    default:{
-      usage();
-      trace(FATAL,"Please provide content to be queried!\n");
-      return;
+      case SINGLEFILE:{
+        //trace(DEBUG1,"Processing content from file \n");
+        rq.setOutputFormat(gv.g_ouputformat);
+        processFile(vContent[i], rq, total, fileMode, iSkip);
+        break;
+      }
+      case FOLDER:{
+        //trace(DEBUG1,"Processing content from folder \n");
+        rq.setOutputFormat(gv.g_ouputformat);
+        processFolder(vContent[i], rq, total, fileMode, iSkip);
+        break;
+      }
+      case PROMPT:{
+        //trace(DEBUG1,"Processing content from input or pipe \n");
+        long int thisTime,lastTime = curtime();
+        const size_t cache_length = gv.g_inputbuffer;
+        //char cachebuffer[cache_length];
+        rq.setOutputFormat(gv.g_ouputformat);
+        char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
+        size_t reads = 0;
+        rq.setReadmode(READBUFF);
+        while(std::cin) {
+          if (rq.searchStopped())
+            break;
+          memset( cachebuffer, '\0', sizeof(char)*cache_length );
+          std::cin.read(cachebuffer, cache_length);
+          if (!std::cin)
+            rq.setEof(true);
+          rq.appendrawstr(string(cachebuffer));
+          //trace(DEBUG,"(2)Processing: %s \n", cachebuffer);
+          rq.searchAll();
+          if (gv.g_printheader && gv.g_ouputformat==TEXT)
+            rq.printFieldNames();
+          if (!rq.toGroupOrSort())
+            rq.outputAndClean();
+          total += std::cin.gcount();
+        }
+        free(cachebuffer);
+        thisTime = curtime();
+        trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
+        printResult(rq, total);
+        break;
+      }
+      default:{
+        usage();
+        trace(FATAL,"Please provide content to be queried!\n");
+        return;
+      }
     }
   }
+  printResult(rq, total);
 }
 
 int main(int argc, char *argv[])
@@ -443,9 +444,10 @@ int main(int argc, char *argv[])
   
   gv.setVars(16384, FATAL, false);
   gv.g_consolemode = false;
-  short int readMode = PROMPT, fileMode = READBUFF;
+  short int fileMode = READBUFF;
   int iSkip = 0;
-  string sQuery = "", sContent = "";
+  string sQuery = "";
+  vector<string> vContent;
   QuerierC rq;
 
   for (int i=1; i<argc; i++){
@@ -587,8 +589,7 @@ int main(int argc, char *argv[])
       i++;
     }else{
       //trace(DEBUG1,"Content: %s.\n", argv[i]);
-      sContent = string(argv[i]);
-      readMode = checkReadMode(sContent);
+      vContent.push_back(string(argv[i]));
     }
   }
 
@@ -632,11 +633,11 @@ int main(int argc, char *argv[])
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("load ")==0){
         string strParam = trim_copy(lineInput).substr(string("load ").length());
-        readMode = checkReadMode(strParam);
+        short int readMode = checkReadMode(strParam);
         if (readMode != SINGLEFILE && readMode != FOLDER){
           cout << "Error: Cannot find the file or folder.\n";
         }else{
-          sContent = strParam;
+          vContent.push_back(strParam);
           cout << (readMode==SINGLEFILE?"File":"Folder");
           cout << " is loaded.\n";
         }
@@ -784,13 +785,11 @@ int main(int argc, char *argv[])
         }
       }else if (lower_copy(trim_copy(lineInput)).compare("run")==0 || lower_copy(trim_copy(lineInput)).find("run ")==0){
         if (trim_copy(lineInput).length() == 3){
-          if (readMode == SINGLEFILE || readMode == FOLDER)
-            runQuery(sContent, readMode, rq, fileMode, iSkip);
+          runQuery(vContent, rq, fileMode, iSkip);
         }else{
           string strParam = trim_copy(lineInput).substr(string("run ").length());
           processQuery(strParam, rq);
-          if (readMode == SINGLEFILE || readMode == FOLDER)
-            runQuery(sContent, readMode, rq, fileMode, iSkip);
+          runQuery(vContent, rq, fileMode, iSkip);
         }
         cout << "rquery >";
       }else{
@@ -801,7 +800,7 @@ int main(int argc, char *argv[])
   }else{
     //if (!sQuery.empty())
     processQuery(sQuery, rq);
-    runQuery(sContent, readMode, rq, fileMode, iSkip);
+    runQuery(vContent, rq, fileMode, iSkip);
   }
   exitProgram(0);
 }

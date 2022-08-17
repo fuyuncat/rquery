@@ -101,7 +101,7 @@ class QuerierC
     bool searchStopped();
     void output();
     void clear();
-    void outputExtraInfo(size_t total, short int mode, bool bPrintHeader);
+    void outputExtraInfo(size_t total, bool bPrintHeader);
     void outputAndClean();
     int boostmatch( vector<string> *result = NULL);
     int boostmatch( map<string,string> & result);
@@ -125,8 +125,10 @@ class QuerierC
     bool m_delmrepeatable;
     
     string m_filename;  // Data source file name
+    long m_fileid;        // File sequence number, starting from 1
     bool m_bNamePrinted;// a flag for checking if field names are printed.
     long m_line;        // data line number matched searching pattern in the file or in a stream input
+    long m_fileline;    // data line number matched searching pattern in the current file
     long m_matchcount;  // number of matched rows. Can be used to match @row
     long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
     short int m_outputformat; // TEXT or JSON

@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.94] 2022-08-16
+   New feature: new variable @FILELINE stands for line number of current file; new variable @FILEID stands for sequence number of current file.<br />
+   New feature: Accept multiple files<br />
+   Fixed bug: Analytic function may cause crash if data contain variable number fileds in each rows.<br />
    # [0.933] 2022-08-16
    New feature: New analytic functions: counta([group1,group2...];expr), uniquecounta([group1,group2...];expr), suma([group1,group2...];expr), averagea([group1,group2...];expr), maxa([group1,group2...];expr), mina([group1,group2...];expr)<br />
    # [0.933] 2022-08-15

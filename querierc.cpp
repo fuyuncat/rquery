@@ -80,8 +80,10 @@ void QuerierC::init()
   m_delmrepeatable = false;
   m_quoters = "";
   m_filename = "";
+  m_fileid = 0;
   m_nameline = false;
   m_line = 0;
+  m_fileline = 0;
   m_outputformat = TEXT;
   m_matchcount = 0; 
   m_outputrow = 0;
@@ -214,7 +216,7 @@ bool QuerierC::assignGroupStr(string groupstr)
       return false;
     }
     eGroup = ExpressionC(sGroup);
-    if (eGroup.m_expType == FUNCTION && eGroup.m_Function && eGroup.m_Function->m_funcID==FOREACH){
+    if (eGroup.m_expType == FUNCTION && eGroup.m_Function && eGroup.m_Function->isMacro()){
       trace(FATAL,"Macro function '%s' cannot be used in GROUP!\n", eGroup.m_Function->m_funcName.c_str());
       continue;
     }
@@ -311,7 +313,7 @@ bool QuerierC::analyzeSelString(){
     //trace(DEBUG, "Got selection expression '%s'!\n", eSel.getEntireExpstr().c_str());
     
     // if macro function is involved, need to wait util the first data analyzed to analyze select expression
-    if (eSel.m_expType == FUNCTION && eSel.m_Function && eSel.m_Function->m_funcID==FOREACH){
+    if (eSel.m_expType == FUNCTION && eSel.m_Function && eSel.m_Function->isMacro()){
       if (m_fieldtypes.size()==0){
         m_bSelectContainMacro = true;
         m_bToAnalyzeSelectMacro = true;
@@ -320,25 +322,30 @@ bool QuerierC::analyzeSelString(){
         trace(DEBUG2,"Skiping select FOREACH: '%s'\n",eSel.m_expStr.c_str());
         return true;
       }else{
-        if (m_groups.size()>0)
-          vExpandedExpr = eSel.m_Function->expandForeach(m_groups);
-        else
-          vExpandedExpr = eSel.m_Function->expandForeach(m_fieldtypes.size());
-        trace(DEBUG2,"Expanding FOREACH: '%s'\n",eSel.m_expStr.c_str());
-        for (int j=0; j<vExpandedExpr.size(); j++){
-          trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
-          m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
-          checkSelGroupConflict(vExpandedExpr[j]);
-          if (vExpandedExpr[j].containGroupFunc())
-            bGroupFunc = true;
-          else
-            bNonGroupFuncSel = true;
+        switch(eSel.m_Function->m_funcID){
+          case FOREACH:{
+            if (m_groups.size()>0)
+              vExpandedExpr = eSel.m_Function->expandForeach(m_groups);
+            else
+              vExpandedExpr = eSel.m_Function->expandForeach(m_fieldtypes.size());
+            trace(DEBUG2,"Expanding FOREACH: '%s'\n",eSel.m_expStr.c_str());
+            for (int j=0; j<vExpandedExpr.size(); j++){
+              trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
+              m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
+              checkSelGroupConflict(vExpandedExpr[j]);
+              if (vExpandedExpr[j].containGroupFunc())
+                bGroupFunc = true;
+              else
+                bNonGroupFuncSel = true;
 
-          vExpandedExpr[j].getAggFuncs(m_initAggProps);
-          vExpandedExpr[j].getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
-          m_selections.push_back(vExpandedExpr[j]);
+              vExpandedExpr[j].getAggFuncs(m_initAggProps);
+              vExpandedExpr[j].getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
+              m_selections.push_back(vExpandedExpr[j]);
+            }
+            m_bToAnalyzeSelectMacro = false;
+            break;
+          }
         }
-        m_bToAnalyzeSelectMacro = false;
         continue;
       }
     }
@@ -416,37 +423,41 @@ bool QuerierC::analyzeSortStr(){
       keyProp.direction = DESC;
     keyProp.sortKey.setExpstr(trim_copy(vKP[0]));
     // if macro function is involved , need to wait util the first data analyzed to analyze sort expression
-    if (keyProp.sortKey.m_expType == FUNCTION && keyProp.sortKey.m_Function && keyProp.sortKey.m_Function->m_funcID==FOREACH){
+    if (keyProp.sortKey.m_expType == FUNCTION && keyProp.sortKey.m_Function && keyProp.sortKey.m_Function->isMacro()){
       if (m_fieldtypes.size()==0){
         m_bSortContainMacro = true;
         m_bToAnalyzeSortMacro = true;
         m_sorts.clear();
-        trace(DEBUG2,"Skiping sort FOREACH: '%s'\n",keyProp.sortKey.m_expStr.c_str());
+        trace(DEBUG2,"Skiping sort due to Macro function: '%s'\n",keyProp.sortKey.m_expStr.c_str());
         return true;
       }else{
-        vector<ExpressionC> vExpandedExpr;
-        if (m_groups.size()>0)
-          vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_groups);
-        else
-          vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_fieldtypes.size());
-        SortProp keyPropE;
-        for (int j=0; j<vExpandedExpr.size(); j++){
-          keyPropE = SortProp();
-          vKP = split(vExpandedExpr[j].getEntireExpstr(),' ',"''()",'\\',{'(',')'},false,true);
-          trace(DEBUG, "Splited from expanded expression '%s' to '%s'(%d)\n",vExpandedExpr[j].getEntireExpstr().c_str(),vKP[0].c_str(),vKP.size());
-          if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
-            keyPropE.direction = ASC;
-          else
-            keyPropE.direction = DESC;
-          keyPropE.sortKey.setExpstr(trim_copy(vKP[0]));
+        switch (keyProp.sortKey.m_Function->m_funcID){
+          case FOREACH:{
+            vector<ExpressionC> vExpandedExpr;
+            if (m_groups.size()>0)
+              vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_groups);
+            else
+              vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_fieldtypes.size());
+            SortProp keyPropE;
+            for (int j=0; j<vExpandedExpr.size(); j++){
+              keyPropE = SortProp();
+              vKP = split(vExpandedExpr[j].getEntireExpstr(),' ',"''()",'\\',{'(',')'},false,true);
+              trace(DEBUG, "Splited from expanded expression '%s' to '%s'(%d)\n",vExpandedExpr[j].getEntireExpstr().c_str(),vKP[0].c_str(),vKP.size());
+              if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
+                keyPropE.direction = ASC;
+              else
+                keyPropE.direction = DESC;
+              keyPropE.sortKey.setExpstr(trim_copy(vKP[0]));
 
-          checkSortGroupConflict(keyPropE.sortKey);
-          keyPropE.sortKey.getAggFuncs(m_initAggProps);
-          keyPropE.sortKey.getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
-          if (keyPropE.sortKey.m_type==BRANCH || keyPropE.sortKey.m_expType != CONST || (!isInt(keyPropE.sortKey.m_expStr) && !isLong(keyPropE.sortKey.m_expStr)) || atoi(keyPropE.sortKey.m_expStr.c_str())>=m_selections.size())
-            m_sorts.push_back(keyPropE);
+              checkSortGroupConflict(keyPropE.sortKey);
+              keyPropE.sortKey.getAggFuncs(m_initAggProps);
+              keyPropE.sortKey.getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
+              if (keyPropE.sortKey.m_type==BRANCH || keyPropE.sortKey.m_expType != CONST || (!isInt(keyPropE.sortKey.m_expStr) && !isLong(keyPropE.sortKey.m_expStr)) || atoi(keyPropE.sortKey.m_expStr.c_str())>=m_selections.size())
+                m_sorts.push_back(keyPropE);
+            }
+            m_bToAnalyzeSortMacro = false;
+          }
         }
-        m_bToAnalyzeSortMacro = false;
         continue;
       }
     }
@@ -522,6 +533,8 @@ void QuerierC::setUserVars(string variables)
 void QuerierC::setFileName(string filename)
 {
   m_filename = filename;
+  m_fileid++;
+  m_fileline = 0;
 }
 
 void QuerierC::setOutputFormat(short int format)
@@ -823,7 +836,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
   long int thistime = curtime();
   long int filterbegintime = thistime;
 #endif // __DEBUG__
-  if (rowValue.size() != m_fieldnames.size() + 3){ // field name number + 3 variables (@raw @line @row)
+  if (rowValue.size() != m_fieldnames.size() + 4){ // field name number + 4 variables (@raw @line @row @fileline)
     trace(ERROR, "Filed number %d and value number %d dont match!\n", m_fieldnames.size(), rowValue.size());
     dumpVector(m_fieldnames);
     dumpVector(rowValue);
@@ -836,8 +849,10 @@ bool QuerierC::matchFilter(vector<string> rowValue)
     //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
   varValues.insert( pair<string,string>("@RAW",rowValue[0]));
   varValues.insert( pair<string,string>("@FILE",m_filename));
+  varValues.insert( pair<string,string>("@FILEID",intToStr(m_fileid)));
   varValues.insert( pair<string,string>("@LINE",rowValue[m_fieldnames.size()+1]));
   varValues.insert( pair<string,string>("@ROW",rowValue[m_fieldnames.size()+2]));
+  varValues.insert( pair<string,string>("@FILELINE",rowValue[m_fieldnames.size()+3]));
   varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
   unordered_map< string,GroupProp > aggGroupProp;
@@ -942,9 +957,6 @@ bool QuerierC::matchFilter(vector<string> rowValue)
         m_groupKeys.insert(groupExps);
         unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it1 = m_aggRowValues.find(groupExps);
         unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > >::iterator it2 = m_aggGroupProp.find(groupExps);
-        if (it1 == m_aggRowValues.end()){
-          m_aggRowValues.insert( pair<vector<string>, vector<string> >(groupExps,fieldValues));
-        }
         if (it2 == m_aggGroupProp.end()){
           for (unordered_map< string,GroupProp >::iterator it=m_initAggProps.begin(); it!=m_initAggProps.end(); ++it)
             aggGroupProp.insert(pair< string,GroupProp >(it->first,it->second));
@@ -952,6 +964,12 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           m_aggGroupProp.insert( pair<vector<string>, unordered_map< string,GroupProp > >(groupExps,aggGroupProp));
         }else
           evalAggExpNode(&fieldValues, &varValues, it2->second);
+        if (it1 == m_aggRowValues.end()){
+          // add variables  @FILE, @FILEID
+          fieldValues.push_back(m_filename);
+          fieldValues.push_back(intToStr(m_fileid));
+          m_aggRowValues.insert( pair<vector<string>, vector<string> >(groupExps,fieldValues));
+        }
 #ifdef __DEBUG__
   m_updateResulttime += (curtime()-thistime);
   thistime = curtime();
@@ -1010,7 +1028,7 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
   for (unordered_map< string,ExpressionC >::iterator it=m_aggFuncExps.begin(); it!=m_aggFuncExps.end(); ++it)
     it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
   for (int i=0; i<m_anaEvaledExp.size(); i++)
-    for (int j=0; i<m_anaEvaledExp[i].size(); j++)
+    for (int j=0; j<m_anaEvaledExp[i].size(); j++)
       m_anaEvaledExp[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
 }
 
@@ -1024,17 +1042,20 @@ int QuerierC::searchNextReg()
     //namesaving_smatch matches(m_regexstr);
     while(!m_rawstr.empty() && regex_search(m_rawstr, m_matches, m_regexp)){
       m_line++;
+      m_fileline++;
       vector<string> matcheddata;
       if (m_nameline && m_line==1){ // use the first line as field names
         for (int i=1; i<m_matches.size(); i++)
           m_fieldnames.push_back(m_matches[i]);
         m_nameline = false;
         m_line--;
+        m_fileline--;
         continue;
       }else
         for (int i=0; i<m_matches.size(); i++)
           matcheddata.push_back(m_matches[i]);
       //trace(DEBUG2,"Detected rows %d/%d\n", m_detectedRawDatatype.size(), m_detectTypeMaxRowNum);
+      // detect fileds data type
       if (m_detectedTypeRows < m_detectTypeMaxRowNum || matcheddata.size()!=m_fieldnames.size()+1){
         if (matcheddata.size()!=m_fieldnames.size()+1 && m_fieldnames.size()>0){
           m_fieldnames.clear();
@@ -1050,6 +1071,7 @@ int QuerierC::searchNextReg()
       //matcheddata.push_back(m_filename);
       matcheddata.push_back(intToStr(m_line));
       matcheddata.push_back(intToStr(m_matchcount+1));
+      matcheddata.push_back(intToStr(m_fileline+1));
       if (matchFilter(matcheddata)){
         m_matchcount++;
       }
@@ -1113,17 +1135,20 @@ int QuerierC::searchNextWild()
     if (matcheddata.size()==0 && bEnded)
       continue;
     m_line++;
+    m_fileline++;
     if (m_nameline && m_line==1){ // use the first line as field names
       for (int i=0; i<matcheddata.size(); i++)
         m_fieldnames.push_back(matcheddata[i]);
       m_nameline = false;
       m_line--;
+      m_fileline--;
       continue;
     }
     matcheddata.insert(matcheddata.begin(),sLine); // whole matched line for @raw
     //trace(DEBUG, "Matched %d\n", matcheddata.size());
     //for (int i=0; i<matcheddata.size(); i++)
     //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
+    // detect fileds data type
     if (m_detectedTypeRows < m_detectTypeMaxRowNum || matcheddata.size()!=m_fieldnames.size()+1){
       if (matcheddata.size()!=m_fieldnames.size()+1 && m_fieldnames.size()>0){
         m_fieldnames.clear();
@@ -1136,8 +1161,10 @@ int QuerierC::searchNextWild()
           m_fieldnames.push_back("@FIELD"+intToStr(i));
       trialAnalyze(matcheddata);
     }
+    // append variables
     matcheddata.push_back(intToStr(m_line));
     matcheddata.push_back(intToStr(m_matchcount+1));
+    matcheddata.push_back(intToStr(m_fileline+1));
     if (matchFilter(matcheddata))
       m_matchcount++;
     found++;
@@ -1182,17 +1209,20 @@ int QuerierC::searchNextDelm()
     if (matcheddata.size()==0 && bEnded)
       continue;
     m_line++;
+    m_fileline++;
     if (m_nameline && m_line==1){ // use the first line as field names
       for (int i=0; i<matcheddata.size(); i++)
         m_fieldnames.push_back(matcheddata[i]);
       m_nameline = false;
       m_line--;
+      m_fileline--;
       continue;
     }
     matcheddata.insert(matcheddata.begin(),sLine); // whole matched line for @raw
     //trace(DEBUG, "Matched %d\n", matcheddata.size());
     //for (int i=0; i<matcheddata.size(); i++)
     //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
+    // detect fileds data type
     if (m_detectedTypeRows < m_detectTypeMaxRowNum || matcheddata.size()!=m_fieldnames.size()+1){
       if (matcheddata.size()!=m_fieldnames.size()+1 && m_fieldnames.size()>0){
         m_fieldnames.clear();
@@ -1205,8 +1235,10 @@ int QuerierC::searchNextDelm()
           m_fieldnames.push_back("@FIELD"+intToStr(i));
       trialAnalyze(matcheddata);
     }
+    // append variables
     matcheddata.push_back(intToStr(m_line));
     matcheddata.push_back(intToStr(m_matchcount+1));
+    matcheddata.push_back(intToStr(m_fileline+1));
     if (matchFilter(matcheddata))
       m_matchcount++;
     found++;
@@ -1267,18 +1299,24 @@ bool QuerierC::group()
 
   unordered_map< string,vector<string> > anaFuncData;
   map<string, string> varValues;
-  varValues.insert( pair<string,string>("@FILE",m_filename));
-  varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
-  varValues.insert(m_uservariables.begin(), m_uservariables.end());
   vector<string> vResults;
   string sResult;
   DataTypeStruct dts;
   ExpressionC tmpExp;
   int iRow = 0;
   for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
+    varValues.clear();
     varValues.insert( pair<string,string>("@RAW",m_aggRowValues[*it][0]));
+    varValues.insert( pair<string,string>("@FILE",m_aggRowValues[*it][m_aggRowValues[*it].size()-2]));
+    varValues.insert( pair<string,string>("@FILEID",m_aggRowValues[*it][m_aggRowValues[*it].size()-1]));
     varValues.insert( pair<string,string>("@LINE",intToStr(iRow)));
+    varValues.insert( pair<string,string>("@FILELINE",intToStr(iRow)));
     varValues.insert( pair<string,string>("@ROW",intToStr(iRow)));
+    varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
+    varValues.insert(m_uservariables.begin(), m_uservariables.end());
+    // removed stored variables @FILE, @FILEID.
+    m_aggRowValues[*it].pop_back();
+    m_aggRowValues[*it].pop_back();
     anaFuncData.clear();
     if (m_filter && !m_filter->compareExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData))
       continue;
@@ -1465,6 +1503,8 @@ bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const string & sFuncExp
   sortProps.insert(sortProps.end(),m_anaSortProps[sFuncExpStr].begin(),m_anaSortProps[sFuncExpStr].end());
   auto sortVectorLambda = [sortProps] (vector<string> const& v1, vector<string> const& v2) -> bool
   {
+    if (v1.size()!=sortProps.size() || v2.size()!=sortProps.size() || v2.size()!=v1.size())
+      return false;
     for (int i=0;i<sortProps.size();i++){
       int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype);
       if (iCompareRslt == 0) // Compare next key only when current keys equal
@@ -1703,6 +1743,7 @@ bool QuerierC::analytic()
 
   map<string, string> varValues;
   varValues.insert( pair<string,string>("@FILE",m_filename));
+  varValues.insert( pair<string,string>("@FILEID",intToStr(m_fileid)));
   varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
   int iRow = 0;
@@ -1716,6 +1757,7 @@ bool QuerierC::analytic()
   for (int i=0; i<tmpResults.size();i++){
     varValues.insert( pair<string,string>("@RAW",tmpResults[i][0]));
     varValues.insert( pair<string,string>("@LINE",intToStr(iRow)));
+    varValues.insert( pair<string,string>("@FILELINE",intToStr(iRow)));
     varValues.insert( pair<string,string>("@ROW",intToStr(iRow)));
     // create the map for the filter
     unordered_map< string,vector<string> > anaFinalResult;
@@ -1941,6 +1983,8 @@ bool QuerierC::sort()
   vector<SortProp> sortProps = m_sorts;
   auto sortVectorLambda = [sortProps] (vector<string> const& v1, vector<string> const& v2) -> bool
   {
+    if (v1.size()!=sortProps.size() || v2.size()!=sortProps.size() || v2.size()!=v1.size())
+      return false;
     for (int i=0;i<sortProps.size();i++){
       int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype);
       if (iCompareRslt == 0) // Compare next key only when current keys equal
@@ -2121,7 +2165,7 @@ void QuerierC::outputAndClean()
 #endif // __DEBUG__
 }
 
-void QuerierC::outputExtraInfo(size_t total, short int mode, bool bPrintHeader)
+void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
 {
   if (m_outputformat == JSON){
     if (m_outputrow>0)
@@ -2221,5 +2265,7 @@ void QuerierC::clear()
   m_limitbottom = 1;
   m_limittop = -1;
   m_filename = "";
+  m_fileid = 0;
+  m_fileline = 0;
   init();
 }

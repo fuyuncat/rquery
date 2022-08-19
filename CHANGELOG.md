@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.941] 2022-08-19
+   New feature: Accept wildcard in the file name. <br/>
    # [0.94] 2022-08-18
    New feature: Join query two or more files using new query command "meanwhile". <br/>
    # [0.94] 2022-08-16

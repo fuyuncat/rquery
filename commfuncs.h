@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.94"
+#define VERSION "v0.941"
 
 #define UNKNOWN 0
 
@@ -92,6 +92,7 @@ using namespace std;
 #define PARAMETER 2
 #define SINGLEFILE 3
 #define FOLDER 4
+#define WILDCARDFILES 5
 
 #define READBUFF 1
 #define READLINE 2
@@ -257,7 +258,9 @@ int matchQuoters(const string & listStr, const size_t & offset, const string & q
 vector<string> split(const string & str, string delim = " ", string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 vector<string> split(const string & str, std::set<char> delims = {' ','\t','\n','\r'}, string quoters = "''\"\"", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+size_t findNthCharacter(const string & str, const std::set<char> & lookfor, const size_t & pos=0, const int & seq=1, const bool & forward=true, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}); // find the Nth(seq) position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, const size_t & pos=0, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+size_t findNthSub(const string & str, const string & lookfor, const size_t & pos=0, const int & seq=1, const bool & forward=true, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, bool casesensitive=true); // find the Nth(seq) position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 size_t findFirstSub(const string & str, const string & lookfor, const size_t & pos=0, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, bool casesensitive=true); // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 string readLine(string str, size_t & pos); // read a line
 vector<string> matchWildcard(const string & str, const string & wildStr, string quoters = "\"\"", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // match wildcard to transfer a string to a vector
@@ -309,7 +312,7 @@ long int curtime();
 int random(int min=1, int max=100);
 string randstr(int len=8, const string & flags="uld");
 
-bool like(string str1, string str2); 
+bool like(string str1, string str2); // str1 like str2 (containing wildcard)
 bool reglike(string str, string regstr); 
 bool in(string str1, string str2); 
 //char getch();

@@ -82,17 +82,20 @@ void usage()
 short int checkReadMode(string sContent)
 {
   short int readMode = PARAMETER;
-
-  struct stat s;
-  if( stat(sContent.c_str(),&s) == 0 ){
-    if( s.st_mode & S_IFDIR )
-      readMode = FOLDER;
-    else if( s.st_mode & S_IFREG )
-      readMode = SINGLEFILE;
-    else
+  if (findFirstCharacter(sContent, {'*','?'}, 0, "\"\"", '\\',{})!=string::npos)
+    readMode = WILDCARDFILES;
+  else {
+    struct stat s;
+    if( stat(sContent.c_str(),&s) == 0 ){
+      if( s.st_mode & S_IFDIR )
+        readMode = FOLDER;
+      else if( s.st_mode & S_IFREG )
+        readMode = SINGLEFILE;
+      else
+        readMode = PARAMETER;
+    }else
       readMode = PARAMETER;
-  }else
-    readMode = PARAMETER;
+  }
   
   return readMode;
 }
@@ -248,6 +251,35 @@ void processFolder(string foldername, QuerierC & rq, size_t& total, short int fi
   total += this_total;
 }
 
+void processWildfiles(string wildfiles, QuerierC & rq, size_t& total, short int fileMode=READBUFF, int iSkip=0)
+{
+  trace(DEBUG,"Processing folder: %s \n", wildfiles.c_str());
+  size_t slashPos = findNthCharacter(wildfiles, {'/'}, 0, 1, false, "\"\"", '\\',{}) ; // find the last / to get the folder 
+  string foldername = slashPos!=string::npos?wildfiles.substr(0,slashPos+1):".";
+  vector<string> filelist = listFilesInFolder(foldername);
+  size_t this_total = 0, this_filesize = 0;
+  for (int i=0; i<filelist.size(); i++){
+    string filename = trim_right(foldername,'/')+"/"+filelist[i];
+    if (like(filename,wildfiles)){
+      short int filetype = checkReadMode(filename);
+      switch(filetype){
+      case SINGLEFILE:
+        processFile(filename, rq, this_filesize, fileMode, iSkip);
+        break;
+      case FOLDER:
+        if (gv.g_recursiveread)
+          processFolder(filename, rq, this_filesize, fileMode, iSkip);
+        break;
+      default:
+        trace(WARNING,"Unrecognized file type: %s (%d)\n", filename.c_str(), filetype);
+      }
+      this_total += this_filesize;
+      this_filesize = 0;
+    }
+  }
+  total += this_total;
+}
+
 void printResult(QuerierC & rq, size_t total)
 {
   long int thisTime,lastTime = curtime();
@@ -392,6 +424,12 @@ void runQuery(vector<string> vContent, QuerierC & rq, short int fileMode=READBUF
         //trace(DEBUG1,"Processing content from folder \n");
         rq.setOutputFormat(gv.g_ouputformat);
         processFolder(vContent[i], rq, total, fileMode, iSkip);
+        break;
+      }
+      case WILDCARDFILES:{
+        //trace(DEBUG1,"Processing content from folder \n");
+        rq.setOutputFormat(gv.g_ouputformat);
+        processWildfiles(vContent[i], rq, total, fileMode, iSkip);
         break;
       }
       case PROMPT:{
@@ -643,7 +681,7 @@ int main(int argc, char *argv[])
       }else if (lower_copy(trim_copy(lineInput)).find("load ")==0){
         string strParam = trim_copy(lineInput).substr(string("load ").length());
         short int readMode = checkReadMode(strParam);
-        if (readMode != SINGLEFILE && readMode != FOLDER){
+        if (readMode != SINGLEFILE && readMode != FOLDER && readMode != WILDCARDFILES){
           cout << "Error: Cannot find the file or folder.\n";
         }else{
           vContent.push_back(strParam);

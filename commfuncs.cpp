@@ -259,9 +259,47 @@ string readQuotedStr(const string & str, size_t& pos, const string & quoters, co
   return "";
 }
 
+// find the Nth position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
+size_t findNthCharacter(const string & str, const std::set<char> & lookfor, const size_t & pos, const int & seq, const bool & forward, const string & quoters, const char & escape, const std::set<char> & nestedQuoters)
+{
+  //trace(DEBUG, "findFirstCharacter '%s', quoters: '%s' !\n",str.c_str(),quoters.c_str());
+  int iFound=0;
+  size_t i = pos, j = 0;
+  vector<int> q;
+  while(i < str.length()) {
+    if (lookfor.find(str[i]) != lookfor.end() && i>0 && q.size()==0){
+      iFound++;
+      if (iFound>=seq)
+        return i;
+    }else{
+      if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+        if (i>0 && str[i-1]!=escape){
+          q.pop_back();
+          //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+          forward?++i:--i;
+          continue;
+        }
+      if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
+        for (int k=0; k<(int)(quoters.length()/2); k++){
+          if (str[i] == quoters[k*2])
+            if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
+              //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+              q.push_back(k*2+1); // quoted start, need to pair the right quoter
+              break;
+            }
+        }
+    }
+    forward?++i:--i;
+  }
+  if (q.size() > 0)
+    trace(ERROR, "(1)Quoters in '%s' are not paired!\n",str.c_str());
+  return -1;
+}
+
 // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
 size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, const size_t & pos, const string & quoters, const char & escape, const std::set<char> & nestedQuoters)
 {
+  return findNthCharacter(str, lookfor, pos, 1, true, quoters, escape, nestedQuoters);
   //trace(DEBUG, "findFirstCharacter '%s', quoters: '%s' !\n",str.c_str(),quoters.c_str());
   size_t i = pos, j = 0;
   vector<int> q;
@@ -292,8 +330,51 @@ size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, co
 }
 
 // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
+size_t findNthSub(const string & str, const string & lookfor, const size_t & pos, const int & seq, const bool & forward, const string & quoters,  const char & escape, const std::set<char> & nestedQuoters, bool casesensitive)
+{
+  trace(DEBUG, "findNthSub '%s'\n",str.c_str());
+  trace(DEBUG, "looking for(%d): '%s', start from %d, quoters '%s' !\n",seq,lookfor.c_str(),pos,quoters.c_str());
+  int iFound=0;
+  size_t i = pos+(forward?0:lookfor.length()-1), j = forward?0:lookfor.length()-1;
+  vector<int> q;
+  while(i < str.length()) {
+    size_t l=i,r=0;
+    while(q.size()==0 && l<str.length() && r<lookfor.length() && ((casesensitive?str[l]:upper_char(str[l])) == (casesensitive?lookfor[r]:upper_char(lookfor[r])))){
+      forward?++l:--l;
+      forward?r++:r--;
+    }
+    if (r==lookfor.length()) {
+      trace(DEBUG, "found at %d !\n",i);
+      return i;
+    }else{
+      if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+        if (i>0 && str[i-1]!=escape){
+          q.pop_back();
+          //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+          forward?++i:--i;
+          continue;
+        }
+      if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
+        for (int k=0; k<(int)(quoters.size()/2); k++){
+          if (str[i] == quoters[k*2])
+            if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
+              //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+              q.push_back(k*2+1); // quoted start, need to pair the right quoter
+              break;
+            }
+        }
+    }
+    forward?++i:--i;
+  }
+  if (q.size() > 0)
+    trace(ERROR, "(1)Quoters in '%s' are not paired!\n",str.c_str());
+  return -1;
+}
+
+// find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
 size_t findFirstSub(const string & str, const string & lookfor, const size_t & pos, const string & quoters,  const char & escape, const std::set<char> & nestedQuoters, bool casesensitive)
 {
+  return findNthSub(str, lookfor, pos, 1, true, quoters, escape, nestedQuoters, casesensitive);
   trace(DEBUG, "findFirstSub '%s'\n",str.c_str());
   trace(DEBUG, "looking for: '%s', start from %d, quoters '%s' !\n",lookfor.c_str(),pos,quoters.c_str());
   size_t i = pos, j = 0;

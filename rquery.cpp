@@ -59,6 +59,7 @@ void usage()
   printf("\t\tparse|p /<searching expression string>/ -- Choose one of three mode to match the content.\n\t\t\t// quotes a regular expression pattern string to parse the content; \n\t\t\t w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '*' stands for a field, e.g. w/*abc*,*/. substrings between two * are the spliters, spliter between quoters will be skipped;\n\t\t\td/<Delmiter>/[quoters/][r] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, r at the end of pattern means the delmiter is repeatable, e.g. d/ /\"\"/\n");
   printf("\t\tset|t <field datatype [date format],...> -- Set the date type of the fields.\n");
   printf("\t\tfilter|f <filter conditions> -- Provide filter conditions to filt the content.\n");
+  printf("\t\tmeanwhile|m <actions when searching data> -- Provide actions to be done while doing searching. The result set can be used for two or more files JOIN or IN query.\n");
   printf("\t\tselect|s <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected. If no filed name captured, @N or @fieldN can be used for field N.\n");
   printf("\t\tgroup|g <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n");
   printf("\t\tsort|o <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
@@ -318,6 +319,13 @@ void processQuery(string sQuery, QuerierC & rq)
   }else if (query.find("g") != query.end()){
     //trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
     rq.assignGroupStr(query["g"]);
+  }
+  if (query.find("meanwhile") != query.end()){
+    //trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
+    rq.assignMeanwhileString(query["meanwhile"]);
+  }else if (query.find("m") != query.end()){
+    //trace(DEBUG,"Setting group : %s \n", query["group"].c_str());
+    rq.assignMeanwhileString(query["m"]);
   }
   if (query.find("select") != query.end()){
     //trace(DEBUG,"Assigning selections: %s \n", query["select"].c_str());
@@ -613,6 +621,7 @@ int main(int argc, char *argv[])
         cout << "set <field datatype [date format],...> -- Set the date type of the fields.\n";
         cout << "detecttyperows <N> : Set how many matched rows will be used for detecting data types, default is 1.\n";
         cout << "filter <filter conditions> -- Provide filter conditions to filt the content.\n";
+        cout << "meanwhile <actions when searching data> -- Provide actions to be done while doing searching. The result set can be used for two or more files JOIN or IN query.\n";
         cout << "select <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected. If no filed name captured, @N or @fieldN can be used for field N.\n";
         cout << "group <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n";
         cout << "sort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n";
@@ -733,6 +742,11 @@ int main(int argc, char *argv[])
         cout << "Filter condition is provided.\n";
         filter = new FilterC(strParam);
         rq.assignFilter(filter);
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("meanwhile ")==0){
+        string strParam = trim_copy(lineInput).substr(string("meanwhile ").length());
+        rq.assignMeanwhileString(strParam);
+        cout << "Meanwhile actions are provided.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("group ")==0){
         string strParam = trim_copy(lineInput).substr(string("group ").length());

@@ -84,6 +84,7 @@ class QuerierC
     bool assignSelString(string selstr);
     bool assignSortStr(string sortstr);
     bool assignLimitStr(string limitstr);
+    bool assignMeanwhileString(string mwstr);
     bool setFieldTypeFromStr(string setstr);
     void setFileName(string filename);
     void setNameline(bool nameline);
@@ -143,6 +144,14 @@ class QuerierC
     bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
     bool m_bToAnalyzeSortMacro; // whether need to analyze marco in sort
 
+    vector< vector<ExpressionC> > m_sideSelections; // side query selections
+    vector< vector<string> > m_sideAlias; // side query selections
+    vector< FilterC > m_sideFilters; // side query filters
+    vector< vector< unordered_map<string,string> > > m_sideDatasets; // map sideworkID(starting from 1):vector of result set (selExp/alias:result)
+    unordered_map< string, unordered_map<string,DataTypeStruct> > m_sideDatatypes; // map sideworkID(starting from 1):vector of data types (selExp/alias:datatype)
+    unordered_map< int,int > m_sideMatchedRowIDs; // the matched side work data set row IDs when the dataset involved in the main query filter.
+    unordered_map< string, unordered_map<string,string> > m_matchedSideDatarow; // the matched side work data set rows
+
     //vector<namesaving_smatch> m_results;
     FilterC* m_filter;
     vector<string> m_fieldnames;    // field names
@@ -178,10 +187,13 @@ class QuerierC
     unordered_map< string,vector<int> > m_anaFuncParaNums; // The number of parameter (splitted by ;) in each part (splitted by ,) of analytic function
 
     bool analyzeSelString();
+    vector<ExpressionC> genSelExpression(string sSel, vector<string> & vAlias);
     bool analyzeSortStr();
     bool checkSelGroupConflict(const ExpressionC & eSel);
     bool checkSortGroupConflict(const ExpressionC & eSort);
-    bool matchFilter(vector<string> rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
+    void doSideWorks(vector<string> * pfieldValues, map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData); // do side queries
+    void getSideDatarow();
+    bool matchFilter(const vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp);  // eval expression in aggregation paramter and store in a data set
     bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, vector< vector<string> > & resultSet); // add a data row to a result set
     //void mergeSort(int iLeft, int iMid, int iRight);

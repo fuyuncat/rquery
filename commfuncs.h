@@ -252,13 +252,13 @@ void exitProgram(short int code);
 void clearGroupPropMap(unordered_map< string,GroupProp > & aggProps); // manually free the memory of GroupProp, as it's not freed in the destructor to improve performance. 
 
 //string string_format( const string& format, Args ... args );
-string readQuotedStr(string str, int& pos, string quoters, char escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
-int matchQuoters(string listStr, int offset, string quoters); // detect if quoters matched.
+string readQuotedStr(const string & str, size_t& pos, const string & quoters, const char & escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
+int matchQuoters(const string & listStr, const size_t & offset, const string & quoters); // detect if quoters matched.
 vector<string> split(const string & str, string delim = " ", string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 vector<string> split(const string & str, std::set<char> delims = {' ','\t','\n','\r'}, string quoters = "''\"\"", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-int findFirstCharacter(const string & str, std::set<char> lookfor, size_t pos=0, string quoters = "''()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-int findFirstSub(const string & str, const string & lookfor, size_t pos=0, string quoters = "''()",  char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, const size_t & pos=0, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+size_t findFirstSub(const string & str, const string & lookfor, const size_t & pos=0, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, bool casesensitive=true); // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 string readLine(string str, size_t & pos); // read a line
 vector<string> matchWildcard(const string & str, const string & wildStr, string quoters = "\"\"", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // match wildcard to transfer a string to a vector
 string readWordTillStop(const string & str, size_t & pos, char stopper='*', char escape = '\\'); // read the first word until reaches stopper
@@ -278,6 +278,8 @@ string trim(const string & str, char c = ' ');
 string trim_copy(const string & str);
 string upper_copy(const string & str);
 string lower_copy(const string & str);
+char upper_char(const char & c);
+char lower_char(const char & c);
 string camelstr(const string & str); // convert a string to camel string
 string snakestr(const string & str); // convert a string to snake string
 void replacestr(string & sRaw, const string & sReplace, const string & sNew);

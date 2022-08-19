@@ -44,6 +44,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
          - filter <filter conditions> : Filter the parsed records<br />
          - select <field or expression,...> : Fields or expressions to be selected<br />
+         - meanwhile <actions when searching data> -- Provide actions to be done while doing searching. The result set can be used for two or more files JOIN or IN query.<br />
          - group <field or expression,...> : Fields or expressions to be groupd for aggregation selections<br />
          - sort <field or expression [asc|desc],...> : Sorting keys to decide order of the output records<br />
          - limt <n | bottomN,topN> : Limited number records to be printed<br />
@@ -66,22 +67,22 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
 - Syntax of query string:
    - parse /regular string/|set field datatype [date format],...|filter <ilter conditions|select field or expression,...|group field or expression,...|sort field or expression [asc|desc],...|limt n | bottomN,topN<br />
  The query parts are separated by |, they could be put in any order. You can provide one or more of them in a query, none of them is mandatary<br />
-      - parse /regular string/ : Parse a regular expression string quoted by //<br />
-      - set field datatype [date format],... : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
-      - filter filter conditions : Filter the parsed records<br />
-      - select field or expression,... : Fields or expressions to be selected<br />
-      - group field or expression,... : Fields or expressions to be groupd for aggregation selections<br />
-      - sort field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
-      - limt n | bottomN,topN : Limited number records to be printed<br />
-      - unique : Make the returned resutl unique. <br />
-      - msglevel : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
-      - progress <on|off> -- Wheather show the processing progress or not(default).<br />
-      - format <text|json> -- Provide output format, default is text.<br />
+      - parse|p /regular string/ : Parse a regular expression string quoted by //<br />
+      - set|t field datatype [date format],... : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
+      - filter|f filter conditions : Filter the parsed records<br />
+      - meanwhile|m <actions when searching data> -- Provide actions to be done while doing searching. The result set can be used for two or more files JOIN or IN query.<br />
+      - select|s field or expression,... : Fields or expressions to be selected<br />
+      - group|g field or expression,... : Fields or expressions to be groupd for aggregation selections<br />
+      - sort|o field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
+      - limtl n | bottomN,topN : Limited number records to be printed<br />
+      - unique|u : Make the returned resutl unique. <br />
 - Variables:
 In any expression of select, filter, group, sort, variables can be used. The variables are in a @Var format. Currently, the variables can be used are,<br />
    - @raw : The raw string of a parsed line<br />
    - @file : The file name<br />
-   - @line : The line sequence number of (regular expression) matched lines<br />
+   - @fileid : The file sequence number<br />
+   - @line : The line sequence number of all matched lines<br />
+   - @fileline : The line sequence number of current file matched lines<br />
    - @row : The sequence number of output records<br />
    - @filedN : The field of a parsed line, N is the sequence number of the field. It matches to the Capturing Group in the regular expression.<br />
    - @% : Number of the fields.<br />

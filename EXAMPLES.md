@@ -993,4 +993,34 @@
     29/Jun/2022:01:00:00 +1000      76
     29/Jun/2022:02:00:00 +1000      32
    ```
+- From one file (timezone.log) get rows that only have "hostip" existing in another file (tz1.log) <br/>
+   ```
+   rq -q "p d/ /\"\"[]/r |m @1 as aaa, @4 as bbb where @fileid=1 | s @1, @4 | f @fileid=2 and @1 in @r[0][aaa]" tz1.log timezone.log
+   ```
+   Returns result:<br/>
+   ```
+   192.168.1.2     [22/Jul/2022:01:10:41 -0700]
+   192.168.1.1     [22/Jul/2022:01:10:41 +1100]
+   192.168.1.1     [22/Jul/2022:01:10:41 -0800]
+   192.168.1.1     [22/Jul/2022:01:10:41 +0700]
+   192.168.1.1     [22/Jul/2022:01:10:41 +0700]
+   192.168.1.1     [22/Jul/2022:01:10:41 +1000]
+   192.168.1.2     [22/Jul/2022:01:10:41 -0800]
+   192.168.1.2     [22/Jul/2022:01:10:41 -0700]
+   ```
+- Join query data from three files <br/>
+   ```
+   rq -q "p d/ /\"\"[]/r |m @1 as aaa, @5 as bbb where @fileid=1;@1 as aaa, @5 as ccc where @fileid=2 | s @file,@fileid,@line,@fileline,@1,@r[1][ccc] | f @fileid=3 and @1=@r[1][aaa]" tz1.log tz2.log timezone.log
+   ```
+   Returns result:<br/>
+   ```
+   timezone.log    3       7       1       192.168.1.2     "GET textb_222.pdf"
+   timezone.log    3       8       2       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       10      4       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       11      5       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       12      6       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       14      8       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       15      9       192.168.1.2     "GET textb_222.pdf"
+   timezone.log    3       16      10      192.168.1.2     "GET textb_222.pdf"
+   ```
 

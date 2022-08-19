@@ -286,18 +286,16 @@ bool QuerierC::checkSelGroupConflict(const ExpressionC & eSel)
   return true;
 }
 
-bool QuerierC::analyzeSelString(){
-  trace(DEBUG, "Analyzing selections from '%s'!\n", m_selstr.c_str());
-  m_selections.clear();
-  m_selnames.clear();
-  vector<string> vSelections = split(m_selstr,',',"''()",'\\',{'(',')'},false,true);
-  bool bGroupFunc = false, bNonGroupFuncSel = false;
+vector<ExpressionC> QuerierC::genSelExpression(string sSel, vector<string> & vAlias)
+{
+  vector<ExpressionC> vSelections;
+  trace(DEBUG, "Analyzing selections from '%s'!\n", sSel.c_str());
+  vector<string> vSelStrs = split(sSel,',',"''()",'\\',{'(',')'},false,true);
   string sAlias;
   ExpressionC eSel;
-  vector<ExpressionC> vExpandedExpr; 
-  for (int i=0; i<vSelections.size(); i++){
-    trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelections[i].c_str());
-    string sSel = trim_copy(vSelections[i]);
+  for (int i=0; i<vSelStrs.size(); i++){
+    trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelStrs[i].c_str());
+    string sSel = trim_copy(vSelStrs[i]);
     if (sSel.empty()){
       trace(ERROR, "Empty selection string!\n");
       continue;
@@ -305,30 +303,46 @@ bool QuerierC::analyzeSelString(){
     vector<string> vSelAlias = split(sSel," as ","''()",'\\',{'(',')'},false,true);
     sAlias = "";
     if (vSelAlias.size()>1)
-      sAlias = trim_copy(vSelAlias[1]);
+      sAlias = upper_copy(trim_copy(vSelAlias[1]));
     //trace(DEBUG2,"Selection expression: '%s'\n",vSelAlias[0].c_str());
     eSel = ExpressionC(vSelAlias[0]);
-    if (eSel.m_type == LEAF && eSel.m_expType == FUNCTION && eSel.m_Function && eSel.m_Function->isAnalytic())
-      trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", eSel.m_Function->m_expStr.c_str(),eSel.m_Function->m_anaParaNums[0],eSel.m_Function->m_params.size());
-    //trace(DEBUG, "Got selection expression '%s'!\n", eSel.getEntireExpstr().c_str());
+    vSelections.push_back(eSel);
+    vAlias.push_back(sAlias);
+  }
+  return vSelections;
+}
+
+bool QuerierC::analyzeSelString(){
+  trace(DEBUG, "Analyzing selections from '%s'!\n", m_selstr.c_str());
+  m_selections.clear();
+  m_selnames.clear();
+  vector<ExpressionC> vExpandedExpr; 
+  vector<string> vAlias;
+  m_selections = genSelExpression(m_selstr, vAlias);
+  vector<string> vSelections = split(m_selstr,',',"''()",'\\',{'(',')'},false,true);
+  bool bGroupFunc = false, bNonGroupFuncSel = false;
+  for (int i=0; i<m_selections.size(); i++){
+    if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isAnalytic())
+      trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", m_selections[i].m_Function->m_expStr.c_str(),m_selections[i].m_Function->m_anaParaNums[0],m_selections[i].m_Function->m_params.size());
+    //trace(DEBUG, "Got selection expression '%s'!\n", m_selections[i].getEntireExpstr().c_str());
     
     // if macro function is involved, need to wait util the first data analyzed to analyze select expression
-    if (eSel.m_expType == FUNCTION && eSel.m_Function && eSel.m_Function->isMacro()){
+    if (m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isMacro()){
       if (m_fieldtypes.size()==0){
         m_bSelectContainMacro = true;
         m_bToAnalyzeSelectMacro = true;
         m_selections.clear();
         m_selnames.clear();
-        trace(DEBUG2,"Skiping select FOREACH: '%s'\n",eSel.m_expStr.c_str());
+        trace(DEBUG2,"Skiping select FOREACH: '%s'\n",m_selections[i].m_expStr.c_str());
         return true;
       }else{
-        switch(eSel.m_Function->m_funcID){
+        switch(m_selections[i].m_Function->m_funcID){
           case FOREACH:{
             if (m_groups.size()>0)
-              vExpandedExpr = eSel.m_Function->expandForeach(m_groups);
+              vExpandedExpr = m_selections[i].m_Function->expandForeach(m_groups);
             else
-              vExpandedExpr = eSel.m_Function->expandForeach(m_fieldtypes.size());
-            trace(DEBUG2,"Expanding FOREACH: '%s'\n",eSel.m_expStr.c_str());
+              vExpandedExpr = m_selections[i].m_Function->expandForeach(m_fieldtypes.size());
+            trace(DEBUG2,"Expanding FOREACH: '%s'\n",m_selections[i].m_expStr.c_str());
             for (int j=0; j<vExpandedExpr.size(); j++){
               trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
               m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
@@ -349,21 +363,20 @@ bool QuerierC::analyzeSelString(){
         continue;
       }
     }
-    if (sAlias.empty())
-      m_selnames.push_back(eSel.getEntireExpstr());
+    if (vAlias[i].empty())
+      m_selnames.push_back(m_selections[i].getEntireExpstr());
     else
-      m_selnames.push_back(sAlias);
+      m_selnames.push_back(vAlias[i]);
     
-    checkSelGroupConflict(eSel);
-    if (eSel.containGroupFunc())
+    checkSelGroupConflict(m_selections[i]);
+    if (m_selections[i].containGroupFunc())
       bGroupFunc = true;
     else
       bNonGroupFuncSel = true;
 
-    eSel.getAggFuncs(m_initAggProps);
-    eSel.getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
-    m_selections.push_back(eSel);
-    //trace(DEBUG, "Selection: '%s'!\n", eSel.getEntireExpstr().c_str());
+    m_selections[i].getAggFuncs(m_initAggProps);
+    m_selections[i].getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
+    //trace(DEBUG, "Selection: '%s'!\n", m_selections[i].getEntireExpstr().c_str());
   }
   m_aggrOnly = (bGroupFunc && !bNonGroupFuncSel && m_groups.size()==0);
   if (bGroupFunc && bNonGroupFuncSel && m_groups.size() == 0){ // selection has non-aggregation function but non group field.
@@ -477,6 +490,28 @@ bool QuerierC::analyzeSortStr(){
   return true;
 }
 
+bool QuerierC::assignMeanwhileString(string mwstr)
+{
+  vector<string> vSideWorks = split(mwstr,';',"''()",'\\',{'(',')'},false,true);
+  for (int i=0; i<vSideWorks.size(); i++){
+    size_t pos = findFirstSub(vSideWorks[i], " WHERE ", 0,"''()",'\\',{'(',')'},false );
+    FilterC filter;
+    vector<ExpressionC> vSelections;
+    vector<string> vAlias;
+    if (pos > 0){
+      filter.setExpstr(trim_copy(vSideWorks[i].substr(pos+string(" WHERE ").length())));
+      vSelections = genSelExpression(trim_copy(vSideWorks[i].substr(0,pos)), vAlias);
+    }else{
+      filter.setExpstr("1=1");
+      vSelections = genSelExpression(trim_copy(vSideWorks[i]), vAlias);
+    }
+    m_sideFilters.push_back(filter);
+    m_sideSelections.push_back(vSelections);
+    m_sideAlias.push_back(vAlias);
+  }
+  return true;
+}
+
 bool QuerierC::setFieldTypeFromStr(string setstr)
 {
   vector<string> vSetFields = split(setstr,',',"''()",'\\',{'(',')'},false,true);
@@ -535,6 +570,7 @@ void QuerierC::setFileName(string filename)
   m_filename = filename;
   m_fileid++;
   m_fileline = 0;
+  m_detectedTypeRows = 0;  // force to detect data type again
 }
 
 void QuerierC::setOutputFormat(short int format)
@@ -618,6 +654,23 @@ void QuerierC::analyzeFiledTypes(vector<string> matches)
   }
 }
 
+void QuerierC::getSideDatarow()
+{
+  m_matchedSideDatarow.clear();
+  if (m_sideMatchedRowIDs.size() == 0){
+    //trace(ERROR, "Side dataset vector size %d doesnot match side matched rowID vector size %d!\n", m_sideDatasets.size(), m_sideMatchedRowIDs.size());
+    return;
+  }
+  for (int i=0; i<m_sideDatasets.size(); i++){
+    //if (m_sideMatchedRowIDs.find(i) == m_sideMatchedRowIDs.end())
+    //  continue;
+    if (m_sideMatchedRowIDs[i]>=m_sideDatasets[i].size()){
+      trace(ERROR, "%d is an invalid matched ID, side work(%d) data size is %d!\n", m_sideMatchedRowIDs[i], i, m_sideDatasets[i].size());
+    }
+    m_matchedSideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i), m_sideDatasets[i][m_sideMatchedRowIDs[i]]));
+  }
+}
+
 void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp)
 {
   for (unordered_map< string,GroupProp >::iterator it=aggGroupProp.begin(); it!=aggGroupProp.end(); ++it){
@@ -630,7 +683,7 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
     DataTypeStruct dts;
     unordered_map< string,vector<string> > anaFuncData;
     //trace(DEBUG2, "Eval aggregation function expression '%s'\n", ite->second.getEntireExpstr().c_str());
-    if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, &anaFuncData, sResult, dts, true)){
+    if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(fieldvalues, varvalues, &aggGroupProp, &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, true)){
       it->second.funcID = ite->second.m_funcID;
       if (!it->second.inited){
         switch(ite->second.m_funcID){
@@ -723,13 +776,13 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
         //expressions[i].copyTo(&tmpExp);
         //trace(DEBUG, "addResultToSet: Before eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
         //tmpExp.dump();
-        //expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true);
+        //expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
         if (expressions[i].containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
-          tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, false);
+          tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
           anaEvaledExp->push_back(tmpExp);
           trace(DEBUG, "addResultToSet: adding analytic function involved expression '%s':\n",expressions[i].getEntireExpstr().c_str());
         }else
-          tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts, true);
+          tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
         //trace(DEBUG, "addResultToSet: After eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
         //tmpExp.dump();
         //trace(DEBUG, "eval '%s' => '%s'\n", expressions[i].getEntireExpstr().c_str(), sResult.c_str());
@@ -825,8 +878,32 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData
     m_anaFuncResult.push_back(anaFuncResult);
 }
 
+void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData)
+{
+  if (m_sideSelections.size()>0 && m_sideSelections.size()==m_sideAlias.size() && m_sideSelections.size()==m_sideFilters.size()){
+    for(int i=0;i<m_sideSelections.size();i++){
+      vector< unordered_map<string,string> > resultSet;
+      if (m_sideFilters[i].compareExpression(pfieldValues, pvarValues, paggGroupProp, panaFuncData, &m_sideDatasets, &m_sideDatatypes, m_sideMatchedRowIDs)){
+        getSideDatarow();
+        unordered_map<string,string> thisResult;
+        for (int j=0; j<m_sideSelections[i].size(); j++){
+          string sResult;
+          DataTypeStruct dts;
+          m_sideSelections[i][j].evalExpression(pfieldValues, pvarValues, paggGroupProp, panaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+          thisResult.insert(pair<string,string>(m_sideAlias[i][j].empty()?intToStr(j):m_sideAlias[i][j], sResult));
+        }
+        if (m_sideDatasets.size()<=i){
+          resultSet.push_back(thisResult);
+          m_sideDatasets.push_back(resultSet);
+        }else
+          m_sideDatasets[i].push_back(thisResult);
+      }
+    }
+  }
+}
+
 // filt a row data by filter. no predication mean true. comparasion failed means alway false
-bool QuerierC::matchFilter(vector<string> rowValue)
+bool QuerierC::matchFilter(const vector<string> & rowValue)
 {
   //if (!filter){
   //  //trace(INFO, "No filter defined\n");
@@ -857,15 +934,20 @@ bool QuerierC::matchFilter(vector<string> rowValue)
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
+
+  // doing side work
+  doSideWorks(&fieldValues, &varValues, &aggGroupProp, &anaFuncData);
+
   //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
   //dumpMap(varValues);
-  bool matched = (!m_filter || m_filter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData));
+  bool matched = (!m_filter || m_filter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &m_sideDatasets, &m_sideDatatypes, m_sideMatchedRowIDs));
 #ifdef __DEBUG__
   m_filtercomptime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
   //trace(DEBUG, " selected:%d (%d)! \n", matched, m_selections.size());
   if (matched){
+    getSideDatarow();
     if (m_selections.size()>0){
       vector<string> vEvaledParams;
       for (unordered_map< string,vector<ExpressionC> >::iterator it=m_initAnaArray.begin(); it!=m_initAnaArray.end(); ++it){
@@ -899,7 +981,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
               sResult = m_results[m_results.size()-1][iSel + 1];
               if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
                 tmpExp = m_selections[iSel];
-                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
+                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
                 anaEvaledExp.push_back(tmpExp);
               }
             // if the sort key is a integer, get the result from the result set at the same sequence number
@@ -908,17 +990,17 @@ bool QuerierC::matchFilter(vector<string> rowValue)
               sResult = m_results[m_results.size()-1][iSel + 1];
               if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
                 tmpExp = m_selections[iSel];
-                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
+                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
                 anaEvaledExp.push_back(tmpExp);
               }
             }else{
               tmpExp = m_sorts[i].sortKey;
              // m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
               if (m_sorts[i].sortKey.containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
-                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, false);
+                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
                 anaEvaledExp.push_back(tmpExp);
               }else
-                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
+                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
             }
             //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
           }else{
@@ -945,7 +1027,7 @@ bool QuerierC::matchFilter(vector<string> rowValue)
           groupExps.push_back("");
         else // group expressions to the sorting keys
           for (int i=0; i<m_groups.size(); i++){
-            m_groups[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
+            m_groups[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
             trace(DEBUG2, "Adding '%s' for Group '%s', eval from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str(),rowValue[0].c_str());
             groupExps.push_back(sResult);
           }
@@ -1030,6 +1112,16 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
   for (int i=0; i<m_anaEvaledExp.size(); i++)
     for (int j=0; j<m_anaEvaledExp[i].size(); j++)
       m_anaEvaledExp[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+  for (int i=0; i<m_sideSelections.size(); i++){
+    unordered_map<string,DataTypeStruct> sideSelDatatypes;
+    for (int j=0; j<m_sideSelections[i].size(); j++){
+      m_sideSelections[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+      sideSelDatatypes.insert(pair<string,DataTypeStruct>(m_sideAlias[i][j].empty()?intToStr(j):m_sideAlias[i][j], m_sideSelections[i][j].m_datatype));
+    }
+    m_sideDatatypes.insert(pair< string, unordered_map<string,DataTypeStruct> >(intToStr(i),sideSelDatatypes));
+  }
+  for (int i=0; i<m_sideFilters.size(); i++)
+    m_sideFilters[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
 }
 
 int QuerierC::searchNextReg()
@@ -1071,7 +1163,7 @@ int QuerierC::searchNextReg()
       //matcheddata.push_back(m_filename);
       matcheddata.push_back(intToStr(m_line));
       matcheddata.push_back(intToStr(m_matchcount+1));
-      matcheddata.push_back(intToStr(m_fileline+1));
+      matcheddata.push_back(intToStr(m_fileline));
       if (matchFilter(matcheddata)){
         m_matchcount++;
       }
@@ -1164,7 +1256,7 @@ int QuerierC::searchNextWild()
     // append variables
     matcheddata.push_back(intToStr(m_line));
     matcheddata.push_back(intToStr(m_matchcount+1));
-    matcheddata.push_back(intToStr(m_fileline+1));
+    matcheddata.push_back(intToStr(m_fileline));
     if (matchFilter(matcheddata))
       m_matchcount++;
     found++;
@@ -1238,7 +1330,7 @@ int QuerierC::searchNextDelm()
     // append variables
     matcheddata.push_back(intToStr(m_line));
     matcheddata.push_back(intToStr(m_matchcount+1));
-    matcheddata.push_back(intToStr(m_fileline+1));
+    matcheddata.push_back(intToStr(m_fileline));
     if (matchFilter(matcheddata))
       m_matchcount++;
     found++;
@@ -1318,8 +1410,9 @@ bool QuerierC::group()
     m_aggRowValues[*it].pop_back();
     m_aggRowValues[*it].pop_back();
     anaFuncData.clear();
-    if (m_filter && !m_filter->compareExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData))
+    if (m_filter && !m_filter->compareExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &m_sideDatasets, &m_sideDatatypes, m_sideMatchedRowIDs))
       continue;
+    getSideDatarow();
     iRow++;
     vector<string> vEvaledParams;
     for (unordered_map< string,vector<ExpressionC> >::iterator it=m_initAnaArray.begin(); it!=m_initAnaArray.end(); ++it){
@@ -1333,10 +1426,10 @@ bool QuerierC::group()
     for (int i=0; i<m_selections.size(); i++){
       if (m_selections[i].containAnaFunc()){ // eval analytic function processing data anaFuncData
         tmpExp = m_selections[i];
-        tmpExp.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, false);
+        tmpExp.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
         anaEvaledExp.push_back(tmpExp);
       }else
-        m_selections[i].evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, true);
+        m_selections[i].evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
       vResults.push_back(sResult);
     }
     m_results.push_back(vResults);
@@ -1359,10 +1452,10 @@ bool QuerierC::group()
       }else{ // sort expressions
         if (m_sorts[i].sortKey.containAnaFunc()){ // eval analytic function processing data anaFuncData
           tmpExp = m_sorts[i].sortKey;
-          tmpExp.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, false);
+          tmpExp.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
           anaEvaledExp.push_back(tmpExp);
         }else
-          m_sorts[i].sortKey.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, sResult, dts, true);
+          m_sorts[i].sortKey.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &m_matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
         vResults.push_back(sResult);
       }
     }
@@ -1768,8 +1861,9 @@ bool QuerierC::analytic()
       anaFinalResult.insert(pair< string,vector<string> >(it->first,anaThisResult));
     }
     // filter by analytic function results
-    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &varValues, ((m_aggGroupProp.size()>0 && m_aggGroupDataidMap.size()==tmpResults.size())?(&m_aggGroupProp[m_aggGroupDataidMap[i]]):&dummyAggGroupProp), &anaFinalResult))
+    if (m_filter && !m_filter->compareExpression(&vfieldvalues, &varValues, ((m_aggGroupProp.size()>0 && m_aggGroupDataidMap.size()==tmpResults.size())?(&m_aggGroupProp[m_aggGroupDataidMap[i]]):&dummyAggGroupProp), &anaFinalResult, &m_sideDatasets, &m_sideDatatypes, m_sideMatchedRowIDs))
       continue;
+    getSideDatarow();
     iRow++;
     int anaExpID = 0;
     for (int j=0; j<m_selections.size(); j++)
@@ -2243,6 +2337,12 @@ void QuerierC::clear()
   m_uservariables.clear();
   m_selnames.clear();
   m_selections.clear();
+  m_sideSelections.clear();
+  m_sideAlias.clear();
+  m_sideFilters.clear();
+  m_sideDatasets.clear();
+  m_sideDatatypes.clear();
+  m_sideMatchedRowIDs.clear();
   m_searchMode = REGSEARCH;
   m_readmode = READBUFF;
   m_quoters = "";

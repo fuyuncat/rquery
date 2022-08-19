@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.94] 2022-08-18
+   New feature: Join query two or more files using new query command "meanwhile". <br/>
    # [0.94] 2022-08-16
    New feature: new variable @FILELINE stands for line number of current file; new variable @FILEID stands for sequence number of current file.<br />
    New feature: Accept multiple files<br />

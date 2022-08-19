@@ -65,6 +65,8 @@ class ExpressionC
     bool groupFuncOnly() const; // check if the expression contains group (aggregation) function only except CONST
     bool containGroupFunc() const; // check if the expression contains group (aggregation) function
     bool containAnaFunc() const; // check if the expression contains analytic function
+    bool containRefVar() const; // check if the expression contains reference variable @R[][]
+    int getSideWorkID() const; // if the expression contains reference variable @R[][], return the first found side work ID (the first subscribe)
     void getAllColumnNames(vector<string> & fieldnames);  // get all potential column/variable (upper case)
     bool inColNamesRange(vector<string> fieldnames) const; // check if all column/variable in a given list of names (upper case).
     ExpressionC* cloneMe();
@@ -75,7 +77,7 @@ class ExpressionC
     bool remove(ExpressionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
     void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     bool evalAnalyticFunc(unordered_map< string,string > * anaResult, string & sResult); // get expression result from pre evaled analytic function results
-    bool evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts, bool getresultonly); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
+    bool evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
     bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.
     bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
     bool getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string, vector<int> > & anaGroupNums); // get the full list of analytic functions in the expression.

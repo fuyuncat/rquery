@@ -221,12 +221,12 @@ void trace(short level, const char *fmt, ...)
 }
 
 // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
-string readQuotedStr(string str, int& pos, string quoters, char escape)
+string readQuotedStr(const string & str, size_t& pos, const string & quoters, const char & escape)
 {
   string trimmedStr="";
   if (quoters.length()<2)
     return trimmedStr;
-  int quoteStart = -1, i = pos, quoteDeep=0;
+  size_t quoteStart = -1, i = pos, quoteDeep=0;
   bool quoted = false;
   while(i < str.length()) {
     if (quoteDeep > 0){ // checking right quoter only when the string is quoted.
@@ -260,7 +260,7 @@ string readQuotedStr(string str, int& pos, string quoters, char escape)
 }
 
 // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-int findFirstCharacter(const string & str, std::set<char> lookfor, size_t pos, string quoters,  char escape, std::set<char> nestedQuoters)
+size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, const size_t & pos, const string & quoters, const char & escape, const std::set<char> & nestedQuoters)
 {
   //trace(DEBUG, "findFirstCharacter '%s', quoters: '%s' !\n",str.c_str(),quoters.c_str());
   size_t i = pos, j = 0;
@@ -292,7 +292,7 @@ int findFirstCharacter(const string & str, std::set<char> lookfor, size_t pos, s
 }
 
 // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-int findFirstSub(const string & str, const string & lookfor, size_t pos, string quoters,  char escape, std::set<char> nestedQuoters)
+size_t findFirstSub(const string & str, const string & lookfor, const size_t & pos, const string & quoters,  const char & escape, const std::set<char> & nestedQuoters, bool casesensitive)
 {
   trace(DEBUG, "findFirstSub '%s'\n",str.c_str());
   trace(DEBUG, "looking for: '%s', start from %d, quoters '%s' !\n",lookfor.c_str(),pos,quoters.c_str());
@@ -300,7 +300,7 @@ int findFirstSub(const string & str, const string & lookfor, size_t pos, string 
   vector<int> q;
   while(i < str.length()) {
     size_t l=i,r=0;
-    while(q.size()==0 && l<str.length() && r<lookfor.length() && str[l] == lookfor[r]){
+    while(q.size()==0 && l<str.length() && r<lookfor.length() && ((casesensitive?str[l]:upper_char(str[l])) == (casesensitive?lookfor[r]:upper_char(lookfor[r])))){
       l++;
       r++;
     }
@@ -375,7 +375,7 @@ vector<string> matchWildcard(const string & str, const string & wildStr, string 
     string sub = readWordTillStop(wildStr,iWPos,'*','\\');
     if (bToMatch){
       if (!sub.empty()){
-        size_t iEPos = findFirstSub(str,sub,iBPos,quoters,escape,nestedQuoters);
+        size_t iEPos = findFirstSub(str,sub,iBPos,quoters,escape,nestedQuoters,true);
         if (iEPos != string::npos)
           matches.push_back(str.substr(iBPos,iEPos-iBPos));
         iBPos=iEPos+sub.length();
@@ -701,6 +701,22 @@ string lower_copy(const string & str)
   return boost::to_lower_copy<string>(str);
 }
 
+char upper_char(const char & c)
+{
+  if (c>='a' && c<='z')
+    return char(int(c)-32);
+  else
+    return c;
+}
+
+char lower_char(const char & c)
+{
+  if (c>='A' && c<='Z')
+    return char(int(c)+32);
+  else
+    return c;
+}
+
 string camelstr(const string & str)
 {
   string sCamel = "";
@@ -708,15 +724,9 @@ string camelstr(const string & str)
   for (int i=0; i<str.length(); i++){
     if ((str[i]>='a' && str[i]<='z') || (str[i]>='A' && str[i]<='Z')){
       if (!preIsLetter){
-        if (str[i]>='a' && str[i]<='z')
-          sCamel.push_back(char(int(str[i]-32)));
-        else
-          sCamel.push_back(str[i]);
+        sCamel.push_back(upper_char(str[i]));
       }else{
-        if (str[i]>='A' && str[i]<='Z')
-          sCamel.push_back(char(int(str[i]+32)));
-        else
-          sCamel.push_back(str[i]);
+        sCamel.push_back(lower_char(str[i]));
       }
       preIsLetter = true;
     }else{
@@ -733,15 +743,9 @@ string snakestr(const string & str)
   for (int i=0; i<str.length(); i++){
     if ((str[i]>='a' && str[i]<='z') || (str[i]>='A' && str[i]<='Z')){
       if (i==0){
-        if (str[i]>='a' && str[i]<='z')
-          sSnake.push_back(char(int(str[i]-32)));
-        else
-          sSnake.push_back(str[i]);
+        sSnake.push_back(upper_char(str[i]));
       }else{
-        if (str[i]>='A' && str[i]<='Z')
-          sSnake.push_back(char(int(str[i]+32)));
-        else
-          sSnake.push_back(str[i]);
+        sSnake.push_back(lower_char(str[i]));
       }
     }else
       sSnake.push_back(str[i]);
@@ -2356,7 +2360,7 @@ string removeSpace(string originalStr, string keepPattern)
 // offset, off set to begin test;
 // quoters,  eg. {'(',')'}
 // 0 means all matched
-int matchQuoters(string listStr, int offset, string quoters){
+int matchQuoters(const string & listStr, const size_t & offset, const string & quoters){
   if (quoters.empty() || quoters.length() != 2 || offset < 0)
     return -1;
   int deep = 0;

@@ -432,7 +432,8 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
     //  }
     }else if (expStr[0] == '\''){ // checking STRING string
       if (expStr.length()>1 && expStr[expStr.length()-1] == '\''){ // whole string is a STRING string
-        int iOffSet, iPos = 0;
+        int iOffSet;
+        size_t iPos = 0;
         node->m_expStr = readQuotedStr(expStr, iPos, "''", '\\');
         trace(DEBUG, "Read STRING \"%s\" . \n", expStr.c_str());
         if (isDate(node->m_expStr, iOffSet, node->m_datatype.extrainfo))
@@ -1091,7 +1092,7 @@ bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
-bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, string & sResult, DataTypeStruct & dts, bool getresultonly)
+bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly)
 {
   if (!fieldvalues || !varvalues || !aggFuncs || !anaFuncs){
     trace(ERROR, "Insufficient metadata!\n");
@@ -1116,7 +1117,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             if (m_Function->m_params.size()>0){
               // we dont bother with the paramter, as it has already been evaled in querierc.evalAggExpNode()
               // calculate the parameter here will cause duplicated calculation if the same aggregation function involved multiple times in the selection/sort
-              //m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sResult, extrainfo);
+              //m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sideDatarow, sideDatatypes, sResult, extrainfo);
               it->second.funcID = m_Function->m_funcID;
               dts = m_Function->m_datatype;
               if (calAggFunc(it->second, m_Function, sResult)){
@@ -1138,7 +1139,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             string tmpRslt;
             if (it->second.size()==0)// Empty vector means it's still doing raw data matching, only need to eval parameter expressions. Only retrieve once for each analytic function (identified by its expression str)
               for (int i=0;i<m_Function->m_params.size();i++){
-                m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, tmpRslt, dts, true);
+                m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, sideDatarow, sideDatatypes, tmpRslt, dts, true);
                 it->second.push_back(tmpRslt);
               }
             else // otherwise, the passed-in vector is analytic function result, need to return it to do other operation, e.g. filter
@@ -1150,7 +1151,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             return false;
           }
         }else{
-          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, anaFuncs, sResult, dts);
+          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
           m_datatype = dts;
           if (!getresultonly && gotResult){
             m_expType = CONST;
@@ -1203,6 +1204,19 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
           m_expStr = sResult;
         }
         return true;
+      }else if(m_expStr.length()>=8 && m_expStr[1]=='R'&&m_expStr[2]=='['){
+        size_t pos=0;
+        string s1 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0')), s2 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0'));
+        if (s1.empty() || s2.empty()){
+          trace(ERROR, "Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
+        }
+        sResult = (*sideDatarow)[s1][s2];
+        dts = (*sideDatatypes)[s1][s2];
+        if (!getresultonly){
+          m_expType = CONST;
+          m_expStr = sResult;
+        }
+        return true;
       }else{
         trace(ERROR, "Cannot find VARIABLE '%s'\n",m_expStr.c_str());
         return false;
@@ -1214,11 +1228,11 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
   }else{
     string leftRst = "", rightRst = "";
     DataTypeStruct leftDts, rightDts;
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, leftRst, leftDts, getresultonly)){
+    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, leftRst, leftDts, getresultonly)){
       trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
       return false;
     }
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, rightRst, rightDts, getresultonly)){
+    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, rightRst, rightDts, getresultonly)){
       trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
       return false;
     }
@@ -1266,9 +1280,11 @@ bool ExpressionC::mergeConstNodes(string & sResult)
           map<string,string> mvarvalues;
           unordered_map< string,GroupProp > aggFuncs;
           unordered_map< string,vector<string> > anaFuncs;
+          unordered_map< string, unordered_map<string,string> > sideDatarow;
+          unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
           m_Function->analyzeColumns(&vfieldnames, &fieldtypes, &rawDatatype);
           DataTypeStruct dts;
-          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,&anaFuncs,sResult,dts);
+          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,&anaFuncs,&sideDatarow,&sideDatatypes,sResult,dts);
           if (gotResult){
             m_expStr = sResult;
             m_expType = CONST;
@@ -1373,6 +1389,45 @@ bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaF
     bGotAnaFunc = (m_rightNode && m_rightNode->getAnaFuncs(anaFuncs, anaParaNums));
     return bGotAnaFunc;
   }
+}
+
+int ExpressionC::getSideWorkID() const
+{
+  if (m_type == LEAF){
+    if (m_expType == VARIABLE && m_expStr.length()>=8 && m_expStr[1]=='R' && m_expStr[2]=='['){
+      size_t pos=0;
+      string sID = readQuotedStr(m_expStr, pos, "[]", '\0');
+      if (isInt(sID))
+        return atoi(sID.c_str());
+      else
+        return -1;
+    }else
+      return -1;
+  }else{
+    if (m_leftNode)
+      return m_leftNode->getSideWorkID();
+    if (m_rightNode)
+      return m_rightNode->getSideWorkID();
+    return -1;
+  }
+  return -1;
+}
+
+bool ExpressionC::containRefVar() const
+{
+  if (m_type == LEAF){
+    if (m_expType == FUNCTION && m_Function && m_Function->containRefVar())
+      return true;
+    else if (m_expType == VARIABLE && m_expStr.length()>=8 && m_expStr[1]=='R' && m_expStr[2]=='[')
+      return true;
+    else
+      return false;
+  }else{
+    if ((m_leftNode && m_leftNode->containRefVar()) || (m_rightNode && m_rightNode->containRefVar()))
+      return true;
+    return false;
+  }
+  return false;
 }
 
 bool ExpressionC::containGroupFunc() const

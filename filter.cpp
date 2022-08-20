@@ -743,14 +743,14 @@ bool FilterC::compareIn(vector<string>* fieldvalues, map<string,string>* varvalu
     return false;
   }
   if (m_rightExpression && m_rightExpression->containRefVar()){
-    int sidWorkID = m_rightExpression->getSideWorkID();
+    int sidWorkID = m_rightExpression->getSideWorkID()-1;
     if (sidWorkID>=sideDatasets->size()){
       trace(ERROR, "%d is an invalide side work ID!\n", sidWorkID);
       return false;
     }
     for (int i=0;i<(*sideDatasets)[sidWorkID].size();i++){
       sideDatarow.clear();
-      sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID), (*sideDatasets)[sidWorkID][i]));
+      sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*sideDatasets)[sidWorkID][i]));
       if (!m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &sideDatarow, sideDatatypes, sResult, dts2, true)){
         trace(ERROR, "Failed to get result of IN element %s!\n", m_rightExpression->getEntireExpstr().c_str());
         return false;
@@ -792,9 +792,9 @@ bool FilterC::joinMatch(vector<string>* fieldvalues, map<string,string>* varvalu
     for (int i=0;i<(*sideDatasets)[sidWorkID].size();i++){
       // construct current side work
       if (i==0)
-        sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID), (*sideDatasets)[sidWorkID][i]));
+        sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*sideDatasets)[sidWorkID][i]));
       else
-        sideDatarow[intToStr(sidWorkID)] = (*sideDatasets)[sidWorkID][i];
+        sideDatarow[intToStr(sidWorkID+1)] = (*sideDatasets)[sidWorkID][i];
       if (sidWorkID<sideDatasets->size()-1){ // construct other side work 
         if (joinMatch(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs, sideDatarow, sidWorkID+1))
           return true;

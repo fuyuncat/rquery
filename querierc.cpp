@@ -667,7 +667,7 @@ void QuerierC::getSideDatarow()
     if (m_sideMatchedRowIDs[i]>=m_sideDatasets[i].size()){
       trace(ERROR, "%d is an invalid matched ID, side work(%d) data size is %d!\n", m_sideMatchedRowIDs[i], i, m_sideDatasets[i].size());
     }
-    m_matchedSideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i), m_sideDatasets[i][m_sideMatchedRowIDs[i]]));
+    m_matchedSideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i+1), m_sideDatasets[i][m_sideMatchedRowIDs[i]]));
   }
 }
 
@@ -1118,7 +1118,7 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
       m_sideSelections[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
       sideSelDatatypes.insert(pair<string,DataTypeStruct>(m_sideAlias[i][j].empty()?intToStr(j):m_sideAlias[i][j], m_sideSelections[i][j].m_datatype));
     }
-    m_sideDatatypes.insert(pair< string, unordered_map<string,DataTypeStruct> >(intToStr(i),sideSelDatatypes));
+    m_sideDatatypes.insert(pair< string, unordered_map<string,DataTypeStruct> >(intToStr(i+1),sideSelDatatypes));
   }
   for (int i=0; i<m_sideFilters.size(); i++)
     m_sideFilters[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);

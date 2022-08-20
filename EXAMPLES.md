@@ -995,7 +995,7 @@
    ```
 - From one file (timezone.log) get rows that only have "hostip" existing in another file (tz1.log) <br/>
    ```
-   rq -q "p d/ /\"\"[]/r |m @1 as aaa, @4 as bbb where @fileid=1 | s @1, @4 | f @fileid=2 and @1 in @r[0][aaa]" tz1.log timezone.log
+   rq -q "p d/ /\"\"[]/r |m @1 as aaa, @4 as bbb where @fileid=1 | s @1, @4 | f @fileid=2 and @1 in @r[1][aaa]" tz1.log timezone.log
    ```
    Returns result:<br/>
    ```
@@ -1010,7 +1010,7 @@
    ```
 - Join query data from three files <br/>
    ```
-   rq -q "p d/ /\"\"[]/r |m @1 as aaa, @5 as bbb where @fileid=1;@1 as aaa, @5 as ccc where @fileid=2 | s @file,@fileid,@line,@fileline,@1,@r[1][ccc] | f @fileid=3 and @1=@r[1][aaa]" tz1.log tz2.log timezone.log
+   rq -q "p d/ /\"\"[]/r |m @1 as aaa, @5 as bbb where @fileid=1;@1 as aaa, @5 as ccc where @fileid=2 | s @file,@fileid,@line,@fileline,@1,@r[2][ccc] | f @fileid=3 and @1=@r[2][aaa]" tz1.log tz2.log timezone.log
    ```
    Returns result:<br/>
    ```

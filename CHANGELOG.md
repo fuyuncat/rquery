@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.941] 2022-08-20
+   Enhancement: Side work data set id starting from 1, to align with other sequence numbers. <br/>
    # [0.941] 2022-08-19
    New feature: Accept wildcard in the file name. <br/>
    # [0.94] 2022-08-18

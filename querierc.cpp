@@ -498,7 +498,7 @@ bool QuerierC::assignMeanwhileString(string mwstr)
     FilterC filter;
     vector<ExpressionC> vSelections;
     vector<string> vAlias;
-    if (pos > 0){
+    if (pos != string::npos){
       filter.setExpstr(trim_copy(vSideWorks[i].substr(pos+string(" WHERE ").length())));
       vSelections = genSelExpression(trim_copy(vSideWorks[i].substr(0,pos)), vAlias);
     }else{
@@ -881,9 +881,10 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData
 void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData)
 {
   if (m_sideSelections.size()>0 && m_sideSelections.size()==m_sideAlias.size() && m_sideSelections.size()==m_sideFilters.size()){
+    unordered_map< int,int > tmpsideMatchedRowIDs;
     for(int i=0;i<m_sideSelections.size();i++){
       vector< unordered_map<string,string> > resultSet;
-      if (m_sideFilters[i].compareExpression(pfieldValues, pvarValues, paggGroupProp, panaFuncData, &m_sideDatasets, &m_sideDatatypes, m_sideMatchedRowIDs)){
+      if (m_sideFilters[i].compareExpression(pfieldValues, pvarValues, paggGroupProp, panaFuncData, &m_sideDatasets, &m_sideDatatypes, tmpsideMatchedRowIDs)){
         getSideDatarow();
         unordered_map<string,string> thisResult;
         for (int j=0; j<m_sideSelections[i].size(); j++){
@@ -935,12 +936,11 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
 
-  // doing side work
-  doSideWorks(&fieldValues, &varValues, &aggGroupProp, &anaFuncData);
-
   //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
   //dumpMap(varValues);
   bool matched = (!m_filter || m_filter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &m_sideDatasets, &m_sideDatatypes, m_sideMatchedRowIDs));
+  // doing side work
+  doSideWorks(&fieldValues, &varValues, &aggGroupProp, &anaFuncData);
 #ifdef __DEBUG__
   m_filtercomptime += (curtime()-thistime);
   thistime = curtime();

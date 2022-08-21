@@ -745,7 +745,7 @@ bool FilterC::compareIn(vector<string>* fieldvalues, map<string,string>* varvalu
   if (m_rightExpression && m_rightExpression->containRefVar()){
     int sidWorkID = m_rightExpression->getSideWorkID()-1;
     if (sidWorkID>=sideDatasets->size()){
-      trace(ERROR, "%d is an invalide side work ID!\n", sidWorkID);
+      //trace(ERROR, "%d is an invalide side work ID!\n", sidWorkID);
       return false;
     }
     for (int i=0;i<(*sideDatasets)[sidWorkID].size();i++){

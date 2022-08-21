@@ -1023,4 +1023,28 @@
    timezone.log    3       15      9       192.168.1.2     "GET textb_222.pdf"
    timezone.log    3       16      10      192.168.1.2     "GET textb_222.pdf"
    ```
+- Using the other two files JOIN query result to join query the main file. <br/>
+   ```
+   rq -q "p d/ /\"\"[]/r |m @1 as aaa, @5 as bbb where @fileid=1;@1 as aaa, @5 as ccc where @fileid=2 and @1 in @r[1][aaa]  | s @file,@fileid,@line,@fileline,@1,@r[2][ccc] | f @fileid=3 and @1=@r[2][aaa]" tz1.log tz2.log timezone.log
+   ```
+   Returns result:<br/>
+   ```
+   timezone.log    3       7       1       192.168.1.2     "GET textb_222.pdf"
+   timezone.log    3       8       2       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       10      4       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       11      5       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       12      6       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       14      8       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       15      9       192.168.1.2     "GET textb_222.pdf"
+   timezone.log    3       16      10      192.168.1.2     "GET textb_222.pdf"
+   ```
+- Get one row for each distincted IP address from a log file. <br/>
+   ```
+   rq -q "p d/ /\"\"[]/r |m @1 as aaa where @fileid=1 | s @1, @4, @5 | f @1 noin @r[1][aaa]" tz1.log 
+   ```
+   Returns result:<br/>
+   ```
+   192.168.1.2     [22/Jul/2022:01:10:41 -0700]    "GET imagesa_111.jpg"
+   192.168.1.1     [22/Jul/2022:01:10:41 +1100]    "GET imagesb_111.jpg"
+   ```
 

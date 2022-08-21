@@ -2,6 +2,7 @@
 All change logs will be documented here.<br/>
    # [0.942] 2022-08-21
    Enhancement: Main query result set can be used as a side work data set to do filtering. <br/>
+   Fixed bug: Intermedium side work data set doesnot get other side work data set correctly. <br/>
    # [0.941] 2022-08-20
    Enhancement: Side work data set id starting from 1, to align with other sequence numbers. <br/>
    # [0.941] 2022-08-19

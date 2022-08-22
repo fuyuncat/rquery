@@ -131,6 +131,30 @@
    ```
    weq
    ```
+- findnth(str,sub[,Nth]) : Normal function. Find the position of Nth sub in str, if Nth is positive number, search from head, if Nth is negative, search from tail.<br />
+   ```
+   rq -q "s findnth(@raw,'me',1)" "meadsdfmeaasf me sfsme adfa me adf"
+   ```
+   Returns result:<br/>
+   ```
+   0
+   ```
+   Another example:<br/>
+   ```
+   rq -q "s findnth(@raw,'me',-2)" "meadsdfmeaasf me sfsme adfa me adf"
+   ```
+   Returns result:<br/>
+   ```
+   21
+   ```
+- revertstr(str) : Normal function. Convert a string to reverse sequence (e.g. abc -> cba).<br />
+   ```
+   rq -q "s revertstr(@raw)" "meadsdfmeaasf me sfsme adfa me adf"
+   ```
+   Returns result:<br/>
+   ```
+   fda em afda emsfs em fsaaemfdsdaem
+   ```
 - switch(expr, case1, return1[, case2, return2 ...][, default]) - if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br/>
    ```
    echo "aaa

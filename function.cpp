@@ -494,6 +494,31 @@ bool FunctionC::runStrlen(vector<string>* fieldvalues, map<string,string>* varva
   }
 }
 
+bool FunctionC::runFindnth(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2 && m_params.size() != 3){
+    trace(ERROR, "findnth() function accepts only two or three parameter.\n");
+    return false;
+  }
+  string str, sub, sNth; 
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, str, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sub, dts, true)){
+    int iNth = 1;
+    if (m_params.size() == 3 && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sNth, dts, true) && isInt(sNth)){
+      iNth = atoi(sNth.c_str());
+    }else{
+      trace(ERROR, "Failed to run findnth(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+      return false;
+    }
+    size_t pos = findNthSub(str, sub, iNth<0?str.length()-1:0, iNth<0?iNth*-1:iNth,iNth<0?false:true, "", '\0', {}, true);
+    sResult = intToStr(pos==string::npos?-1:(int)pos);
+    dts.datatype = LONG;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run findnth(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
+}
+
 bool FunctionC::runComparestr(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 2){
@@ -526,6 +551,23 @@ bool FunctionC::runNoCaseComparestr(vector<string>* fieldvalues, map<string,stri
     return true;
   }else{
     trace(ERROR, "Failed to run nocasecomparestr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runRevertstr(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "revertstr(str) function accepts only one parameter.\n");
+    return false;
+  }
+  string sStr; 
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){
+    sResult = revertstr(sStr);
+    dts.datatype = STRING;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run revertstr(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
     return false;
   }
 }
@@ -1250,6 +1292,12 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case SNAKESTR:
       getResult = runSnakestr(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case REVERTSTR:
+      getResult = runRevertstr(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case FINDNTH:
+      getResult = runFindnth(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case DATATYPE:
       getResult = runDatatype(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

@@ -264,9 +264,9 @@ size_t findNthCharacter(const string & str, const std::set<char> & lookfor, cons
 {
   //trace(DEBUG, "findFirstCharacter '%s', quoters: '%s' !\n",str.c_str(),quoters.c_str());
   int iFound=0;
-  size_t i = pos, j = 0;
+  size_t i = pos;
   vector<int> q;
-  while(i < str.length()) {
+  while(i>=0 && i < str.length()) {
     if (lookfor.find(str[i]) != lookfor.end() && i>0 && q.size()==0){
       iFound++;
       if (iFound>=seq)
@@ -301,10 +301,10 @@ size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, co
 {
   return findNthCharacter(str, lookfor, pos, 1, true, quoters, escape, nestedQuoters);
   //trace(DEBUG, "findFirstCharacter '%s', quoters: '%s' !\n",str.c_str(),quoters.c_str());
-  size_t i = pos, j = 0;
+  size_t i = pos;
   vector<int> q;
   while(i < str.length()) {
-    if (lookfor.find(str[i]) != lookfor.end() && i>0 && q.size()==0) 
+    if (lookfor.find(str[i]) != lookfor.end() && i>0 && q.size()==0)
       return i;
     if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
       if (i>0 && str[i-1]!=escape){
@@ -335,17 +335,18 @@ size_t findNthSub(const string & str, const string & lookfor, const size_t & pos
   trace(DEBUG, "findNthSub '%s'\n",str.c_str());
   trace(DEBUG, "looking for(%d): '%s', start from %d, quoters '%s' !\n",seq,lookfor.c_str(),pos,quoters.c_str());
   int iFound=0;
-  size_t i = pos+(forward?0:lookfor.length()-1), j = forward?0:lookfor.length()-1;
+  size_t i = pos;
   vector<int> q;
-  while(i < str.length()) {
-    size_t l=i,r=0;
-    while(q.size()==0 && l<str.length() && r<lookfor.length() && ((casesensitive?str[l]:upper_char(str[l])) == (casesensitive?lookfor[r]:upper_char(lookfor[r])))){
+  while(i != string::npos && i < str.length()) {
+    size_t l=i,r=forward?0:lookfor.length()-1;
+    while(q.size()==0 && l != string::npos && r != string::npos && l<str.length() && r<lookfor.length() && ((casesensitive?str[l]:upper_char(str[l])) == (casesensitive?lookfor[r]:upper_char(lookfor[r])))){
       forward?++l:--l;
       forward?r++:r--;
     }
-    if (r==lookfor.length()) {
-      trace(DEBUG, "found at %d !\n",i);
-      return i;
+    if ( forward?r==lookfor.length():r==string::npos ) {
+      iFound++;
+      if (iFound>=seq)
+        return i;
     }else{
       if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
         if (i>0 && str[i-1]!=escape){
@@ -377,7 +378,7 @@ size_t findFirstSub(const string & str, const string & lookfor, const size_t & p
   return findNthSub(str, lookfor, pos, 1, true, quoters, escape, nestedQuoters, casesensitive);
   trace(DEBUG, "findFirstSub '%s'\n",str.c_str());
   trace(DEBUG, "looking for: '%s', start from %d, quoters '%s' !\n",lookfor.c_str(),pos,quoters.c_str());
-  size_t i = pos, j = 0;
+  size_t i = pos;
   vector<int> q;
   while(i < str.length()) {
     size_t l=i,r=0;
@@ -832,6 +833,14 @@ string snakestr(const string & str)
       sSnake.push_back(str[i]);
   }
   return sSnake;
+}
+
+string revertstr(const string & str)
+{
+  string reverse = "";
+  for (int i=str.length()-1;i>=0;i--)
+    reverse.push_back(str[i]);
+  return reverse;
 }
 
 int random(int min, int max)

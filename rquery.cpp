@@ -388,9 +388,43 @@ void processQuery(string sQuery, QuerierC & rq)
   }
 }
 
+void processPrompt(QuerierC & rq, size_t & total)
+{
+  //trace(DEBUG1,"Processing content from input or pipe \n");
+  long int thisTime,lastTime = curtime();
+  const size_t cache_length = gv.g_inputbuffer;
+  //char cachebuffer[cache_length];
+  rq.setOutputFormat(gv.g_ouputformat);
+  char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
+  size_t reads = 0;
+  rq.setReadmode(READBUFF);
+  while(std::cin) {
+    if (rq.searchStopped())
+      break;
+    memset( cachebuffer, '\0', sizeof(char)*cache_length );
+    std::cin.read(cachebuffer, cache_length);
+    if (!std::cin)
+      rq.setEof(true);
+    rq.appendrawstr(string(cachebuffer));
+    //trace(DEBUG,"(2)Processing: %s \n", cachebuffer);
+    rq.searchAll();
+    if (gv.g_printheader && gv.g_ouputformat==TEXT)
+      rq.printFieldNames();
+    if (!rq.toGroupOrSort())
+      rq.outputAndClean();
+    total += std::cin.gcount();
+  }
+  free(cachebuffer);
+  thisTime = curtime();
+  trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
+  printResult(rq, total);
+}
+
 void runQuery(vector<string> vContent, QuerierC & rq, short int fileMode=READBUFF, int iSkip=0)
 {
   size_t total = 0;
+  if (vContent.size() == 0)
+    processPrompt(rq, total);
   for (int i=0;i<vContent.size();i++){
     short int readMode = checkReadMode(vContent[i]);
     trace(DEBUG,"(0)Processing(mode:%d): %s \n", readMode, vContent[i].c_str());
@@ -433,34 +467,7 @@ void runQuery(vector<string> vContent, QuerierC & rq, short int fileMode=READBUF
         break;
       }
       case PROMPT:{
-        //trace(DEBUG1,"Processing content from input or pipe \n");
-        long int thisTime,lastTime = curtime();
-        const size_t cache_length = gv.g_inputbuffer;
-        //char cachebuffer[cache_length];
-        rq.setOutputFormat(gv.g_ouputformat);
-        char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
-        size_t reads = 0;
-        rq.setReadmode(READBUFF);
-        while(std::cin) {
-          if (rq.searchStopped())
-            break;
-          memset( cachebuffer, '\0', sizeof(char)*cache_length );
-          std::cin.read(cachebuffer, cache_length);
-          if (!std::cin)
-            rq.setEof(true);
-          rq.appendrawstr(string(cachebuffer));
-          //trace(DEBUG,"(2)Processing: %s \n", cachebuffer);
-          rq.searchAll();
-          if (gv.g_printheader && gv.g_ouputformat==TEXT)
-            rq.printFieldNames();
-          if (!rq.toGroupOrSort())
-            rq.outputAndClean();
-          total += std::cin.gcount();
-        }
-        free(cachebuffer);
-        thisTime = curtime();
-        trace(DEBUG2, "Reading and searching: %u\n", thisTime-lastTime);
-        printResult(rq, total);
+        processPrompt(rq, total);
         break;
       }
       default:{
@@ -634,7 +641,7 @@ int main(int argc, char *argv[])
       //trace(DEBUG2,"Query string: %s.\n", sQuery.c_str());
       i++;
     }else{
-      //trace(DEBUG1,"Content: %s.\n", argv[i]);
+      trace(DEBUG1,"Content: %s.\n", argv[i]);
       vContent.push_back(string(argv[i]));
     }
   }

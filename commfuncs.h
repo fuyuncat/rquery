@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.941"
+#define VERSION "v0.942"
 
 #define UNKNOWN 0
 
@@ -285,6 +285,7 @@ char upper_char(const char & c);
 char lower_char(const char & c);
 string camelstr(const string & str); // convert a string to camel string
 string snakestr(const string & str); // convert a string to snake string
+string revertstr(const string & str);
 void replacestr(string & sRaw, const string & sReplace, const string & sNew);
 void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'});
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew);

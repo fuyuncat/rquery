@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.942] 2022-08-22
+   New feature: New function : findnth(str,sub,Nth) : Normal function. Find the position of Nth sub in str, if Nth is positive number, search from head, if Nth is negative, search from tail. <br/>
+   New feature: New function : revertstr(str) : Normal function. Convert a string to reverse sequence (e.g. abc -> cba). <br/>
+   Fixed bug: Failed to read content from pipeline. <br/>
    # [0.942] 2022-08-21
    Enhancement: Main query result set can be used as a side work data set to do filtering. <br/>
    Fixed bug: Intermedium side work data set doesnot get other side work data set correctly. <br/>

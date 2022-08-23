@@ -155,6 +155,38 @@
    ```
    fda em afda emsfs em fsaaemfdsdaem
    ```
+- ascii(char) : Normal function. Get the ascii code of a char.<br />
+   ```
+   echo " " | rq -q "s ascii('a')"
+   ```
+   Returns result:<br/>
+   ```
+   97
+   ```
+- char(int) : Normal function. Get character of an ascii code number.<br />
+   ```
+   echo " " | rq -q "s char(97)"
+   ```
+   Returns result:<br/>
+   ```
+   a
+   ```
+- mod(num,div) : Normal function. Get the mod of a number.<br />
+   ```
+   echo " " | rq -q "s mod(255,7)"
+   ```
+   Returns result:<br/>
+   ```
+   3
+   ```
+- abs(num) : Normal function. Get the abs value of a given float number.<br />
+   ```
+   echo " " | rq -q "s abs(-12)"
+   ```
+   Returns result:<br/>
+   ```
+   12
+   ```
 - switch(expr, case1, return1[, case2, return2 ...][, default]) - if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br/>
    ```
    echo "aaa

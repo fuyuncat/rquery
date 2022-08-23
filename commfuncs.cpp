@@ -1815,6 +1815,34 @@ short int encodeFunction(string str)
     return SWITCH;
   else if(sUpper.compare("PAD")==0)
     return PAD;
+  else if(sUpper.compare("ASCII")==0)
+    return ASCII;
+  else if(sUpper.compare("CHAR")==0)
+    return CHAR;
+  else if(sUpper.compare("MOD")==0)
+    return MOD;
+  else if(sUpper.compare("ABS")==0)
+    return ABS;
+  else if(sUpper.compare("TOINT")==0)
+    return TOINT;
+  else if(sUpper.compare("TOLONG")==0)
+    return TOLONG;
+  else if(sUpper.compare("TOFLOAT")==0)
+    return TOFLOAT;
+  else if(sUpper.compare("TOSTR")==0)
+    return TOSTR;
+  else if(sUpper.compare("DECTOHEX")==0)
+    return DECTOHEX;
+  else if(sUpper.compare("HEXTODEC")==0)
+    return HEXTODEC;
+  else if(sUpper.compare("ADDTIME")==0)
+    return ADDTIME;
+  else if(sUpper.compare("JSONFORMAT")==0)
+    return JSONFORMAT;
+  else if(sUpper.compare("JSONQUERY")==0)
+    return JSONQUERY;
+  else if(sUpper.compare("XMLEXTRACT")==0)
+    return XMLEXTRACT;
   else if(sUpper.compare("GREATEST")==0)
     return GREATEST;
   else if(sUpper.compare("LEAST")==0)

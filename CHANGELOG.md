@@ -1,5 +1,8 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.943] 2022-08-23
+   New feature: New function : mod(num,div) : Normal function. Get the mod of a number; abs(num) : Normal function. Get the abs value of a given float number <br/>
+   New feature: New function : ascii(char) : Normal function. Get the ascii code of a char; char(int) : Normal function. Get character of an ascii code number <br/>
    # [0.942] 2022-08-22
    New feature: New function : findnth(str,sub,Nth) : Normal function. Find the position of Nth sub in str, if Nth is positive number, search from head, if Nth is negative, search from tail. <br/>
    New feature: New function : revertstr(str) : Normal function. Convert a string to reverse sequence (e.g. abc -> cba). <br/>

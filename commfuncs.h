@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.942"
+#define VERSION "v0.943"
 
 #define UNKNOWN 0
 
@@ -133,6 +133,20 @@ using namespace std;
 #define DATATYPE 34
 #define REVERTSTR 35
 #define FINDNTH 36
+#define ASCII 37
+#define CHAR 38
+#define MOD 39
+#define ABS 40
+#define TOINT 41
+#define TOLONG 42
+#define TOFLOAT 43
+#define TOSTR 44
+#define DECTOHEX 45
+#define HEXTODEC 46
+#define ADDTIME 47
+#define JSONFORMAT 48
+#define JSONQUERY 49
+#define XMLEXTRACT 50
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103

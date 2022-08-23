@@ -254,6 +254,7 @@ bool FunctionC::analyzeExpStr()
     case SNAKESTR:
     case REVERTSTR:
     case GROUPLIST:
+    case ASCII:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -274,6 +275,8 @@ bool FunctionC::analyzeExpStr()
     case FINDNTH:
     case COUNTA:
     case UNIQUECOUNTA:
+    case CHAR:
+    case MOD:
       m_datatype.datatype = LONG;
       break;
     case TIMEDIFF:
@@ -282,6 +285,7 @@ bool FunctionC::analyzeExpStr()
     case SUM:
     case AVERAGEA:
     case SUMA:
+    case ABS:
       m_datatype.datatype = DOUBLE;
       break;
     case NOW:
@@ -681,6 +685,81 @@ bool FunctionC::runGetword(vector<string>* fieldvalues, map<string,string>* varv
     }
   }else{
     trace(ERROR, "(2)Failed to run getword(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runAscii(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "ascii() function accepts only one parameter.\n");
+    return false;
+  }
+  bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true);
+  if (sResult.length() == 0){
+    trace(ERROR, "ascii() function accepts only one letter as parameter.\n");
+    return false;
+  }
+  if (sResult.length()>1)
+    trace(WARNING, "The parameter '%s' of ascii() is too long, will return the ascii code of the first letter only! \n", sResult.c_str());
+  if (gotResult){
+    dts.datatype = INTEGER;
+    sResult = intToStr(int(sResult[0]));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run ascii(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runChar(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "char() function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && isInt(sResult)){
+    dts.datatype = INTEGER;
+    char a = char(atoi(sResult.c_str()));
+    sResult.clear();
+    sResult.push_back(a);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run char(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runMod(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "mod() function accepts only two parameters.\n");
+    return false;
+  }
+  string sBase, sMod;
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sBase, dts, true) && isInt(sBase) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sMod, dts, true) && isInt(sMod)){
+    dts.datatype = INTEGER;
+    sResult = intToStr(atoi(sBase.c_str())%atoi(sMod.c_str()));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run mod(%s, %s)\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runAbs(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "abs() function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && isDouble(sResult)){
+    dts.datatype = DOUBLE;
+    double dNum = atof(sResult.c_str());
+    sResult = doubleToStr(dNum<0?dNum*-1:dNum);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run abs(%s)\n", m_params[0].m_expStr.c_str());
     return false;
   }
 }
@@ -1298,6 +1377,18 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case FINDNTH:
       getResult = runFindnth(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case ASCII:
+      getResult = runAscii(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case CHAR:
+      getResult = runChar(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case MOD:
+      getResult = runMod(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case ABS:
+      getResult = runAbs(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case DATATYPE:
       getResult = runDatatype(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

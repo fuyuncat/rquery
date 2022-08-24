@@ -108,6 +108,14 @@ Functions can be used in the expression. We current provide some essential norma
    - trimright(str[,char]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    - trim(str[,char]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    - datatype(expr) : Normal function. Return the date type of the expression.<br/>
+   - toint(str) : Normal function. Conver a string to integer.<br/>
+   - tolong(str) : Normal function. Conver a string to long.<br/>
+   - tofloat(str) : Normal function. Conver a string to float.<br/>
+   - tostr(expr) : Normal function. Conver any data type to string.<br/>
+   - dectohex(num) : Normal function. Conver a decimal number to hex formatted string.<br/>
+   - hextodec(str) : Normal function. Conver a hex number to decimal number.<br/>
+   - dectobin(num) : Normal function. Conver a decimal number to binary formatted string.<br/>
+   - bintodec(str) : Normal function. Conver a binary number to decimal number.<br/>
    - pad(seed,len) : Normal function. Construct a new string from seed multiple len times.<br />
    - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
    - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
@@ -125,6 +133,7 @@ Functions can be used in the expression. We current provide some essential norma
    - char(int) : Normal function. Get character of an ascii code number.<br />
    - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
    - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />
+   - addtime(date, number, unit) : Normal function. Increase a datetime, unit can be s-second(default),m-minute,h-hour,d-day,n-month,y-year, number can be positive or negative interger.<br />
    - now() : Normal function. Get current date time.<br />
    - truncdate(date,seconds) : Normal function. Truncate a date a number is multiple of the given second number.<br />
    - switch(input,case1,return1[,case2,result2...][,default]): Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br />

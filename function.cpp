@@ -255,6 +255,9 @@ bool FunctionC::analyzeExpStr()
     case REVERTSTR:
     case GROUPLIST:
     case ASCII:
+    case TOSTR:
+    case DECTOHEX:
+    case DECTOBIN:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -277,6 +280,10 @@ bool FunctionC::analyzeExpStr()
     case UNIQUECOUNTA:
     case CHAR:
     case MOD:
+    case TOLONG:
+    case TOINT:
+    case HEXTODEC:
+    case BINTODEC:
       m_datatype.datatype = LONG;
       break;
     case TIMEDIFF:
@@ -286,11 +293,13 @@ bool FunctionC::analyzeExpStr()
     case AVERAGEA:
     case SUMA:
     case ABS:
+    case TOFLOAT:
       m_datatype.datatype = DOUBLE;
       break;
     case NOW:
     case TRUNCDATE:
     case ZONECONVERT:
+    case ADDTIME:
       m_datatype.datatype = DATE;
       break;
     case MAX:
@@ -773,10 +782,138 @@ bool FunctionC::runDatatype(vector<string>* fieldvalues, map<string,string>* var
   bool gotResult = m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true);
   if (gotResult){
     string extrainfo;
-    sResult = decodeDatatype(detectDataType(sResult, extrainfo));
+    if (dts.datatype == UNKNOWN)
+      sResult = decodeDatatype(detectDataType(sResult, extrainfo));
+    else
+      sResult = decodeDatatype(dts.datatype);
+    dts.datatype = STRING;
     return true;
   }else{
     trace(ERROR, "Failed to run datatype(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runToint(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "toint(str) function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && isInt(sResult)){
+    dts.datatype = INTEGER;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run toint(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runTolong(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "tolong(str) function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && isInt(sResult)){
+    dts.datatype = LONG;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run tolong(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runTofloat(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "tofloat(str) function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && isDouble(sResult)){
+    dts.datatype = DOUBLE;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run tofloat(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runTostr(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "tostr(expr) function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true)){
+    dts.datatype = STRING;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run tostr(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runDectohex(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "dectohex(num) function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && isInt(sResult)){
+    sResult = dectohex(atoi(sResult.c_str()));
+    dts.datatype = STRING;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runHextodec(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "hextodec(str) function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true)){
+    sResult = intToStr(hextodec(sResult));
+    dts.datatype = LONG;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runDectobin(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "dectobin(num) function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && isInt(sResult)){
+    sResult = dectobin(atoi(sResult.c_str()));
+    dts.datatype = STRING;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runBintodec(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "bintodec(str) function accepts only one parameter.\n");
+    return false;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true)){
+    sResult = intToStr(bintodec(sResult));
+    dts.datatype = LONG;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].m_expStr.c_str());
     return false;
   }
 }
@@ -827,9 +964,10 @@ bool FunctionC::runTimediff(vector<string>* fieldvalues, map<string,string>* var
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sTm1, dts1, true) && isDate(sTm1, offSet1, dts1.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sTm2, dts2, true) && isDate(sTm2, offSet2, dts2.extrainfo)){
     struct tm tm1, tm2;
     if (strToDate(sTm1, tm1, offSet1, dts1.extrainfo) && strToDate(sTm2, tm2, offSet2, dts2.extrainfo)){
-      time_t t1 = mktime(&tm1);
-      time_t t2 = mktime(&tm2);
-      sResult = doubleToStr(difftime(t1, t2));
+      //time_t t1 = mktime(&tm1);
+      //time_t t2 = mktime(&tm2);
+      //sResult = doubleToStr(difftime(t1, t2));
+      sResult = doubleToStr(timediff(tm1, tm2));
       dts.datatype = DOUBLE;
       return true;
     }else{
@@ -838,6 +976,47 @@ bool FunctionC::runTimediff(vector<string>* fieldvalues, map<string,string>* var
     }
   }else{
     trace(ERROR, "Failed to run timediff(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runAddtime(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2 && m_params.size() != 3){
+    trace(ERROR, "addtime(date, number, unit) function accepts only two or three parameters.\n");
+    return false;
+  }
+  string sTm, sNum, sUnit; 
+  DataTypeStruct dts1, dts2;
+  int offSet;
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sTm, dts1, true) && isDate(sTm, offSet, dts1.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sNum, dts2, true) && isInt(sNum)){
+    char unit = 'S';
+    if (m_params.size() == 3 && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sUnit, dts2, true)){
+      sUnit = upper_copy(sUnit);
+      if (sUnit.length() == 1 & (sUnit[0]=='S' || sUnit[0]=='M' || sUnit[0]=='H' || sUnit[0]=='D' || sUnit[0]=='N' || sUnit[0]=='Y'))
+        unit = sUnit[0];
+      else{
+        trace(ERROR, "'%s' is not a valid unit!\n", m_params[2].m_expStr.c_str());
+        return false;
+      }
+    }
+    struct tm tm;
+    if (strToDate(sTm, tm, offSet, dts1.extrainfo)){
+      tm.tm_gmtoff = offSet*36;
+      addtime(tm, atoi(sNum.c_str()), unit);
+      addhours(tm, offSet/100);
+      char buffer [256];
+      if (strftime(buffer,256,dts1.extrainfo.c_str(),&tm))
+        sResult=string(buffer);
+      //sResult = dateToStr(tm, offSet, dts1.extrainfo);
+      dts.datatype = DATE;
+      return true;
+    }else{
+      trace(ERROR, "Failed to run addtime(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+      return false;
+    }
+  }else{
+    trace(ERROR, "Failed to run addtime(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
     return false;
   }
 }
@@ -1321,6 +1500,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
     case TIMEDIFF:
       getResult = runTimediff(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
+    case ADDTIME:
+      getResult = runAddtime(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
     case ISNULL:
       getResult = runIsnull(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
@@ -1392,6 +1574,30 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case DATATYPE:
       getResult = runDatatype(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case TOINT:
+      getResult = runToint(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case TOLONG:
+      getResult = runTolong(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case TOFLOAT:
+      getResult = runTofloat(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case TOSTR:
+      getResult = runTostr(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case DECTOHEX:
+      getResult = runDectohex(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case HEXTODEC:
+      getResult = runHextodec(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case DECTOBIN:
+      getResult = runDectobin(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case BINTODEC:
+      getResult = runBintodec(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case SWITCH:
       getResult = runSwitch(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

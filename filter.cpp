@@ -729,6 +729,42 @@ void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string
     dataList.insert( pair<string,string>(columns[m_leftColId],m_rightExpStr) );
 }
 
+bool FilterC::containAnaFunc() const
+{
+  if (m_type == LEAF){
+    if ((m_leftExpression && m_leftExpression->containAnaFunc()) || (m_rightExpression && m_rightExpression->containAnaFunc()))
+      return true;
+  }else{
+    if ((m_leftNode && m_leftNode->containAnaFunc()) || (m_rightNode && m_rightNode->containAnaFunc()))
+      return true;
+  }
+  return false;
+}
+
+// calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
+bool FilterC::evalAnaExprs(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly)
+{
+  if (m_type == LEAF){
+    if (m_leftExpression && m_leftExpression->containAnaFunc()){
+      ExpressionC tmpExp;
+      tmpExp = *m_leftExpression;
+      tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, false);
+      anaEvaledExp->push_back(tmpExp);
+    }
+    if (m_rightExpression && m_rightExpression->containAnaFunc()){
+      ExpressionC tmpExp;
+      tmpExp = *m_rightExpression;
+      tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, false);
+      anaEvaledExp->push_back(tmpExp);
+    }
+    return true;
+  }else{
+    if ((m_leftNode && m_leftNode->evalAnaExprs(fieldvalues, varvalues, aggFuncs, anaFuncs, anaEvaledExp, sideDatarow, sideDatatypes, sResult, dts, getresultonly)) && (m_rightNode && m_rightNode->evalAnaExprs(fieldvalues, varvalues, aggFuncs, anaFuncs, anaEvaledExp, sideDatarow, sideDatatypes, sResult, dts, getresultonly)))
+      return true;
+  }
+  return false;
+}
+
 bool FilterC::compareIn(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes)
 {
   string leftRst, sResult;

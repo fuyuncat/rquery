@@ -952,7 +952,11 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
   //trace(DEBUG, " selected:%d (%d)! \n", matched, m_selections.size());
   if (matched){
     getSideDatarow(sideMatchedRowIDs, matchedSideDatarow);
+    string sResult;
+    DataTypeStruct dts;
+    vector<ExpressionC> anaEvaledExp;
     if (m_selections.size()>0){
+      // initialize an empty anaFuncData
       vector<string> vEvaledParams;
       for (unordered_map< string,vector<ExpressionC> >::iterator it=m_initAnaArray.begin(); it!=m_initAnaArray.end(); ++it){
         vEvaledParams.clear();
@@ -960,7 +964,6 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
       }
       ExpressionC tmpExp;
       if (m_groups.size() == 0 && m_initAggProps.size() == 0 && !m_aggrOnly){
-        vector<ExpressionC> anaEvaledExp;
         //trace(DEBUG, " No group! \n");
         if (!addResultToSet(&fieldValues, &varValues, rowValue, m_selections, &aggGroupProp, &anaFuncData, &anaEvaledExp, matchedSideDatarow, m_results))
           return false;
@@ -970,8 +973,6 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
 #endif // __DEBUG__
 
         vector<string> vResults;
-        string sResult;
-        DataTypeStruct dts;
         for (int i=0; i<m_sorts.size(); i++){
           if (!m_sorts[i].sortKey.containGroupFunc()){
             //if it has the exact same expression as any selection, get the result from selection
@@ -1013,10 +1014,8 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
           }
           vResults.push_back(sResult);
         }
-        m_anaEvaledExp.push_back(anaEvaledExp);
         //vResults.push_back(intToStr(m_sortKeys.size())); // add an index for the sort key
         m_sortKeys.push_back(vResults);
-        addAnaFuncData(anaFuncData);
 #ifdef __DEBUG__
   m_evalSorttime += (curtime()-thistime);
   thistime = curtime();
@@ -1063,15 +1062,17 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
       }
     }else{
       m_results.push_back(rowValue);
-      vector<ExpressionC> anaEvaledExp;
       vector<ExpressionC> vKeys;
       for (int i=0;i<m_sorts.size();i++)
         vKeys.push_back(m_sorts[i].sortKey);
       if (!addResultToSet(&fieldValues, &varValues, rowValue, vKeys, &aggGroupProp, &anaFuncData, &anaEvaledExp, matchedSideDatarow, m_sortKeys))
         return false;
-      m_anaEvaledExp.push_back(anaEvaledExp);
-      addAnaFuncData(anaFuncData);
     }
+    // eval filter expressions to get anaFuncData
+    if (m_filter && m_filter->containAnaFunc())
+      m_filter->evalAnaExprs(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &anaEvaledExp, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+    m_anaEvaledExp.push_back(anaEvaledExp);
+    addAnaFuncData(anaFuncData);
   }
 #ifdef __DEBUG__
   m_filtertime += (curtime()-filterbegintime);
@@ -1766,8 +1767,10 @@ bool QuerierC::processAnalyticC(const short int & iFuncID, const string & sFuncE
     //continue;
   }else if (iDefaultParaNum > 1)
     trace(WARNING, "NEARBY default value only need one parameter, will use the first one, the other will be discarded!\n");
-  if (vFuncData[0].size() != iAnaExprNum+iAnaSortNum*2+iDistParaNum)
-    trace(ERROR, "NEARBY processing data size %d doesnot match parameter group total number %d+%d*2+%d !\n",vFuncData[0].size(), iAnaExprNum, iAnaSortNum, iDistParaNum);
+  if (vFuncData[0].size() != iAnaExprNum+iAnaSortNum+iDistParaNum+iDefaultParaNum+1){
+    trace(ERROR, "NEARBY processing data size %d doesnot match parameter group total number %d+%d+%d+%d+1 !\n",vFuncData[0].size(), iAnaExprNum, iAnaSortNum, iDistParaNum, iDefaultParaNum);
+    return false;
+  }
 
   for (int i=0; i<m_anaFuncResult.size(); i++){
     int iPosBeforeSorted = atoi(vFuncData[i][vFuncData[i].size()-1].c_str());

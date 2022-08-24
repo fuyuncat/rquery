@@ -1084,6 +1084,83 @@ string doubleToStr(const double val)
   return str;
 }
 
+string dectohex(const int & val)
+{
+  string hex;
+  int raw, d;
+  if (val == 0)
+    return "0";
+  else if (val<0)
+    raw = val*-1;
+  else
+    raw = val;
+  while(raw>0){
+    d = raw%16;
+    raw=(raw-d)/16;
+    if (d<10) // 0-9 ascii + 48
+      hex.push_back(char(d+48));
+    else // A-F ascii + 55
+      hex.push_back(char(d+55));
+  }
+  if (val<0)
+    hex.push_back('-');
+  hex = revertstr(hex);
+  return hex;
+}
+
+int hextodec(const string& str)
+{
+  int val = 0;
+  for (int i=str.length()-1; i>=0; i--){
+    if (str[i]>='0' && str[i]<='9')
+      val = val+(int(str[i])-48)*int(pow(16,(str.length()-1)-i));
+    else if (str[i]>='a' && str[i]<='f')
+      val = val+(int(str[i])-87)*int(pow(16,(str.length()-1)-i));
+    else if (str[i]>='A' && str[i]<='F')
+      val = val+(int(str[i])-55)*int(pow(16,(str.length()-1)-i));
+    else{
+      trace(ERROR, "'%s' is not a valid hex number!\n", str.c_str());
+      return 0;
+    }
+  }
+  return val;
+}
+
+string dectobin(const int & val)
+{
+  string bin;
+  int raw, d;
+  if (val == 0)
+    return "0";
+  else if (val<0)
+    raw = val*-1;
+  else
+    raw = val;
+  while(raw>0){
+    d = raw%2;
+    raw=(raw-d)/2;
+    bin.push_back(char(d+48));
+  }
+  if (val<0)
+    bin.push_back('-');
+  bin = revertstr(bin);
+  return bin;
+}
+
+int bintodec(const string& str)
+{
+  int val = 0;
+  for (int i=str.length()-1; i>=0; i--){
+    if (str[i]>='0' && str[i]<='1')
+      val = val+(int(str[i])-48)*int(pow(2,(str.length()-1)-i));
+    else{
+      trace(ERROR, "'%s' is not a valid binary number!\n", str.c_str());
+      return 0;
+    }
+  }
+  return val;
+}
+
 #if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
 extern int putenv(char*);
 #endif
@@ -1129,7 +1206,10 @@ string dateToStr(struct tm val, int iOffSet, string fmt)
     char buffer [256];
     // trace(DEBUG2, "(2)Converting %d %d %d %d %d %d %d, format '%s' \n",val.tm_year+1900, val.tm_mon, val.tm_mday, val.tm_hour, val.tm_min, val.tm_sec, val.tm_isdst, fmt.c_str());
     time_t t1 = mktime(&val);
-    struct tm tm = zonetime(t1, iOffSet);
+    int off = iOffSet;
+    //if (off==0 && fmt.find("%z") == string::npos) // no timezone provided, use local timezone.
+    //  off = localOffset();
+    struct tm tm = zonetime(t1, off);
     if (strftime(buffer,256,fmt.c_str(),&tm)){
       return string(buffer);
       //trace(DEBUG2, "(3)Converting %d %d %d %d %d %d %d to '%s' \n",tm->tm_year+1900, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, tm->tm_isdst, string(buffer).c_str());
@@ -1242,6 +1322,15 @@ int dateFormatLen(string fmt)
   return len;
 }
 
+int localOffset()
+{
+  time_t t = time(NULL);
+  struct tm lt = {0};
+
+  localtime_r(&t, &lt);
+  return lt.tm_gmtoff/36;
+}
+
 // note: tm returns GMT time, iOffSet is the timezone
 // strptime doesnot consider the whole datetime string. For example, strptime("20/Jul/2022:01:00:00", "%Y/%b/%d", tm) will return true.
 // The return value of the strptime is a pointer to the first character not processed in this function call. In case the whole input string is consumed, the return value points to the null byte at the end of the string.
@@ -1255,6 +1344,7 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
   }
   string sRaw, sTimeZone, sFm = fmt;
   iOffSet = 0;
+  //bool localTime = false;
   //short int iOffOp = PLUS;
   sRaw = stripTimeZone(str, iOffSet, sTimeZone);
   if (sFm.length()>5 && sFm[sFm.length()-2]=='%' && sFm[sFm.length()-1]=='z'){
@@ -1265,6 +1355,8 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
       //trace(DEBUG2, "'%s' (format: '%s') should not contain timezone '%s' \n", str.c_str(), sFm.c_str(), sTimeZone.c_str());
       return false;
     }
+    //iOffSet = localOffset();
+    //localTime = true;
   }
   // bare in mind: strptime will ignore %z. means we need to treat its returned time as GMT time
   char * c = strptime(sRaw.c_str(), sFm.c_str(), &tm);
@@ -1277,41 +1369,11 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
     //if (sDate.compare(sRaw) != 0)
     //  return false;
     if (iOffSet != 0){
-      tm.tm_hour = tm.tm_hour+(iOffSet/100*-1);
-      if (tm.tm_hour<0){
-        tm.tm_hour += 24;
-        tm.tm_mday -= 1;
-        if (tm.tm_mday<=0){
-          switch(tm.tm_mon){
-            case 0:
-            case 1:
-            case 3:
-            case 5:
-            case 7:
-            case 8:
-            case 10:
-            case 12:
-              tm.tm_mday+=31;
-              break;
-            case 4:
-            case 6:
-            case 9:
-            case 11:
-              tm.tm_mday+=30;
-              break;
-            case 2:
-              if ((tm.tm_year+1900)%400==0 || ((tm.tm_year+1900)%4==0&&(tm.tm_year+1900)%100!=0))
-                tm.tm_mday+=29;
-              else
-                tm.tm_mday+=28;
-              break;
-          }
-          tm.tm_mon -= 1;
-          if(tm.tm_mon<0)
-            tm.tm_year-=1;
-        }
-      }
+      addhours(tm, iOffSet/100*-1);
+      //tm.tm_hour = tm.tm_hour+(iOffSet/100*-1);
     }
+    //if (localTime)
+    //  iOffSet = 0;
     //time_t t1;
     //t1 = mktime(&tm);
     //tm = zonetime(t1, iOffSet*-1); // we cannot get any local time as strptime ignored the timezone, return GMT time only.
@@ -1389,6 +1451,157 @@ bool isDate(const string& str, int & iOffSet, string& fmt)
     }
   }
   return false;
+}
+
+double timediff(struct tm & tm1, struct tm & tm2)
+{
+  time_t t1 = mktime(&tm1);
+  time_t t2 = mktime(&tm2);
+  return difftime(t1, t2);
+}
+
+void addhours(struct tm & tm, int hours)
+{
+  tm.tm_hour = tm.tm_hour+hours;
+  while (tm.tm_hour<0){
+    tm.tm_hour += 24;
+    tm.tm_mday -= 1;
+    if (tm.tm_mday<=0){
+      switch(tm.tm_mon){
+        case 0:
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+        case 12:
+          tm.tm_mday+=31;
+          break;
+        case 4:
+        case 6:
+        case 9:
+        case 11:
+          tm.tm_mday+=30;
+          break;
+        case 2:
+          if ((tm.tm_year+1900)%400==0 || ((tm.tm_year+1900)%4==0&&(tm.tm_year+1900)%100!=0))
+            tm.tm_mday+=29;
+          else
+            tm.tm_mday+=28;
+          break;
+      }
+      tm.tm_mon -= 1;
+      if(tm.tm_mon<0)
+        tm.tm_year-=1;
+    }
+  }
+
+  while (tm.tm_hour>24){
+    tm.tm_hour -= 24;
+    tm.tm_mday += 1;
+    switch(tm.tm_mon){
+      case 0:
+      case 2:
+      case 4:
+      case 6:
+      case 7:
+      case 9:
+        if (tm.tm_mday>31){
+          tm.tm_mday=1;
+          tm.tm_mon+=1;
+        }
+        break;
+      case 11:
+        if (tm.tm_mday>31){
+          tm.tm_mday=1;
+          tm.tm_mon=1;
+          tm.tm_year+=1;
+        }
+        break;
+      case 3:
+      case 5:
+      case 8:
+      case 10:
+        if (tm.tm_mday>30){
+          tm.tm_mday=1;
+          tm.tm_mon+=1;
+        }
+        break;
+      case 1:
+        if ((tm.tm_year+1900)%400==0 || ((tm.tm_year+1900)%4==0&&(tm.tm_year+1900)%100!=0)){
+          if (tm.tm_mday>29){
+            tm.tm_mday=1;
+            tm.tm_mon+=1;
+          }
+        }else{
+          if (tm.tm_mday>28){
+            tm.tm_mday=1;
+            tm.tm_mon+=1;
+          }
+        }
+        break;
+    }
+  }
+}
+
+void addseconds(struct tm & tm, int seconds)
+{
+  tm.tm_sec = tm.tm_sec+seconds;
+  while (tm.tm_sec>=60){
+    tm.tm_sec -= 60;
+    tm.tm_min += 1;
+    if (tm.tm_min >= 60){
+      tm.tm_min -= 60;
+      addhours(tm, 1);
+    }
+  }
+  while (tm.tm_sec<0){
+    tm.tm_sec += 60;
+    tm.tm_min -= 1;
+    if (tm.tm_min < 0){
+      tm.tm_min += 60;
+      addhours(tm, -1);
+    }
+  }
+}
+
+void addtime(struct tm & tm, int diff, char unit)
+{
+  switch (unit){
+  case 'y':
+  case 'Y':
+    tm.tm_year += diff;
+    break;
+  case 'n':
+  case 'N':
+    tm.tm_mon += diff;
+    while (tm.tm_mon<=0){
+      tm.tm_mon += 12;
+      tm.tm_year -= 1;
+    }
+    while (tm.tm_mon>12){
+      tm.tm_mon -= 12;
+      tm.tm_year += 1;
+    }
+    break;
+  case 'd':
+  case 'D':
+    addhours(tm, diff*24);
+    break;
+  case 'h':
+  case 'H':
+    addhours(tm, diff);
+    break;
+  case 'm':
+  case 'M':
+    addseconds(tm, diff*60);
+    break;
+  case 's':
+  case 'S':
+  default:
+    addseconds(tm, diff);
+  }
 }
 
 // get the compatible data type from two data types
@@ -1835,6 +2048,10 @@ short int encodeFunction(string str)
     return DECTOHEX;
   else if(sUpper.compare("HEXTODEC")==0)
     return HEXTODEC;
+  else if(sUpper.compare("DECTOBIN")==0)
+    return DECTOBIN;
+  else if(sUpper.compare("BINTODEC")==0)
+    return BINTODEC;
   else if(sUpper.compare("ADDTIME")==0)
     return ADDTIME;
   else if(sUpper.compare("JSONFORMAT")==0)
@@ -2010,9 +2227,10 @@ int anyDataCompare(string str1, string str2, DataTypeStruct dts){
       //if (bIsDate1 && bIsDate2){
         struct tm tm1, tm2;
         if (strToDate(newstr1, tm1, offSet1, fmt1) && strToDate(newstr2, tm2, offSet2, fmt2)){
-          time_t t1 = mktime(&tm1);
-          time_t t2 = mktime(&tm2);
-          double diffs = difftime(t1, t2);
+          //time_t t1 = mktime(&tm1);
+          //time_t t2 = mktime(&tm2);
+          //double diffs = difftime(t1, t2); 
+          double diffs = timediff(tm1, tm2);
           if (diffs < 0)
             return -1;
           else if (diffs > 0)
@@ -2138,9 +2356,10 @@ int anyDataCompare(string str1, int comparator, string str2, DataTypeStruct dts)
       if (bIsDate1 && bIsDate2){
         struct tm tm1, tm2;
         if (strToDate(newstr1, tm1, offSet1, fmt1) && strToDate(newstr2, tm2, offSet2, fmt2)){
-          time_t t1 = mktime(&tm1);
-          time_t t2 = mktime(&tm2);
-          double diffs = difftime(t1, t2);
+          //time_t t1 = mktime(&tm1);
+          //time_t t2 = mktime(&tm2);
+          //double diffs = difftime(t1, t2);
+          double diffs = timediff(tm1, tm2);
           switch (comparator){
           case EQ:
             return diffs==0?1:0;

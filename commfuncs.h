@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.943"
+#define VERSION "v0.95"
 
 #define UNKNOWN 0
 
@@ -143,10 +143,12 @@ using namespace std;
 #define TOSTR 44
 #define DECTOHEX 45
 #define HEXTODEC 46
-#define ADDTIME 47
-#define JSONFORMAT 48
-#define JSONQUERY 49
-#define XMLEXTRACT 50
+#define DECTOBIN 47
+#define BINTODEC 48
+#define ADDTIME 49
+#define JSONFORMAT 50
+#define JSONQUERY 51
+#define XMLEXTRACT 52
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103
@@ -316,13 +318,22 @@ string longToStr(const long val);
 string floatToStr(const float val);
 string doubleToStr(const double val);
 string dateToStr(struct tm val, int iOffSet = 888888, string fmt = DATEFMT);
+string dectohex(const int & val);
+int hextodec(const string& str);
+string dectobin(const int & val);
+int bintodec(const string& str);
 
 bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt=DATEFMT);
+int localOffset();
 struct tm zonetime(time_t t1, int iOffSet);
 int dateFormatLen(string fmt);
 string stripTimeZone(string str, int & iOffSet, string & sTimeZone);
 struct tm now();
 long int curtime();
+double timediff(struct tm & tm1, struct tm & tm2);
+void addhours(struct tm & tm, int hours);
+void addseconds(struct tm & tm, int seconds);
+void addtime(struct tm & tm, int diff, char unit='S');
 
 int random(int min=1, int max=100);
 string randstr(int len=8, const string & flags="uld");

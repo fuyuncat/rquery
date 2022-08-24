@@ -1,5 +1,17 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.95] 2022-08-24
+   New feature: New function : toint(str) : Normal function. Conver a string to integer. <br/>
+   New feature: New function : tolong(str) : Normal function. Conver a string to long. <br/>
+   New feature: New function : tofloat(str) : Normal function. Conver a string to float. <br/>
+   New feature: New function : tostr(expr) : Normal function. Conver any data type to string. <br/>
+   New feature: New function : dectohex(num) : Normal function. Conver a decimal number to hex formatted string. <br/>
+   New feature: New function : hextodec(str) : Normal function. Conver a hex number to decimal number. <br/>
+   New feature: New function : dectobin(num) : Normal function. Conver a decimal number to binary formatted string. <br/>
+   New feature: New function : bintodec(str) : Normal function. Conver a binary number to decimal number. <br/>
+   New feature: New function : addtime(date, number, unit) : Normal function. Increase a datetime, unit can be s-second(default),m-minute,h-hour,d-day,n-month,y-year, number can be positive or negative interger. <br/>
+   Fixed bug: datatype() doesnot return correct data type in some situations. <br/>
+   Fixed bug: Analytic function is ignored in the filter in some situations. <br/>
    # [0.943] 2022-08-23
    New feature: New function : mod(num,div) : Normal function. Get the mod of a number; abs(num) : Normal function. Get the abs value of a given float number <br/>
    New feature: New function : ascii(char) : Normal function. Get the ascii code of a char; char(int) : Normal function. Get character of an ascii code number <br/>

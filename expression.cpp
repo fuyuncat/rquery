@@ -1105,6 +1105,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
   if (m_type == LEAF){
     if (m_expType == CONST){
       sResult = m_expStr;
+      dts = m_datatype;
       return true;
     }else if (m_expType == FUNCTION){
       //trace(DEBUG2, "Expression '%s' is a fucntion.. \n",m_expStr.c_str());

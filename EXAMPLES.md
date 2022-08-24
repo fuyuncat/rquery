@@ -1,5 +1,5 @@
 # Functions usage
-- isnull(expr) - Return the position of a sub string in a string. Return -1 if caannot find the sub string<br/> 
+- isnull(expr) : Normal function. Return the position of a sub string in a string. Return -1 if caannot find the sub string<br/> 
    ```
    echo "aaa,bbb,,ddd,eee"|rq -f on -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s @field1 as f1,isnull(@field1) as f1n,@field3 as f3,isnull(@field3) as f3n"
    ```
@@ -11,7 +11,7 @@
    Pattern matched 1 line(s).
    Selected 1 row(s).
    ```
-- upper(str) - Convert a string to upper case<br/>
+- upper(str) : Normal function. Convert a string to upper case<br/>
    ```
    echo "asdasAWdsfasfsafsdaf, ssadflsdfSOFSF{SFLDF "|rq -q "s upper(@raw)"
    ```
@@ -27,7 +27,7 @@
    ```
    AAA
    ```
-- lower(str) - Convert a string to lower case<br/>
+- lower(str) : Normal function. Convert a string to lower case<br/>
    ```
    echo "AAA,BBB,,DDD,EEE"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s lower(@1)"
    ```
@@ -35,7 +35,7 @@
    ```
    aaa
    ```
-- substr(str,startpos[,len]) - Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string<br/>
+- substr(str,startpos[,len]) : Normal function. Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string<br/>
    ```
    echo "AAABBBcccDDDEEE"|rq -q "s substr(@raw,6,3)"
    ```
@@ -51,7 +51,7 @@
    ```
    cccDDDEEE
    ```
-- instr(str,substr) - Return the position of a sub string in a string. Return -1 if caannot find the sub string<br/>
+- instr(str,substr) : Normal function. Return the position of a sub string in a string. Return -1 if caannot find the sub string<br/>
    ```
    echo "AAABBBcccDDDEEE"|rq -q "s instr(@raw,'ccc')"
    ```
@@ -59,7 +59,7 @@
    ```
    6
    ```
-- strlen(str) - Return the length of a string<br/>
+- strlen(str) : Normal function. Return the length of a string<br/>
    ```
    echo "AAABBBcccDDDEEE"|rq -q "s strlen(@raw,)"
    ```
@@ -67,7 +67,7 @@
    ```
    15
    ```
-- comparestr(str1, str2) - Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br/>
+- comparestr(str1, str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br/>
    ```
    echo "Abc,aBC"|rq -q "p /(?P<col1>[^,]*),(?P<col2>[^,^\n]*)/ | s col1,col2,comparestr(col1,col2)"
    ```
@@ -75,7 +75,7 @@
    ```
    Abc     aBC     -32
    ```
-- nocasecomparestr(str1, str2) - Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br/>
+- nocasecomparestr(str1, str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br/>
    ```
    echo "Abc,aBC"|rq -q "p /(?P<col1>[^,]*),(?P<col2>[^,^\n]*)/ | s col1,col2,nocasecomparestr(col1,col2)"
    ```
@@ -83,7 +83,7 @@
    ```
    Abc     aBC     0
    ```
-- replace(str, sub, new) - Replace all sub1 in a string with sub2<br/>
+- replace(str, sub, new) : Normal function. Replace all sub1 in a string with sub2<br/>
    ```
    echo "AAABBBcccDDDEEE"|rq -q "s replace(@raw,'ccc','333')"
    ```
@@ -91,7 +91,7 @@
    ```
    AAABBB333DDDEEE
    ```
-- regreplace(str, pattern, new) - Replace all regular pattern in a string with sub (capturing group supported).<br/>
+- regreplace(str, pattern, new) : Normal function. Replace all regular pattern in a string with sub (capturing group supported).<br/>
    ```
    echo "AAABBBcccDDDEEE"|rq -q "s regreplace(@raw,'(AAA|EEE)','333')"
    ```
@@ -99,7 +99,7 @@
    ```
    333BBBcccDDD333
    ```
-- regmatch(str, pattern, return_expr) - Return an expression including the capturing groups matched a regular pattern. Use {N} to stand for the matched groups<br/>
+- regmatch(str, pattern, return_expr) : Normal function. Return an expression including the capturing groups matched a regular pattern. Use {N} to stand for the matched groups<br/>
    ```
    echo "AAA,111,ccc,222,EEE"|rq -q "s regmatch(@raw,'[^1]*111([^2]*)222[^\n]*','I found \"{1}\" .')"
    ```
@@ -107,7 +107,7 @@
    ```
    I found ",ccc," .
    ```
-- pad(seed, times) - Construct a new string from seed multiple len times<br/>
+- pad(seed, times) : Normal function. Construct a new string from seed multiple len times<br/>
    ```
    echo ""|rq -q "s pad('abcde',3)"
    ```
@@ -187,7 +187,7 @@
    ```
    12
    ```
-- switch(expr, case1, return1[, case2, return2 ...][, default]) - if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br/>
+- switch(expr, case1, return1[, case2, return2 ...][, default]) : Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br/>
    ```
    echo "aaa
    bbb
@@ -219,7 +219,7 @@
    111
    000
    ```
-- greatest(expr1, expr2[, expr3...]) - Return the largest one of the given expressions<br/>
+- greatest(expr1, expr2[, expr3...]) : Normal function. Return the largest one of the given expressions<br/>
    ```
    echo "aaa,bbb,,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s greatest(@1,@2,@3,@4,@5)"
    ```
@@ -227,7 +227,7 @@
    ```
    eee
    ```
-- least(expr1, expr2[, expr3...]) - urn the smallest one of the given expressions<br/>
+- least(expr1, expr2[, expr3...]) : Normal function. urn the smallest one of the given expressions<br/>
    ```
    echo "aaa,bbb,ccc,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s least(@1,@2,@3,@4,@5)"
    ```
@@ -235,7 +235,7 @@
    ```
    aaa
    ```
-- floor(floatNum) - Get the floor integer number of a given float number<br/>
+- floor(floatNum) : Normal function. Get the floor integer number of a given float number<br/>
    ```
    echo "3.1415926"|rq -q "s floor(@raw)"
    ```
@@ -243,7 +243,7 @@
    ```
    3
    ```
-- ceil(floatNum) - Get the ceil integer number of a given float number<br/>
+- ceil(floatNum) : Normal function. Get the ceil integer number of a given float number<br/>
    ```
    echo "3.1415926"|rq -q "s ceil(@raw)"
    ```
@@ -251,7 +251,7 @@
    ```
    4
    ```
-- round(floatNum) - Round a given float number<br/>
+- round(floatNum) : Normal function. Round a given float number<br/>
    ```
    echo "3.1415926"|rq -q "s round(@raw*10)/10"
    ```
@@ -259,7 +259,7 @@
    ```
    3
    ```
-- log(num) - Get the log result of a given float number<br/>
+- log(num) : Normal function. Get the log result of a given float number<br/>
    ```
    echo "1000"|rq -q "s log(@raw)"
    ```
@@ -267,7 +267,7 @@
    ```
    3
    ```
-- timediff(datetime1,datetime2) - Get the difference (in seconds) of two date<br/>
+- timediff(datetime1,datetime2) : Normal function. Get the difference (in seconds) of two date<br/>
    ```
    echo "2022-07-29:18:00:00 2022-07-28:08:18:00"|rq -q "p /([^ ]*) ([^\n]*)/ | s @1,@2,timediff(@1,@2)"
    ```
@@ -275,7 +275,15 @@
    ```
    2022-07-29:18:00:00     2022-07-28:08:18:00     121320
    ```
-- dateformat(datetime,format) - Convert a date data to a string with the given format<br/>
+- addtime(date, number, unit) : Normal function. Increase a datetime, unit can be s-second(default),m-minute,h-hour,d-day,n-month,y-year, number can be positive or negative interger.<br/>
+   ```
+   rq -q "s addtime('2022/08/18:08:00:18 +1000', -1, 'd')" " "
+   ```
+   Returns result:<br/>
+   ```
+   2022/08/17:08:00:18 +1000
+   ```
+- dateformat(datetime,format) : Normal function. Convert a date data to a string with the given format<br/>
    ```
    echo "2022-07-29:18:00:00"|rq -q "s @raw,dateformat(@raw,'%d/%b/%Y')"
    ```
@@ -283,7 +291,7 @@
    ```
    2022-07-29:18:00:00     29/Jul/2022
    ```
-- truncdate(datetime,seconds) - Truncate a date a number is multiple of the given second number<br/>
+- truncdate(datetime,seconds) : Normal function. Truncate a date a number is multiple of the given second number<br/>
    ```
    echo "2022-07-29:18:56:36"|rq -q "s @raw,truncdate(@raw,3600)"
    ```
@@ -291,7 +299,7 @@
    ```
    2022-07-29:18:56:36     2022-07-29:18:00:00
    ```
-- now() - Get current date time<br/>
+- now() : Normal function. Get current date time<br/>
    ```
    echo ""|rq -q "s now()"
    ```
@@ -370,6 +378,70 @@
    Returns result:<br/>
    ```
    Asdfwd,sfsea2123wd
+   ```
+- toint(str) : Normal function. Conver a string to integer.<br />
+   ```
+   rq -q "s toint('888')" " "
+   ```
+   Returns result:<br/>
+   ```
+   888
+   ```
+- tolong(str) : Normal function. Conver a string to long.<br />
+   ```
+   rq -q "s tolong('888')" " "
+   ```
+   Returns result:<br/>
+   ```
+   888
+   ```
+- tofloat(str) : Normal function. Conver a string to float.<br />
+   ```
+   rq -q "s tofloat('888.888')" " "
+   ```
+   Returns result:<br/>
+   ```
+   888.888
+   ```
+- tostr(expr) : Normal function. Conver any data type to string.<br />
+   ```
+   rq -q "s datatype(tostr(888)), tostr(888)" " "
+   ```
+   Returns result:<br/>
+   ```
+   STRING  888
+   ```
+- dectohex(num) : Normal function. Conver a decimal number to hex formatted string.<br />
+   ```
+   rq -q "s dectohex(888)" " "
+   ```
+   Returns result:<br/>
+   ```
+   378
+   ```
+- hextodec(str) : Normal function. Conver a hex number to decimal number.<br />
+   ```
+   rq -q "s hextodec(378)" " "
+   ```
+   Returns result:<br/>
+   ```
+   888
+   ```
+- dectobin(num) : Normal function. Conver a decimal number to binary formatted string.<br />
+   ```
+   rq -q "s dectobin(888)" " "
+   ```
+   Returns result:<br/>
+   ```
+   1101111000
+   ```
+- bintodec(str) : Normal function. Conver a binary number to decimal number.<br />
+   ```
+   rq -q "s bintodec('1101111000')" " "
+   ```
+   Returns result:<br/>
+   ```
+   888
    ```
 - datatype(expr) : Normal function. Return the date type of the expression.<br/>
    ```

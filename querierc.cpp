@@ -304,8 +304,9 @@ vector<ExpressionC> QuerierC::genSelExpression(string sSel, vector<string> & vAl
     sAlias = "";
     if (vSelAlias.size()>1)
       sAlias = upper_copy(trim_copy(vSelAlias[1]));
-    //trace(DEBUG2,"Selection expression: '%s'\n",vSelAlias[0].c_str());
     eSel = ExpressionC(vSelAlias[0]);
+    //trace(DEBUG2,"Selection expression: '%s'\n",vSelAlias[0].c_str());
+    //eSel.dump();
     vSelections.push_back(eSel);
     vAlias.push_back(sAlias);
   }

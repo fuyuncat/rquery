@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.951] 2022-08-25
+   Fixed bug: Operator priority is not correct in some expressions. <br/>
    # [0.95] 2022-08-24
    New feature: New function : toint(str) : Normal function. Conver a string to integer. <br/>
    New feature: New function : tolong(str) : Normal function. Conver a string to long. <br/>

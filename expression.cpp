@@ -182,6 +182,7 @@ void ExpressionC::setExpstr(string expString)
 {
   m_expStr = expString;
   buildExpression();
+  dump();
   if (isMacroInExpression()){
     trace(FATAL, "A macro function cannot be a part of an expression '%s'\n", m_expStr.c_str());
     //return;
@@ -275,29 +276,66 @@ a  b   B3(*)   B5(^)
       c  d   B6(-)   g
             e  f
 
+
+New method (v0.951)
+8+7*(8+8)+3*16*16
+
+ +
+8 7*(8+8)+3*16*16
+
+  +
+8  *
+  7  (8+8)+3*16*16
+
+  +
+8   +N
+  *    3*16*16
+7 (8+8)
+
+  +
+8   +
+  *    3*16*16
+7  +
+  8 8
+
+  +
+8    +
+  *    *
+7  +  3 16*16
+  8 8
+
+  +
+8    +
+  *     *
+7  +  3   *
+  8 8   16 16
+
 **********************************************************/
-ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
+ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, ExpressionC* parentNode)
 {
-  trace(DEBUG, "Building BTREE from '%s'\n", expStr.c_str());
+  if (!newNode){
+    trace(ERROR, "Error: node is not allocated!\n");
+    return NULL;
+  }
   if (m_expStr.empty()){
     trace(ERROR, "Error: No statement found!\n");
     return NULL;
   }else
     m_expStr = trim_copy(m_expStr);
+  trace(DEBUG, "Building BTREE from '%s'\n", expStr.c_str());
   int nextPos=0,strStart=0;
   try{
-    ExpressionC* newNode = new ExpressionC();
     newNode->m_expstrAnalyzed = true;
-    if (expStr.length()>1 && expStr[0]=='/' && expStr[expStr.length()-1]=='/') { // regular expression string can NOT operate with any other expression!
-      buildLeafNode(expStr, newNode);
-      return newNode->getTopParent();
-    }
+    newNode->m_parentNode = parentNode;
+    //if (expStr.length()>1 && expStr[0]=='/' && expStr[expStr.length()-1]=='/') { // regular expression string can NOT operate with any other expression!
+    //  buildLeafNode(expStr, newNode);
+    //  return newNode->getTopParent();
+    //}
     int iPos = findFirstCharacter(expStr, m_operators, 0, "''()", '\\',{'(',')'});
     // check if is a scientific notation number, e.g.1.58e+8
     if(iPos>1 && iPos<expStr.length()-1 && (expStr[iPos-1]=='e' || expStr[iPos-1]=='E') && (expStr[iPos]=='+' || expStr[iPos] == '-')){
-      trace(DEBUG, "Checking scientific notation number for base '%s'\n", expStr.substr(0,iPos-1).c_str());
-      //check left of +/1 is a double number
-      if (isDouble(expStr.substr(0,iPos-1))){
+      //trace(DEBUG, "Checking scientific notation number for base '%s'\n", expStr.substr(0,iPos-1).c_str());
+      if (isDouble(expStr.substr(0,iPos-1))){ //check left of +/1 is a double number
         int iNextPos = findFirstCharacter(expStr, m_operators, iPos+1, "''()", '\\',{'(',')'});
         string sNotation="";
         if (iNextPos < 0)
@@ -311,39 +349,82 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* parentNode)
     }
     if (iPos<0) { // didnt find any operator, reached the end
       if (expStr.length()>1 && expStr[0]=='(' && expStr[expStr.length()-1]==')') { // quoted expression
-        newNode->clear();
-        SafeDelete(newNode);
-        newNode = BuildTree(expStr.substr(1,expStr.length()-2),NULL);
+        //newNode->clear();
+        //SafeDelete(newNode);
+        //newNode = new ExpressionC();
+        if (!BuildTree(expStr.substr(1,expStr.length()-2),newNode,NULL))
+          return NULL;
+        newNode->m_parentNode = parentNode;
       }else{ // atom expression to be built as a leaf
         buildLeafNode(expStr, newNode);
       }
     }else{ // got an operator, building a branch
       //trace(DEBUG, "Found '%s'(%d) in '%s'\n",expStr.substr(iPos,1).c_str(),iPos,expStr.c_str());
       if (iPos == expStr.length() - 1){ // operator should NOT be the end
-        newNode->clear();
-        SafeDelete(newNode);
+        //newNode->clear();
+        //SafeDelete(newNode);
         trace(ERROR, "Operator should NOT be the end of the expression!\n");
         return NULL;
       }
       newNode->m_type = BRANCH;
       newNode->m_operate = encodeOperator(expStr.substr(iPos,1));
       newNode->m_expStr = expStr.substr(iPos,1);
-      if (!parentNode || operatorPriority(newNode->m_operate)>operatorPriority(parentNode->m_operate)){
-        if (parentNode){
-          parentNode->m_rightNode = newNode;
+      if (parentNode){
+        if (operatorPriority(newNode->m_operate)>=operatorPriority(parentNode->m_operate)){
+          //parentNode->m_rightNode = newNode;
+          ExpressionC* tmpNode = new ExpressionC();
+          newNode->m_leftNode = tmpNode;
+          if (!BuildTree(expStr.substr(0,iPos), tmpNode, newNode))
+            return NULL;
+        }else{
+          ExpressionC* tmpNode = new ExpressionC();
+          parentNode->m_rightNode = tmpNode;
+          if (!BuildTree(expStr.substr(0,iPos), tmpNode, parentNode))
+            return NULL;
+          ExpressionC* pNode = parentNode;
+          while (pNode && operatorPriority(newNode->m_operate)<operatorPriority(pNode->m_operate)){
+            if (!pNode->m_parentNode){
+              newNode->m_leftNode = pNode;
+              pNode->m_parentNode = newNode;
+              newNode->m_parentNode = NULL;
+              break;
+            }
+            pNode = pNode->m_parentNode;
+            if (operatorPriority(newNode->m_operate)>=operatorPriority(pNode->m_operate)){
+              newNode->m_leftNode = pNode->m_rightNode;
+              pNode->m_rightNode->m_parentNode = newNode;
+              newNode->m_parentNode = pNode;
+              pNode->m_rightNode = newNode;
+              break;
+            }
+          }
         }
-        newNode->m_leftNode = BuildTree(expStr.substr(0,iPos), NULL);
       }else{
-        parentNode->m_rightNode = BuildTree(expStr.substr(0,iPos), NULL); 
-        parentNode->m_datatype = getCompatibleDataType(parentNode->m_leftNode->m_datatype, parentNode->m_rightNode->m_datatype);
-        newNode->m_leftNode = parentNode;
+        ExpressionC* tmpNode = new ExpressionC();
+        newNode->m_leftNode = tmpNode;
+        if (!BuildTree(expStr.substr(0,iPos), tmpNode, newNode))
+          return NULL;
       }
-      newNode->m_rightNode = BuildTree(expStr.substr(iPos+1), NULL);
+      //if (!parentNode || operatorPriority(newNode->m_operate)<operatorPriority(parentNode->m_operate)){
+      //  if (parentNode){
+      //    parentNode->m_rightNode = newNode;
+      //  }
+      //  newNode->m_leftNode = BuildTree(expStr.substr(0,iPos), NULL);
+      //}else{
+      //  parentNode->m_rightNode = BuildTree(expStr.substr(0,iPos), NULL); 
+      //  parentNode->m_datatype = getCompatibleDataType(parentNode->m_leftNode->m_datatype, parentNode->m_rightNode->m_datatype);
+      //  newNode->m_leftNode = parentNode;
+      //}
+      ExpressionC* tmpNode = new ExpressionC();
+      newNode->m_rightNode = tmpNode;
+      if (!BuildTree(expStr.substr(iPos+1), tmpNode, newNode))
+        return NULL;
       newNode->m_datatype = getCompatibleDataType(newNode->m_leftNode->m_datatype, newNode->m_rightNode->m_datatype);
       if (parentNode)
         parentNode->m_datatype = getCompatibleDataType(parentNode->m_leftNode->m_datatype, parentNode->m_rightNode->m_datatype);
     }
-    return newNode->getTopParent();
+    return newNode;
+    //return newNode->getTopParent();
   }catch (exception& e) {
     trace(ERROR, "Building expression exception: %s\n", e.what());
     return NULL;
@@ -400,35 +481,6 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_expstrAnalyzed = false;
         return false;
       }
-    //}else if (expStr[0] == '/'){
-    //  if (expStr.length()>1 && expStr[expStr.length()-1] == '/'){ // whole string is a regular expression string
-    //    node->m_datatype.datatype = STRING;
-    //    node->m_expType = CONST;
-    //    node->m_expStr = trim_pair(expStr,"//");
-    //    node->m_expstrAnalyzed = true;
-    //    return true;
-    //  }else{
-    //    trace(ERROR, "Regular expression '%s' is not closed. \n", expStr.c_str());
-    //    return false;
-    //  }
-    //}else if (expStr[0] == '{'){ // checking DATE string
-    //  int iOffSet;
-    //  if (expStr.length()>1 && expStr[expStr.length()-1] == '}'){ // whole string is a date string
-    //    if (isDate(expStr.substr(1,expStr.length()-2), iOffSet, node->m_datatype.extrainfo))
-    //      node->m_datatype.datatype = DATE;
-    //    else{
-    //      trace(ERROR, "Unrecognized date format of '%s'. \n", expStr.c_str());
-    //      return false;
-    //    }
-    //    node->m_expType = CONST;
-    //    node->m_expstrAnalyzed = true;
-    //    node->m_expStr = trim_pair(expStr,"{}");
-    //    return true;
-    //  }else{
-    //    trace(ERROR, "DATE string '%s' is not closed. \n", expStr.c_str());
-    //    node->m_expstrAnalyzed = false;
-    //    return false;
-    //  }
     }else if (expStr[0] == '\''){ // checking STRING string
       if (expStr.length()>1 && expStr[expStr.length()-1] == '\''){ // whole string is a STRING string
         int iOffSet;
@@ -497,14 +549,19 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
 // build expression class from the expression string
 bool ExpressionC::buildExpression()
 {
-  ExpressionC* root = BuildTree(m_expStr, NULL);
-  if (root){
+  ExpressionC* newNode = new ExpressionC();
+  if (BuildTree(m_expStr, newNode, NULL)){
+    ExpressionC* root = newNode->getTopParent();
     root->copyTo(this);
     root->clear();
     SafeDelete(root);
     return true;
+  }else{
+    newNode->clear();
+    SafeDelete(newNode);
+    clear();
+    return false;
   }
-  return false;
 }
 
 bool ExpressionC::isMacroInExpression()
@@ -603,13 +660,15 @@ void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop)
 void ExpressionC::dump(int deep)
 {
   if (m_type == BRANCH){
-    trace(DUMP,"%s(%d)\n",decodeOperator(m_operate).c_str(),deep);
+    trace(DUMP,"%s(%d-%s)\n",decodeOperator(m_operate).c_str(),deep,decodeDatatype(m_datatype.datatype).c_str());
     trace(DUMP,"L-");
-    m_leftNode->dump(deep+1);
+    if (m_leftNode)
+      m_leftNode->dump(deep+1);
     trace(DUMP,"R-");
-    m_rightNode->dump(deep+1);
+    if (m_rightNode)
+      m_rightNode->dump(deep+1);
   }else{
-    trace(DUMP,"(%d)%s(%d)\n",deep,m_expStr.c_str(),m_colId);
+    trace(DUMP,"(%d)%s(%d-%s)\n",deep,m_expStr.c_str(),m_colId,decodeDatatype(m_datatype.datatype).c_str());
   }
 }
 

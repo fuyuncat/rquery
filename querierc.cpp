@@ -130,6 +130,7 @@ void QuerierC::setregexp(string regexstr)
     vector<string> vSearchPattern = split(regexstr.substr(2,regexstr.length()-3),'/',"",'\\',{'(',')'},false,true);
     //dumpVector(vSearchPattern);
     m_regexstr = vSearchPattern[0];
+    replacestr(m_regexstr,"\\t","\t");
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
         trace(ERROR, "(1)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
@@ -152,6 +153,7 @@ void QuerierC::setregexp(string regexstr)
     }
     vector<string> vSearchPattern = split(spattern,'/',"",'\\',{'(',')'},false,true);
     m_regexstr = vSearchPattern[0];
+    replacestr(m_regexstr,"\\t","\t");
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
         trace(ERROR, "(2)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
@@ -320,12 +322,17 @@ bool QuerierC::analyzeSelString(){
   vector<ExpressionC> vExpandedExpr; 
   vector<string> vAlias;
   m_selections = genSelExpression(m_selstr, vAlias);
+  for (int i=0; i<m_selections.size(); i++)
+    if (i<vAlias.size()&& !vAlias[i].empty())
+      m_selnames.push_back(vAlias[i]);
+    else
+      m_selnames.push_back(m_selections[i].getEntireExpstr());
   bool bGroupFunc = false, bNonGroupFuncSel = false;
   for (int i=0; i<m_selections.size(); i++){
     if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isAnalytic())
       trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", m_selections[i].m_Function->m_expStr.c_str(),m_selections[i].m_Function->m_anaParaNums[0],m_selections[i].m_Function->m_params.size());
     //trace(DEBUG, "Got selection expression '%s'!\n", m_selections[i].getEntireExpstr().c_str());
-    
+
     // if macro function is involved, need to wait util the first data analyzed to analyze select expression
     if (m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isMacro()){
       if (m_fieldtypes.size()==0){
@@ -344,18 +351,20 @@ bool QuerierC::analyzeSelString(){
               vExpandedExpr = m_selections[i].m_Function->expandForeach(m_fieldtypes.size());
             trace(DEBUG2,"Expanding FOREACH: '%s'\n",m_selections[i].m_expStr.c_str());
             m_selections.erase(m_selections.begin()+i);
+            m_selnames.erase(m_selnames.begin()+i);
+            // expand and insert FOREACH selections.
             for (int j=0; j<vExpandedExpr.size(); j++){
               trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
-              m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
+              m_selnames.insert(m_selnames.begin()+i,vExpandedExpr[j].getEntireExpstr());
+              //m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
               checkSelGroupConflict(vExpandedExpr[j]);
               if (vExpandedExpr[j].containGroupFunc())
                 bGroupFunc = true;
               else
                 bNonGroupFuncSel = true;
-
               vExpandedExpr[j].getAggFuncs(m_initAggProps);
               vExpandedExpr[j].getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
-              m_selections.push_back(vExpandedExpr[j]);
+              m_selections.insert(m_selections.begin()+i,vExpandedExpr[j]);
               i++;
             }
             m_bToAnalyzeSelectMacro = false;
@@ -365,11 +374,7 @@ bool QuerierC::analyzeSelString(){
         continue;
       }
     }
-    if (i<vAlias.size()&& !vAlias[i].empty())
-      m_selnames.push_back(vAlias[i]);
-    else
-      m_selnames.push_back(m_selections[i].getEntireExpstr());
-    
+
     checkSelGroupConflict(m_selections[i]);
     if (m_selections[i].containGroupFunc())
       bGroupFunc = true;

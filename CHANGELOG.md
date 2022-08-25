@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.953] 2022-08-25
+   Fixed bug: Expanded selections from foreach marco function might be set in an incorrect position in some situations. <br/>
    # [0.952] 2022-08-25
    Enhancement: foreach() marco function can invole % in an express, e.g. %-2 <br/>
    New feature: New variable: @N : The last field, it can be an expression, e.g. @(N-3) .<br/>

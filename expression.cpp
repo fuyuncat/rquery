@@ -182,7 +182,7 @@ void ExpressionC::setExpstr(string expString)
 {
   m_expStr = expString;
   buildExpression();
-  dump();
+  //dump();
   if (isMacroInExpression()){
     trace(FATAL, "A macro function cannot be a part of an expression '%s'\n", m_expStr.c_str());
     //return;
@@ -779,6 +779,23 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
             m_expType = UNKNOWN;
             m_datatype.datatype = UNKNOWN;
           }
+        }else if (m_expStr.find("@N") == 0){ // the latest field
+          m_expType = COLUMN;
+          m_colId = (int)fieldtypes->size()-1;
+          m_datatype = (*fieldtypes)[m_colId];
+          trace(DEBUG, "Tuning '%s' from VARIABLE to COLUMN(%d).\n", m_expStr.c_str(), m_colId);
+        }else if (m_expStr.length()>2 && m_expStr[1] == '(' && m_expStr[m_expStr.length()-1] == ')'){ // calculate @(N-x)
+          string expStr = m_expStr.substr(2,m_expStr.length()-3);
+          replacestr(expStr,"N",intToStr(fieldtypes->size()));
+          ExpressionC constExp(expStr);
+          if (!isInt(constExp.m_expStr)){
+            trace(ERROR, "analyzeColumns: '%s' is not a valid number expresion!\n", m_expStr.c_str());
+            return dts;
+          }
+          m_expType = COLUMN;
+          m_colId = max(1,min((int)fieldtypes->size(),atoi(constExp.m_expStr.c_str())))-1;
+          m_datatype = (*fieldtypes)[m_colId];
+          trace(DEBUG, "Tuning '%s' from VARIABLE to COLUMN(%d).\n", m_expStr.c_str(), m_colId);
         }else{
           //trace(ERROR, "Unrecognized variable(2) %s .\n", m_expStr.c_str());
           //m_expType = UNKNOWN;

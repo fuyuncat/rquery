@@ -713,6 +713,24 @@
    [22/Jul/2022:01:10:41 -0800]    192.168.1.2     192.168.1.1
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     192.168.1.1
    ```
+- foreach(beginid,endid,macro_expr) : Macro function. make a macro expression list for all fields from beginid to endid. $ stands for field ($ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. For example, foreach(%-2,2,substr($,2,3)+#) will make this expression list: substr(@field{N-2},2,3)+N..,substr(@field3,2,3)+3,substr(@field2,2,3)+2. It can only be used in "select" and "sort". It cannot be a part of expression.<br />
+   ```
+   rq -q "p d/ /r| select @%,@1,foreach(%-1,%,$) | f @%>=5" test.cpp
+   ```
+   Returns result:<br/>
+   ```
+   5               !=      &other){
+   5               new     A(other.mya->m_id);
+   5               B&      other)
+   5               !=      &other){
+   5               new     A(other.mya->m_id);
+   5               new     A(id);
+   8               "%Y%m%d",       &tm);
+   5               >       bbb;
+   5               =       B();
+   9               bbb2[bbb2.size()-1].mya->m_id,  myb.mya->m_id);
+   5               %d\n",  bbb2[i].mya->m_id);
+   ```
 
 # Examples and scenarios
 - Get lines containing specific string (equal to grep)<br/>
@@ -1174,5 +1192,42 @@
    ```
    192.168.1.2     [22/Jul/2022:01:10:41 -0700]    "GET imagesa_111.jpg"
    192.168.1.1     [22/Jul/2022:01:10:41 +1100]    "GET imagesb_111.jpg"
+   ```
+- Get the last line ID, 3 columns of all rows that have 5 or more columns.<br />
+   Method 1: Using foreach macro function:<br/>
+   ```
+   rq -q "p d/ /r| select @line,foreach(%-2,%,$) | f @%>=5" test.cpp
+   ```
+   Returns result:<br/>
+   ```
+   34      (this   !=      &other){
+   38      =       new     A(other.mya->m_id);
+   54      operator=(const B&      other)
+   56      (this   !=      &other){
+   60      =       new     A(other.mya->m_id);
+   73      =       new     A(id);
+   82      strptime("20220728",    "%Y%m%d",       &tm);
+   85      std::string,B   >       bbb;
+   88      myb2    =       B();
+   96      %d)\n", bbb2[bbb2.size()-1].mya->m_id,  myb.mya->m_id);
+   99      id:     %d\n",  bbb2[i].mya->m_id);
+   ```
+   Method 2: Using @N variable:<br/>
+   ```
+   rq -q "p d/ /r| select @line,@(N-2),@(N-1),@N | f @%>=5" test.cpp
+   ```
+   Returns result:<br/>
+   ```
+   34      (this   !=      &other){
+   38      =       new     A(other.mya->m_id);
+   54      operator=(const B&      other)
+   56      (this   !=      &other){
+   60      =       new     A(other.mya->m_id);
+   73      =       new     A(id);
+   82      strptime("20220728",    "%Y%m%d",       &tm);
+   85      std::string,B   >       bbb;
+   88      myb2    =       B();
+   96      %d)\n", bbb2[bbb2.size()-1].mya->m_id,  myb.mya->m_id);
+   99      id:     %d\n",  bbb2[i].mya->m_id);
    ```
 

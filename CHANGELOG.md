@@ -1,5 +1,8 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.952] 2022-08-25
+   Enhancement: foreach() marco function can invole % in an express, e.g. %-2 <br/>
+   New feature: New variable: @N : The last field, it can be an expression, e.g. @(N-3) .<br/>
    # [0.951] 2022-08-25
    Fixed bug: Operator priority is not correct in some expressions. <br/>
    # [0.95] 2022-08-24

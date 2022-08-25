@@ -320,7 +320,6 @@ bool QuerierC::analyzeSelString(){
   vector<ExpressionC> vExpandedExpr; 
   vector<string> vAlias;
   m_selections = genSelExpression(m_selstr, vAlias);
-  vector<string> vSelections = split(m_selstr,',',"''()",'\\',{'(',')'},false,true);
   bool bGroupFunc = false, bNonGroupFuncSel = false;
   for (int i=0; i<m_selections.size(); i++){
     if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isAnalytic())
@@ -344,6 +343,7 @@ bool QuerierC::analyzeSelString(){
             else
               vExpandedExpr = m_selections[i].m_Function->expandForeach(m_fieldtypes.size());
             trace(DEBUG2,"Expanding FOREACH: '%s'\n",m_selections[i].m_expStr.c_str());
+            m_selections.erase(m_selections.begin()+i);
             for (int j=0; j<vExpandedExpr.size(); j++){
               trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
               m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
@@ -356,6 +356,7 @@ bool QuerierC::analyzeSelString(){
               vExpandedExpr[j].getAggFuncs(m_initAggProps);
               vExpandedExpr[j].getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
               m_selections.push_back(vExpandedExpr[j]);
+              i++;
             }
             m_bToAnalyzeSelectMacro = false;
             break;
@@ -364,10 +365,10 @@ bool QuerierC::analyzeSelString(){
         continue;
       }
     }
-    if (vAlias[i].empty())
-      m_selnames.push_back(m_selections[i].getEntireExpstr());
-    else
+    if (i<vAlias.size()&& !vAlias[i].empty())
       m_selnames.push_back(vAlias[i]);
+    else
+      m_selnames.push_back(m_selections[i].getEntireExpstr());
     
     checkSelGroupConflict(m_selections[i]);
     if (m_selections[i].containGroupFunc())
@@ -558,7 +559,7 @@ void QuerierC::setUserVars(string variables)
     }
     string sName=upper_copy(trim_copy(vNameVal[0])), sValue=trim_copy(vNameVal[1]);
     trace(DEBUG, "Setting variable '%s' value '%s'!\n", sName.c_str(), sValue.c_str());
-    if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0){
+    if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0 || sName.compare("FILEID")==0 || sName.compare("FILELINE")==0 || sName.compare("N")==0 || sName.compare("%")==0 || sName.compare("R")==0){
       trace(ERROR, "%s is a reserved word, cannot be used as a variable name!\n", sName.c_str());
       continue;
     }

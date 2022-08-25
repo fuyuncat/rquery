@@ -1408,18 +1408,32 @@ vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
     return vExpr;
   }
   int begin = 0, end = 0;
-  if (m_params[0].m_expStr.compare("%") == 0)
-    begin = maxFieldNum;
-  else if (isInt(m_params[0].m_expStr))
-    begin = min(maxFieldNum,atoi(m_params[0].m_expStr.c_str()));
+  if (m_params[0].getEntireExpstr().find("%") != string::npos){
+    string expStr = m_params[0].getEntireExpstr();
+    replacestr(expStr,"%",intToStr(maxFieldNum));
+    ExpressionC constExp(expStr);
+    if (!isInt(constExp.m_expStr)){
+      trace(ERROR, "(1a)'%s' is not a valid number expresion!\n", m_params[0].m_expStr.c_str());
+      return vExpr;
+    }
+    begin = max(1,atoi(constExp.m_expStr.c_str()));
+  }else if (isInt(m_params[0].m_expStr))
+    begin = max(1,min(maxFieldNum,atoi(m_params[0].m_expStr.c_str())));
   else{
     trace(ERROR, "(1)Invalid begin ID for foreach macro function!\n", m_params[0].m_expStr.c_str());
     return vExpr;
   }
-  if (m_params[1].m_expStr.compare("%") == 0)
-    end = maxFieldNum;
-  else if (isInt(m_params[1].m_expStr))
-    end = min(maxFieldNum,atoi(m_params[1].m_expStr.c_str()));
+  if (m_params[1].getEntireExpstr().find("%") != string::npos){
+    string expStr = m_params[1].getEntireExpstr();
+    replacestr(expStr,"%",intToStr(maxFieldNum));
+    ExpressionC constExp(expStr);
+    if (!isInt(constExp.m_expStr)){
+      trace(ERROR, "(1b)'%s' is not a valid number expresion!\n", m_params[1].m_expStr.c_str());
+      return vExpr;
+    }
+    end = max(1,atoi(constExp.m_expStr.c_str()));
+  }else if (isInt(m_params[1].m_expStr))
+    end = max(1,min(maxFieldNum,atoi(m_params[1].m_expStr.c_str())));
   else{
     trace(ERROR, "(1)Invalid end ID for foreach macro function!\n", m_params[1].m_expStr.c_str());
     return vExpr;
@@ -1449,18 +1463,32 @@ vector<ExpressionC> FunctionC::expandForeach(vector<ExpressionC> vExps)
     return vExpr;
   }
   int begin = 0, end = 0;
-  if (m_params[0].m_expStr.compare("%") == 0)
-    begin = vExps.size();
-  else if (isInt(m_params[0].m_expStr))
-    begin = min((int)vExps.size(),atoi(m_params[0].m_expStr.c_str()));
+    if (m_params[0].getEntireExpstr().find("%") != string::npos){
+    string expStr = m_params[0].getEntireExpstr();
+    replacestr(expStr,"%",intToStr(vExps.size()));
+    ExpressionC constExp(expStr);
+    if (!isInt(constExp.m_expStr)){
+      trace(ERROR, "(2a)'%s' is not a valid number expresion!\n", m_params[0].m_expStr.c_str());
+      return vExpr;
+    }
+    begin = max(1,atoi(constExp.m_expStr.c_str()));
+  }else if (isInt(m_params[0].m_expStr))
+    begin = max(1,min((int)vExps.size(),atoi(m_params[0].m_expStr.c_str())));
   else{
     trace(ERROR, "(2)Invalid begin ID for foreach macro function!\n", m_params[0].m_expStr.c_str());
     return vExpr;
   }
-  if (m_params[1].m_expStr.compare("%") == 0)
-    end = vExps.size();
-  else if (isInt(m_params[1].m_expStr))
-    end = min((int)vExps.size(),atoi(m_params[1].m_expStr.c_str()));
+  if (m_params[1].getEntireExpstr().find("%") != string::npos){
+    string expStr = m_params[1].getEntireExpstr();
+    replacestr(expStr,"%",intToStr(vExps.size()));
+    ExpressionC constExp(expStr);
+    if (!isInt(constExp.m_expStr)){
+      trace(ERROR, "(2b)'%s' is not a valid number expresion!\n", m_params[1].m_expStr.c_str());
+      return vExpr;
+    }
+    end = atoi(constExp.m_expStr.c_str());;
+  }else if (isInt(m_params[1].m_expStr))
+    end = max(0,min((int)vExps.size(),atoi(m_params[1].m_expStr.c_str())));
   else{
     trace(ERROR, "(2)Invalid end ID for foreach macro function!\n", m_params[1].m_expStr.c_str());
     return vExpr;

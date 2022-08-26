@@ -200,7 +200,7 @@ class QuerierC
     void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);
     void mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, int iLeftB, int iLeftT, int iRightB, int iRightT);
     void addAnaFuncData(unordered_map< string,vector<string> > anaFuncData);
-    bool sortAnaData(vector<SortProp> & sortProps, const string & sFuncExpStr, vector< vector<string> > & vFuncData);
+    bool sortAnaData(vector<SortProp> & sortProps, const short int & iFuncID, const string & sFuncExpStr, vector< vector<string> > & vFuncData);
     bool processAnalytic(const string & sFuncExpStr, vector< vector<string> > & vFuncData);
     bool processAnalyticA(const short int & iFuncID, const string & sFuncExpStr, vector< vector<string> > & vFuncData);
     bool processAnalyticB(const short int & iFuncID, const string & sFuncExpStr, vector< vector<string> > & vFuncData);

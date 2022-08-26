@@ -1220,19 +1220,10 @@ bool FunctionC::runTruncdate(vector<string>* fieldvalues, map<string,string>* va
     return false;
   }
   string sTm, sSeconds;
-  struct tm tm;
   DataTypeStruct tmpDts;
-  int iOffSet;
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sTm, dts, true) && strToDate(sTm, tm, iOffSet, dts.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sSeconds, tmpDts, true) && isInt(sSeconds)){
-    long iSeconds = atol(sSeconds.c_str());
-    time_t t1 = mktime(&tm) - timezone; // adjust timezone
-    time_t t2 = (time_t)(trunc((long double)t1/iSeconds))*iSeconds - timezone; // adjust timezone for gmtime
-    trace(DEBUG2, "(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d iSeconds: %d(%s) t2: %d timezone: %d \n",sTm.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, iSeconds, sSeconds.c_str(), (long) t2, timezone);
-    //tm = *(localtime(&t2));
-    tm = *(gmtime(&t2));
-    //tm = zonetime(t2, 0); // as tm returned from strToDate is GMT time
-    sResult = dateToStr(tm, iOffSet, dts.extrainfo);
-    trace(DEBUG2, "(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) \n",sTm.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sTm, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sSeconds, tmpDts, true) && isInt(sSeconds)){
+    int iSeconds = atoi(sSeconds.c_str());
+    sResult = truncdate(sTm, dts.extrainfo, iSeconds);
     dts.datatype = DATE;
     //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", iSeconds, sTm.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
     return !sResult.empty();

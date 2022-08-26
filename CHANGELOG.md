@@ -1,5 +1,11 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.953] 2022-08-26
+   Fixed bug: User defined date format cannot be recognized if special character quoted timezone. <br/>
+   Enhancement: '\t' will be treated as TAB, '\/' will be treated as '/' in wildcard/delimiter parsing pattern. <br/>
+   Fixed bug: Sorting gets incorrect order in some situations. <br/>
+   Fixed bug: Analytic function doesnot work properly with group. <br/>
+   Fixed bug: Nearby doesnot get the correct order sequence. <br/>
    # [0.953] 2022-08-25
    Fixed bug: Expanded selections from foreach marco function might be set in an incorrect position in some situations. <br/>
    # [0.952] 2022-08-25

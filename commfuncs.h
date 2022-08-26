@@ -303,6 +303,7 @@ string camelstr(const string & str); // convert a string to camel string
 string snakestr(const string & str); // convert a string to snake string
 string revertstr(const string & str);
 void replacestr(string & sRaw, const string & sReplace, const string & sNew);
+void replacestr(string & sRaw, const vector<string> & vReplace, const vector<string> & vNew);
 void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'});
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew);
 void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr);
@@ -334,6 +335,7 @@ double timediff(struct tm & tm1, struct tm & tm2);
 void addhours(struct tm & tm, int hours);
 void addseconds(struct tm & tm, int seconds);
 void addtime(struct tm & tm, int diff, char unit='S');
+string truncdate(const string & datesrc, const string & fmt, const int & seconds);
 
 int random(int min=1, int max=100);
 string randstr(int len=8, const string & flags="uld");

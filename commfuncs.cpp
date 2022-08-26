@@ -568,7 +568,8 @@ vector<string> split(const string & str, char delim, string quoters, char escape
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.length()) {
-    if (str[i] == delim && (i==0 || (i>0 && str[i-1]!=escape)) && q.size()==0) {
+    //if (str[i] == delim && (i==0 || (i>0 && str[i-1]!=escape)) && q.size()==0) {
+    if (str[i] == delim && q.size()==0) {
       //trace(DEBUG, "(1)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       if (!skipemptyelement || i>begin)
         v.push_back(str.substr(begin, i-begin));
@@ -716,6 +717,16 @@ void replacestr(string & sRaw, const string & sReplace, const string & sNew)
     pos = sRaw.find(sReplace, pos+sNew.length());
   }
   //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
+}
+
+void replacestr(string & sRaw, const vector<string> & vReplace, const vector<string> & vNew)
+{
+  if (vReplace.size() != vNew.size()){
+    trace(ERROR, "Replace string array size %d doesnot match new string array size %d! \n", vReplace.size(), vNew.size());
+    return;
+  }
+  for (int i=0; i<vReplace.size(); i++)
+    replacestr(sRaw,vReplace[i],vNew[i]);
 }
 
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
@@ -1234,10 +1245,14 @@ string stripTimeZone(string str, int & iOffSet, string & sTimeZone)
   while ((sRaw[iTZ]!='+'&&sRaw[iTZ]!='-') && iTZ<sRaw.length()){
     iTZ++;
     if (sRaw[iTZ]=='+'||sRaw[iTZ]=='-'){
-      sTimeZone = sRaw.substr(iTZ);
+      int opos = iTZ+1;
+      while (opos<sRaw.length()&&sRaw[opos]>='0'&&sRaw[opos]<='9')
+        opos++;
+      sTimeZone = sRaw.substr(iTZ,opos-iTZ);
       if (isInt(sTimeZone)){
         iOffSet = atoi(sTimeZone.c_str());
-        sRaw = trim_copy(sRaw.substr(0,iTZ));
+        replacestr(sRaw,sTimeZone,"");
+        sRaw = trim_copy(sRaw);
       }else{
         sTimeZone = "";
         // trace(ERROR, "Trying It is not digit number : %s\n", sRaw.c_str());
@@ -1347,9 +1362,11 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
   //bool localTime = false;
   //short int iOffOp = PLUS;
   sRaw = stripTimeZone(str, iOffSet, sTimeZone);
-  if (sFm.length()>5 && sFm[sFm.length()-2]=='%' && sFm[sFm.length()-1]=='z'){
+  size_t zpos = sFm.find("%z");
+  if (sFm.length()>5 && zpos != string::npos){
     // trace(DEBUG, "Trying timezone '%s' : '%s'\n", fmt.c_str(), sRaw.c_str());
-    sFm = trim_copy(sFm.substr(0,sFm.length()-2));
+    replacestr(sFm,"%z","");
+    sFm = trim_copy(sFm);
   }else{
     if (!sTimeZone.empty()) { // no %z in the format, there should no timezone info in the datetime string
       //trace(DEBUG2, "'%s' (format: '%s') should not contain timezone '%s' \n", str.c_str(), sFm.c_str(), sTimeZone.c_str());
@@ -1602,6 +1619,29 @@ void addtime(struct tm & tm, int diff, char unit)
   default:
     addseconds(tm, diff);
   }
+}
+
+string truncdate(const string & datesrc, const string & fmt, const int & seconds)
+{
+  struct tm tm;
+  string sResult, sFmt = fmt;
+  int iOffSet;
+  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+    trace(ERROR, "'%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
+  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+    time_t t1 = mktime(&tm) - timezone; // adjust timezone
+    time_t t2 = (time_t)(trunc((long double)t1/seconds))*seconds - timezone; // adjust timezone for gmtime
+    trace(DEBUG2, "(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d seconds: %d t2: %d timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, seconds, (long) t2, timezone);
+    //tm = *(localtime(&t2));
+    tm = *(gmtime(&t2));
+    //tm = zonetime(t2, 0); // as tm returned from strToDate is GMT time
+    sResult = dateToStr(tm, iOffSet, sFmt);
+    trace(DEBUG2, "(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", seconds, datesrc.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
+  }else{
+    trace(ERROR, "'%s' is not a correct date!\n", datesrc.c_str());
+  }
+  return sResult;
 }
 
 // get the compatible data type from two data types

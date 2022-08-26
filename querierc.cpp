@@ -128,9 +128,12 @@ void QuerierC::setregexp(string regexstr)
   }else if ((regexstr[0] == 'w' || regexstr[0] == 'W')&& regexstr[1] == '/' && regexstr[regexstr.length()-1] == '/'){
     m_searchMode = WILDSEARCH;
     vector<string> vSearchPattern = split(regexstr.substr(2,regexstr.length()-3),'/',"",'\\',{'(',')'},false,true);
-    //dumpVector(vSearchPattern);
+    if (vSearchPattern.size() == 0){
+      trace(ERROR, "(1)'%s' is an unrecognized pattern!\n", regexstr.c_str());
+      return;
+    }
     m_regexstr = vSearchPattern[0];
-    replacestr(m_regexstr,"\\t","\t");
+    replacestr(m_regexstr,{"\\t","\\/","\\v"},{"\t","/","\v"});
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
         trace(ERROR, "(1)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
@@ -152,8 +155,12 @@ void QuerierC::setregexp(string regexstr)
       spattern = regexstr.substr(2,regexstr.length()-4);
     }
     vector<string> vSearchPattern = split(spattern,'/',"",'\\',{'(',')'},false,true);
+    if (vSearchPattern.size() == 0){
+      trace(ERROR, "(1)'%s' is an unrecognized pattern!\n", regexstr.c_str());
+      return;
+    }
     m_regexstr = vSearchPattern[0];
-    replacestr(m_regexstr,"\\t","\t");
+    replacestr(m_regexstr,{"\\t","\\/","\\v"},{"\t","/","\v"});
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
         trace(ERROR, "(2)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
@@ -1410,6 +1417,10 @@ bool QuerierC::group()
   unordered_map< int,int > sideMatchedRowIDs;
   unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
   int iRow = 0;
+  m_anaFuncResult.clear();
+  m_anaEvaledExp.clear();
+  m_anaSortProps.clear();
+  m_anaSortData.clear();
   for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
     varValues.clear();
     varValues.insert( pair<string,string>("@RAW",m_aggRowValues[*it][0]));
@@ -1605,15 +1616,29 @@ bool QuerierC::processAnalyticA(const short int & iFuncID, const string & sFuncE
   return true;
 }
 
-bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const string & sFuncExpStr, vector< vector<string> > & vFuncData)
+bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const short int & iFuncID, const string & sFuncExpStr, vector< vector<string> > & vFuncData)
 {
   sortProps.insert(sortProps.end(),m_anaSortProps[sFuncExpStr].begin(),m_anaSortProps[sFuncExpStr].end());
-  auto sortVectorLambda = [sortProps] (vector<string> const& v1, vector<string> const& v2) -> bool
+  // rank/denserank sort lambda function
+  auto sortVectorLambdaB = [sortProps] (vector<string> const& v1, vector<string> const& v2) -> bool
   {
-    if (v1.size()!=sortProps.size() || v2.size()!=sortProps.size() || v2.size()!=v1.size())
+    if (v1.size()!=sortProps.size()+1 || v2.size()!=sortProps.size()+1 || v2.size()!=v1.size())
       return false;
     for (int i=0;i<sortProps.size();i++){
       int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype);
+      if (iCompareRslt == 0) // Compare next key only when current keys equal
+        continue;
+      return (sortProps[i].direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
+    }
+    return false; // return false if all elements equal
+  };
+  // nearby sort lambda function
+  auto sortVectorLambdaC = [sortProps] (vector<string> const& v1, vector<string> const& v2) -> bool
+  {
+    if (v1.size()<2 || v2.size()<2 || v1.size()!=sortProps.size()+4 || v2.size()!=sortProps.size()+4 || v2.size()!=v1.size())
+      return false;
+    for (int i=0;i<sortProps.size();i++){
+      int iCompareRslt = anyDataCompare(v1[i+1],v2[i+1],sortProps[i].sortKey.m_datatype);
       if (iCompareRslt == 0) // Compare next key only when current keys equal
         continue;
       return (sortProps[i].direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
@@ -1634,7 +1659,10 @@ bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const string & sFuncExp
     printf("\n");
   }
 #endif
-  std::sort(vFuncData.begin(), vFuncData.end(), sortVectorLambda);
+  if (iFuncID == RANK || iFuncID == DENSERANK)
+    std::sort(vFuncData.begin(), vFuncData.end(), sortVectorLambdaB);
+  if (iFuncID == NEARBY)
+    std::sort(vFuncData.begin(), vFuncData.end(), sortVectorLambdaC);
 #ifdef DEBUG_ANALYTIC
   printf("Sorted analytic function data [%d][%d]\n",vFuncData.size(), vFuncData[0].size());
   for (int i=0;i<vFuncData.size();i++){
@@ -1693,7 +1721,7 @@ bool QuerierC::processAnalyticB(const short int & iFuncID, const string & sFuncE
     }
   }
   
-  if (!sortAnaData(sortProps, sFuncExpStr, vFuncData))
+  if (!sortAnaData(sortProps, iFuncID, sFuncExpStr, vFuncData))
     return false;
 
   // variables for RANK/DENSERANK
@@ -1748,7 +1776,7 @@ bool QuerierC::processAnalyticC(const short int & iFuncID, const string & sFuncE
     return false;
   }
   vector<SortProp> sortProps;
-  if (!sortAnaData(sortProps, sFuncExpStr, vFuncData))
+  if (!sortAnaData(sortProps, iFuncID, sFuncExpStr, vFuncData))
     return false;
 
   // variables for NEARBY
@@ -1837,7 +1865,7 @@ bool QuerierC::analytic()
     return false;
   }
   if (m_results.size() != m_anaFuncResult.size() || m_results.size() != m_anaEvaledExp.size() || m_anaFuncResult.size() != m_anaEvaledExp.size()){
-    trace(ERROR, "Result data size %d, analytic, function result size %d, analytic function expression size %d do not match!\n", m_results.size(), m_anaFuncResult.size(), m_anaEvaledExp.size());
+    trace(ERROR, "Result data size %d, analytic function result size %d, analytic function expression size %d do not match!\n", m_results.size(), m_anaFuncResult.size(), m_anaEvaledExp.size());
     return false;
   }
 
@@ -2095,7 +2123,7 @@ bool QuerierC::sort()
   vector<SortProp> sortProps = m_sorts;
   auto sortVectorLambda = [sortProps] (vector<string> const& v1, vector<string> const& v2) -> bool
   {
-    if (v1.size()!=sortProps.size() || v2.size()!=sortProps.size() || v2.size()!=v1.size())
+    if (v1.size()!=sortProps.size()+1 || v2.size()!=sortProps.size()+1 || v2.size()!=v1.size())
       return false;
     for (int i=0;i<sortProps.size();i++){
       int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype);

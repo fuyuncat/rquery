@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.953"
+#define VERSION "v0.96"
 
 #define UNKNOWN 0
 
@@ -176,6 +176,10 @@ using namespace std;
 #define REGSEARCH 1
 #define WILDSEARCH 2
 #define DELMSEARCH 3
+
+#define STANDARD 1
+#define OVERWRITE 2
+#define APPEND 3
 
 template< class T > void SafeDelete( T*& pVal )
 {

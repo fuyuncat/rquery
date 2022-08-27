@@ -85,6 +85,8 @@ void QuerierC::init()
   m_line = 0;
   m_fileline = 0;
   m_outputformat = TEXT;
+  m_outputmode = STANDARD;
+  m_outputfileexp = NULL;
   m_matchcount = 0; 
   m_outputrow = 0;
   m_limitbottom = 1;
@@ -592,6 +594,14 @@ void QuerierC::setOutputFormat(short int format)
   m_outputformat = format;
 }
 
+void setOutputFiles(string outputfilestr, short int outputmode)
+{
+  if (m_outputfileexp)
+    SafeDelete(m_outputfileexp);
+  m_outputfileexp = new ExpressionC(outputfilestr);
+  m_outputmode = outputmode;
+}
+
 bool QuerierC::toGroupOrSort()
 {
   return (m_groups.size()>0 || m_sorts.size()>0 || m_initAnaArray.size()>0 || m_aggrOnly || m_bUniqueResult);
@@ -773,41 +783,62 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
   }
 }
 
+void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow)
+{
+  if (m_outputfileexp){
+    DataTypeStruct dts;
+    string sResult;
+    m_outputfileexp->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+    unordered_map< string, ofstream >::iterator it = m_outputfiles.find(sResult);
+    if (it == m_outputfiles.end()){
+      ofstream ofs;
+      ofs.open(sResult, std::ofstream::out | m_outputmode==OVERWRITE? ofstream::trunc : ofstream::app);
+      m_outputfiles.insert(pair< string, ofstream >(sResult, ofs));
+      m_resultfiles.push_back(&ofs);
+    }else
+      m_resultfiles.push_back(&it->second);
+  }
+}
+
 // add a data row to a result set
 bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow, vector< vector<string> > & resultSet)
 {
-    vector<string> vResults;
-    ExpressionC tmpExp;
-    DataTypeStruct dts;
-    string sResult;
-    //vResults.push_back(rowValue[0]);
-    vResults.push_back(""); // save memory
-    for (int i=0; i<expressions.size(); i++){
-      dts = DataTypeStruct();
-      tmpExp = ExpressionC();
-      if (!expressions[i].containGroupFunc()){
-        tmpExp = expressions[i];
-        //expressions[i].copyTo(&tmpExp);
-        //trace(DEBUG, "addResultToSet: Before eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
-        //tmpExp.dump();
-        //expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
-        if (expressions[i].containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
-          tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
-          anaEvaledExp->push_back(tmpExp);
-          trace(DEBUG, "addResultToSet: adding analytic function involved expression '%s':\n",expressions[i].getEntireExpstr().c_str());
-        }else
-          tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
-        //trace(DEBUG, "addResultToSet: After eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
-        //tmpExp.dump();
-        //trace(DEBUG, "eval '%s' => '%s'\n", expressions[i].getEntireExpstr().c_str(), sResult.c_str());
-      }else{
-        trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", expressions[i].getEntireExpstr().c_str());
-        return false;
-      }
-      vResults.push_back(sResult);
+  vector<string> vResults;
+  ExpressionC tmpExp;
+  DataTypeStruct dts;
+  string sResult;
+  //vResults.push_back(rowValue[0]);
+  vResults.push_back(""); // save memory
+  for (int i=0; i<expressions.size(); i++){
+    dts = DataTypeStruct();
+    tmpExp = ExpressionC();
+    if (!expressions[i].containGroupFunc()){
+      tmpExp = expressions[i];
+      //expressions[i].copyTo(&tmpExp);
+      //trace(DEBUG, "addResultToSet: Before eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
+      //tmpExp.dump();
+      //expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+      if (expressions[i].containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
+        tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
+        anaEvaledExp->push_back(tmpExp);
+        trace(DEBUG, "addResultToSet: adding analytic function involved expression '%s':\n",expressions[i].getEntireExpstr().c_str());
+      }else
+        tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+      //trace(DEBUG, "addResultToSet: After eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
+      //tmpExp.dump();
+      //trace(DEBUG, "eval '%s' => '%s'\n", expressions[i].getEntireExpstr().c_str(), sResult.c_str());
+    }else{
+      trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", expressions[i].getEntireExpstr().c_str());
+      return false;
     }
-    resultSet.push_back(vResults);
-    return true;
+    vResults.push_back(sResult);
+  }
+  resultSet.push_back(vResults);
+  // add output file mapping with result.
+  if (m_outputmode != STANDARD && &m_results == &resultSet && m_outputfileexp){
+    addResultOutputFileMap(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes);
+  }
+  return true;
 }
 
 // add evaled analytic function processing data to m_anaSortProps&m_anaSortData&m_anaFuncResult
@@ -1076,6 +1107,7 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
       }
     }else{
       m_results.push_back(rowValue);
+      addResultOutputFileMap(fieldvalues, varvalues, &aggGroupProp, &anaFuncData, matchedSideDatarow, &m_sideDatatypes);
       vector<ExpressionC> vKeys;
       for (int i=0;i<m_sorts.size();i++)
         vKeys.push_back(m_sorts[i].sortKey);
@@ -1141,6 +1173,8 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
   }
   for (int i=0; i<m_sideFilters.size(); i++)
     m_sideFilters[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+  if (m_outputfileexp)
+    m_outputfileexp->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
 }
 
 int QuerierC::searchNextReg()
@@ -1458,6 +1492,7 @@ bool QuerierC::group()
       vResults.push_back(sResult);
     }
     m_results.push_back(vResults);
+    addResultOutputFileMap(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow, &m_sideDatatypes);
 
     vResults.clear();
     for (int i=0; i<m_sorts.size(); i++){
@@ -1893,6 +1928,7 @@ bool QuerierC::analytic()
   vector< vector<string> > tmpSortKeys = m_sortKeys;
   m_results.clear();
   m_sortKeys.clear();
+  m_resultfiles.clear();
   for (int i=0; i<tmpResults.size();i++){
     varValues.insert( pair<string,string>("@RAW",tmpResults[i][0]));
     varValues.insert( pair<string,string>("@LINE",intToStr(iRow)));
@@ -1930,6 +1966,7 @@ bool QuerierC::analytic()
       }
     m_results.push_back(tmpResults[i]); 
     m_sortKeys.push_back(tmpSortKeys[i]);
+    addResultOutputFileMap(&vfieldvalues, &varValues, &dummyAggGroupProp, &anaFinalResult, &matchedSideDatarow, &m_sideDatatypes);
   }
   clearAnalytic();
 #ifdef __DEBUG__
@@ -2157,7 +2194,19 @@ bool QuerierC::sort()
 //  printf("\n");
 //}
 
-void QuerierC::formatoutput(vector<string> datas)
+void QuerierC::outputstream(string buffer, int resultid)
+{
+  if (m_outputmode == STANDARD)
+    printf(buffer.c_str());
+  else{
+    if (resultid<m_resultfiles.size() && m_resultfiles[resultid])
+      m_resultfiles[resultid]->write(buffer.c_str(), buffer.size());
+    else
+      trace(ERROR, "Failed to find output file!\n");
+  }
+}
+
+void QuerierC::formatoutput(vector<string> datas, int resultid)
 {
   if (m_outputformat == JSON){
     if (m_outputrow==m_limitbottom-1){
@@ -2205,6 +2254,9 @@ void QuerierC::formatoutput(vector<string> datas)
 
 void QuerierC::printFieldNames()
 {
+  // output field names only in STANDARD(screen) output mode
+  if (m_outputmode != STANDARD)
+    return;
   //for (int i=1; i<m_fieldnames.size(); i++)
   //  printf("%s\t",m_fieldnames[i].c_str());
   if (m_bNamePrinted)
@@ -2227,7 +2279,7 @@ void QuerierC::output()
 {
   //printf("Result Num: %d\n",m_results.size());
   for (int i=0; i<m_results.size(); i++)
-    formatoutput(m_results[i]);
+    formatoutput(m_results[i], i);
 }
 
 int QuerierC::boostmatch(vector<string> *result)
@@ -2299,6 +2351,7 @@ void QuerierC::outputAndClean()
 {
   output();
   m_results.clear();
+  m_resultfiles.clear();
 #ifdef __DEBUG__
   m_totaltime = curtime() - m_querystartat;
   trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, filtering time: %d\n, sorting time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_filtertime, m_sorttime, m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_line);
@@ -2388,6 +2441,14 @@ void QuerierC::clear()
   m_sideFilters.clear();
   m_sideDatasets.clear();
   m_sideDatatypes.clear();
+  for (int i=0; i<m_outputfiles.size(); i++){
+    if (m_outputfiles[i].is_open())
+      m_outputfiles[i].close();
+  }
+  m_outputfiles.clear();
+  if (m_outputfileexp)
+    SafeDelete(m_outputfileexp);
+  m_resultfiles.clear();
   m_searchMode = REGSEARCH;
   m_readmode = READBUFF;
   m_quoters = "";

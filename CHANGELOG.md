@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.96] 2022-08-27
+   New feature: '>' '>>' indicate output files. <br/>
    # [0.953] 2022-08-26
    Fixed bug: User defined date format cannot be recognized if special character quoted timezone. <br/>
    Enhancement: '\t' will be treated as TAB, '\/' will be treated as '/' in wildcard/delimiter parsing pattern. <br/>

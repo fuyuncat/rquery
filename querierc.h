@@ -90,6 +90,7 @@ class QuerierC
     void setNameline(bool nameline);
     void setUserVars(string variables);
     void setUniqueResult(bool bUnique);
+    void setOutputFiles(string outputfilestr, short int outputmode=OVERWRITE);
     void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
     void setOutputFormat(short int format=TEXT);
     int searchNext();
@@ -125,6 +126,12 @@ class QuerierC
     bool m_bEof;
     bool m_delmrepeatable;
     
+    short int m_outputformat; // TEXT or JSON
+    short int m_outputmode; // file write mode: OVERWRITE or APPEND
+    ExpressionC* m_outputfileexp; // expression of output files
+    unordered_map< string, ofstream > m_outputfiles; // output files. mapping: filename:outstream
+    vector< *ofstream > m_resultfiles; // output file of each result row
+    
     string m_filename;  // Data source file name
     long m_fileid;        // File sequence number, starting from 1
     bool m_bNamePrinted;// a flag for checking if field names are printed.
@@ -132,7 +139,6 @@ class QuerierC
     long m_fileline;    // data line number matched searching pattern in the current file
     long m_matchcount;  // number of matched rows. Can be used to match @row
     long m_outputrow;   // number of outputed rows. m_matchcount doent not always equal to m_outputrow. When sorting is required, outputed rows could be a part of sorted matched rows. Can be used to match @rowsorted.
-    short int m_outputformat; // TEXT or JSON
     bool m_nameline; // The first matched line be used for field name.
     bool m_bUniqueResult; // flag for the returned result is unique or not
     int m_detectTypeMaxRowNum; // How many rows to be used to detect the data types
@@ -191,6 +197,7 @@ class QuerierC
     bool analyzeSortStr();
     bool checkSelGroupConflict(const ExpressionC & eSel);
     bool checkSortGroupConflict(const ExpressionC & eSort);
+    void addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);
     void doSideWorks(vector<string> * pfieldValues, map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData); // do side queries
     void getSideDatarow(unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);
     bool matchFilter(const vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
@@ -234,7 +241,8 @@ class QuerierC
   protected:
     void init();
     //void formatoutput(namesaving_smatch matches);
-    void formatoutput(vector<string> datas);
+    void outputstream(string buffer, int resultid);
+    void formatoutput(vector<string> datas, int resultid);
     void pairFiledNames(namesaving_smatch matches);
     void analyzeFiledTypes(vector<string> matches);
     void trialAnalyze(vector<string> matcheddata);

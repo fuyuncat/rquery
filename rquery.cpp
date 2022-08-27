@@ -65,6 +65,7 @@ void usage()
   printf("\t\tsort|o <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
   printf("\t\tlimt|l <n | bottomN,topN> -- Provide output limit range.\n");
   printf("\t\tunique|u -- Make the returned result unique.\n");
+  printf("\t\t>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file.\n");
   printf("\t-r|--readmode <buffer|line> -- Provide file read mode, default is buffer.\n");
   printf("\t-s|--skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n");
   printf("\t-b|--buffsize <N> -- The read buffer size when read mode is buffer.\n");
@@ -386,6 +387,11 @@ void processQuery(string sQuery, QuerierC & rq)
     //trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
     rq.assignLimitStr(query["l"]);
   }
+  if (query.find(">") != query.end()){
+    rq.assignSortStr(query[">"], OVERWRITE);
+  }else if (query.find(">>") != query.end()){
+    rq.assignSortStr(query[">>"], APPEND);
+  }
 }
 
 void processPrompt(QuerierC & rq, size_t & total)
@@ -672,6 +678,7 @@ int main(int argc, char *argv[])
         cout << "sort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n";
         cout << "limt <n | bottomN,topN> -- Provide output limit range.\n";
         cout << "unique -- Make the returned resutl unique.\n";
+        cout << "output|append -- Set output files, if not set, output to standard terminal (screen). 'output' will overwrite existing files, 'append' will append to existing file.\n";
         cout << "clear -- Clear all query inputs.\n";
         cout << "filemode <buffer|line> -- Provide file read mode, default is buffer.\n";
         cout << "skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n";
@@ -811,6 +818,16 @@ int main(int argc, char *argv[])
       }else if (lower_copy(trim_copy(lineInput)).compare("unique")==0){
         rq.setUniqueResult(true);
         cout << "Set returned result unique.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).compare("output")==0){
+        string strParam = trim_copy(lineInput).substr(string("output ").length());
+        rq.setOutputFiles(strParam, OVERWRITE);
+        cout << "Set output files.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).compare("append")==0){
+        string strParam = trim_copy(lineInput).substr(string("append ").length());
+        rq.setOutputFiles(strParam, APPEND);
+        cout << "Set append files.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).compare("clear")==0){
         rq.clear();

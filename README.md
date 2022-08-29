@@ -63,6 +63,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
    - --detecttyperows | -d <N> : How many matched rows will be used for detecting data types, default is 1.<br />
    - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
    - --nameline | -n Yes/no : Specify the first line should be used for filed names (useful for csv files). Default is no.<br />
+   - --recursive | -c <yes|no> -- Wheather recursively read subfolder of a folder (default NO).<br />
    - --query | -q <qeury string> : The query string to be used to parse and query the text content.<br />
 - Syntax of query string:
    - parse /regular string/|set field datatype [date format],...|filter <ilter conditions|select field or expression,...|group field or expression,...|sort field or expression [asc|desc],...|limt n | bottomN,topN<br />

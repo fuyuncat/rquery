@@ -59,15 +59,24 @@ map<string,string> ParserC::parseparam(string parameterstr)
   //dumpVector(params);
   for (int i = 0; i < params.size(); ++i){
     string trimmedstr = trim_copy(params[i]);
-    //trace(DEBUG, "Param %d:%s;\n",i,trimmedstr.c_str());
-    size_t found = trimmedstr.find_first_of(" ");
-    found = found==string::npos?trimmedstr.find_first_of("\t"):found;
-    //trace(DEBUG, "Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);
-    if  (found!=string::npos){
-      //trace(DEBUG, "Operation %s: %s\n", lower_copy(trim_copy(params[i].substr(0,found))).c_str(), trim_copy(params[i].substr(found+1)).c_str());
-      m_queryparts.insert( pair<string,string>(lower_copy(trimmedstr.substr(0,found)),trimmedstr.substr(found+1)) );
-    }else
-      m_queryparts.insert( pair<string,string>(lower_copy(trimmedstr),""));
+    if (trimmedstr.empty())
+      continue;
+    else if (trimmedstr[0]=='>'){
+      if (trimmedstr.length()>1 && trimmedstr[1]=='>')
+        m_queryparts.insert( pair<string,string>(">>",trim_copy(trimmedstr.substr(2))));
+      else
+        m_queryparts.insert( pair<string,string>(">",trim_copy(trimmedstr.substr(1))));
+    }else{
+      //trace(DEBUG, "Param %d:%s;\n",i,trimmedstr.c_str());
+      size_t found = trimmedstr.find_first_of(" ");
+      found = found==string::npos?trimmedstr.find_first_of("\t"):found;
+      //trace(DEBUG, "Parameter %d: %s. Space at %d\n", i+1, params[i].c_str(),found);
+      if  (found!=string::npos){
+        //trace(DEBUG, "Operation %s: %s\n", lower_copy(trim_copy(params[i].substr(0,found))).c_str(), trim_copy(params[i].substr(found+1)).c_str());
+        m_queryparts.insert( pair<string,string>(lower_copy(trimmedstr.substr(0,found)),trimmedstr.substr(found+1)) );
+      }else
+        m_queryparts.insert( pair<string,string>(lower_copy(trimmedstr),""));
+    }
   }
 
   return m_queryparts;

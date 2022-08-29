@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.96] 2022-08-28
+   Enhancement: The flag options (fieldheader/progress/nameline/recursive) dont requir a following value any more, it will turn on the option by default. <br/>
    # [0.96] 2022-08-27
    New feature: '>' '>>' indicate output files. <br/>
    # [0.953] 2022-08-26

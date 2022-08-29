@@ -1318,7 +1318,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
       trace(DEBUG,"Skip to eval analytic function. Left: '%s'; Right: '%s'\n", m_leftNode->getEntireExpstr().c_str(),m_rightNode->getEntireExpstr().c_str());
       return true;
     }else if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
-      trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
+      trace(DEBUG,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
       dts = m_datatype;
       if (!getresultonly){
         //clear();

@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "expression.h"
 #include "function.h"
 #include "querierc.h"
@@ -106,6 +107,9 @@ void QuerierC::init()
   m_querystartat = curtime();
   m_totaltime = 0;
   m_searchtime = 0;
+  m_rawreadtime = 0;
+  m_rawsplittime = 0;
+  m_rawanalyzetime = 0;
   m_filtertime = 0;
   m_sorttime = 0;
   m_uniquetime = 0;
@@ -118,6 +122,7 @@ void QuerierC::init()
   m_evalSeltime = 0;
   m_evalSorttime = 0;
   m_updateResulttime = 0;
+  m_outputtime = 0;
 #endif // __DEBUG__
 }
 
@@ -594,7 +599,7 @@ void QuerierC::setOutputFormat(short int format)
   m_outputformat = format;
 }
 
-void setOutputFiles(string outputfilestr, short int outputmode)
+void QuerierC::setOutputFiles(string outputfilestr, short int outputmode)
 {
   if (m_outputfileexp)
     SafeDelete(m_outputfileexp);
@@ -783,20 +788,20 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
   }
 }
 
-void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow)
+void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow)
 {
   if (m_outputfileexp){
     DataTypeStruct dts;
     string sResult;
-    m_outputfileexp->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
-    unordered_map< string, ofstream >::iterator it = m_outputfiles.find(sResult);
+    m_outputfileexp->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+    unordered_map< string, ofstream* >::iterator it = m_outputfiles.find(sResult);
     if (it == m_outputfiles.end()){
-      ofstream ofs;
-      ofs.open(sResult, std::ofstream::out | m_outputmode==OVERWRITE? ofstream::trunc : ofstream::app);
-      m_outputfiles.insert(pair< string, ofstream >(sResult, ofs));
-      m_resultfiles.push_back(&ofs);
+      ofstream* ofs=new ofstream();
+      ofs->open(sResult, std::ofstream::out | m_outputmode==OVERWRITE? ofstream::trunc : ofstream::app);
+      m_outputfiles.insert(pair< string, ofstream* >(sResult, ofs));
+      m_resultfiles.push_back(ofs);
     }else
-      m_resultfiles.push_back(&it->second);
+      m_resultfiles.push_back(it->second);
   }
 }
 
@@ -836,7 +841,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
   resultSet.push_back(vResults);
   // add output file mapping with result.
   if (m_outputmode != STANDARD && &m_results == &resultSet && m_outputfileexp){
-    addResultOutputFileMap(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow, &m_sideDatatypes);
+    addResultOutputFileMap(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow);
   }
   return true;
 }
@@ -1107,7 +1112,7 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
       }
     }else{
       m_results.push_back(rowValue);
-      addResultOutputFileMap(fieldvalues, varvalues, &aggGroupProp, &anaFuncData, matchedSideDatarow, &m_sideDatatypes);
+      addResultOutputFileMap(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow);
       vector<ExpressionC> vKeys;
       for (int i=0;i<m_sorts.size();i++)
         vKeys.push_back(m_sorts[i].sortKey);
@@ -1139,7 +1144,7 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
 {
   trace(DEBUG, "Detecting data types from the matched line '%s'\n", matcheddata[0].c_str());
   analyzeFiledTypes(matcheddata);
-  trace(DEBUG2,"Detected field type %d/%d\n", m_fieldtypes.size(), matcheddata.size());
+  trace(DEBUG,"Detected field type %d/%d\n", m_fieldtypes.size(), matcheddata.size());
   if (m_bToAnalyzeSelectMacro || m_selections.size()==0){
     analyzeSelString();
     analyzeSortStr();
@@ -1324,6 +1329,7 @@ int QuerierC::searchNextWild()
 int QuerierC::searchNextDelm()
 {
 #ifdef __DEBUG__
+  long int searchstarttime = curtime();
   long int thistime = curtime();
 #endif // __DEBUG__
   trace(DEBUG, "Delm searching '%s'\n", m_regexstr.c_str());
@@ -1341,12 +1347,20 @@ int QuerierC::searchNextDelm()
       sLine = m_rawstr;
       m_rawstr = "";
     }
+#ifdef __DEBUG__
+  m_rawreadtime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     vector<string>  matcheddata;
     if (m_regexstr.empty()){
       if (!(sLine.empty()&&bEnded))
         matcheddata.push_back(sLine);
     }else
       matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
+#ifdef __DEBUG__
+  m_rawsplittime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     trace(DEBUG, "searchNextDelm Read '%s'(flag:%d; len:%d) vector size: %d \n", sLine.c_str(), sLine.empty()&&bEnded, sLine.length(), matcheddata.size());
     trace(DEBUG, "searchNextDelm pos/size %d/%d\n", pos, m_rawstr.length());
     pos = 0;
@@ -1380,6 +1394,10 @@ int QuerierC::searchNextDelm()
           m_fieldnames.push_back("@FIELD"+intToStr(i));
       trialAnalyze(matcheddata);
     }
+#ifdef __DEBUG__
+  m_rawanalyzetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     // append variables
     matcheddata.push_back(intToStr(m_line));
     matcheddata.push_back(intToStr(m_matchcount+1));
@@ -1390,7 +1408,7 @@ int QuerierC::searchNextDelm()
   }
   //trace(DEBUG, "(3)Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
-  m_searchtime += (curtime()-thistime);
+  m_searchtime += (curtime()-searchstarttime);
 #endif // __DEBUG__
   return found;
 }
@@ -1492,7 +1510,7 @@ bool QuerierC::group()
       vResults.push_back(sResult);
     }
     m_results.push_back(vResults);
-    addResultOutputFileMap(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow, &m_sideDatatypes);
+    addResultOutputFileMap(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow);
 
     vResults.clear();
     for (int i=0; i<m_sorts.size(); i++){
@@ -1966,7 +1984,7 @@ bool QuerierC::analytic()
       }
     m_results.push_back(tmpResults[i]); 
     m_sortKeys.push_back(tmpSortKeys[i]);
-    addResultOutputFileMap(&vfieldvalues, &varValues, &dummyAggGroupProp, &anaFinalResult, &matchedSideDatarow, &m_sideDatatypes);
+    addResultOutputFileMap(&vfieldvalues, &varValues, &dummyAggGroupProp, &anaFinalResult, &matchedSideDatarow);
   }
   clearAnalytic();
 #ifdef __DEBUG__
@@ -2194,26 +2212,32 @@ bool QuerierC::sort()
 //  printf("\n");
 //}
 
-void QuerierC::outputstream(string buffer, int resultid)
+void QuerierC::outputstream(int resultid, const char *fmt, ...)
 {
+  va_list args;
+  va_start(args, fmt);
   if (m_outputmode == STANDARD)
-    printf(buffer.c_str());
+    vprintf(fmt, args);
   else{
-    if (resultid<m_resultfiles.size() && m_resultfiles[resultid])
-      m_resultfiles[resultid]->write(buffer.c_str(), buffer.size());
-    else
+    if (resultid<m_resultfiles.size() && m_resultfiles[resultid]){
+      char buf[8192];
+      int bsize = 0;
+      bsize = vsprintf(buf, fmt, args);
+      m_resultfiles[resultid]->write(buf, bsize);
+    }else
       trace(ERROR, "Failed to find output file!\n");
   }
+  va_end(args);
 }
 
 void QuerierC::formatoutput(vector<string> datas, int resultid)
 {
   if (m_outputformat == JSON){
     if (m_outputrow==m_limitbottom-1){
-      printf("{\n");
-      printf("\t\"records\": [\n");
+      outputstream(resultid, "{\n");
+      outputstream(resultid, "\t\"records\": [\n");
     }else if (m_outputrow>m_limitbottom-1){
-      printf(",\n");
+      outputstream(resultid, ",\n");
     }
   }
   if (m_outputrow<m_limitbottom-1 ){
@@ -2223,31 +2247,31 @@ void QuerierC::formatoutput(vector<string> datas, int resultid)
     return;
   else
     m_outputrow++;
-  //printf("%d: ", m_outputrow);
+  //outputstream(resultid, "%d: ", m_outputrow);
   if (m_outputformat == JSON){
-    printf("\t\t{\n");
+    outputstream(resultid, "\t\t{\n");
     if (m_selections.size()==0){
-      printf("\t\t\t\"%s\": \"%s\"\n","RAW",datas[0].c_str());
+      outputstream(resultid, "\t\t\t\"%s\": \"%s\"\n","RAW",datas[0].c_str());
     }else{
       for (int i=1; i<datas.size(); i++){
         if (m_selections[i-1].m_datatype.datatype == INTEGER || m_selections[i-1].m_datatype.datatype == LONG || m_selections[i-1].m_datatype.datatype == DOUBLE || m_selections[i-1].m_datatype.datatype == BOOLEAN)
-          printf("\t\t\t\"%s\": %s",m_selnames[i-1].c_str(),datas[i].c_str());
+          outputstream(resultid, "\t\t\t\"%s\": %s",m_selnames[i-1].c_str(),datas[i].c_str());
         else
-          printf("\t\t\t\"%s\": \"%s\"",m_selnames[i-1].c_str(),datas[i].c_str());
+          outputstream(resultid, "\t\t\t\"%s\": \"%s\"",m_selnames[i-1].c_str(),datas[i].c_str());
         if (i == datas.size()-1)
-          printf("\n");
+          outputstream(resultid, "\n");
         else
-          printf(",\n");
+          outputstream(resultid, ",\n");
       }
     }
-    printf("\t\t}");
+    outputstream(resultid, "\t\t}");
   }else{
     if (m_selections.size()==0)
-      printf("%s\n", datas[0].c_str());
+      outputstream(resultid, "%s\n", datas[0].c_str());
     else{
       for (int i=1; i<datas.size(); i++)
-        printf("%s\t", datas[i].c_str());
-      printf("\n");
+        outputstream(resultid, "%s\t", datas[i].c_str());
+      outputstream(resultid, "\n");
     }
   }
 }
@@ -2277,9 +2301,15 @@ void QuerierC::printFieldNames()
 
 void QuerierC::output()
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   //printf("Result Num: %d\n",m_results.size());
   for (int i=0; i<m_results.size(); i++)
     formatoutput(m_results[i], i);
+#ifdef __DEBUG__
+  m_outputtime += (curtime()-thistime);
+#endif // __DEBUG__
 }
 
 int QuerierC::boostmatch(vector<string> *result)
@@ -2352,10 +2382,6 @@ void QuerierC::outputAndClean()
   output();
   m_results.clear();
   m_resultfiles.clear();
-#ifdef __DEBUG__
-  m_totaltime = curtime() - m_querystartat;
-  trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, filtering time: %d\n, sorting time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_filtertime, m_sorttime, m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_line);
-#endif // __DEBUG__
 }
 
 void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
@@ -2379,6 +2405,10 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
     printf("Pattern matched %ld line(s).\n", m_line);
     printf("Selected %ld row(s).\n", m_outputrow-m_limitbottom+1);
   }
+#ifdef __DEBUG__
+  m_totaltime = curtime() - m_querystartat;
+  trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, filtering time: %d\n, sorting time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_rawanalyzetime, m_filtertime, m_sorttime, m_uniquetime, m_grouptime, m_detectedTypeRows, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
+#endif // __DEBUG__
 }
 
 void QuerierC::clearGroup()
@@ -2441,9 +2471,11 @@ void QuerierC::clear()
   m_sideFilters.clear();
   m_sideDatasets.clear();
   m_sideDatatypes.clear();
-  for (int i=0; i<m_outputfiles.size(); i++){
-    if (m_outputfiles[i].is_open())
-      m_outputfiles[i].close();
+  for (unordered_map< string, ofstream* >::iterator it=m_outputfiles.begin();it!=m_outputfiles.end();it++){
+    if (it->second && it->second->is_open()){
+      it->second->close();
+      SafeDelete(it->second);
+    }
   }
   m_outputfiles.clear();
   if (m_outputfileexp)

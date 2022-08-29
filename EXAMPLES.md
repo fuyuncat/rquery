@@ -1230,4 +1230,17 @@
    96      %d)\n", bbb2[bbb2.size()-1].mya->m_id,  myb.mya->m_id);
    99      id:     %d\n",  bbb2[i].mya->m_id);
    ```
-
+- Split the search result into different files named after a field content. <br/>
+   ```
+   rq -p on -q "s @raw|>'/tmp/'+@1+'.log'" logs/g_access_log.loh
+   ```
+   Returns result:<br/>
+   ```
+   'logs/g_access_log.loh': 1165657 bytes(100.00%) read in 0.270000 seconds.
+   [rquery]$ wc -l /tmp/10.65.12.181.log
+   2105 /tmp/10.65.12.181.log
+   [rquery]$ wc -l /tmp/10.65.22.232.log
+   2679 /tmp/10.65.22.232.log
+   [rquery]$ wc -l logs/g_access_log.loh
+   4784 logs/g_access_log.loh
+   ```

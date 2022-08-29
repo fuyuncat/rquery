@@ -129,8 +129,8 @@ class QuerierC
     short int m_outputformat; // TEXT or JSON
     short int m_outputmode; // file write mode: OVERWRITE or APPEND
     ExpressionC* m_outputfileexp; // expression of output files
-    unordered_map< string, ofstream > m_outputfiles; // output files. mapping: filename:outstream
-    vector< *ofstream > m_resultfiles; // output file of each result row
+    unordered_map< string, ofstream* > m_outputfiles; // output files. mapping: filename:outstream
+    vector< ofstream* > m_resultfiles; // output file of each result row
     
     string m_filename;  // Data source file name
     long m_fileid;        // File sequence number, starting from 1
@@ -197,7 +197,7 @@ class QuerierC
     bool analyzeSortStr();
     bool checkSelGroupConflict(const ExpressionC & eSel);
     bool checkSortGroupConflict(const ExpressionC & eSort);
-    void addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);
+    void addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow);
     void doSideWorks(vector<string> * pfieldValues, map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData); // do side queries
     void getSideDatarow(unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);
     bool matchFilter(const vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
@@ -224,6 +224,9 @@ class QuerierC
     long int m_querystartat;
     long int m_totaltime;
     long int m_searchtime;
+    long int m_rawreadtime;
+    long int m_rawsplittime;
+    long int m_rawanalyzetime;
     long int m_filtertime;
     long int m_sorttime;
     long int m_uniquetime;
@@ -236,12 +239,13 @@ class QuerierC
     long int m_evalSeltime;
     long int m_evalSorttime;
     long int m_updateResulttime;
+    long int m_outputtime;
 #endif // __DEBUG__
 
   protected:
     void init();
     //void formatoutput(namesaving_smatch matches);
-    void outputstream(string buffer, int resultid);
+    void outputstream(int resultid, const char *fmt, ...);
     void formatoutput(vector<string> datas, int resultid);
     void pairFiledNames(namesaving_smatch matches);
     void analyzeFiledTypes(vector<string> matches);

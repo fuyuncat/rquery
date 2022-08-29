@@ -319,7 +319,8 @@ void processQuery(string sQuery, QuerierC & rq)
 
   //string patternStr = "/[^\n]*/"; // if no PARSE passed, search each lines
   //string patternStr = "w/*/"; // if no PARSE passed, search each lines
-  string patternStr = ""; // an empty pattern mean each line matches.
+  // string patternStr = ""; // an empty pattern mean each line matches.
+  string patternStr = "d/ /\"\"/r"; // a repeatable space as delimiter.
   if (query.find("parse") != query.end())
     patternStr = query["parse"];
   else if (query.find("p") != query.end())
@@ -388,9 +389,9 @@ void processQuery(string sQuery, QuerierC & rq)
     rq.assignLimitStr(query["l"]);
   }
   if (query.find(">") != query.end()){
-    rq.assignSortStr(query[">"], OVERWRITE);
+    rq.setOutputFiles(query[">"], OVERWRITE);
   }else if (query.find(">>") != query.end()){
-    rq.assignSortStr(query[">>"], APPEND);
+    rq.setOutputFiles(query[">>"], APPEND);
   }
 }
 
@@ -526,7 +527,7 @@ int main(int argc, char *argv[])
     }else if (lower_copy(string(argv[i])).compare("--console")==0){
       gv.g_consolemode = true;
     }else if (lower_copy(string(argv[i])).compare("-l")==0 || lower_copy(string(argv[i])).compare("--logfile")==0){
-      if (argv[i+1][0] == '-'){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
@@ -543,49 +544,55 @@ int main(int argc, char *argv[])
       }
       i++;
     }else if (lower_copy(string(argv[i])).compare("-f")==0 || lower_copy(string(argv[i])).compare("--fieldheader")==0){
-      if (argv[i+1][0] == '-'){
-        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
-        exitProgram(1);
+      if (i>=argc-1 || argv[i+1][0] == '-'){
+        //trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        //exitProgram(1);
+        gv.g_printheader = true;
+      }else{
+        gv.g_printheader = (lower_copy(string(argv[i+1])).compare("off")!=0);
+        i++;
       }
-      gv.g_printheader = (lower_copy(string(argv[i+1])).compare("off")!=0);
-      i++;
     }else if (lower_copy(string(argv[i])).compare("-p")==0 || lower_copy(string(argv[i])).compare("--progress")==0){
-      if (argv[i+1][0] == '-'){
-        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
-        exitProgram(1);
+      if (i>=argc-1 || argv[i+1][0] == '-'){
+        //trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        //exitProgram(1);
+        gv.g_showprogress = true;
+      }else{
+        gv.g_showprogress = (lower_copy(string(argv[i+1])).compare("on")==0);
+        i++;
       }
-      gv.g_showprogress = (lower_copy(string(argv[i+1])).compare("on")==0);
-      i++;
     }else if (lower_copy(string(argv[i])).compare("-c")==0 || lower_copy(string(argv[i])).compare("--recursive")==0){
-      if (argv[i+1][0] == '-'){
-        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
-        exitProgram(1);
+      if (i>=argc-1 || argv[i+1][0] == '-'){
+        //trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        //exitProgram(1);
+        gv.g_recursiveread = true;
+      }else{
+        gv.g_recursiveread = (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
+        i++;
       }
-      gv.g_recursiveread = (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
-      i++;
     }else if (lower_copy(string(argv[i])).compare("-r")==0 || lower_copy(string(argv[i])).compare("--readmode")==0){
-      if (argv[i+1][0] == '-'){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
       fileMode = (lower_copy(string(argv[i+1])).compare("line")!=0?READBUFF:READLINE);
       i++;
     }else if (lower_copy(string(argv[i])).compare("-o")==0 || lower_copy(string(argv[i])).compare("--outputformat")==0){
-      if (argv[i+1][0] == '-'){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
       gv.g_ouputformat = (lower_copy(string(argv[i+1])).compare("json")!=0?TEXT:JSON);
       i++;
     }else if (lower_copy(string(argv[i])).compare("-v")==0 || lower_copy(string(argv[i])).compare("--variable")==0){
-      if (argv[i+1][0] == '-'){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
       rq.setUserVars(trim_copy(string(argv[i+1])));
       i++;
     }else if (lower_copy(string(argv[i])).compare("-s")==0 || lower_copy(string(argv[i])).compare("--skip")==0){
-      if (argv[i+1][0] == '-'){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
@@ -596,7 +603,7 @@ int main(int argc, char *argv[])
       iSkip = atoi((argv[i+1]));
       i++;
     }else if (lower_copy(string(argv[i])).compare("-b")==0 || lower_copy(string(argv[i])).compare("--buffsize")==0){
-      if (argv[i+1][0] == '-'){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
@@ -607,7 +614,7 @@ int main(int argc, char *argv[])
       gv.g_inputbuffer = atoi((argv[i+1]));
       i++;
     }else if (lower_copy(string(argv[i])).compare("-d")==0 || lower_copy(string(argv[i])).compare("--detecttyperows")==0){
-      if (argv[i+1][0] == '-'){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
@@ -618,15 +625,17 @@ int main(int argc, char *argv[])
       rq.setDetectTypeMaxRowNum(atoi((argv[i+1])));
       i++;
     }else if (lower_copy(string(argv[i])).compare("-n")==0 || lower_copy(string(argv[i])).compare("--nameline")==0){
-      if (argv[i+1][0] == '-'){
-        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
-        exitProgram(1);
-      }
-      if (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0)
+      if (i>=argc-1 || argv[i+1][0] == '-'){
+        //trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        //exitProgram(1);
         rq.setNameline(true);
-      i++;
+      }else{
+        if (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0)
+          rq.setNameline(true);
+        i++;
+      }
     }else if (lower_copy(string(argv[i])).compare("-m")==0 || lower_copy(string(argv[i])).compare("--msglevel")==0){
-      if (argv[i+1][0] == '-'){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
@@ -639,7 +648,7 @@ int main(int argc, char *argv[])
       }
       i++;
     }else if (lower_copy(string(argv[i])).compare("-q")==0 || lower_copy(string(argv[i])).compare("--query")==0){
-      if (argv[i+1][0] == '-'){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }

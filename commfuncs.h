@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.96"
+#define VERSION "v0.961"
 
 #define UNKNOWN 0
 
@@ -169,6 +169,7 @@ using namespace std;
 #define MINA 211
 #define AVERAGEA 212
 #define FOREACH 501
+#define COLTOROW 502
 
 #define TEXT 1
 #define JSON 2

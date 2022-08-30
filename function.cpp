@@ -307,12 +307,13 @@ bool FunctionC::analyzeExpStr()
     case SWITCH:
     case GREATEST:
     case LEAST: // MAX and MIN could be any data type
-    case FOREACH:
     case PREVIOUS:
     case NEXT:
     case NEARBY:
     case MAXA:
     case MINA:
+    case FOREACH:
+    case COLTOROW:
       m_datatype.datatype = ANY;
       break;
     default:{
@@ -1684,6 +1685,7 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     }
     case FOREACH:
+    case COLTOROW:
       break;
       //trace(ERROR, "Internal error: Macro function '%s' is not parsed yet!\n", m_funcName.c_str());
       //return false;

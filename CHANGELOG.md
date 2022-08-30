@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.96] 2022-08-30
+   New feature: New function: coltorow(exp1[,exp2 ... ] ) : Macro function. Make the columns to rows. Accept multiple parameter, also accept foreach(). The row number will be the maximum number of parameter of all coltorow functions. <br/>
    # [0.96] 2022-08-28
    Enhancement: The flag options (fieldheader/progress/nameline/recursive) dont requir a following value any more, it will turn on the option by default. <br/>
    # [0.96] 2022-08-27

@@ -140,7 +140,7 @@ void QuerierC::setregexp(string regexstr)
       return;
     }
     m_regexstr = vSearchPattern[0];
-    replacestr(m_regexstr,{"\\t","\\/","\\v"},{"\t","/","\v"});
+    replacestr(m_regexstr,{"\\t","\\/","\\v","\\|"},{"\t","/","\v","|"});
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
         trace(ERROR, "(1)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
@@ -167,7 +167,7 @@ void QuerierC::setregexp(string regexstr)
       return;
     }
     m_regexstr = vSearchPattern[0];
-    replacestr(m_regexstr,{"\\t","\\/","\\v"},{"\t","/","\v"});
+    replacestr(m_regexstr,{"\\t","\\/","\\v","\\|"},{"\t","/","\v","|"});
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
         trace(ERROR, "(2)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
@@ -343,17 +343,32 @@ bool QuerierC::analyzeSelString(){
       m_selnames.push_back(m_selections[i].getEntireExpstr());
   bool bGroupFunc = false, bNonGroupFuncSel = false;
   for (int i=0; i<m_selections.size(); i++){
+    // transfer parameters of COLTOROW macro function to selections
+    if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->m_funcID==COLTOROW){
+      m_colToRowNames.push_back(m_selnames[i]);
+      vector<int> colToRowSels;
+      m_selnames.erase(m_selnames.begin()+i);
+      for (int j=0; j<m_selections[i].m_Function->m_params.size(); j++){
+        m_selnames.insert(m_selnames.begin()+i+j,m_selections[i].m_Function->m_params[j].getEntireExpstr());
+        colToRowSels.push_back(i+j);
+      }
+      vector<ExpressionC> params = m_selections[i].m_Function->m_params;
+      m_selections.erase(m_selections.begin()+i);
+      m_selections.insert(m_selections.begin()+i,params.begin(),params.end());
+      m_colToRows.push_back(colToRowSels);
+    }
     if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isAnalytic())
       trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", m_selections[i].m_Function->m_expStr.c_str(),m_selections[i].m_Function->m_anaParaNums[0],m_selections[i].m_Function->m_params.size());
     //trace(DEBUG, "Got selection expression '%s'!\n", m_selections[i].getEntireExpstr().c_str());
 
     // if macro function is involved, need to wait util the first data analyzed to analyze select expression
-    if (m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isMacro()){
+    if (m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->m_funcID==FOREACH){
       if (m_fieldtypes.size()==0){
         m_bSelectContainMacro = true;
         m_bToAnalyzeSelectMacro = true;
         m_selections.clear();
         m_selnames.clear();
+        m_colToRows.clear();
         trace(DEBUG2,"Skiping select FOREACH: '%s'\n",m_selections[i].m_expStr.c_str());
         return true;
       }else{
@@ -366,9 +381,24 @@ bool QuerierC::analyzeSelString(){
             trace(DEBUG2,"Expanding FOREACH: '%s'\n",m_selections[i].m_expStr.c_str());
             m_selections.erase(m_selections.begin()+i);
             m_selnames.erase(m_selnames.begin()+i);
+            int l=0, k=0;
+            while(l<m_colToRows.size()&&m_colToRows[l][k]<i){
+              k++;
+              if (k>=m_colToRows[l].size()){
+                k=0;
+                l++;
+              }
+            }
+            bool bToConvColToRow = false;
+            if (l<m_colToRows.size() && k<m_colToRows[l].size() && m_colToRows[l][k]==i){
+              m_colToRows[l].erase(m_colToRows[l].begin()+k);
+              bToConvColToRow = true;
+            }
             // expand and insert FOREACH selections.
             for (int j=0; j<vExpandedExpr.size(); j++){
               trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
+              if (bToConvColToRow)
+                m_colToRows[l].insert(m_colToRows[l].begin()+k+j,i);
               m_selnames.insert(m_selnames.begin()+i,vExpandedExpr[j].getEntireExpstr());
               //m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
               checkSelGroupConflict(vExpandedExpr[j]);
@@ -2285,9 +2315,19 @@ void QuerierC::printFieldNames()
   //  printf("%s\t",m_fieldnames[i].c_str());
   if (m_bNamePrinted)
     return;
+  if (m_colToRows.size() != m_colToRowNames.size()){
+    trace(ERROR,"COLTOROW marco function size %d doesnot match filed names of COLTOROW marco function %d",m_colToRows.size(),m_colToRowNames.size());
+  }else{
+    for (int i=m_colToRows.size()-1;i>=0;i--){
+      m_selnames.insert(m_selnames.begin()+m_colToRows[i][0],m_colToRowNames[i]);
+      for (int j=m_colToRows[i].size()-1;j>=0;j--)
+        m_selnames.erase(m_selnames.begin()+1+m_colToRows[i][j]);
+    }
+  }
   if (m_selnames.size()>0){
-    for (int i=0; i<m_selnames.size(); i++)
+    for (int i=0; i<m_selnames.size(); i++){
       printf("%s\t",m_selnames[i].c_str());
+    }
     printf("\n");
     for (int i=0; i<m_selnames.size(); i++)
       printf("%s\t",string(m_selnames[i].length(),'-').c_str());
@@ -2305,8 +2345,40 @@ void QuerierC::output()
   long int thistime = curtime();
 #endif // __DEBUG__
   //printf("Result Num: %d\n",m_results.size());
-  for (int i=0; i<m_results.size(); i++)
-    formatoutput(m_results[i], i);
+  int iRowNumFromCols = 0;
+  for (int i=0; i<m_colToRows.size(); i++)
+    iRowNumFromCols = max(iRowNumFromCols, (int)m_colToRows[i].size());
+  for (int i=0; i<m_results.size(); i++){
+    if (iRowNumFromCols>0){ // convert cols to rows
+      int k=0;
+      vector<string> datas;
+      vector< vector<string> > tmpResult;
+      for (int j=1; j<m_results[i].size(); j++){
+        if(k<m_colToRows.size() && j-1>=m_colToRows[k][0] && j-1<=m_colToRows[k][m_colToRows[k].size()-1]){ // the selection is a part of a COLTOROW function
+          datas.push_back(m_results[i][j]);
+          if (j-1==m_colToRows[k][m_colToRows[k].size()-1] || j-1==m_results[i].size()-1){ // if current selection is the last one, complement empty strings
+            datas.insert(datas.end(),iRowNumFromCols-(int)datas.size(),"");
+            tmpResult.push_back(datas);
+            datas.clear();
+            k++;
+          }
+        }else{ // the selection is not a part of any COLTOROW function
+          datas.push_back(m_results[i][j]);
+          datas.insert(datas.end(),iRowNumFromCols-1,"");
+          tmpResult.push_back(datas);
+          datas.clear();
+        }
+      }
+      for (int j=0;j<iRowNumFromCols;j++){
+        datas.clear();
+        datas.push_back("");
+        for (int k=0;k<tmpResult.size();k++)
+          datas.push_back(tmpResult[k][j]);
+        formatoutput(datas, i);
+      }
+    }else
+      formatoutput(m_results[i], i);
+  }
 #ifdef __DEBUG__
   m_outputtime += (curtime()-thistime);
 #endif // __DEBUG__
@@ -2481,6 +2553,8 @@ void QuerierC::clear()
   if (m_outputfileexp)
     SafeDelete(m_outputfileexp);
   m_resultfiles.clear();
+  m_colToRows.clear();
+  m_colToRowNames.clear();
   m_searchMode = REGSEARCH;
   m_readmode = READBUFF;
   m_quoters = "";

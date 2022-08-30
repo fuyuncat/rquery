@@ -568,8 +568,8 @@ vector<string> split(const string & str, char delim, string quoters, char escape
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.length()) {
-    //if (str[i] == delim && (i==0 || (i>0 && str[i-1]!=escape)) && q.size()==0) {
-    if (str[i] == delim && q.size()==0) {
+    if (str[i] == delim && (i==0 || (i>0 && str[i-1]!=escape)) && q.size()==0) {
+    //if (str[i] == delim && q.size()==0) {
       //trace(DEBUG, "(1)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       if (!skipemptyelement || i>begin)
         v.push_back(str.substr(begin, i-begin));
@@ -2154,6 +2154,8 @@ short int encodeFunction(string str)
     return AVERAGEA;
   else if(sUpper.compare("FOREACH")==0)
     return FOREACH;
+  else if(sUpper.compare("COLTOROW")==0)
+    return COLTOROW;
   else
     return UNKNOWN;
 }

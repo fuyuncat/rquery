@@ -149,6 +149,9 @@ class QuerierC
     bool m_bToAnalyzeSelectMacro; // whether need to analyze marco in selections
     bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
     bool m_bToAnalyzeSortMacro; // whether need to analyze marco in sort
+    
+    vector<vector<int>> m_colToRows; // the selection list of each COLTOROW marco function
+    vector<string> m_colToRowNames; // filed names of COLTOROW marco function
 
     vector< vector<ExpressionC> > m_sideSelections; // side query selections
     vector< vector<string> > m_sideAlias; // side query selections

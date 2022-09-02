@@ -12,7 +12,7 @@ Packager:       fuyuncat
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 %description
-RQuery is a regular expression (Capturing Group and Named Group supported) based text searching engine.
+RQuery is a powerful tool can search string block/file/folder using regular/delimiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more.
 
 %prep
 %setup -q -n %{name}-%{version}

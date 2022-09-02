@@ -775,7 +775,8 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
             m_datatype = (*fieldtypes)[m_colId];
             trace(DEBUG, "Tuning '%s' from VARIABLE to COLUMN(%d).\n", m_expStr.c_str(), m_colId);
           }else{
-            trace(ERROR, "Unrecognized variable(1) %s, Extracted COL ID: %d, number of fields: %d.\n", sColId.c_str(), iColID, fieldtypes->size());
+            // this is a warning, because field size could be different if query multiple files.
+            trace(WARNING, "Unrecognized variable(1) %s, Extracted COL ID: %d, number of fields: %d.\n", sColId.c_str(), iColID, fieldtypes->size());
             m_expType = UNKNOWN;
             m_datatype.datatype = UNKNOWN;
           }

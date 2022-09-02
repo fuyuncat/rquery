@@ -135,6 +135,56 @@ void GroupProp::clear()
   init();
 }
 
+TimeZone::TimeZone()
+{
+  init();
+}
+
+TimeZone::~TimeZone()
+{
+  
+}
+
+unordered_map< string, int > TimeZone::m_nameoffmap = {};
+
+void TimeZone::init()
+{
+  if (m_nameoffmap.size() == 0){
+    trace(DEBUG,"Initializing time zone list\n");
+    string time("1988/08/18 08:18:58"), sFm("%Y/%m/%d %H:%M:%S");
+    struct tm tm; 
+    int iOff=0,iOffSet = 0;
+    strToDate(time, tm, iOffSet, sFm);
+    time_t t1 = mktime(&tm);
+    for (int i=0; i<=24; i++){
+      int iCurOff = iOff+(int)(i/2)*100;
+      if (i%2==1)
+        iCurOff+=30;
+      tm = zonetime(t1, iCurOff);
+      tm = zonetime(t1, -1*iCurOff);
+      string sOff=intToStr(iCurOff);
+      if (sOff.length()==3)
+        sOff = "0"+sOff;
+      string curtime = time+" +"+sOff;
+      char * c = strptime(curtime.c_str(), sFm.c_str(), &tm);
+      if (c && c == curtime.c_str()+curtime.length())
+        m_nameoffmap.insert(pair<string,int>(tm.tm_zone?string(tm.tm_zone):"", tm.tm_gmtoff/36));
+      //if (strToDate(curtime, tm, iCurOff, sFm))
+      //  m_nameoffmap.insert(pair<string,int>(tm.tm_zone?string(tm.tm_zone):"", tm.tm_gmtoff/36));
+      curtime = time+" -"+sOff;
+      if (strToDate(curtime, tm, iCurOff, sFm))
+        m_nameoffmap.insert(pair<string,int>(tm.tm_zone?string(tm.tm_zone):"", tm.tm_gmtoff/36));
+    }
+  }
+}
+
+void TimeZone::dump()
+{
+  for (unordered_map< string, int >::iterator it=m_nameoffmap.begin();it!=m_nameoffmap.end();it++)
+    printf("%s:%d\n",it->first.c_str(),it->second);
+}
+
+
 // manually free the memory of GroupProp, as it's not freed in the destructor to improve performance.
 void clearGroupPropMap(unordered_map< string,GroupProp > & aggProps)
 {
@@ -1177,35 +1227,44 @@ extern int putenv(char*);
 #endif
 
 // get the local time in the specific timezone
-struct tm zonetime(time_t t1, int iOffSet)
+struct tm zonetime(time_t t1, string zone)
 {
   char const* tmp = getenv( "TZ" );
   struct tm tm;
+  string sOldTimeZone = tmp?string(tmp):"";
+  string sNewTimeZone = zone;
+#if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
+  putenv(const_cast<char *>(string("TZ="+sNewTimeZone).c_str()));
+  system("set"); 
+#elif defined _WIN32 || defined _WIN64
+  putenv(("TZ="+sNewTimeZone).c_str());
+  tzset();
+#else
+  setenv("TZ", sNewTimeZone.c_str(), 1);
+  tzset();
+#endif
+  //trace(DEBUG2, "Setting timezone to '%s'(%d)\n", sNewTimeZone.c_str(), iOffSet);
+  tm = *(localtime(&t1));
+#if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
+  putenv(const_cast<char *>(string("TZ="+sOldTimeZone).c_str()));
+  system("set"); 
+#elif defined _WIN32 || defined _WIN64
+  putenv(("TZ="+sOldTimeZone).c_str());
+  tzset();
+#else
+  setenv("TZ", sOldTimeZone.c_str(), 1);
+  tzset();
+#endif
+  return tm;
+}
+
+// get the local time in the specific timezone
+struct tm zonetime(time_t t1, int iOffSet)
+{
+  struct tm tm;
   if (iOffSet>=-1200 && iOffSet<=1200){
-    string sOldTimeZone = tmp?string(tmp):"";
     string sNewTimeZone = "GMT"+intToStr(iOffSet/100*-1);
-#if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
-    putenv(const_cast<char *>(string("TZ="+sNewTimeZone).c_str()));
-    system("set"); 
-#elif defined _WIN32 || defined _WIN64
-    putenv(("TZ="+sNewTimeZone).c_str());
-    tzset();
-#else
-    setenv("TZ", sNewTimeZone.c_str(), 1);
-    tzset();
-#endif
-    //trace(DEBUG2, "Setting timezone to '%s'(%d)\n", sNewTimeZone.c_str(), iOffSet);
-    tm = *(localtime(&t1));
-#if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
-    putenv(const_cast<char *>(string("TZ="+sOldTimeZone).c_str()));
-    system("set"); 
-#elif defined _WIN32 || defined _WIN64
-    putenv(("TZ="+sOldTimeZone).c_str());
-    tzset();
-#else
-    setenv("TZ", sOldTimeZone.c_str(), 1);
-    tzset();
-#endif
+    tm = zonetime(t1, sNewTimeZone);
   }else
     tm = *(localtime(&t1));
   return tm;
@@ -1642,6 +1701,28 @@ string truncdate(const string & datesrc, const string & fmt, const int & seconds
     trace(ERROR, "'%s' is not a correct date!\n", datesrc.c_str());
   }
   return sResult;
+}
+
+struct tm convertzone(const struct tm & tm, const string & fromzone, const string & tozone)
+{
+  struct tm tm1 = tm;
+  time_t t1 = mktime(&tm1);
+  tm1 = zonetime(t1, fromzone);
+  int off1=tm1.tm_gmtoff;
+  tm1 = zonetime(t1, tozone);
+  int off2 = tm1.tm_gmtoff;
+  tm1.tm_gmtoff = off1+off2;
+  return tm1;
+}
+
+string convertzone(const string & sdate, const string & sFmt, const string & fromzone, const string & tozone)
+{
+  struct tm tm;
+  int iOffset=0;
+  string ddate;
+  if (strToDate(sdate, tm, iOffset, sFmt))
+    ddate = dateToStr(convertzone(tm, fromzone, tozone),0,sFmt);
+  return ddate;
 }
 
 // get the compatible data type from two data types

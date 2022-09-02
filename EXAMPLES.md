@@ -731,6 +731,30 @@
    9               bbb2[bbb2.size()-1].mya->m_id,  myb.mya->m_id);
    5               %d\n",  bbb2[i].mya->m_id);
    ```
+- coltorow(exp1[,exp2 ... ] ) : Macro function. Make the columns to rows. Accept multiple parameter, also accept foreach(). The row number will be the maximum number of parameter of all coltorow functions.<br />
+   ```
+   rq -q "s @1,coltorow(@2,@3,@4),@5" "aaa bbb ccc ddd eee fff"
+   ```
+   Returns result:<br/>
+   ```
+   aaa     bbb     eee
+           ccc
+           ddd
+   ```
+   Another example:<br/>
+   ```
+   rq -f -q "s @1,coltorow(@2,@3,@4) as f2 ,@5" "aaa bbb ccc ddd eee fff"
+   ```
+   Returns result:<br/>
+   ```
+   @FIELD1 F2      @FIELD5
+   ------- --      -------
+   aaa     bbb     eee
+           ccc
+           ddd
+   Pattern matched 0 line(s).
+   Selected 0 row(s).
+   ```
 
 # Examples and scenarios
 - Get lines containing specific string (equal to grep)<br/>

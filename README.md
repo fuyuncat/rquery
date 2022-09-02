@@ -61,6 +61,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
    - --skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0.<br />
    - --variable | -v "name1:value1[ name2:value2..]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
    - --detecttyperows | -d <N> : How many matched rows will be used for detecting data types, default is 1.<br />
+   - --delimiter | -i <string> : Specify the delimiter of the fields, TAB will be adapted if this option is not provided <br/>
    - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
    - --nameline | -n Yes/no : Specify the first line should be used for filed names (useful for csv files). Default is no.<br />
    - --recursive | -c <yes|no> -- Wheather recursively read subfolder of a folder (default NO).<br />

@@ -93,6 +93,7 @@ class QuerierC
     void setOutputFiles(string outputfilestr, short int outputmode=OVERWRITE);
     void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
     void setOutputFormat(short int format=TEXT);
+    void setFieldDelim(string delimstr);
     int searchNext();
     int searchAll();
     bool toGroupOrSort();
@@ -125,6 +126,7 @@ class QuerierC
     short int m_readmode;
     bool m_bEof;
     bool m_delmrepeatable;
+    string m_fielddelim;
     
     short int m_outputformat; // TEXT or JSON
     short int m_outputmode; // file write mode: OVERWRITE or APPEND

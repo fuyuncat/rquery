@@ -101,6 +101,7 @@ void QuerierC::init()
   m_bToAnalyzeSortMacro = false;
   m_selstr = "";
   m_sortstr = "";
+  m_fielddelim = "\t";
   m_detectTypeMaxRowNum = 1;
   m_detectedTypeRows = 0;
 #ifdef __DEBUG__
@@ -629,6 +630,12 @@ void QuerierC::setOutputFormat(short int format)
   m_outputformat = format;
 }
 
+void QuerierC::setFieldDelim(string delimstr)
+{
+  m_fielddelim = delimstr;
+  replacestr(m_fielddelim,{"\\t","\\v","\\n","\\r"},{"\t","\v","\n","\r"});
+}
+
 void QuerierC::setOutputFiles(string outputfilestr, short int outputmode)
 {
   if (m_outputfileexp)
@@ -973,7 +980,7 @@ void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * 
           string sResult;
           DataTypeStruct dts;
           m_sideSelections[i][j].evalExpression(pfieldValues, pvarValues, paggGroupProp, panaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
-          thisResult.insert(pair<string,string>(m_sideAlias[i][j].empty()?intToStr(j):m_sideAlias[i][j], sResult));
+          thisResult.insert(pair<string,string>(m_sideAlias[i][j].empty()?intToStr(j+1):m_sideAlias[i][j], sResult));
         }
         if (m_sideDatasets.size()<=i){
           resultSet.push_back(thisResult);
@@ -2300,7 +2307,7 @@ void QuerierC::formatoutput(vector<string> datas, int resultid)
       outputstream(resultid, "%s\n", datas[0].c_str());
     else{
       for (int i=1; i<datas.size(); i++)
-        outputstream(resultid, "%s\t", datas[i].c_str());
+        outputstream(resultid, "%s%s", datas[i].c_str(),i<datas.size()-1?m_fielddelim.c_str():"");
       outputstream(resultid, "\n");
     }
   }
@@ -2311,8 +2318,6 @@ void QuerierC::printFieldNames()
   // output field names only in STANDARD(screen) output mode
   if (m_outputmode != STANDARD)
     return;
-  //for (int i=1; i<m_fieldnames.size(); i++)
-  //  printf("%s\t",m_fieldnames[i].c_str());
   if (m_bNamePrinted)
     return;
   if (m_colToRows.size() != m_colToRowNames.size()){
@@ -2326,11 +2331,11 @@ void QuerierC::printFieldNames()
   }
   if (m_selnames.size()>0){
     for (int i=0; i<m_selnames.size(); i++){
-      printf("%s\t",m_selnames[i].c_str());
+      printf("%s%s",m_selnames[i].c_str(),i<m_selnames.size()-1?m_fielddelim.c_str():"");
     }
     printf("\n");
     for (int i=0; i<m_selnames.size(); i++)
-      printf("%s\t",string(m_selnames[i].length(),'-').c_str());
+      printf("%s%s",string(m_selnames[i].length(),'-').c_str(),i<m_selnames.size()-1?m_fielddelim.c_str():"");
   }else{
     printf("Row\n"); 
     printf("%s",string(58,'-').c_str());

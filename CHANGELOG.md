@@ -1,6 +1,10 @@
 # Change Log
 All change logs will be documented here.<br/>
-   # [0.96] 2022-08-30
+   # [0.962] 2022-09-02
+   Fixed bug: field sequence id of sidework(meanwhile) query referred by variable @R is incorrect. <br/>
+   # [0.962] 2022-09-01
+   New feature: new option: --delimiter | -i <string> : Specify the delimiter of the fields, TAB will be adapted if this option is not provided. <br/>
+   # [0.961] 2022-08-30
    New feature: New function: coltorow(exp1[,exp2 ... ] ) : Macro function. Make the columns to rows. Accept multiple parameter, also accept foreach(). The row number will be the maximum number of parameter of all coltorow functions. <br/>
    # [0.96] 2022-08-28
    Enhancement: The flag options (fieldheader/progress/nameline/recursive) dont requir a following value any more, it will turn on the option by default. <br/>

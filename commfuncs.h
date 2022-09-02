@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.961"
+#define VERSION "v0.962"
 
 #define UNKNOWN 0
 
@@ -269,6 +269,17 @@ public:
 
 extern GlobalVars gv;
 
+class TimeZone{
+public:
+  TimeZone();
+  ~TimeZone();
+  
+  void init();
+  void dump();
+  
+  static unordered_map< string, int > m_nameoffmap;
+};
+
 void trace(short level, const char *fmt, ...);
 void exitProgram(short int code);
 void clearGroupPropMap(unordered_map< string,GroupProp > & aggProps); // manually free the memory of GroupProp, as it's not freed in the destructor to improve performance. 
@@ -331,6 +342,7 @@ int bintodec(const string& str);
 
 bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt=DATEFMT);
 int localOffset();
+struct tm zonetime(time_t t1, string zone);
 struct tm zonetime(time_t t1, int iOffSet);
 int dateFormatLen(string fmt);
 string stripTimeZone(string str, int & iOffSet, string & sTimeZone);
@@ -341,6 +353,8 @@ void addhours(struct tm & tm, int hours);
 void addseconds(struct tm & tm, int seconds);
 void addtime(struct tm & tm, int diff, char unit='S');
 string truncdate(const string & datesrc, const string & fmt, const int & seconds);
+struct tm convertzone(const struct tm & tm, const string & fromzone, const string & tozone);
+string convertzone(const string & sdate, const string & sFmt, const string & fromzone, const string & tozone);
 
 int random(int min=1, int max=100);
 string randstr(int len=8, const string & flags="uld");

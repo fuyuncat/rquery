@@ -54,7 +54,7 @@ void usage()
   printf("\nProgram Name: RQuery AKA RQ Version %s\n", VERSION);
   printf("Contact Email: fuyuncat@gmail.com\n");
   printf("Search string block/file/folder using regular/delimiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. \n\n");
-  printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q \"parse /<regular expression>/ | select <expr>... | set field datatype,... | filter <filters> | group <expr>,... | sort <expr>,... | limit n[,topN] | unique \" \"file or string to be queried\"\n\n");
+  printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q[uery] \"p[arse] [w|d]/<regular expression>/[<quoters>/][r] | m[eanwhile] <expr> .. [where filter] | s[elect] <expr>... | [se]t field datatype,... | f[ilter] <filters> | group <expr>,... | [s]o[rt] <expr>,... | l[imit] n[,topN] | u[nique] \" \"file, folder or string to be queried\"\n\n");
   printf("\t-q|--query <query string> -- The query string indicates how to query the content, valid query commands include parse,select,set,filter,group,sort,limit. One or more commands can be provide in the query, multiple commands are separated by |. They can be in any order. \n");
   printf("\t\tparse|p /<searching expression string>/ -- Choose one of three mode to match the content.\n\t\t\t// quotes a regular expression pattern string to parse the content; \n\t\t\t w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '*' stands for a field, e.g. w/*abc*,*/. substrings between two * are the spliters, spliter between quoters will be skipped;\n\t\t\td/<Delmiter>/[quoters/][r] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, r at the end of pattern means the delmiter is repeatable, e.g. d/ /\"\"/\n");
   printf("\t\tset|t <field datatype [date format],...> -- Set the date type of the fields.\n");
@@ -76,7 +76,8 @@ void usage()
   printf("\t-c|--recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n");
   printf("\t-o|--outputformat <text|json> -- Provide output format, default is text.\n");
   printf("\t-d|--detecttyperows <N> : How many matched rows will be used for detecting data types, default is 1.\n");
-  printf("\t-v|--variable \"name1:value1[ name2:value2..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.\n");
+  printf("\t-i|--delimiter <string> : Specify the delimiter of the fields, TAB will be adapted if this option is not provided\n");
+  printf("\t-v|--variable \"name1:value1[ name2:value2..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable.\n");
   printf("More information can be found at https://github.com/fuyuncat/rquery .\n");
 }
 
@@ -502,6 +503,9 @@ int main(int argc, char *argv[])
     exitProgram(1);
   }
   
+  //string time("1988/08/18 08:18:58"), sFm("%Y/%m/%d %H:%M:%S");
+  //convertzone(time,sFm,"AEST","BST");
+  
   gv.setVars(16384, FATAL, false);
   gv.g_consolemode = false;
   short int fileMode = READBUFF;
@@ -583,6 +587,13 @@ int main(int argc, char *argv[])
         exitProgram(1);
       }
       gv.g_ouputformat = (lower_copy(string(argv[i+1])).compare("json")!=0?TEXT:JSON);
+      i++;
+    }else if (lower_copy(string(argv[i])).compare("-i")==0 || lower_copy(string(argv[i])).compare("--delimiter")==0){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      rq.setFieldDelim(trim_copy(string(argv[i+1])));
       i++;
     }else if (lower_copy(string(argv[i])).compare("-v")==0 || lower_copy(string(argv[i])).compare("--variable")==0){
       if (i>=argc-1 || argv[i+1][0] == '-'){
@@ -699,6 +710,7 @@ int main(int argc, char *argv[])
         cout << "progress <on|off> -- Wheather show the processing progress or not(default).\n";
         cout << "recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n";
         cout << "format <text|json> -- Provide output format, default is text.\n";
+        cout << "delimiter <string> -- Specify the delimiter of the fields, TAB will be adapted if this option is not provided.\n";
         cout << "var \"name1:value1[ name2:value2..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("load ")==0){
@@ -823,6 +835,11 @@ int main(int argc, char *argv[])
         string strParam = trim_copy(lineInput).substr(string("sort ").length());
         rq.assignSortStr(strParam);
         cout << "Sorting keys are provided.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("delimiter ")==0){
+        string strParam = trim_copy(lineInput).substr(string("delimiter ").length());
+        rq.setFieldDelim(strParam);
+        cout << "Fields delimiter is set.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).compare("unique")==0){
         rq.setUniqueResult(true);

@@ -1,5 +1,11 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.962] 2022-10-13
+   New feature: New function: todate(str[,dateformat]) : Normal function. Conver any string to date. <br/>
+   Fixed bug: Variable @R does not get correct data type. <br/>
+   Fixed bug: Expression priority is wrong when subtract is calculated before plus. <br/>
+   # [0.963] 2022-10-12
+   Enhancement: "\'" will be escaped to "'", "\t" will be escaped to tab, "\n" will be escaped to newline, "\r" will be escaped to return, in string expressions. <br/>
    # [0.962] 2022-09-02
    Fixed bug: field sequence id of sidework(meanwhile) query referred by variable @R is incorrect. <br/>
    # [0.962] 2022-09-01

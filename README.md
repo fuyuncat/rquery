@@ -116,6 +116,7 @@ Functions can be used in the expression. We current provide some essential norma
    - tolong(str) : Normal function. Conver a string to long.<br/>
    - tofloat(str) : Normal function. Conver a string to float.<br/>
    - tostr(expr) : Normal function. Conver any data type to string.<br/>
+   - todate(str[,dateformat]) : Normal function. Conver any string to date.<br/>
    - dectohex(num) : Normal function. Conver a decimal number to hex formatted string.<br/>
    - hextodec(str) : Normal function. Conver a hex number to decimal number.<br/>
    - dectobin(num) : Normal function. Conver a decimal number to binary formatted string.<br/>

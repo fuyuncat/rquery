@@ -485,7 +485,7 @@ FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
 }
 
 // analyze column ID & name from metadata
-bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype){
+bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes){
   trace(DEBUG, "Analyzing columns in filter '%s'\n", m_expStr.c_str());
   if (!fieldnames || !fieldtypes){
     trace(ERROR, "(Filter)fieldnames or fieldtypes is NULL!\n");
@@ -494,15 +494,15 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
   if (m_type == BRANCH){
     m_metaDataAnzlyzed = true;
     if (m_leftNode)
-        m_metaDataAnzlyzed = m_leftNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype) && m_metaDataAnzlyzed ;
+        m_metaDataAnzlyzed = m_leftNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes) && m_metaDataAnzlyzed ;
     if (m_rightNode)
-        m_metaDataAnzlyzed = m_rightNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype) && m_metaDataAnzlyzed;
+        m_metaDataAnzlyzed = m_rightNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes) && m_metaDataAnzlyzed;
     if (!m_metaDataAnzlyzed)
         return m_metaDataAnzlyzed;
     //if (m_leftExpression)
-    //  m_leftExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype);
+    //  m_leftExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes);
     //if (m_rightExpression)
-    //  m_rightExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype);
+    //  m_rightExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes);
   }else if (m_type == LEAF){
     if (m_leftExpression){
       if (!m_leftExpression->expstrAnalyzed()){
@@ -518,7 +518,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
       SafeDelete(m_leftExpression);
       return false;
     }
-    m_leftExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype);
+    m_leftExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes);
 
     if (m_rightExpression){
       if (!m_rightExpression->expstrAnalyzed()){
@@ -535,7 +535,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
         SafeDelete(m_rightExpression);
         return false;
       }
-      m_rightExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype);
+      m_rightExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes);
       m_datatype = getCompatibleDataType(m_leftExpression->m_datatype, m_rightExpression->m_datatype);
     }else{
       if (m_comparator == IN || m_comparator == NOIN){ // hard code for element iterating IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
@@ -543,7 +543,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
         dts.datatype = -99;
         for (int i=0; i<m_inExpressions.size(); i++){
           if (m_inExpressions[i].expstrAnalyzed()){
-            m_inExpressions[i].analyzeColumns(fieldnames, fieldtypes, rawDatatype);
+            m_inExpressions[i].analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes);
             if (dts.datatype == -99)
               dts = m_inExpressions[i].m_datatype;
             else

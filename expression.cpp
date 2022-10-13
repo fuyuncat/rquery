@@ -486,7 +486,8 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         int iOffSet;
         size_t iPos = 0;
         node->m_expStr = readQuotedStr(expStr, iPos, "''", '\\');
-        trace(DEBUG, "Read STRING \"%s\" . \n", expStr.c_str());
+        replacestr(node->m_expStr,{"\\'","\\t","\\v","\\n","\\r"},{"'","\t","\v","\n","\r"});
+        trace(DEBUG, "Read STRING \"%s\" . \n", node->m_expStr.c_str());
         if (isDate(node->m_expStr, iOffSet, node->m_datatype.extrainfo))
           node->m_datatype.datatype = DATE;
         else
@@ -723,7 +724,7 @@ ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
 
 // analyze column ID & name from metadata, return data type of current node
 // decide current node data type by checking children's data type
-DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype)
+DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes)
 {
   DataTypeStruct dts;
   dts.extrainfo="";
@@ -739,8 +740,8 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
     m_fieldtypes = fieldtypes;
     if (m_type == BRANCH){
       dts.datatype=UNKNOWN;
-      DataTypeStruct rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype):dts;
-      DataTypeStruct ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype):dts;
+      DataTypeStruct rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes):dts;
+      DataTypeStruct ldatatype = m_leftNode?m_leftNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes):dts;
       //trace(DEBUG, "Left node: %s (%d); Right node: %s (%d)\n", m_leftNode->m_expStr.c_str(),m_leftNode->m_type, m_rightNode->m_expStr.c_str(),m_rightNode->m_type);
       //trace(DEBUG, "Getting compatible type from %s and %s\n", decodeDatatype(ldatatype.datatype).c_str(), decodeDatatype(rdatatype.datatype).c_str());
       m_datatype = getCompatibleDataType(ldatatype, rdatatype);
@@ -763,7 +764,14 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
           m_datatype = *rawDatatype;
         else if(m_expStr.compare("@FILE") == 0)
           m_datatype.datatype = STRING;
-        else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@FILELINE") == 0 || m_expStr.compare("@FILEID") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0 || m_expStr.compare("@%") == 0)
+        else if(m_expStr.length()>=8 && m_expStr[1]=='R'&&m_expStr[2]=='['){
+          size_t pos=0;
+          string s1 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0')), s2 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0'));
+          if (s1.empty() || s2.empty()){
+            trace(ERROR, "(1)Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
+          }
+          m_datatype = (*sideDatatypes)[s1][s2];
+        }else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@FILELINE") == 0 || m_expStr.compare("@FILEID") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0 || m_expStr.compare("@%") == 0)
           m_datatype.datatype = LONG;
         else if (m_expStr.find("@FIELD") == 0){
           string sColId = m_expStr.substr(string("@FIELD").length());
@@ -868,7 +876,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
           m_Function = new FunctionC(m_expStr);
           trace(DEBUG, "(2)New function from '%s'\n",m_expStr.c_str());
         }
-        m_datatype = m_Function->analyzeColumns(fieldnames, fieldtypes, rawDatatype);
+        m_datatype = m_Function->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes);
         // m_datatype = m_Function->m_datatype;
         m_funcID = m_Function->m_funcID;
         //m_expStr = upper_copy(trim_copy(m_Function->m_expStr)); -- should NOT turn the parameters to UPPER case.
@@ -1176,7 +1184,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
   }
   // if (!m_metaDataAnzlyzed || !m_expstrAnalyzed){
   if (!m_metaDataAnzlyzed && (m_type != LEAF || m_expType != FUNCTION || !m_Function || !m_Function->isAggFunc())){
-    trace(ERROR, "Expression '%s' is not analyzed! metaData: %d, expstr: %d \n",m_expStr.c_str(),m_metaDataAnzlyzed,m_expstrAnalyzed);
+    trace(ERROR, "Expression '%s' is not analyzed! metaData: %d, expstr: %d \n",getEntireExpstr().c_str(),m_metaDataAnzlyzed,m_expstrAnalyzed);
     return false;
   }
   if (m_type == LEAF){
@@ -1285,10 +1293,11 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
         size_t pos=0;
         string s1 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0')), s2 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0'));
         if (s1.empty() || s2.empty()){
-          trace(ERROR, "Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
+          trace(ERROR, "(2)Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
         }
         sResult = (*sideDatarow)[s1][s2];
         dts = (*sideDatatypes)[s1][s2];
+        m_datatype = dts;
         if (!getresultonly){
           m_expType = CONST;
           m_expStr = sResult;
@@ -1359,7 +1368,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
           unordered_map< string,vector<string> > anaFuncs;
           unordered_map< string, unordered_map<string,string> > sideDatarow;
           unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
-          m_Function->analyzeColumns(&vfieldnames, &fieldtypes, &rawDatatype);
+          m_Function->analyzeColumns(&vfieldnames, &fieldtypes, &rawDatatype, &sideDatatypes);
           DataTypeStruct dts;
           gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,&anaFuncs,&sideDatarow,&sideDatatypes,sResult,dts);
           if (gotResult){

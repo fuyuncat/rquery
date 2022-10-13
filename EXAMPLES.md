@@ -411,6 +411,22 @@
    ```
    STRING  888
    ```
+- todate(str[,dateformat]) : Normal function. Conver any string to date.<br />
+   ```
+   rq -q "s rq -q "s datatype(todate('2022/Aug/18 15:18:58'))" " "" " "
+   ```
+   Returns result:<br/>
+   ```
+   DATE
+   ```
+   Another example:<br/>
+   ```
+   rq -q "s datatype(todate('1988/08/18','%Y/%m/%d'))" " "
+   ```
+   Returns result:<br/>
+   ```
+   DATE
+   ```
 - dectohex(num) : Normal function. Conver a decimal number to hex formatted string.<br />
    ```
    rq -q "s dectohex(888)" " "

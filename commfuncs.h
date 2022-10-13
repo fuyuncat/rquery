@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.962"
+#define VERSION "v0.963"
 
 #define UNKNOWN 0
 
@@ -141,14 +141,15 @@ using namespace std;
 #define TOLONG 42
 #define TOFLOAT 43
 #define TOSTR 44
-#define DECTOHEX 45
-#define HEXTODEC 46
-#define DECTOBIN 47
-#define BINTODEC 48
-#define ADDTIME 49
-#define JSONFORMAT 50
-#define JSONQUERY 51
-#define XMLEXTRACT 52
+#define TODATE 45
+#define DECTOHEX 46
+#define HEXTODEC 47
+#define DECTOBIN 48
+#define BINTODEC 49
+#define ADDTIME 50
+#define JSONFORMAT 51
+#define JSONQUERY 52
+#define XMLEXTRACT 53
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103

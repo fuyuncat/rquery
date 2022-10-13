@@ -300,6 +300,7 @@ bool FunctionC::analyzeExpStr()
     case TRUNCDATE:
     case ZONECONVERT:
     case ADDTIME:
+    case TODATE:
       m_datatype.datatype = DATE;
       break;
     case MAX:
@@ -331,7 +332,7 @@ void FunctionC::dump(){
 
 // analyze column ID & name from metadata, return data type of current node
 // decide current node data type by checking children's data type
-DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype)
+DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes)
 {
   trace(DEBUG, "Analyzing columns in function '%s'\n", m_expStr.c_str());
   if (!fieldnames || !fieldtypes){
@@ -344,7 +345,7 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
   m_fieldnames = fieldnames;
   m_fieldtypes = fieldtypes;
   for (int i=0; i<m_params.size(); i++){
-    m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype);
+    m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
     //trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
   }
   if (m_funcID == TRUNCDATE || m_funcID==GROUPLIST)
@@ -851,6 +852,24 @@ bool FunctionC::runTostr(vector<string>* fieldvalues, map<string,string>* varval
     return true;
   }else{
     trace(ERROR, "Failed to run tostr(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runTodate(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1 && m_params.size() != 2){
+    trace(ERROR, "runTodate(str,[dateformat]) function accepts only one or two parameters(%d).\n",m_params.size());
+    return false;
+  }
+  DataTypeStruct dts1;
+  int offSet;
+  if (m_params.size() != 2 || !m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, dts.extrainfo, dts1, true))
+    dts.extrainfo = "";
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && isDate(sResult, offSet, dts.extrainfo)){
+    return true;
+  }else{
+    trace(ERROR, "Failed to run runTodate(str,[dateformat])\n", m_params[0].m_expStr.c_str());
     return false;
   }
 }
@@ -1606,6 +1625,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case TOSTR:
       getResult = runTostr(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case TODATE:
+      getResult = runTodate(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case DECTOHEX:
       getResult = runDectohex(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

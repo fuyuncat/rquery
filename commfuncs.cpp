@@ -2165,6 +2165,8 @@ short int encodeFunction(string str)
     return TOFLOAT;
   else if(sUpper.compare("TOSTR")==0)
     return TOSTR;
+  else if(sUpper.compare("TODATE")==0)
+    return TODATE;
   else if(sUpper.compare("DECTOHEX")==0)
     return DECTOHEX;
   else if(sUpper.compare("HEXTODEC")==0)
@@ -2247,13 +2249,13 @@ short int operatorPriority(int iOperator)
   case PLUS:
     return 1;
   case SUBTRACT:
-    return 1;
+    return 2;
   case TIMES:
-    return 2;
-  case DIVIDE:
-    return 2;
-  case POWER:
     return 3;
+  case DIVIDE:
+    return 4;
+  case POWER:
+    return 5;
   default:
     return 0;
   }

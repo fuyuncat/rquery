@@ -1188,35 +1188,35 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
   }
   if (m_bToAnalyzeSortMacro)
     analyzeSortStr();
-  if (m_filter){
-    m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-    //m_filter->mergeExprConstNodes();
-  }
-  for (int i=0; i<m_selections.size(); i++){
-    //trace(DEBUG, "Analyzing selection '%s' (%d), found %d\n", m_selections[i].m_expStr.c_str(), i, found);
-    m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-  }
-  for (int i=0; i<m_groups.size(); i++)
-    m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-  for (int i=0; i<m_sorts.size(); i++)
-    m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-  for (unordered_map< string,ExpressionC >::iterator it=m_aggFuncExps.begin(); it!=m_aggFuncExps.end(); ++it)
-    it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-  for (int i=0; i<m_anaEvaledExp.size(); i++)
-    for (int j=0; j<m_anaEvaledExp[i].size(); j++)
-      m_anaEvaledExp[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
   for (int i=0; i<m_sideSelections.size(); i++){
     unordered_map<string,DataTypeStruct> sideSelDatatypes;
     for (int j=0; j<m_sideSelections[i].size(); j++){
-      m_sideSelections[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
-      sideSelDatatypes.insert(pair<string,DataTypeStruct>(m_sideAlias[i][j].empty()?intToStr(j):m_sideAlias[i][j], m_sideSelections[i][j].m_datatype));
+      m_sideSelections[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+      sideSelDatatypes.insert(pair<string,DataTypeStruct>(m_sideAlias[i][j].empty()?intToStr(j+1):m_sideAlias[i][j], m_sideSelections[i][j].m_datatype));
     }
     m_sideDatatypes.insert(pair< string, unordered_map<string,DataTypeStruct> >(intToStr(i+1),sideSelDatatypes));
   }
   for (int i=0; i<m_sideFilters.size(); i++)
-    m_sideFilters[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+    m_sideFilters[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  if (m_filter){
+    m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+    //m_filter->mergeExprConstNodes();
+  }
+  for (int i=0; i<m_selections.size(); i++){
+    //trace(DEBUG, "Analyzing selection '%s' (%d), found %d\n", m_selections[i].m_expStr.c_str(), i, found);
+    m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  }
+  for (int i=0; i<m_groups.size(); i++)
+    m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  for (int i=0; i<m_sorts.size(); i++)
+    m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  for (unordered_map< string,ExpressionC >::iterator it=m_aggFuncExps.begin(); it!=m_aggFuncExps.end(); ++it)
+    it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  for (int i=0; i<m_anaEvaledExp.size(); i++)
+    for (int j=0; j<m_anaEvaledExp[i].size(); j++)
+      m_anaEvaledExp[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   if (m_outputfileexp)
-    m_outputfileexp->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype);
+    m_outputfileexp->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
 }
 
 int QuerierC::searchNextReg()

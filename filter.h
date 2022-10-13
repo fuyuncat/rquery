@@ -61,7 +61,7 @@ class FilterC
     void dump();
     bool containsColId(int colId); // detect if predication contains special colId
     FilterC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
-    bool analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype); // analyze column ID & name from metadata
+    bool analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes); // analyze column ID & name from metadata
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     bool containAnaFunc() const; // check if the expression contains analytic function

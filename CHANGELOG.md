@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.97] 2022-10-13
+   Enhancement: New parameter added to trim/trimleft/trimright to indicate should trim all repeated characters or only trim once. <br/>
    # [0.962] 2022-10-13
    New feature: New function: todate(str[,dateformat]) : Normal function. Conver any string to date. <br/>
    Fixed bug: Variable @R does not get correct data type. <br/>

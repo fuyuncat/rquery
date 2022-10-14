@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.963"
+#define VERSION "v0.97"
 
 #define UNKNOWN 0
 
@@ -310,7 +310,7 @@ string trim_pair(const string & str, const string & pair);
 string trim_left(const string & str, char c = ' ', bool repeat=false);
 string trim_right(const string & str, char c = ' ', bool repeat=false);
 string trim_one(const string & str, char c = ' ');
-string trim(const string & str, char c = ' ');
+string trim(const string & str, char c = ' ', bool repeat=true);
 string trim_copy(const string & str);
 string upper_copy(const string & str);
 string lower_copy(const string & str);

@@ -1124,11 +1124,12 @@ bool FunctionC::runRandstr(vector<string>* fieldvalues, map<string,string>* varv
 
 bool FunctionC::runTrimleft(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() != 1 && m_params.size() != 2){
-    trace(ERROR, "trimleft(str[,char]) function accepts only one or two parameters.\n");
+  if (m_params.size() != 1 && m_params.size() != 2 && m_params.size() != 3){
+    trace(ERROR, "trimleft(str[,char][,repeat(1|0)]) function accepts only one or two or three parameters.\n");
     return false;
   }
-  string sStr, sChar=" ";
+  string sStr, sChar=" ", sRepeat;
+  bool repeat=true;
   if (m_params.size() > 0){
     if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){ 
       trace(ERROR, "Failed to run trimleft(%s)!\n", m_params[0].m_expStr.c_str());
@@ -1143,19 +1144,27 @@ bool FunctionC::runTrimleft(vector<string>* fieldvalues, map<string,string>* var
         trace(ERROR, "The second parameter of trimleft should only be one char!\n");
         return false;
       }
+      if (m_params.size() > 2){ 
+        if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRepeat, dts, true)){ 
+          trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+          return false;
+        }
+        repeat=(sRepeat.compare("0")!=0);
+      }
     }
   }
-  sResult = trim_left(sStr, sChar[0], true);
+  sResult = trim_left(sStr, sChar[0], repeat);
   return true;
 }
 
 bool FunctionC::runTrimright(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() != 1 && m_params.size() != 2){
-    trace(ERROR, "trimright(str[,char]) function accepts only one or two parameters.\n");
+  if (m_params.size() != 1 && m_params.size() != 2 && m_params.size() != 3){
+    trace(ERROR, "trimright(str[,char][,repeat(1|0)]) function accepts only one or two or three parameters.\n");
     return false;
   }
-  string sStr, sChar=" ";
+  string sStr, sChar=" ", sRepeat;
+  bool repeat=true;
   if (m_params.size() > 0){
     if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){ 
       trace(ERROR, "Failed to run trimright(%s)!\n", m_params[0].m_expStr.c_str());
@@ -1170,19 +1179,27 @@ bool FunctionC::runTrimright(vector<string>* fieldvalues, map<string,string>* va
         trace(ERROR, "The second parameter of trimright should only be one char!\n");
         return false;
       }
+      if (m_params.size() > 2){ 
+        if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRepeat, dts, true)){ 
+          trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+          return false;
+        }
+        repeat=(sRepeat.compare("0")!=0);
+      }
     }
   }
-  sResult = trim_right(sStr, sChar[0], true);
+  sResult = trim_right(sStr, sChar[0], repeat);
   return true;
 }
 
 bool FunctionC::runTrim(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() != 1 && m_params.size() != 2){
-    trace(ERROR, "trim(str[,char]) function accepts only one or two parameters.\n");
+  if (m_params.size() != 1 && m_params.size() != 2 && m_params.size() != 3){
+    trace(ERROR, "trim(str[,char][,repeat(1|0)]) function accepts only one or two or three parameters.\n");
     return false;
   }
-  string sStr, sChar=" ";
+  string sStr, sChar=" ", sRepeat;
+  bool repeat=true;
   if (m_params.size() > 0){
     if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){ 
       trace(ERROR, "Failed to run trim(%s)!\n", m_params[0].m_expStr.c_str());
@@ -1197,9 +1214,16 @@ bool FunctionC::runTrim(vector<string>* fieldvalues, map<string,string>* varvalu
         trace(ERROR, "The second parameter of trim should only be one char!\n");
         return false;
       }
+      if (m_params.size() > 2){ 
+        if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRepeat, dts, true)){ 
+          trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+          return false;
+        }
+        repeat=(sRepeat.compare("0")!=0);
+      }
     }
   }
-  sResult = trim(sStr, sChar[0]);
+  sResult = trim(sStr, sChar[0], repeat);
   return true;
 }
 

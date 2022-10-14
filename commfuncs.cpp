@@ -720,13 +720,13 @@ string trim_pair(const string & str, const string & pair)
     return str;
 }
 
-string trim(const string & str, char c)
+string trim(const string & str, char c, bool repeat)
 {
   //string newstr = trim_one(str, c);
   //while (newstr.length() != str.length())
   //  newstr = trim_one(str, c);
   //return newstr;
-  return trim_left(trim_right(str,c,true),c,true);
+  return trim_left(trim_right(str,c,repeat),c,repeat);
 }
 
 string trim_right(const string & str, char c, bool repeat)

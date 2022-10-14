@@ -347,6 +347,14 @@
    ```
      bbb   'bbb  '
    ```
+   One more example:<br/>
+   ```
+   echo "aaa,|||bbb|||" | rq -q "p d/,/ | s @2, trimleft(@2,'|',0)"
+   ```
+   Returns result:<br/>
+   ```
+   |||bbb|||       ||bbb|||
+   ```
 - trimright(str[,char]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    ```
    echo "aaa,  bbb  " | rq -q "p d/,/ | s @2, '\''+trimright(@2,' ')+'\''"
@@ -355,6 +363,14 @@
    ```
      bbb   '  bbb'
    ```
+   One more example:<br/>
+   ```
+   echo "aaa,|||bbb|||" | rq -q "p d/,/ | s @2, trimright(@2,'|',0)"
+   ```
+   Returns result:<br/>
+   ```
+   |||bbb|||       |||bbb||
+   ```
 - trim(str[,char]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    ```
    echo "aaa,  bbb  " | ./rq -q "p d/,/ | s @2, '\''+trim(@2,' ')+'\''"
@@ -362,6 +378,14 @@
    Returns result:<br/>
    ```
      bbb   'bbb'
+   ```
+   One more example:<br/>
+   ```
+   echo "aaa,|||bbb|||" | rq -q "p d/,/ | s @2, trim(@2,'|',0)"
+   ```
+   Returns result:<br/>
+   ```
+   |||bbb|||       ||bbb||
    ```
 - camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
    ```

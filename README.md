@@ -108,9 +108,9 @@ Functions can be used in the expression. We current provide some essential norma
    - NocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - countword(str,[ingnore_quoters]) : Normal function. Get the number of word in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br />
    - getword(str,wordnum,[ingnore_quoters]) : Normal function. Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br />
-   - trimleft(str[,char]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br />
-   - trimright(str[,char]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
-   - trim(str[,char]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   - trimleft(str[,char][,repeat(1|0)]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br />
+   - trimright(str[,char][,repeat(1|0)]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   - trim(str[,char][,repeat(1|0]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    - datatype(expr) : Normal function. Return the date type of the expression.<br/>
    - toint(str) : Normal function. Conver a string to integer.<br/>
    - tolong(str) : Normal function. Conver a string to long.<br/>

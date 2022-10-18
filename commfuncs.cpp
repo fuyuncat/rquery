@@ -2109,6 +2109,10 @@ short int encodeFunction(string str)
     return STRLEN;
   else if(sUpper.compare("COMPARESTR")==0)
     return COMPARESTR;
+  else if(sUpper.compare("COMPARENUM")==0)
+    return COMPARENUM;
+  else if(sUpper.compare("COMPAREDATE")==0)
+    return COMPAREDATE;
   else if(sUpper.compare("NOCASECOMPARESTR")==0)
     return NOCASECOMPARESTR;
   else if(sUpper.compare("REPLACE")==0)

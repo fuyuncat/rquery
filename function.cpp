@@ -266,6 +266,8 @@ bool FunctionC::analyzeExpStr()
     case INSTR:
     case COMPARESTR:
     case NOCASECOMPARESTR:
+    case COMPARENUM:
+    case COMPAREDATE:
     case STRLEN:
     case COUNT:
     case UNIQUECOUNT:
@@ -737,6 +739,52 @@ bool FunctionC::runChar(vector<string>* fieldvalues, map<string,string>* varvalu
     return true;
   }else{
     trace(ERROR, "Failed to run char(%s)\n", m_params[0].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runComparenum(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "comparenum(num1, num2) function accepts only two parameters.\n");
+    return false;
+  }
+  string str1, str2; 
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, str1, dts, true) && isDouble(str1) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, str2, dts, true) && isDouble(str2)){
+    double num1 = atof(str1.c_str()), num2 = atof(str2.c_str());
+    sResult = intToStr(num1>num2?1:(num1==num2?0:-1));
+    dts.datatype = LONG;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run comparenum(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runComparedate(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2 && m_params.size() != 3){
+    trace(ERROR, "comparedater(date1, date2[, date_format]) function accepts only two or three parameters.\n");
+    return false;
+  }
+  string date1, date2, sFmt; 
+  DataTypeStruct dts1, dts2;
+  int offSet;
+  if (m_params.size() == 3 && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sFmt, dts, true)){
+    dts1.extrainfo = sFmt;
+    dts2.extrainfo = sFmt;
+  }
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, date1, dts, true) && isDate(date1, offSet, dts1.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, date2, dts, true) && isDate(date2, offSet, dts2.extrainfo)){
+    if (dts1.extrainfo.compare(dts2.extrainfo)!=0){
+      trace(ERROR, "Date format %s of %s doesnot match date format %s of %s!\n", dts1.extrainfo.c_str(), m_params[0].m_expStr.c_str(), dts2.extrainfo.c_str(), m_params[1].m_expStr.c_str());
+      return false;
+    }
+    dts1.datatype = DATE;
+    sResult = intToStr(anyDataCompare(date1, date2, dts1));
+    dts.datatype = LONG;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run comparedater(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
     return false;
   }
 }
@@ -1577,6 +1625,12 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case COMPARESTR:
       getResult = runComparestr(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case COMPARENUM:
+      getResult = runComparenum(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case COMPAREDATE:
+      getResult = runComparedate(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case NOCASECOMPARESTR:
       getResult = runNoCaseComparestr(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

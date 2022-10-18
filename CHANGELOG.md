@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.972] 2022-10-19
+   New feature: New function comparenum(num1,num2) : Normal function. Compare two numbers; comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates. <br/>
    # [0.971] 2022-10-19
    Enhancement: Dynamic variables can quote other variables defined previously, e.g. v1:0:tolong(@v1)+tolong(switch(@raw,'#####',1,0));v2:1:@v2+@line;v3:0:tolong(@v1)+tolong(@v2). <br/>
    Fixed bug: Expression priority is wrong when multiple subtract operations involved. <br/>

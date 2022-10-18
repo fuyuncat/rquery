@@ -403,6 +403,22 @@
    ```
    Asdfwd,sfsea2123wd
    ```
+- comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
+   ```
+   rq -q "s comparenum(5.8,1.8)" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates, return -1 if date1 less than date2, return 0 if date1 equal to date2, return 1 if date1 greater than date2. date1 and date2 should have the same dateformat.<br />
+   ```
+   rq -q "s comparedate('2022/Aug/18 18:18:58', '2022/Aug/18 18:58:18')" " "
+   ```
+   Returns result:<br/>
+   ```
+   -1
+   ```
 - toint(str) : Normal function. Conver a string to integer.<br />
    ```
    rq -q "s toint('888')" " "

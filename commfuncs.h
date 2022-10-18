@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.971"
+#define VERSION "v0.972"
 
 #define UNKNOWN 0
 
@@ -157,6 +157,8 @@ using namespace std;
 #define MIN 105
 #define AVERAGE 106
 #define GROUPLIST 107
+#define COMPARENUM 108
+#define COMPAREDATE 109
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203

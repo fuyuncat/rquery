@@ -370,7 +370,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
       newNode->m_operate = encodeOperator(expStr.substr(iPos,1));
       newNode->m_expStr = expStr.substr(iPos,1);
       if (parentNode){
-        if (operatorPriority(newNode->m_operate)>=operatorPriority(parentNode->m_operate)){
+        if (operatorPriority(newNode->m_operate)>operatorPriority(parentNode->m_operate)){
           //parentNode->m_rightNode = newNode;
           ExpressionC* tmpNode = new ExpressionC();
           newNode->m_leftNode = tmpNode;
@@ -382,7 +382,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
           if (!BuildTree(expStr.substr(0,iPos), tmpNode, parentNode))
             return NULL;
           ExpressionC* pNode = parentNode;
-          while (pNode && operatorPriority(newNode->m_operate)<operatorPriority(pNode->m_operate)){
+          while (pNode && operatorPriority(newNode->m_operate)<=operatorPriority(pNode->m_operate)){
             if (!pNode->m_parentNode){
               newNode->m_leftNode = pNode;
               pNode->m_parentNode = newNode;
@@ -390,7 +390,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
               break;
             }
             pNode = pNode->m_parentNode;
-            if (operatorPriority(newNode->m_operate)>=operatorPriority(pNode->m_operate)){
+            if (operatorPriority(newNode->m_operate)>operatorPriority(pNode->m_operate)){
               newNode->m_leftNode = pNode->m_rightNode;
               pNode->m_rightNode->m_parentNode = newNode;
               newNode->m_parentNode = pNode;

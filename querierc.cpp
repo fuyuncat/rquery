@@ -838,7 +838,7 @@ void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,st
     unordered_map< string, ofstream* >::iterator it = m_outputfiles.find(sResult);
     if (it == m_outputfiles.end()){
       ofstream* ofs=new ofstream();
-      ofs->open(sResult, std::ofstream::out | m_outputmode==OVERWRITE? ofstream::trunc : ofstream::app);
+      ofs->open(sResult, m_outputmode==OVERWRITE? (std::ofstream::out | ofstream::trunc) : ofstream::app);
       m_outputfiles.insert(pair< string, ofstream* >(sResult, ofs));
       m_resultfiles.push_back(ofs);
     }else
@@ -1040,6 +1040,7 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
     for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
       it->second.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
       m_uservariables[it->first] = sResult;
+      varValues[it->first] = sResult;
     }
   }
   // doing side work

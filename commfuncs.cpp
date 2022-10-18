@@ -2249,11 +2249,11 @@ short int operatorPriority(int iOperator)
   case PLUS:
     return 1;
   case SUBTRACT:
-    return 2;
+    return 1;
   case TIMES:
     return 3;
   case DIVIDE:
-    return 4;
+    return 3;
   case POWER:
     return 5;
   default:

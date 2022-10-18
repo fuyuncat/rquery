@@ -389,10 +389,10 @@ void processQuery(string sQuery, QuerierC & rq)
     //trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
     rq.assignLimitStr(query["l"]);
   }
-  if (query.find(">") != query.end()){
-    rq.setOutputFiles(query[">"], OVERWRITE);
-  }else if (query.find(">>") != query.end()){
+  if (query.find(">>") != query.end()){
     rq.setOutputFiles(query[">>"], APPEND);
+  }else if (query.find(">") != query.end()){
+    rq.setOutputFiles(query[">"], OVERWRITE);
   }
 }
 

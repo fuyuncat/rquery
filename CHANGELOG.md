@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.971] 2022-10-19
+   Enhancement: Dynamic variables can quote other variables defined previously, e.g. v1:0:tolong(@v1)+tolong(switch(@raw,'#####',1,0));v2:1:@v2+@line;v3:0:tolong(@v1)+tolong(@v2). <br/>
+   Fixed bug: Expression priority is wrong when multiple subtract operations involved. <br/>
+   Fixed bug: Output file append mode does not work properly. <br/>
    # [0.97] 2022-10-18
    New feature: Variable can be a dynamic variable now (not supported in aggregation and analytic functions yet). e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. <br/>
    # [0.97] 2022-10-13

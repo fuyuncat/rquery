@@ -1030,6 +1030,21 @@
    ```
      printf("strptime is defined!\n");
    ```
+   Dynamic variables example:<br/>
+   ```
+   rq -v "v1:0:tolong(@v1)+tolong(switch(@raw,'#####',1,0));v2:1:@v2+@line" -q "s @v1,@v2,@raw" samples/test_file.txt
+   ```
+   Returns result:<br/>
+   ```
+   0       1       aaaaa
+   0       2       bbbbb
+   0       4       ccccc
+   0       7       #####
+   1       11      ddddd
+   1       16      eeeee
+   1       22      fffff
+   1       29      #####
+   ```
 - Get all INFO WARNING and ERROR messages and write them to a logfile<br/>
    ```
    rq -m info -l /tmp/rquery.log -v folder:$(pwd) -q "s @raw | filter @raw = @folder/'*'" file

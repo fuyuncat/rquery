@@ -600,9 +600,9 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
 void QuerierC::setUserVars(string variables)
 {
   trace(DEBUG, "Setting variables from '%s' !\n", variables.c_str());
-  vector<string> vVariables = split(variables,' ',"''()",'\\',{'(',')'},false,true);
+  vector<string> vVariables = split(variables,';',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vVariables.size(); i++){
-    vector<string> vNameVal = split(vVariables[i],':',"''()",'\\',{'(',')'},false,true);
+    vector<string> vNameVal = split(trim_copy(vVariables[i]),':',"''()",'\\',{'(',')'},false,true);
     if (vNameVal.size()<2){
       trace(ERROR, "Incorrect variable format!\n", vVariables[i].c_str());
       continue;
@@ -614,6 +614,10 @@ void QuerierC::setUserVars(string variables)
       continue;
     }
     m_uservariables.insert(pair<string, string> ("@"+sName,sValue));
+    if (vNameVal.size()>2){ // dynamic variable has an expression
+      ExpressionC tmpExp = ExpressionC(trim_copy(vNameVal[2]));
+      m_uservarexprs.insert(pair<string, ExpressionC> ("@"+sName,tmpExp));
+    }
   }
 }
 
@@ -1030,6 +1034,14 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
   //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
   //dumpMap(varValues);
   bool matched = (!m_filter || m_filter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &m_sideDatasets, &m_sideDatatypes, sideMatchedRowIDs));
+  if (matched) {// calculate dynamic variables
+    string sResult;
+    DataTypeStruct dts;
+    for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
+      it->second.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+      m_uservariables[it->first] = sResult;
+    }
+  }
   // doing side work
   doSideWorks(&fieldValues, &varValues, &aggGroupProp, &anaFuncData);
 #ifdef __DEBUG__
@@ -1188,6 +1200,8 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
   }
   if (m_bToAnalyzeSortMacro)
     analyzeSortStr();
+  for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it)
+    it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for (int i=0; i<m_sideSelections.size(); i++){
     unordered_map<string,DataTypeStruct> sideSelDatatypes;
     for (int j=0; j<m_sideSelections[i].size(); j++){

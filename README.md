@@ -49,7 +49,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - sort <field or expression [asc|desc],...> : Sorting keys to decide order of the output records<br />
          - limt <n | bottomN,topN> : Limited number records to be printed<br />
          - unique : Make the returned resutl unique.<br />
-         - var "name1:value1[:datatyp1][ name2:value2[:datatyp2]..]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
+         - -v|--variable \"name1:value1[:expression1][;name2:value2[:expression2..]]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. Dynamic variable is not supported in the aggregation & analytic functions in current version.<br />
          - run [query] : Run the preprocessed query of a provided query (refering to below part)<br />
 - options
    - --help|-h<br />

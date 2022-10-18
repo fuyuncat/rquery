@@ -808,7 +808,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         }else{
           //trace(ERROR, "Unrecognized variable(2) %s .\n", m_expStr.c_str());
           //m_expType = UNKNOWN;
-          m_datatype.datatype = UNKNOWN;
+          m_datatype.datatype = ANY;
         }
         //trace(DEBUG, "Expression '%s' type is %s, data type is '%s'\n", m_expStr.c_str(), decodeExptype(m_expType).c_str(),decodeDatatype(m_datatype.datatype).c_str());
         return m_datatype;

@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.97] 2022-10-18
+   New feature: Variable can be a dynamic variable now (not supported in aggregation and analytic functions yet). e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. <br/>
    # [0.97] 2022-10-13
    Enhancement: New parameter added to trim/trimleft/trimright to indicate should trim all repeated characters or only trim once. <br/>
    # [0.962] 2022-10-13

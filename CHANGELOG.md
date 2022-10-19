@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.972] 2022-10-20
+   Enhancement: Dynamic variables will be reset for each file when processing multiple files. <br/>
    # [0.972] 2022-10-19
    New feature: New function comparenum(num1,num2) : Normal function. Compare two numbers; comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates. <br/>
    # [0.971] 2022-10-19

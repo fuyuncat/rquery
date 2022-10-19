@@ -171,6 +171,7 @@ class QuerierC
     vector<DataTypeStruct> m_fieldtypes;       // field datatype in sequence
     DataTypeStruct m_rawDatatype;  // @raw data type for special cases, e.g. each line contains only one data
     map<string, DataTypeStruct> m_fieldntypes; // field datatype by names, set by setFieldDatatype
+    string m_uservarstr;
     map<string, string> m_uservariables; // User defined variables, map to initial/calculated values
     map<string, ExpressionC> m_uservarexprs; // User defined dynamic variables expressions
     vector<string>  m_selnames; // selection names

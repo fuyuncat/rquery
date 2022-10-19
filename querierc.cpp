@@ -600,6 +600,9 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
 void QuerierC::setUserVars(string variables)
 {
   trace(DEBUG, "Setting variables from '%s' !\n", variables.c_str());
+  m_uservarstr = variables;
+  m_uservariables.clear();
+  m_uservarexprs.clear();
   vector<string> vVariables = split(variables,';',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vVariables.size(); i++){
     vector<string> vNameVal = split(trim_copy(vVariables[i]),':',"''()",'\\',{'(',')'},false,true);
@@ -627,6 +630,7 @@ void QuerierC::setFileName(string filename)
   m_fileid++;
   m_fileline = 0;
   m_detectedTypeRows = 0;  // force to detect data type again
+  setUserVars(m_uservarstr); // reset user defined variables for each file.
 }
 
 void QuerierC::setOutputFormat(short int format)
@@ -2556,6 +2560,7 @@ void QuerierC::clear()
   m_fieldtypes.clear();
   m_fieldntypes.clear();
   m_uservariables.clear();
+  m_uservarexprs.clear();
   m_selnames.clear();
   m_selections.clear();
   m_sideSelections.clear();
@@ -2577,6 +2582,7 @@ void QuerierC::clear()
   m_colToRowNames.clear();
   m_searchMode = REGSEARCH;
   m_readmode = READBUFF;
+  m_uservarstr = "";
   m_quoters = "";
   m_nameline = false;
   m_bEof = false;

@@ -77,7 +77,7 @@ void usage()
   printf("\t-o|--outputformat <text|json> -- Provide output format, default is text.\n");
   printf("\t-d|--detecttyperows <N> : How many matched rows will be used for detecting data types, default is 1.\n");
   printf("\t-i|--delimiter <string> : Specify the delimiter of the fields, TAB will be adapted if this option is not provided\n");
-  printf("\t-v|--variable \"name1:value1[:expression1][;name2:value2[:expression2..]]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row.\n");
+  printf("\t-v|--variable \"name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]]..\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files.\n");
   printf("More information can be found at https://github.com/fuyuncat/rquery .\n");
 }
 
@@ -711,7 +711,7 @@ int main(int argc, char *argv[])
         cout << "recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n";
         cout << "format <text|json> -- Provide output format, default is text.\n";
         cout << "delimiter <string> -- Specify the delimiter of the fields, TAB will be adapted if this option is not provided.\n";
-        cout << "var \"name1:value1[:expression1][;name2:value2[:expression2]..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row.\n\n";
+        cout << "var \"name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]]..\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files.\n\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("load ")==0){
         string strParam = trim_copy(lineInput).substr(string("load ").length());

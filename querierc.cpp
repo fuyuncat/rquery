@@ -601,8 +601,8 @@ void QuerierC::setUserVars(string variables)
 {
   trace(DEBUG, "Setting variables from '%s' !\n", variables.c_str());
   m_uservarstr = variables;
-  m_uservariables.clear();
-  m_uservarexprs.clear();
+  //m_uservariables.clear();
+  //m_uservarexprs.clear();
   vector<string> vVariables = split(variables,';',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vVariables.size(); i++){
     vector<string> vNameVal = split(trim_copy(vVariables[i]),':',"''()",'\\',{'(',')'},false,true);
@@ -616,10 +616,18 @@ void QuerierC::setUserVars(string variables)
       trace(ERROR, "%s is a reserved word, cannot be used as a variable name!\n", sName.c_str());
       continue;
     }
-    m_uservariables.insert(pair<string, string> ("@"+sName,sValue));
-    if (vNameVal.size()>2){ // dynamic variable has an expression
+    bool bGlobal=false;
+    if (vNameVal.size()>3) // whether dynamic variable is a global variable for multiple files
+      bGlobal = (upper_copy(trim_copy(vNameVal[3])).compare("G")==0);
+    string sVName = "@"+sName;
+    if (m_uservariables.find(sVName) != m_uservariables.end()){
+      if (!bGlobal) // reset value for local variables
+        m_uservariables[sVName] = sValue;
+    }else
+      m_uservariables.insert(pair<string, string> (sVName,sValue));
+    if (vNameVal.size()>2 && m_uservarexprs.find(sVName) == m_uservarexprs.end()){ // dynamic variable has an expression
       ExpressionC tmpExp = ExpressionC(trim_copy(vNameVal[2]));
-      m_uservarexprs.insert(pair<string, ExpressionC> ("@"+sName,tmpExp));
+      m_uservarexprs.insert(pair<string, ExpressionC> (sVName,tmpExp));
     }
   }
 }

@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.972"
+#define VERSION "v0.973"
 
 #define UNKNOWN 0
 

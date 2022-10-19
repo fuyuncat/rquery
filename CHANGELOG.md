@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.973] 2022-10-20
+   Enhancement: Dynamic variables can be set to be a global when processing multiple files. e.g. v1:0:@v1+1:g  <br/>
    # [0.972] 2022-10-20
    Enhancement: Dynamic variables will be reset for each file when processing multiple files. <br/>
    # [0.972] 2022-10-19

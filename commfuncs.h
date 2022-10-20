@@ -200,7 +200,7 @@ template< class T > void SafeDeleteArray( T*& pVal )
 }
 
 struct DataTypeStruct{
-  int datatype=UNKNOWN;
+  short int datatype=UNKNOWN;
   string extrainfo="";  // for DATE type only so far, the format of the DATE 
 
   // We only need these operators when this struct is being used as Key of Map

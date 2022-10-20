@@ -153,7 +153,7 @@ class QuerierC
     bool m_bToAnalyzeSortMacro; // whether need to analyze marco in sort
     
     vector<vector<int>> m_colToRows; // the selection list of each COLTOROW marco function
-    vector<string> m_colToRowNames; // filed names of COLTOROW marco function
+    vector<string> m_colToRowNames; // field names of COLTOROW marco function
 
     vector< vector<ExpressionC> > m_sideSelections; // side query selections
     vector< vector<string> > m_sideAlias; // side query selections
@@ -209,6 +209,7 @@ class QuerierC
     void getSideDatarow(unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);
     bool matchFilter(const vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);  // eval expression in aggregation paramter and store in a data set
+    void appendResultSet(vector<string> vResult); // add a row to result set, doing columns to rows if coltorow involved
     bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow, vector< vector<string> > & resultSet); // add a data row to a result set
     //void mergeSort(int iLeft, int iMid, int iRight);
     void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);

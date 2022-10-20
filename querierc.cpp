@@ -343,8 +343,12 @@ bool QuerierC::analyzeSelString(){
     else
       m_selnames.push_back(m_selections[i].getEntireExpstr());
   bool bGroupFunc = false, bNonGroupFuncSel = false;
+  m_colToRows.clear();
+  m_colToRowNames.clear();
+  // process COLTOROW first, in case FOREACH is a parameter of COLTOROW
   for (int i=0; i<m_selections.size(); i++){
     // transfer parameters of COLTOROW macro function to selections
+    //int iExpandedCols = 0; // number of expended fields when COLTOROW  involved. Need to be skipped in the loop
     if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->m_funcID==COLTOROW){
       m_colToRowNames.push_back(m_selnames[i]);
       vector<int> colToRowSels;
@@ -357,7 +361,11 @@ bool QuerierC::analyzeSelString(){
       m_selections.erase(m_selections.begin()+i);
       m_selections.insert(m_selections.begin()+i,params.begin(),params.end());
       m_colToRows.push_back(colToRowSels);
+      i += params.size()-1;
     }
+  }
+  // then process FOREACH
+  for (int i=0; i<m_selections.size(); i++){
     if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isAnalytic())
       trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", m_selections[i].m_Function->m_expStr.c_str(),m_selections[i].m_Function->m_anaParaNums[0],m_selections[i].m_Function->m_params.size());
     //trace(DEBUG, "Got selection expression '%s'!\n", m_selections[i].getEntireExpstr().c_str());
@@ -858,6 +866,42 @@ void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,st
   }
 }
 
+void QuerierC::appendResultSet(vector<string> vResult)
+{
+  int iRowNumFromCols = 0;
+  for (int i=0; i<m_colToRows.size(); i++)
+    iRowNumFromCols = max(iRowNumFromCols, (int)m_colToRows[i].size());
+  if (iRowNumFromCols>0){ // convert cols to rows
+    int k=0;
+    vector<string> datas;
+    vector< vector<string> > tmpResult;
+    for (int j=1; j<vResult.size(); j++){
+      if(k<m_colToRows.size() && j-1>=m_colToRows[k][0] && j-1<=m_colToRows[k][m_colToRows[k].size()-1]){ // the selection is a part of a COLTOROW function
+        datas.push_back(vResult[j]);
+        if (j-1==m_colToRows[k][m_colToRows[k].size()-1] || j-1==vResult.size()-1){ // if current selection is the last one, complement empty strings
+          datas.insert(datas.end(),iRowNumFromCols-(int)datas.size(),"");
+          tmpResult.push_back(datas);
+          datas.clear();
+          k++;
+        }
+      }else{ // the selection is not a part of any COLTOROW function
+        datas.push_back(vResult[j]);
+        datas.insert(datas.end(),iRowNumFromCols-1,"");
+        tmpResult.push_back(datas);
+        datas.clear();
+      }
+    }
+    for (int j=0;j<iRowNumFromCols;j++){
+      datas.clear();
+      datas.push_back("");
+      for (int k=0;k<tmpResult.size();k++)
+        datas.push_back(tmpResult[k][j]);
+      m_results.push_back(datas);
+    }
+  }else
+    m_results.push_back(vResult);
+}
+
 // add a data row to a result set
 bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow, vector< vector<string> > & resultSet)
 {
@@ -891,7 +935,10 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
     }
     vResults.push_back(sResult);
   }
-  resultSet.push_back(vResults);
+  if (&m_results == &resultSet)
+    appendResultSet(vResults);
+  else
+    resultSet.push_back(vResults);
   // add output file mapping with result.
   if (m_outputmode != STANDARD && &m_results == &resultSet && m_outputfileexp){
     addResultOutputFileMap(fieldvalues, varvalues, aggFuncs, anaFuncs, &matchedSideDatarow);
@@ -1173,7 +1220,7 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
 #endif // __DEBUG__
       }
     }else{
-      m_results.push_back(rowValue);
+      appendResultSet(rowValue);
       addResultOutputFileMap(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow);
       vector<ExpressionC> vKeys;
       for (int i=0;i<m_sorts.size();i++)
@@ -1573,7 +1620,7 @@ bool QuerierC::group()
         m_selections[i].evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
       vResults.push_back(sResult);
     }
-    m_results.push_back(vResults);
+    appendResultSet(vResults);
     addResultOutputFileMap(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow);
 
     vResults.clear();
@@ -2046,7 +2093,7 @@ bool QuerierC::analytic()
         trace(DEBUG, "Selection '%s'(%d) contains analytic function, assign result '%s' (was '%s')\n", m_sorts[j].sortKey.getEntireExpstr().c_str(),j,sResult.c_str(),tmpResults[i][j+1].c_str());
         tmpSortKeys[i][j] = sResult;
       }
-    m_results.push_back(tmpResults[i]); 
+    appendResultSet(tmpResults[i]); 
     m_sortKeys.push_back(tmpSortKeys[i]);
     addResultOutputFileMap(&vfieldvalues, &varValues, &dummyAggGroupProp, &anaFinalResult, &matchedSideDatarow);
   }
@@ -2083,7 +2130,7 @@ void QuerierC::unique()
   }
   m_results.clear();
   for (int i=0;i<tmpResult.size();i++)
-    m_results.push_back(tmpResult[i]);
+    appendResultSet(tmpResult[i]);
   trace(DEBUG, "Result number after unique: %d.\n",m_results.size());
 #ifdef __DEBUG__
   m_uniquetime += (curtime()-thistime);
@@ -2377,38 +2424,38 @@ void QuerierC::output()
   long int thistime = curtime();
 #endif // __DEBUG__
   //printf("Result Num: %d\n",m_results.size());
-  int iRowNumFromCols = 0;
-  for (int i=0; i<m_colToRows.size(); i++)
-    iRowNumFromCols = max(iRowNumFromCols, (int)m_colToRows[i].size());
+  //int iRowNumFromCols = 0;
+  //for (int i=0; i<m_colToRows.size(); i++)
+  //  iRowNumFromCols = max(iRowNumFromCols, (int)m_colToRows[i].size());
   for (int i=0; i<m_results.size(); i++){
-    if (iRowNumFromCols>0){ // convert cols to rows
-      int k=0;
-      vector<string> datas;
-      vector< vector<string> > tmpResult;
-      for (int j=1; j<m_results[i].size(); j++){
-        if(k<m_colToRows.size() && j-1>=m_colToRows[k][0] && j-1<=m_colToRows[k][m_colToRows[k].size()-1]){ // the selection is a part of a COLTOROW function
-          datas.push_back(m_results[i][j]);
-          if (j-1==m_colToRows[k][m_colToRows[k].size()-1] || j-1==m_results[i].size()-1){ // if current selection is the last one, complement empty strings
-            datas.insert(datas.end(),iRowNumFromCols-(int)datas.size(),"");
-            tmpResult.push_back(datas);
-            datas.clear();
-            k++;
-          }
-        }else{ // the selection is not a part of any COLTOROW function
-          datas.push_back(m_results[i][j]);
-          datas.insert(datas.end(),iRowNumFromCols-1,"");
-          tmpResult.push_back(datas);
-          datas.clear();
-        }
-      }
-      for (int j=0;j<iRowNumFromCols;j++){
-        datas.clear();
-        datas.push_back("");
-        for (int k=0;k<tmpResult.size();k++)
-          datas.push_back(tmpResult[k][j]);
-        formatoutput(datas, i);
-      }
-    }else
+    //if (iRowNumFromCols>0){ // convert cols to rows
+    //  int k=0;
+    //  vector<string> datas;
+    //  vector< vector<string> > tmpResult;
+    //  for (int j=1; j<m_results[i].size(); j++){
+    //    if(k<m_colToRows.size() && j-1>=m_colToRows[k][0] && j-1<=m_colToRows[k][m_colToRows[k].size()-1]){ // the selection is a part of a COLTOROW function
+    //      datas.push_back(m_results[i][j]);
+    //      if (j-1==m_colToRows[k][m_colToRows[k].size()-1] || j-1==m_results[i].size()-1){ // if current selection is the last one, complement empty strings
+    //        datas.insert(datas.end(),iRowNumFromCols-(int)datas.size(),"");
+    //        tmpResult.push_back(datas);
+    //        datas.clear();
+    //        k++;
+    //      }
+    //    }else{ // the selection is not a part of any COLTOROW function
+    //      datas.push_back(m_results[i][j]);
+    //      datas.insert(datas.end(),iRowNumFromCols-1,"");
+    //      tmpResult.push_back(datas);
+    //      datas.clear();
+    //    }
+    //  }
+    //  for (int j=0;j<iRowNumFromCols;j++){
+    //    datas.clear();
+    //    datas.push_back("");
+    //    for (int k=0;k<tmpResult.size();k++)
+    //      datas.push_back(tmpResult[k][j]);
+    //    formatoutput(datas, i);
+    //  }
+    //}else
       formatoutput(m_results[i], i);
   }
 #ifdef __DEBUG__

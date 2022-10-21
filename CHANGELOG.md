@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.98] 2022-10-21
+   New feature: New function countstr(str,substr) : Normal function. count occurences of substr in str. <br/>
    # [0.973] 2022-10-21
    Enhancement: coltorow function works properly with foreach as a parameter when processing dynamic fields. <br/>
    # [0.973] 2022-10-20

@@ -131,6 +131,14 @@
    ```
    weq
    ```
+- countstr(str,substr) : Normal function. count occurences of substr in str.<br/>
+   ```
+   rq -q "s countstr(@raw,'123')" "asg123aad123,123;;wrew"
+   ```
+   Returns result:<br/>
+   ```
+   3
+   ```
 - findnth(str,sub[,Nth]) : Normal function. Find the position of Nth sub in str, if Nth is positive number, search from head, if Nth is negative, search from tail.<br />
    ```
    rq -q "s findnth(@raw,'me',1)" "meadsdfmeaasf me sfsme adfa me adf"

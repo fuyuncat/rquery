@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.973"
+#define VERSION "v0.98"
 
 #define UNKNOWN 0
 
@@ -159,6 +159,7 @@ using namespace std;
 #define GROUPLIST 107
 #define COMPARENUM 108
 #define COMPAREDATE 109
+#define COUNTSTR 110
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203
@@ -321,6 +322,7 @@ char lower_char(const char & c);
 string camelstr(const string & str); // convert a string to camel string
 string snakestr(const string & str); // convert a string to snake string
 string revertstr(const string & str);
+int countstr(const string & str, const string & substr); // count occurences of substr in str
 void replacestr(string & sRaw, const string & sReplace, const string & sNew);
 void replacestr(string & sRaw, const vector<string> & vReplace, const vector<string> & vNew);
 void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'});

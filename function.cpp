@@ -273,6 +273,7 @@ bool FunctionC::analyzeExpStr()
     case UNIQUECOUNT:
     case ISNULL:
     case COUNTWORD:
+    case COUNTSTR:
     case RANDOM:
     case RANK:
     case DENSERANK:
@@ -698,6 +699,22 @@ bool FunctionC::runGetword(vector<string>* fieldvalues, map<string,string>* varv
     }
   }else{
     trace(ERROR, "(2)Failed to run getword(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runCountstr(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "countstr(str,substr) function accepts only two parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sSub; 
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sSub, dts, true)){
+    sResult = intToStr(countstr(sRaw,sSub));
+    return true;
+  }else{
+    trace(ERROR, "(2)Failed to run countstr(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
     return false;
   }
 }
@@ -1503,7 +1520,7 @@ vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
   }else if (isInt(m_params[0].m_expStr))
     begin = max(1,min(maxFieldNum,atoi(m_params[0].m_expStr.c_str())));
   else{
-    trace(ERROR, "(1)Invalid begin ID for foreach macro function!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "(1)%s is an invalid begin ID for foreach macro function!\n", m_params[0].getEntireExpstr().c_str());
     return vExpr;
   }
   if (m_params[1].getEntireExpstr().find("%") != string::npos){
@@ -1558,7 +1575,7 @@ vector<ExpressionC> FunctionC::expandForeach(vector<ExpressionC> vExps)
   }else if (isInt(m_params[0].m_expStr))
     begin = max(1,min((int)vExps.size(),atoi(m_params[0].m_expStr.c_str())));
   else{
-    trace(ERROR, "(2)Invalid begin ID for foreach macro function!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "(2)%s is an invalid begin ID for foreach macro function!\n", m_params[0].getEntireExpstr().c_str());
     return vExpr;
   }
   if (m_params[1].getEntireExpstr().find("%") != string::npos){
@@ -1646,6 +1663,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case COUNTWORD:
       getResult = runCountword(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case COUNTSTR:
+      getResult = runCountstr(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case GETWORD:
       getResult = runGetword(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

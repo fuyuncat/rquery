@@ -757,6 +757,19 @@ string trim_one(const string & str, char c)
   return newstr;
 }
 
+// count occurences of substr in str
+int countstr(const string & str, const string & substr)
+{
+  int pos=0, count=0;
+  //trace(DEBUG, "counting '%s','%s' ...",str.c_str(),substr.c_str());
+  pos = str.find(substr, pos);
+  while (pos != string::npos){
+    count++;
+    pos = str.find(substr, pos+substr.length());
+  }
+  return count;
+}
+
 void replacestr(string & sRaw, const string & sReplace, const string & sNew)
 {
   int pos=0;
@@ -2125,6 +2138,8 @@ short int encodeFunction(string str)
     return COUNTWORD;
   else if(sUpper.compare("GETWORD")==0)
     return GETWORD;
+  else if(sUpper.compare("COUNTSTR")==0)
+    return COUNTSTR;
   else if(sUpper.compare("ZONECONVERT")==0)
     return ZONECONVERT;
   else if(sUpper.compare("RANDOM")==0)

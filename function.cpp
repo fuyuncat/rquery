@@ -128,7 +128,7 @@ bool FunctionC::isAggFunc() const
 
 bool FunctionC::isMacro() const
 {
-  return (m_funcID==FOREACH);
+  return (m_funcID==FOREACH || m_funcID==ANYCOL || m_funcID==ALLCOL);
 }
 
 bool FunctionC::isAnalytic() const
@@ -318,6 +318,8 @@ bool FunctionC::analyzeExpStr()
     case MINA:
     case FOREACH:
     case COLTOROW:
+    case ANYCOL:
+    case ALLCOL:
       m_datatype.datatype = ANY;
       break;
     default:{
@@ -349,7 +351,7 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
   m_fieldtypes = fieldtypes;
   for (int i=0; i<m_params.size(); i++){
     m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
-    //trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
+    trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
   }
   if (m_funcID == TRUNCDATE || m_funcID==GROUPLIST)
     m_datatype = m_params[0].m_datatype;
@@ -1494,17 +1496,17 @@ bool FunctionC::runLeast(vector<string>* fieldvalues, map<string,string>* varval
 }
 
 // expand foreach to a vector of expression
-// foreach(beginid,endid,macro_expr). $ stands for field, # stands for field sequence, % stands for the largest field sequence ID.
+// foreach(beginid,endid,macro_expr[,step]). $ stands for field, # stands for field sequence, % stands for the largest field sequence ID.
 vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
 {
   vector<ExpressionC> vExpr;
   trace(DEBUG,"(1)Expanding foreach expression '%s'\n",m_expStr.c_str());
-  if (m_funcID!=FOREACH){
+  if (m_funcID!=FOREACH && m_funcID!=ANYCOL && m_funcID!=ALLCOL){
     trace(ERROR, "(1)'%s' is not foreach macro function!\n", m_funcName.c_str());
     return vExpr;
   }
   if (m_params.size()<3){
-    trace(ERROR, "(1)Foreach macro function requires 3 parameters!\n", m_funcName.c_str());
+    trace(ERROR, "(1)Foreach macro function requires at least 3 parameters!\n", m_funcName.c_str());
     return vExpr;
   }
   int begin = 0, end = 0;
@@ -1538,7 +1540,12 @@ vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
     trace(ERROR, "(1)Invalid end ID for foreach macro function!\n", m_params[1].m_expStr.c_str());
     return vExpr;
   }
-  for (int i=begin; begin<end?i<=end:i>=end; begin<end?i++:i--){
+  int iStep = 1;
+  if (m_params.size()>3 && isInt(trim_copy(m_params[3].m_expStr))) // step
+    iStep = atoi(trim_copy(m_params[3].m_expStr).c_str());
+  iStep = iStep==0?1:iStep; // step cannot be 0
+  iStep = iStep*(begin<end?(iStep<0?-1:1):(iStep<0?1:-1)); // if begin less than end, step should be a positive number, otherwise, it is a negative number
+  for (int i=begin; begin<end?i<=end:i>=end; i+=iStep){
     trace(DEBUG,"(1)Expanding foreach element '%s'\n",m_params[2].getEntireExpstr().c_str());
     string sNew = m_params[2].getEntireExpstr();
     replaceunquotedstr(sNew,"$","@field"+intToStr(i),"''",'\\',{'(',')'});
@@ -1554,7 +1561,7 @@ vector<ExpressionC> FunctionC::expandForeach(vector<ExpressionC> vExps)
 {
   vector<ExpressionC> vExpr;
   trace(DEBUG,"(2)Expanding foreach expression '%s'\n",m_expStr.c_str());
-  if (m_funcID!=FOREACH){
+  if (m_funcID!=FOREACH && m_funcID!=ANYCOL && m_funcID!=ALLCOL){
     trace(ERROR, "(2)'%s' is not foreach macro function!\n", m_funcName.c_str());
     return vExpr;
   }

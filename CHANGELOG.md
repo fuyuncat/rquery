@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.98] 2022-10-23
+   New feature: New function anycol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check any field fulfil condition, e.g. anycol(1,%,$)>0. <br/>
+   New feature: New function allcol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check all field fulfil condition, e.g. allcol(1,%,$)>0. <br/>
+   Enhancement: Function foreach has a new parameter: step, default is 1. <br/>
    # [0.98] 2022-10-21
    New feature: New function countstr(str,substr) : Normal function. count occurences of substr in str. <br/>
    # [0.973] 2022-10-21

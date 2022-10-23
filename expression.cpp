@@ -526,6 +526,10 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_Function = new FunctionC(node->m_expStr);
         trace(DEBUG, "(1)New function from '%s'\n",node->m_expStr.c_str());
       }
+      if ((node->m_Function->m_funcID==ANYCOL || node->m_Function->m_funcID==ALLCOL) && node->m_parentNode){
+        trace(FATAL, "Function '%s' cannot be a part of an expression! \n", expStr.c_str());
+        return false;
+      }
       trace(DEBUG, "(1)ExpressionC: The analytic function '%s' param size %d \n", node->m_Function->m_expStr.c_str(), node->m_Function->m_params.size());
       node->m_datatype = node->m_Function->m_datatype;
       node->m_funcID = node->m_Function->m_funcID;

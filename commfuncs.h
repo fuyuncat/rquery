@@ -174,6 +174,8 @@ using namespace std;
 #define AVERAGEA 212
 #define FOREACH 501
 #define COLTOROW 502
+#define ANYCOL 503
+#define ALLCOL 504
 
 #define TEXT 1
 #define JSON 2
@@ -199,6 +201,12 @@ template< class T > void SafeDeleteArray( T*& pVal )
     delete[] pVal;
   pVal = NULL;
 }
+
+//template< typename T > void CountArray( T& array )
+//{
+//  return array.size();
+//}
+
 
 struct DataTypeStruct{
   short int datatype=UNKNOWN;
@@ -398,6 +406,9 @@ bool anyDataOperate(string str1, int operate, string str2, DataTypeStruct dts, s
 
 int detectDataType(string str, string & extrainfo); // detect the data type of an expression string
 DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const DataTypeStruct & rdatatype); // get the compatible data type from two data types
+
+//vector<string> split(const string& str, const string& delim); // split str to an array
+vector<int> genlist(const int& start, const int& end, const int& step); // generate a number array
 
 void dumpVector(vector<string> v);
 void dumpMap(map<string, string> m);

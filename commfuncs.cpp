@@ -1738,6 +1738,28 @@ string convertzone(const string & sdate, const string & sFmt, const string & fro
   return ddate;
 }
 
+//vector<string> split(const string& str, const string& delim)
+//{
+//  vector<string> v;
+//  int ppos=0, cpos=0;
+//  //trace(DEBUG, "counting '%s','%s' ...",str.c_str(),substr.c_str());
+//  cpos = str.find(delim, ppos);
+//  while (cpos != string::npos){
+//    v.push_back(str.substring(ppos,cpos-ppos));
+//    ppos = cpos+delim.length();
+//    cpos = str.find(delim, ppos);
+//  }
+//  return v;
+//}
+
+vector<int> genlist(const int& start, const int& end, const int& step)
+{
+  vector<int> v;
+  for (int i=start; i<=end; i+=step)
+    v.push_back(i);
+  return v;
+}
+
 // get the compatible data type from two data types
 DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const DataTypeStruct & rdatatype) 
 {
@@ -2256,6 +2278,10 @@ short int encodeFunction(string str)
     return AVERAGEA;
   else if(sUpper.compare("FOREACH")==0)
     return FOREACH;
+  else if(sUpper.compare("ANYCOL")==0)
+    return ANYCOL;
+  else if(sUpper.compare("ALLCOL")==0)
+    return ALLCOL;
   else if(sUpper.compare("COLTOROW")==0)
     return COLTOROW;
   else

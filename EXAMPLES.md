@@ -819,6 +819,28 @@
    Pattern matched 0 line(s).
    Selected 0 row(s).
    ```
+- anycol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check any field fulfil a condition, e.g. anycol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.>0.<br />
+   ```
+   rq -q "p d/ /r | s foreach(1,%,$,2) | f anycol(1,%,$,2) > 0" samples/anyall.txt
+   ```
+   Returns result:<br/>
+   ```
+   1       123212  0       0       0
+   121     -1321   -11
+   123     2231    2
+   2131    131
+   11      12      21
+   ```
+- allcol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check all field fulfil a condition, e.g. allcol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.>0.<br />
+   ```
+   rq -q "p d/ /r | s foreach(1,%,$,2) | f allcol(1,%,$,2) > 0" samples/anyall.txt
+   ```
+   Returns result:<br/>
+   ```
+   123     2231    2
+   2131    131
+   11      12      21
+   ```
 
 # Examples and scenarios
 - Get lines containing specific string (equal to grep)<br/>

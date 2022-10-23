@@ -366,12 +366,16 @@ bool QuerierC::analyzeSelString(){
   }
   // then process FOREACH
   for (int i=0; i<m_selections.size(); i++){
+    if (m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && (m_selections[i].m_Function->m_funcID == ANYCOL || m_selections[i].m_Function->m_funcID == ALLCOL)){
+      trace(FATAL, "Marco function %s can not be used in SELECT", m_selections[i].getEntireExpstr().c_str());
+      return false;
+    }
     if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isAnalytic())
       trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", m_selections[i].m_Function->m_expStr.c_str(),m_selections[i].m_Function->m_anaParaNums[0],m_selections[i].m_Function->m_params.size());
     //trace(DEBUG, "Got selection expression '%s'!\n", m_selections[i].getEntireExpstr().c_str());
 
     // if macro function is involved, need to wait util the first data analyzed to analyze select expression
-    if (m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->m_funcID==FOREACH){
+    if (m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->m_funcID == FOREACH){
       if (m_fieldtypes.size()==0){
         m_bSelectContainMacro = true;
         m_bToAnalyzeSelectMacro = true;

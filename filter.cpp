@@ -13,6 +13,8 @@
 *******************************************************************************/
 #include <stdio.h>
 #include <string.h>
+#include "expression.h"
+#include "function.h"
 #include "filter.h"
 
 vector<string> FilterC::m_comparators;
@@ -491,6 +493,10 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
     trace(ERROR, "(Filter)fieldnames or fieldtypes is NULL!\n");
     return UNKNOWN;
   }
+  m_fieldnames = fieldnames;
+  m_fieldtypes = fieldtypes;
+  m_rawDatatype = rawDatatype;
+  m_sideDatatypes = sideDatatypes;
   if (m_type == BRANCH){
     m_metaDataAnzlyzed = true;
     if (m_leftNode)
@@ -890,6 +896,41 @@ bool FilterC::compareExpressionI(vector<string>* fieldvalues, map<string,string>
     else
       return m_leftNode->compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs) || m_rightNode->compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
   }else if(m_type == LEAF){
+    if (m_leftExpression && m_leftExpression->m_type == LEAF && m_leftExpression->m_expType == FUNCTION && m_leftExpression->m_Function && (m_leftExpression->m_Function->m_funcID==ANYCOL || m_leftExpression->m_Function->m_funcID==ALLCOL)) { // left anycol/allcol
+      if (m_rightExpression && m_rightExpression->m_type == LEAF && m_rightExpression->m_expType == FUNCTION && m_rightExpression->m_Function && (m_rightExpression->m_Function->m_funcID==ANYCOL || m_rightExpression->m_Function->m_funcID==ALLCOL)) {
+        trace(ERROR, "ANYCOL/ALLCOL cannot be presented on both comparing side!\n");
+        return false;
+      }
+      bool bResult = (m_leftExpression->m_Function->m_funcID==ALLCOL);
+      vector<ExpressionC> vExpandedExpr = m_leftExpression->m_Function->expandForeach(fieldvalues->size());
+      FilterC tmpFilter;
+      copyTo(&tmpFilter);
+      // compare each field using a temporary filter
+      for (int i=0; i<vExpandedExpr.size(); i++){
+        vExpandedExpr[i].copyTo(tmpFilter.m_leftExpression);
+        tmpFilter.m_leftExpression->analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, m_sideDatatypes);
+        bool bThis = tmpFilter.compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
+        bResult = m_leftExpression->m_Function->m_funcID==ALLCOL?(bResult&&bThis):(bResult||bThis);
+      }
+      return bResult;
+    }
+    if (m_rightExpression && m_rightExpression->m_type == LEAF && m_rightExpression->m_expType == FUNCTION && m_rightExpression->m_Function && (m_rightExpression->m_Function->m_funcID==ANYCOL || m_rightExpression->m_Function->m_funcID==ALLCOL)) { // right anycol/allcol
+      if (m_leftExpression && m_leftExpression->m_type == LEAF && m_leftExpression->m_expType == FUNCTION && m_leftExpression->m_Function && (m_leftExpression->m_Function->m_funcID==ANYCOL || m_leftExpression->m_Function->m_funcID==ALLCOL)) {
+        trace(ERROR, "ANYCOL/ALLCOL cannot be presented on both comparing side!\n");
+        return false;
+      }
+      bool bResult = (m_rightExpression->m_Function->m_funcID==ALLCOL);
+      vector<ExpressionC> vExpandedExpr = m_rightExpression->m_Function->expandForeach(fieldvalues->size());
+      FilterC tmpFilter;
+      copyTo(&tmpFilter);
+      // compare each field
+      for (int i=0; i<vExpandedExpr.size(); i++){
+        vExpandedExpr[i].copyTo(tmpFilter.m_rightExpression);
+        bool bThis = tmpFilter.compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
+        bResult = m_rightExpression->m_Function->m_funcID==ALLCOL?(bResult&&bThis):(bResult||bThis);
+      }
+      return bResult;
+    }
     if (m_comparator == IN || m_comparator == NOIN){
       return compareIn(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes)?(m_comparator == IN?true:false):(m_comparator == IN?false:true);
     }

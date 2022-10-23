@@ -15,9 +15,9 @@
 #ifndef __FILTERC_H
 #define __FILTERC_H
 
+#include "commfuncs.h"
 #include "expression.h"
 #include <unordered_map>
-#include "commfuncs.h"
 
 class FilterC;
 
@@ -83,6 +83,11 @@ class FilterC
     bool m_metaDataAnzlyzed; // analyze column name to column id.
     bool m_expstrAnalyzed;   // if expression string analyzed
     static vector<string> m_comparators; // ">=", "<=" should be before ">", "<"
+    
+    vector<string>* m_fieldnames;
+    vector<DataTypeStruct>* m_fieldtypes;
+    DataTypeStruct* m_rawDatatype; 
+    unordered_map< string, unordered_map<string,DataTypeStruct> >* m_sideDatatypes;
 
     void dump(int deep);
     void buildLeafNodeFromStr(FilterC* node, string str); // build a leaf node

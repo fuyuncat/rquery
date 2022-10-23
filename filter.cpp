@@ -36,6 +36,10 @@ void FilterC::init()
   m_leftNode = NULL;      // if type is BRANCH, it links to left child node. Otherwise, it's meaningless
   m_rightNode = NULL;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
   m_parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
+  m_fieldnames = NULL;
+  m_fieldtypes = NULL;
+  m_rawDatatype = NULL;
+  m_sideDatatypes = NULL;
   
   m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;
@@ -93,6 +97,10 @@ void FilterC::copyTo(FilterC* node) const
     node->m_rightExpStr = m_rightExpStr;
     node->m_leftExpStr = m_leftExpStr;
     node->m_expStr = m_expStr;
+    node->m_fieldnames = m_fieldnames;
+    node->m_fieldtypes = m_fieldtypes;
+    node->m_rawDatatype = m_rawDatatype;
+    node->m_sideDatatypes = m_sideDatatypes;
     if (m_type == BRANCH){
       if (m_leftNode){
         node->m_leftNode = new FilterC();
@@ -392,6 +400,10 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
     m_rightExpStr = "";
     m_leftExpression = NULL;
     m_rightExpression = NULL;
+    m_fieldnames = NULL;
+    m_fieldtypes = NULL;
+    m_rawDatatype = NULL;
+    m_sideDatatypes = NULL;
     if (leafGrowth){
       m_rightNode = existingNode;
       m_rightNode->m_parentNode = this;
@@ -587,6 +599,10 @@ FilterC* FilterC::cloneMe(){
   node->m_expStr = m_expStr;
   node->m_rightExpStr = m_rightExpStr;
   node->m_leftExpStr = m_leftExpStr;
+  node->m_fieldnames = m_fieldnames;
+  node->m_fieldtypes = m_fieldtypes;
+  node->m_rawDatatype = m_rawDatatype;
+  node->m_sideDatatypes = m_sideDatatypes;
   if (m_type == BRANCH){
     node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
     node->m_leftExpression = m_leftExpression->cloneMe();

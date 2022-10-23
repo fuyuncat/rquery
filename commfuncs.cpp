@@ -2162,6 +2162,8 @@ short int encodeFunction(string str)
     return GETWORD;
   else if(sUpper.compare("COUNTSTR")==0)
     return COUNTSTR;
+  else if(sUpper.compare("FIELDNAME")==0)
+    return FIELDNAME;
   else if(sUpper.compare("ZONECONVERT")==0)
     return ZONECONVERT;
   else if(sUpper.compare("RANDOM")==0)

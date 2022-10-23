@@ -160,6 +160,7 @@ using namespace std;
 #define COMPARENUM 108
 #define COMPAREDATE 109
 #define COUNTSTR 110
+#define FIELDNAME 111
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203

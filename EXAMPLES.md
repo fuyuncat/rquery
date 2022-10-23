@@ -411,6 +411,16 @@
    ```
    Asdfwd,sfsea2123wd
    ```
+- fieldname(fieldid) : Normal function. Return the filed name of a field (column).<br />
+   ```
+   rq -n -q "p d/,/|s @1,@2,@3, foreach(4,%,switch(comparenum($,0),1,fieldname(#)+':'+$,'')) | f anycol(4,%,tofloat($))>0" samples/numbers.csv
+   ```
+   Returns result:<br/>
+   ```
+   2000-01-29      3PXI5   37685                                                                           METRIC_A:1      METRIC_B:22.37  METRIC_C:23.91
+   2000-01-29      3PXI6   37686                                                                           METRIC_A:1      METRIC_B:30.00  METRIC_C:40.14
+   2000-01-29      3PXJ1   37691                                                                           METRIC_A:1      METRIC_B:25.00  METRIC_C:51.13
+   ```
 - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
    ```
    rq -q "s comparenum(5.8,1.8)" " "

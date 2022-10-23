@@ -593,7 +593,7 @@ int main(int argc, char *argv[])
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
-      rq.setFieldDelim(trim_copy(string(argv[i+1])));
+      rq.setFieldDelim(string(argv[i+1]));
       i++;
     }else if (lower_copy(string(argv[i])).compare("-v")==0 || lower_copy(string(argv[i])).compare("--variable")==0){
       if (i>=argc-1 || argv[i+1][0] == '-'){
@@ -837,7 +837,7 @@ int main(int argc, char *argv[])
         cout << "Sorting keys are provided.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("delimiter ")==0){
-        string strParam = trim_copy(lineInput).substr(string("delimiter ").length());
+        string strParam = trim_left(lineInput).substr(string("delimiter ").length());
         rq.setFieldDelim(strParam);
         cout << "Fields delimiter is set.\n";
         cout << "rquery >";

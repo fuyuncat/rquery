@@ -1,6 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
    # [0.98] 2022-10-23
+   New feature: New function fieldname(fieldid) : Normal function. Return the filed name of a field (column). <br/>
+   Fixed bug: Space didnot work as a field delmiter. <br/>
+   # [0.98] 2022-10-23
    New feature: New function anycol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check any field fulfil condition, e.g. anycol(1,%,$)>0. <br/>
    New feature: New function allcol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check all field fulfil condition, e.g. allcol(1,%,$)>0. <br/>
    Enhancement: Function foreach has a new parameter: step, default is 1. <br/>

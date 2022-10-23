@@ -340,8 +340,10 @@ bool QuerierC::analyzeSelString(){
   for (int i=0; i<m_selections.size(); i++)
     if (i<vAlias.size()&& !vAlias[i].empty())
       m_selnames.push_back(vAlias[i]);
-    else
+    else{
       m_selnames.push_back(m_selections[i].getEntireExpstr());
+      vAlias[i] = m_selnames[i];
+    }
   bool bGroupFunc = false, bNonGroupFuncSel = false;
   m_colToRows.clear();
   m_colToRowNames.clear();

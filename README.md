@@ -137,6 +137,7 @@ Functions can be used in the expression. We current provide some essential norma
    - snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
    - findnth(str,sub[,Nth]) : Normal function. Find the position of Nth sub in str, if Nth is positive number, search from head, if Nth is negative, search from tail.<br />
    - revertstr(str) : Normal function. Convert a string to reverse sequence (e.g. abc -> cba).<br />
+   - fieldname(fieldid) : Normal function. Return the filed name of a field (column).<br />
    - ascii(char) : Normal function. Get the ascii code of a char.<br />
    - char(int) : Normal function. Get character of an ascii code number.<br />
    - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />

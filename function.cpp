@@ -258,6 +258,7 @@ bool FunctionC::analyzeExpStr()
     case TOSTR:
     case DECTOHEX:
     case DECTOBIN:
+    case FIELDNAME:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -717,6 +718,27 @@ bool FunctionC::runCountstr(vector<string>* fieldvalues, map<string,string>* var
     return true;
   }else{
     trace(ERROR, "(2)Failed to run countstr(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runFieldname(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "fieldname(fieldid) function accepts only one parameter(%d).\n",m_params.size());
+    return false;
+  }
+  string sFieldid; 
+  if (m_fieldnames && m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sFieldid, dts, true) && isInt(sFieldid)){
+    int iFieldid = atoi(sFieldid.c_str());
+    if (iFieldid<1 || iFieldid>m_fieldnames->size()){
+      trace(ERROR, "%s is out of range of the fields!\n", m_params[0].m_expStr.c_str());
+      return false;
+    }
+    sResult = (*m_fieldnames)[iFieldid-1];
+    return true;
+  }else{
+    trace(ERROR, "Failed to run fieldname(%s)!\n", m_params[0].m_expStr.c_str());
     return false;
   }
 }
@@ -1673,6 +1695,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case COUNTSTR:
       getResult = runCountstr(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case FIELDNAME:
+      getResult = runFieldname(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case GETWORD:
       getResult = runGetword(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

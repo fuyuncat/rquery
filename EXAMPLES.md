@@ -421,6 +421,30 @@
    2000-01-29      3PXI6   37686                                                                           METRIC_A:1      METRIC_B:30.00  METRIC_C:40.14
    2000-01-29      3PXJ1   37691                                                                           METRIC_A:1      METRIC_B:25.00  METRIC_C:51.13
    ```
+- concat(str1,str2,[...]) : Normal function. Concatenate multiple strings. <br />
+   ```
+   rq -q "s concat(@1,'+',@2,'+',@3)" "aaa bbb ccc"
+   ```
+   Returns result:<br/>
+   ```
+   aaa+bbb+ccc                                                                           METRIC_A:1      METRIC_B:25.00  METRIC_C:51.13
+   ```
+- concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br />
+   ```
+   rq -q "s concatcol(1,%,$,1,',')" "aaa bbb ccc"
+   ```
+   Returns result:<br/>
+   ```
+   aaa,bbb,ccc
+   ```
+- calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br />
+   ```
+   rq -q "s calcol(1,%,$,1,'sum')" "111 222 333"
+   ```
+   Returns result:<br/>
+   ```
+   666
+   ```
 - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
    ```
    rq -q "s comparenum(5.8,1.8)" " "

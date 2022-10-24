@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.98"
+#define VERSION "v0.981"
 
 #define UNKNOWN 0
 
@@ -161,6 +161,9 @@ using namespace std;
 #define COMPAREDATE 109
 #define COUNTSTR 110
 #define FIELDNAME 111
+#define CONCAT 112
+#define CONCATCOL 113
+#define CALCOL 114
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203

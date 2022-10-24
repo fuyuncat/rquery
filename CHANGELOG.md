@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.981] 2022-10-23
+   New feature: New function concat(str1,str2,[...]) : Normal function. Concatenate multiple strings. <br/>
+   New feature: New function concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. <br/>
+   New feature: New function calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. <br/>
    # [0.98] 2022-10-23
    New feature: New function fieldname(fieldid) : Normal function. Return the filed name of a field (column). <br/>
    Fixed bug: Space didnot work as a field delmiter. <br/>

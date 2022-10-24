@@ -9,6 +9,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
 &nbsp;&nbsp;&nbsp; Unzip the downloaded file<br />
 &nbsp;&nbsp;&nbsp; sudo yum -y install boost-devel<br />
 &nbsp;&nbsp;&nbsp; make<br />
+&nbsp;&nbsp;&nbsp; make install<br />
 
 - Install method 2<br />
 &nbsp;&nbsp;&nbsp; download the rpm file <br />
@@ -112,6 +113,9 @@ Functions can be used in the expression. We current provide some essential norma
    - trimleft(str[,char][,repeat(1|0)]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br />
    - trimright(str[,char][,repeat(1|0)]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    - trim(str[,char][,repeat(1|0]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
+   - concat(str1,str2,[...]) : Normal function. Concatenate multiple strings. <br/>
+   - concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br/>
+   - calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br/>
    - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
    - comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates, return -1 if date1 less than date2, return 0 if date1 equal to date2, return 1 if date1 greater than date2. date1 and date2 should have the same dateformat.<br />
    - datatype(expr) : Normal function. Return the date type of the expression.<br/>
@@ -166,8 +170,8 @@ Functions can be used in the expression. We current provide some essential norma
    - mina([group1,group2...];expr) : Analytic function. Get the minimum value of expr of each group.<br />
    - foreach(beginid,endid,macro_expr[,step]) : Macro function. make a macro expression list for all fields from beginid to endid. $ stands for field ($ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. For example, foreach(%-2,2,substr($,2,3)+#) will make this expression list: substr(@field{N-2},2,3)+N..,substr(@field3,2,3)+3,substr(@field2,2,3)+2. It can only be used in "select" and "sort". It cannot be a part of expression.<br />
    - coltorow(exp1[,exp2 ... ] ) : Macro function. Make the columns to rows. Accept multiple parameter, also accept foreach(). The row number will be the maximum number of parameter of all coltorow functions. <br />
-   - anycol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check any field fulfil a condition, e.g. anycol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.>0.<br />
-   - allcol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check all field fulfil a condition, e.g. allcol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.>0.<br />
+   - anycol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check any field fulfil a condition, e.g. anycol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br />
+   - allcol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check all field fulfil a condition, e.g. allcol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br />
 # Example and scenarios
 - Query an apache or nginx access log, to get the number of hits from different clients, and the browser is Chrome or Firefox<br />
 `./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '(Chrome|Firefox)' | select host, count(1) | group host | sort count(1) desc" < access.log`

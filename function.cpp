@@ -28,6 +28,7 @@ void FunctionC::init()
   m_expstrAnalyzed = false;
   m_fieldnames = NULL;
   m_fieldtypes = NULL;
+  m_rawDatatype = NULL;
   m_bDistinct = false;
   m_anaParaNums.clear();
   m_params.clear();       // parameter expressions
@@ -86,6 +87,7 @@ void FunctionC::copyTo(FunctionC* node) const
     node->m_bDistinct = m_bDistinct;
     node->m_fieldnames = m_fieldnames;
     node->m_fieldtypes = m_fieldtypes;
+    node->m_rawDatatype = m_rawDatatype;
   }
 }
 
@@ -259,6 +261,8 @@ bool FunctionC::analyzeExpStr()
     case DECTOHEX:
     case DECTOBIN:
     case FIELDNAME:
+    case CONCAT:
+    case CONCATCOL:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -298,6 +302,7 @@ bool FunctionC::analyzeExpStr()
     case SUMA:
     case ABS:
     case TOFLOAT:
+    case CALCOL:
       m_datatype.datatype = DOUBLE;
       break;
     case NOW:
@@ -350,6 +355,7 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
   m_metaDataAnzlyzed = true;
   m_fieldnames = fieldnames;
   m_fieldtypes = fieldtypes;
+  m_rawDatatype = rawDatatype;
   for (int i=0; i<m_params.size(); i++){
     m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
     trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
@@ -380,6 +386,7 @@ FunctionC* FunctionC::cloneMe(){
   node->m_bDistinct = m_bDistinct;
   node->m_fieldnames = m_fieldnames;
   node->m_fieldtypes = m_fieldtypes;
+  node->m_rawDatatype = m_rawDatatype;
 
   return node;
 }
@@ -741,6 +748,112 @@ bool FunctionC::runFieldname(vector<string>* fieldvalues, map<string,string>* va
     trace(ERROR, "Failed to run fieldname(%s)!\n", m_params[0].m_expStr.c_str());
     return false;
   }
+}
+
+bool FunctionC::runConcat(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() <= 1){
+    trace(ERROR, "concat() function accepts at least two parameters.\n");
+    return false;
+  }
+  sResult = "";
+  DataTypeStruct dts1, dts2;
+  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts1, true)){
+    trace(ERROR, "(%d-%s)Failed to run concat()\n",0, m_params[0].m_expStr.c_str());
+    return false;
+  }
+  string scomp;
+  for (int i=1;i<m_params.size();i++){
+    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true)){
+      trace(ERROR, "(%d-%s)Failed to run concat()\n",i,m_params[i].m_expStr.c_str());
+      return false;
+    }
+    sResult+=scomp;
+  }
+  return true;
+}
+
+bool FunctionC::runConcatcol(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 3){
+    trace(ERROR, "concatcol(start,end,expr[,step,delm]) function accepts at least three parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sDelm="";
+  sResult = "";
+  if (m_params.size() >= 5){
+    if (!m_params[4].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sDelm, dts, true))
+      sDelm = "";
+  }
+  vector<ExpressionC> vExpandedExpr = expandForeach(fieldvalues->size());
+  for (int i=0; i<vExpandedExpr.size(); i++){
+    vExpandedExpr[i].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
+    if (!vExpandedExpr[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true)){
+      trace(ERROR, "(%d-%s)Failed to run concatcol(start,end,expr[,step,delm])!\n",i,vExpandedExpr[i].m_expStr.c_str());
+    }
+    sResult+=sRaw;
+    if (i<vExpandedExpr.size()-1)
+      sResult+=sDelm;
+  }
+  return true;
+}
+
+bool FunctionC::runCalcol(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 3){
+    trace(ERROR, "calcol(start,end,expr[,step,operation]) function accepts at least three parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sOp="SUM";
+  short int iOp=SUM;
+  sResult = "";
+  if (m_params.size() >= 5){
+    if (m_params[4].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sOp, dts, true))
+      iOp = encodeFunction(upper_copy(trim_copy(sOp)));
+  }
+  double dSum=0,dVal=0;
+  std::set <string> tmpSet;
+  vector<ExpressionC> vExpandedExpr = expandForeach(fieldvalues->size());
+  for (int i=0; i<vExpandedExpr.size(); i++){
+    vExpandedExpr[i].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
+    if (!vExpandedExpr[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true) || !isDouble(trim_copy(sRaw))){
+      trace(ERROR, "(%d-%s)Failed to run calcol(start,end,expr[,step,operation])!\n",i,vExpandedExpr[i].m_expStr.c_str());
+    }
+    double dTmp = atof(trim_copy(sRaw).c_str());
+    switch (iOp){
+      case MAX:
+        dVal = i==0?dTmp:max(dTmp,dVal);
+        break;
+      case MIN:
+        dVal = i==0?dTmp:min(dTmp,dVal);
+        break;
+      case UNIQUECOUNT:
+        tmpSet.insert(trim_copy(sRaw));
+        break;
+      default:
+        dSum+=dTmp;
+        break;
+    }
+  }
+  switch (iOp){
+    case MAX:
+    case MIN:
+      sResult = doubleToStr(dVal);
+      break;
+    case AVERAGE:
+      sResult = doubleToStr(dSum/(double)vExpandedExpr.size());
+      break;
+    case UNIQUECOUNT:
+      sResult = intToStr(tmpSet.size());
+      break;
+    case COUNT:
+      sResult = intToStr(vExpandedExpr.size());
+      break;
+    default:
+      sResult = doubleToStr(dSum);
+      break;
+  }
+  return true;
 }
 
 bool FunctionC::runAscii(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
@@ -1523,7 +1636,7 @@ vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
 {
   vector<ExpressionC> vExpr;
   trace(DEBUG,"(1)Expanding foreach expression '%s'\n",m_expStr.c_str());
-  if (m_funcID!=FOREACH && m_funcID!=ANYCOL && m_funcID!=ALLCOL){
+  if (m_funcID!=FOREACH && m_funcID!=ANYCOL && m_funcID!=ALLCOL && m_funcID!=CONCATCOL && m_funcID!=CALCOL){
     trace(ERROR, "(1)'%s' is not foreach macro function!\n", m_funcName.c_str());
     return vExpr;
   }
@@ -1698,6 +1811,15 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case FIELDNAME:
       getResult = runFieldname(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case CONCAT:
+      getResult = runConcat(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case CONCATCOL:
+      getResult = runConcatcol(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case CALCOL:
+      getResult = runCalcol(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case GETWORD:
       getResult = runGetword(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

@@ -80,6 +80,7 @@ class QuerierC
     void setReadmode(short int readmode);
     void setEof(bool bEof);
     void assignFilter(FilterC* filter);
+    void assignExtraFilter(FilterC* filter);
     bool assignGroupStr(string groupstr);
     bool assignSelString(string selstr);
     bool assignSortStr(string sortstr);
@@ -102,6 +103,7 @@ class QuerierC
     bool analytic();
     void unique();
     bool searchStopped();
+    void applyExtraFilter();
     void output();
     void clear();
     void outputExtraInfo(size_t total, bool bPrintHeader);
@@ -165,6 +167,7 @@ class QuerierC
 
     //vector<namesaving_smatch> m_results;
     FilterC* m_filter;
+    FilterC* m_extrafilter;
     vector<string> m_fieldnames;    // field names
     //vector<int> m_fieldtypes;       // field datatype in sequence
     //map<string, int> m_fieldntypes; // field datatype by names, set by setFieldDatatype
@@ -236,11 +239,13 @@ class QuerierC
     long int m_rawsplittime;
     long int m_rawanalyzetime;
     long int m_filtertime;
+    long int m_extrafiltertime;
     long int m_sorttime;
     long int m_uniquetime;
     long int m_grouptime;
     long int m_analytictime;
     long int m_filtercomptime;
+    long int m_extrafiltercomptime;
     long int m_evalGroupKeytime;
     long int m_prepAggGPtime;
     long int m_evalAggExptime;

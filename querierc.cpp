@@ -73,6 +73,7 @@ QuerierC::~QuerierC()
 void QuerierC::init()
 {
   m_filter = NULL;
+  m_extrafilter = NULL;
   m_rawstr = "";
   m_searchflags = regex_constants::match_default;
   m_searchMode = REGSEARCH;
@@ -112,12 +113,14 @@ void QuerierC::init()
   m_rawsplittime = 0;
   m_rawanalyzetime = 0;
   m_filtertime = 0;
+  m_extrafiltertime = 0;
   m_sorttime = 0;
   m_uniquetime = 0;
   m_grouptime = 0;
   m_analytictime = 0;
   m_evalGroupKeytime = 0;
   m_filtercomptime = 0;
+  m_extrafiltercomptime = 0;
   m_prepAggGPtime = 0;
   m_evalAggExptime = 0;
   m_evalSeltime = 0;
@@ -199,6 +202,29 @@ void QuerierC::assignFilter(FilterC* filter)
   m_filter->getAggFuncs(m_initAggProps);
   m_filter->getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
   //m_filter->dump();
+}
+
+void QuerierC::assignExtraFilter(FilterC* filter)
+{
+  if (m_extrafilter){
+    m_extrafilter->clear();
+    SafeDelete(m_extrafilter);
+  }
+  m_extrafilter = filter;
+  unordered_map< string,GroupProp > initAggProps;
+  m_extrafilter->getAggFuncs(initAggProps);
+  if (initAggProps.size()>0){
+    trace(ERROR, "Extra filter cannot have any aggregation function!\n");
+    return;
+  }
+  unordered_map< string,vector<ExpressionC> > initAnaArray;
+  unordered_map< string,vector<int> > anaFuncParaNums;
+  m_extrafilter->getAnaFuncs(initAnaArray, anaFuncParaNums);
+  if (initAnaArray.size()>0){
+    trace(ERROR, "Extra filter cannot have any analytic function!\n");
+    return;
+  }
+  //m_extrafilter->dump();
 }
 
 void QuerierC::appendrawstr(string rawstr)
@@ -2424,6 +2450,58 @@ void QuerierC::printFieldNames()
   m_bNamePrinted = true;
 }
 
+void QuerierC::applyExtraFilter()
+{
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
+  if (!m_extrafilter)
+    return;
+  vector<string> fieldValues;
+  map<string, string> varValues;
+  varValues.insert( pair<string,string>("@RAW",""));
+  varValues.insert( pair<string,string>("@LINE","0"));
+  varValues.insert( pair<string,string>("@ROW","0"));
+  varValues.insert( pair<string,string>("@FILELINE","0"));
+  varValues.insert( pair<string,string>("@%","0"));
+  varValues.insert( pair<string,string>("@FILE",m_filename));
+  varValues.insert( pair<string,string>("@FILEID",intToStr(m_fileid)));
+  varValues.insert(m_uservariables.begin(), m_uservariables.end());
+  unordered_map< string,GroupProp > aggGroupProp;
+  unordered_map< string,vector<string> > anaFuncData;
+  vector< vector< unordered_map<string,string> > > sideDatasets;
+  unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
+  unordered_map< int,int > sideMatchedRowIDs;
+
+  vector<DataTypeStruct> fieldtypes;
+
+  vector< vector<string> > tmpResults = m_results;
+  m_results.clear();
+  for (int i=0; i<tmpResults.size(); i++){
+    fieldValues.clear();
+    for (int j=1; j<tmpResults[i].size(); j++)
+      fieldValues.push_back(tmpResults[i][j]);
+    if (fieldValues.size()>fieldtypes.size()){
+      DataTypeStruct dts;
+      dts.datatype = ANY;
+      for (int j=fieldtypes.size(); j<fieldValues.size(); j++)
+        fieldtypes.push_back(dts);
+      m_extrafilter->analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+    }
+    varValues["@RAW"]=concatArray(tmpResults[i],m_fielddelim);
+    varValues["@LINE"]=intToStr(i);
+    varValues["@ROW"]=intToStr(i);
+    varValues["@FILELINE"]=intToStr(i);
+    varValues["@%"]=intToStr(tmpResults[i].size());
+      //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
+    if (!m_extrafilter || m_extrafilter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatasets, &sideDatatypes, sideMatchedRowIDs))
+      m_results.push_back(tmpResults[i]);
+  }
+#ifdef __DEBUG__
+  m_extrafiltertime += (curtime()-thistime);
+#endif // __DEBUG__
+}
+
 void QuerierC::output()
 {
 #ifdef __DEBUG__
@@ -2536,6 +2614,7 @@ size_t QuerierC::getRawStrSize()
 
 void QuerierC::outputAndClean()
 {
+  applyExtraFilter();
   output();
   m_results.clear();
   m_resultfiles.clear();
@@ -2564,7 +2643,7 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
   }
 #ifdef __DEBUG__
   m_totaltime = curtime() - m_querystartat;
-  trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, filtering time: %d\n, sorting time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_rawanalyzetime, m_filtertime, m_sorttime, m_uniquetime, m_grouptime, m_detectedTypeRows, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
+  trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_rawanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_uniquetime, m_grouptime, m_detectedTypeRows, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
 #endif // __DEBUG__
 }
 
@@ -2607,6 +2686,10 @@ void QuerierC::clearFilter()
   if (m_filter){
     m_filter->clear();
     SafeDelete(m_filter);
+  }
+  if (m_extrafilter){
+    m_extrafilter->clear();
+    SafeDelete(m_extrafilter);
   }
 }
 
@@ -2661,6 +2744,7 @@ void QuerierC::clear()
   m_detectedTypeRows = 0;
   m_outputformat = TEXT;
   m_filter = NULL;
+  m_extrafilter = NULL;
   m_limitbottom = 1;
   m_limittop = -1;
   m_filename = "";

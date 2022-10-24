@@ -313,6 +313,7 @@ size_t findFirstSub(const string & str, const string & lookfor, const size_t & p
 string readLine(string str, size_t & pos); // read a line
 vector<string> matchWildcard(const string & str, const string & wildStr, string quoters = "\"\"", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // match wildcard to transfer a string to a vector
 string readWordTillStop(const string & str, size_t & pos, char stopper='*', char escape = '\\'); // read the first word until reaches stopper
+string concatArray(const vector<string> & array, const string & delim = ""); // concatenate an array to string
 
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
 int startsWithWords(string str, vector<string> words); // detect if string start with special words

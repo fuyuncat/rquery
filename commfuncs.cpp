@@ -1034,6 +1034,18 @@ string randstr(int len, const string & flags)
   }
 }
 
+// concatenate an array to string
+string concatArray(const vector<string> & array, const string & delim)
+{
+  string sResult = "";
+  for (int i=0; i<array.size(); i++){
+    sResult+=array[i];
+    if (i<array.size()-1)
+      sResult+=delim;
+  }
+  return sResult;
+}
+
 bool isNumber(const string& str)
 {
     for (int i=0; i<str.length(); i++) {

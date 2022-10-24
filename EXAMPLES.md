@@ -1403,3 +1403,16 @@
    [rquery]$ wc -l logs/g_access_log.loh
    4784 logs/g_access_log.loh
    ```
+- Further filter the reseult set using extrafilter <br/>
+   Without extrafilter:<br/>
+   ```
+   [ rquery]$ ./rq -q "s @1, count(1) | g @1" timezone.log
+   192.168.1.1     5
+   192.168.1.2     3
+   192.168.1.3     2
+   ```
+   Using extrafilter:<br/>
+   ```
+   [ rquery]$ ./rq -q "s @1, count(1) | g @1 | e @2=3" timezone.log
+   192.168.1.2     3
+   ```

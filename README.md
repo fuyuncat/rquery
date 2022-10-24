@@ -44,6 +44,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
             - d/<Delmiter>/[quoters/][r] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, r at the end of pattern means the delmiter is repeatable, e.g. d/ /""/
          - set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
          - filter <filter conditions> : Filter the parsed records<br />
+         - extrafilter <extra filter conditions> : Provide filter conditions to filt the resultset. @N refer to Nth selection of the result set.<br />
          - select <field or expression,...> : Fields or expressions to be selected<br />
          - meanwhile <actions when searching data> -- Provide actions to be done while doing searching. The result set can be used for two or more files JOIN or IN query.<br />
          - group <field or expression,...> : Fields or expressions to be groupd for aggregation selections<br />
@@ -72,7 +73,8 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
  The query parts are separated by |, they could be put in any order. You can provide one or more of them in a query, none of them is mandatary<br />
       - parse|p /regular string/ : Parse a regular expression string quoted by //<br />
       - set|t field datatype [date format],... : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
-      - filter|f filter conditions : Filter the parsed records<br />
+      - filter|f <filter conditions> : Filter the parsed records<br />
+      - extrafilter|e <extra filter conditions> : Provide filter conditions to filt the resultset. @N refer to Nth selection of the result set.<br />
       - meanwhile|m <actions when searching data> -- Provide actions to be done while doing searching. The result set can be used for two or more files JOIN or IN query.<br />
       - select|s field or expression,... : Fields or expressions to be selected<br />
       - group|g field or expression,... : Fields or expressions to be groupd for aggregation selections<br />

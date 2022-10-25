@@ -164,6 +164,7 @@ using namespace std;
 #define CONCAT 112
 #define CONCATCOL 113
 #define CALCOL 114
+#define APPENDFILE 115
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203
@@ -414,6 +415,8 @@ DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const Dat
 
 //vector<string> split(const string& str, const string& delim); // split str to an array
 vector<int> genlist(const int& start, const int& end, const int& step); // generate a number array
+
+bool appendFile(const string & sContent, const string & sFile); // append content to a file
 
 void dumpVector(vector<string> v);
 void dumpMap(map<string, string> m);

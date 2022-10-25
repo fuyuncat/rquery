@@ -292,6 +292,7 @@ bool FunctionC::analyzeExpStr()
     case TOINT:
     case HEXTODEC:
     case BINTODEC:
+    case APPENDFILE:
       m_datatype.datatype = LONG;
       break;
     case TIMEDIFF:
@@ -444,7 +445,7 @@ bool FunctionC::runLower(vector<string>* fieldvalues, map<string,string>* varval
     sResult = lower_copy(sResult);
     return true;
   }else{
-    trace(ERROR, "Failed to run lower(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run lower(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -459,21 +460,21 @@ bool FunctionC::runSubstr(vector<string>* fieldvalues, map<string,string>* varva
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sPos, dts, true) && isInt(sPos)){
     int iPos = atoi(sPos.c_str());
     if (iPos<0 || iPos>=sRaw.length()){
-      trace(ERROR, "%s is out of length of %s!\n", sPos.c_str(), m_params[0].m_expStr.c_str());
+      trace(ERROR, "%s is out of length of %s!\n", sPos.c_str(), m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (m_params.size() == 3){
       if (m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sLen, dts, true) && isInt(sLen)){
         int iLen = atoi(sLen.c_str());
         if (iLen<0 || iLen+iPos>sRaw.length()){
-          trace(ERROR, "%s is out of length of %s starting from %s!\n", sLen.c_str(), m_params[0].m_expStr.c_str(), sPos.c_str());
+          trace(ERROR, "%s is out of length of %s starting from %s!\n", sLen.c_str(), m_params[0].getEntireExpstr().c_str(), sPos.c_str());
           return false;
         }
         sResult = sRaw.substr(iPos,iLen);
         dts.datatype = STRING;
         return true;
       }else{
-        trace(ERROR, "(1)Failed to run substr(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+        trace(ERROR, "(1)Failed to run substr(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
         return false;
       }
     }else{
@@ -482,7 +483,7 @@ bool FunctionC::runSubstr(vector<string>* fieldvalues, map<string,string>* varva
       return true;
     }      
   }else{
-    trace(ERROR, "(2)Failed to run substr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "(2)Failed to run substr(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -500,7 +501,7 @@ bool FunctionC::runInstr(vector<string>* fieldvalues, map<string,string>* varval
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run instr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run instr(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -517,7 +518,7 @@ bool FunctionC::runStrlen(vector<string>* fieldvalues, map<string,string>* varva
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run strlen(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run strlen(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -534,7 +535,7 @@ bool FunctionC::runFindnth(vector<string>* fieldvalues, map<string,string>* varv
     if (m_params.size() == 3 && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sNth, dts, true) && isInt(sNth)){
       iNth = atoi(sNth.c_str());
     }else{
-      trace(ERROR, "Failed to run findnth(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+      trace(ERROR, "Failed to run findnth(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
       return false;
     }
     size_t pos = findNthSub(str, sub, iNth<0?str.length()-1:0, iNth<0?iNth*-1:iNth,iNth<0?false:true, "", '\0', {}, true);
@@ -542,7 +543,7 @@ bool FunctionC::runFindnth(vector<string>* fieldvalues, map<string,string>* varv
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run findnth(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run findnth(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -559,7 +560,7 @@ bool FunctionC::runComparestr(vector<string>* fieldvalues, map<string,string>* v
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run comparestr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run comparestr(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -578,7 +579,7 @@ bool FunctionC::runNoCaseComparestr(vector<string>* fieldvalues, map<string,stri
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run nocasecomparestr(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run nocasecomparestr(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -595,7 +596,7 @@ bool FunctionC::runRevertstr(vector<string>* fieldvalues, map<string,string>* va
     dts.datatype = STRING;
     return true;
   }else{
-    trace(ERROR, "Failed to run revertstr(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+    trace(ERROR, "Failed to run revertstr(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -612,7 +613,7 @@ bool FunctionC::runReplace(vector<string>* fieldvalues, map<string,string>* varv
     dts.datatype = STRING;
     return true;
   }else{
-    trace(ERROR, "Failed to run replace(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+    trace(ERROR, "Failed to run replace(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -629,7 +630,7 @@ bool FunctionC::runRegreplace(vector<string>* fieldvalues, map<string,string>* v
     dts.datatype = STRING;
     return true;
   }else{
-    trace(ERROR, "Failed to run regreplace(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+    trace(ERROR, "Failed to run regreplace(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -646,7 +647,7 @@ bool FunctionC::runRegmatch(vector<string>* fieldvalues, map<string,string>* var
     dts.datatype = STRING;
     return true;
   }else{
-    trace(ERROR, "Failed to run regmatch(%s, %s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+    trace(ERROR, "Failed to run regmatch(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -661,7 +662,7 @@ bool FunctionC::runCountword(vector<string>* fieldvalues, map<string,string>* va
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true)){
     if (m_params.size() == 2){
       if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sQuoters, dts, true)){
-        trace(ERROR, "(2)Failed to run countword(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        trace(ERROR, "(2)Failed to run countword(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
         return false;
       }
     }
@@ -670,7 +671,7 @@ bool FunctionC::runCountword(vector<string>* fieldvalues, map<string,string>* va
     sResult = intToStr(vWords.size());
     return true;
   }else{
-    trace(ERROR, "(2)Failed to run countword(%s)!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "(2)Failed to run countword(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -685,30 +686,30 @@ bool FunctionC::runGetword(vector<string>* fieldvalues, map<string,string>* varv
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sPos, dts, true) && isInt(sPos)){
     int iPos = atoi(sPos.c_str());
     if (iPos<=0){
-      trace(ERROR, "%s cannot be zero a negative number!\n", sPos.c_str(), m_params[0].m_expStr.c_str());
+      trace(ERROR, "%s cannot be zero a negative number!\n", sPos.c_str(), m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (m_params.size() == 3){
       if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sQuoters, dts, true)){
-        trace(ERROR, "(1)Failed to run getword(%s,%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str(), m_params[2].m_expStr.c_str());
+        trace(ERROR, "(1)Failed to run getword(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
         return false;
       }
     }
     std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
     vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true,true);
     if (vWords.size() == 0){
-      trace(WARNING, "No word found in '%s'!\n", m_params[0].m_expStr.c_str());
+      trace(WARNING, "No word found in '%s'!\n", m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (iPos>0 && iPos<=vWords.size()){
       sResult = vWords[iPos-1];
       return true;
     }else{
-      trace(WARNING, "%s is out of range of the word list in '%s'!\n", m_params[1].m_expStr.c_str(), m_params[0].m_expStr.c_str());
+      trace(WARNING, "%s is out of range of the word list in '%s'!\n", m_params[1].getEntireExpstr().c_str(), m_params[0].getEntireExpstr().c_str());
       return false;
     }
   }else{
-    trace(ERROR, "(2)Failed to run getword(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "(2)Failed to run getword(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -724,7 +725,7 @@ bool FunctionC::runCountstr(vector<string>* fieldvalues, map<string,string>* var
     sResult = intToStr(countstr(sRaw,sSub));
     return true;
   }else{
-    trace(ERROR, "(2)Failed to run countstr(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "(2)Failed to run countstr(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -738,14 +739,16 @@ bool FunctionC::runFieldname(vector<string>* fieldvalues, map<string,string>* va
   string sFieldid; 
   if (m_fieldnames && m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sFieldid, dts, true) && isInt(sFieldid)){
     int iFieldid = atoi(sFieldid.c_str());
+    if (!fieldvalues || iFieldid<1 || iFieldid>fieldvalues->size())
+      return false;
     if (iFieldid<1 || iFieldid>m_fieldnames->size()){
-      trace(ERROR, "%s is out of range of the fields!\n", m_params[0].m_expStr.c_str());
+      trace(ERROR, "%s is out of range of the fields!\n", m_params[0].getEntireExpstr().c_str());
       return false;
     }
     sResult = (*m_fieldnames)[iFieldid-1];
     return true;
   }else{
-    trace(ERROR, "Failed to run fieldname(%s)!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run fieldname(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -759,13 +762,13 @@ bool FunctionC::runConcat(vector<string>* fieldvalues, map<string,string>* varva
   sResult = "";
   DataTypeStruct dts1, dts2;
   if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts1, true)){
-    trace(ERROR, "(%d-%s)Failed to run concat()\n",0, m_params[0].m_expStr.c_str());
+    trace(ERROR, "(%d-%s)Failed to run concat()\n",0, m_params[0].getEntireExpstr().c_str());
     return false;
   }
   string scomp;
   for (int i=1;i<m_params.size();i++){
     if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true)){
-      trace(ERROR, "(%d-%s)Failed to run concat()\n",i,m_params[i].m_expStr.c_str());
+      trace(ERROR, "(%d-%s)Failed to run concat()\n",i,m_params[i].getEntireExpstr().c_str());
       return false;
     }
     sResult+=scomp;
@@ -789,7 +792,7 @@ bool FunctionC::runConcatcol(vector<string>* fieldvalues, map<string,string>* va
   for (int i=0; i<vExpandedExpr.size(); i++){
     vExpandedExpr[i].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
     if (!vExpandedExpr[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true)){
-      trace(ERROR, "(%d-%s)Failed to run concatcol(start,end,expr[,step,delm])!\n",i,vExpandedExpr[i].m_expStr.c_str());
+      trace(ERROR, "(%d-%s)Failed to run concatcol(start,end,expr[,step,delm])!\n",i,vExpandedExpr[i].getEntireExpstr().c_str());
     }
     sResult+=sRaw;
     if (i<vExpandedExpr.size()-1)
@@ -817,7 +820,7 @@ bool FunctionC::runCalcol(vector<string>* fieldvalues, map<string,string>* varva
   for (int i=0; i<vExpandedExpr.size(); i++){
     vExpandedExpr[i].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
     if (!vExpandedExpr[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true) || !isDouble(trim_copy(sRaw))){
-      trace(ERROR, "(%d-%s)Failed to run calcol(start,end,expr[,step,operation])!\n",i,vExpandedExpr[i].m_expStr.c_str());
+      trace(ERROR, "(%d-%s)Failed to run calcol(start,end,expr[,step,operation])!\n",i,vExpandedExpr[i].getEntireExpstr().c_str());
     }
     double dTmp = atof(trim_copy(sRaw).c_str());
     switch (iOp){
@@ -856,6 +859,22 @@ bool FunctionC::runCalcol(vector<string>* fieldvalues, map<string,string>* varva
   return true;
 }
 
+bool FunctionC::runAppendfile(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "appendfile(content,file) function accepts only two parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sContent, sFile;
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sContent, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sFile, dts, true)){
+    sResult = intToStr(appendFile(sContent, sFile));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run appendfile(%s,%s)\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
 bool FunctionC::runAscii(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 1){
@@ -874,7 +893,7 @@ bool FunctionC::runAscii(vector<string>* fieldvalues, map<string,string>* varval
     sResult = intToStr(int(sResult[0]));
     return true;
   }else{
-    trace(ERROR, "Failed to run ascii(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run ascii(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -892,7 +911,7 @@ bool FunctionC::runChar(vector<string>* fieldvalues, map<string,string>* varvalu
     sResult.push_back(a);
     return true;
   }else{
-    trace(ERROR, "Failed to run char(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run char(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -910,7 +929,7 @@ bool FunctionC::runComparenum(vector<string>* fieldvalues, map<string,string>* v
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run comparenum(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run comparenum(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -930,7 +949,7 @@ bool FunctionC::runComparedate(vector<string>* fieldvalues, map<string,string>* 
   }
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, date1, dts, true) && isDate(date1, offSet, dts1.extrainfo) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, date2, dts, true) && isDate(date2, offSet, dts2.extrainfo)){
     if (dts1.extrainfo.compare(dts2.extrainfo)!=0){
-      trace(ERROR, "Date format %s of %s doesnot match date format %s of %s!\n", dts1.extrainfo.c_str(), m_params[0].m_expStr.c_str(), dts2.extrainfo.c_str(), m_params[1].m_expStr.c_str());
+      trace(ERROR, "Date format %s of %s doesnot match date format %s of %s!\n", dts1.extrainfo.c_str(), m_params[0].getEntireExpstr().c_str(), dts2.extrainfo.c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
     }
     dts1.datatype = DATE;
@@ -938,7 +957,7 @@ bool FunctionC::runComparedate(vector<string>* fieldvalues, map<string,string>* 
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run comparedater(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run comparedater(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -955,7 +974,7 @@ bool FunctionC::runMod(vector<string>* fieldvalues, map<string,string>* varvalue
     sResult = intToStr(atoi(sBase.c_str())%atoi(sMod.c_str()));
     return true;
   }else{
-    trace(ERROR, "Failed to run mod(%s, %s)\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run mod(%s, %s)\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -972,7 +991,7 @@ bool FunctionC::runAbs(vector<string>* fieldvalues, map<string,string>* varvalue
     sResult = doubleToStr(dNum<0?dNum*-1:dNum);
     return true;
   }else{
-    trace(ERROR, "Failed to run abs(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run abs(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -993,7 +1012,7 @@ bool FunctionC::runDatatype(vector<string>* fieldvalues, map<string,string>* var
     dts.datatype = STRING;
     return true;
   }else{
-    trace(ERROR, "Failed to run datatype(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run datatype(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1008,7 +1027,7 @@ bool FunctionC::runToint(vector<string>* fieldvalues, map<string,string>* varval
     dts.datatype = INTEGER;
     return true;
   }else{
-    trace(ERROR, "Failed to run toint(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run toint(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1023,7 +1042,7 @@ bool FunctionC::runTolong(vector<string>* fieldvalues, map<string,string>* varva
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run tolong(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run tolong(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1038,7 +1057,7 @@ bool FunctionC::runTofloat(vector<string>* fieldvalues, map<string,string>* varv
     dts.datatype = DOUBLE;
     return true;
   }else{
-    trace(ERROR, "Failed to run tofloat(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run tofloat(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1053,7 +1072,7 @@ bool FunctionC::runTostr(vector<string>* fieldvalues, map<string,string>* varval
     dts.datatype = STRING;
     return true;
   }else{
-    trace(ERROR, "Failed to run tostr(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run tostr(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1071,7 +1090,7 @@ bool FunctionC::runTodate(vector<string>* fieldvalues, map<string,string>* varva
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && isDate(sResult, offSet, dts.extrainfo)){
     return true;
   }else{
-    trace(ERROR, "Failed to run runTodate(str,[dateformat])\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run runTodate(str,[dateformat])\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1087,7 +1106,7 @@ bool FunctionC::runDectohex(vector<string>* fieldvalues, map<string,string>* var
     dts.datatype = STRING;
     return true;
   }else{
-    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1103,7 +1122,7 @@ bool FunctionC::runHextodec(vector<string>* fieldvalues, map<string,string>* var
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1119,7 +1138,7 @@ bool FunctionC::runDectobin(vector<string>* fieldvalues, map<string,string>* var
     dts.datatype = STRING;
     return true;
   }else{
-    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1135,7 +1154,7 @@ bool FunctionC::runBintodec(vector<string>* fieldvalues, map<string,string>* var
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run dectohex(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1152,7 +1171,7 @@ bool FunctionC::runFloor(vector<string>* fieldvalues, map<string,string>* varval
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run floor(%s)!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run floor(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1169,7 +1188,7 @@ bool FunctionC::runCeil(vector<string>* fieldvalues, map<string,string>* varvalu
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run ceil(%s)!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run ceil(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1193,11 +1212,11 @@ bool FunctionC::runTimediff(vector<string>* fieldvalues, map<string,string>* var
       dts.datatype = DOUBLE;
       return true;
     }else{
-      trace(ERROR, "Failed to run timediff(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+      trace(ERROR, "Failed to run timediff(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
     }
   }else{
-    trace(ERROR, "Failed to run timediff(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run timediff(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1218,7 +1237,7 @@ bool FunctionC::runAddtime(vector<string>* fieldvalues, map<string,string>* varv
       if (sUnit.length() == 1 & (sUnit[0]=='S' || sUnit[0]=='M' || sUnit[0]=='H' || sUnit[0]=='D' || sUnit[0]=='N' || sUnit[0]=='Y'))
         unit = sUnit[0];
       else{
-        trace(ERROR, "'%s' is not a valid unit!\n", m_params[2].m_expStr.c_str());
+        trace(ERROR, "'%s' is not a valid unit!\n", m_params[2].getEntireExpstr().c_str());
         return false;
       }
     }
@@ -1234,11 +1253,11 @@ bool FunctionC::runAddtime(vector<string>* fieldvalues, map<string,string>* varv
       dts.datatype = DATE;
       return true;
     }else{
-      trace(ERROR, "Failed to run addtime(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+      trace(ERROR, "Failed to run addtime(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
     }
   }else{
-    trace(ERROR, "Failed to run addtime(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run addtime(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1255,7 +1274,7 @@ bool FunctionC::runRound(vector<string>* fieldvalues, map<string,string>* varval
     dts.datatype = LONG;
     return true;
   }else{
-    trace(ERROR, "Failed to run round(%s)!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run round(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1272,7 +1291,7 @@ bool FunctionC::runLog(vector<string>* fieldvalues, map<string,string>* varvalue
     dts.datatype = DOUBLE;
     return true;
   }else{
-    trace(ERROR, "Failed to run log(%s)!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run log(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1286,13 +1305,13 @@ bool FunctionC::runRandom(vector<string>* fieldvalues, map<string,string>* varva
   string sMin="1", sMax="100";
   if (m_params.size() > 0){
     if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sMax, dts, true) || !isDouble(sMax)){ // the parameter is the maximum range if only one parameter provided
-      trace(ERROR, "Failed to run random(%s)!\n", m_params[0].m_expStr.c_str());
+      trace(ERROR, "Failed to run random(%s)!\n", m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (m_params.size() > 1){ // the first parameter is the minimum range and the second parameter is the maximum range if two parameters provided
       sMin = sMax;
       if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sMax, dts, true) || !isDouble(sMax)){ 
-        trace(ERROR, "Failed to run random(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        trace(ERROR, "Failed to run random(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
         return false;
       }
     }
@@ -1310,12 +1329,12 @@ bool FunctionC::runRandstr(vector<string>* fieldvalues, map<string,string>* varv
   string sLen="8", sFlags="uld";
   if (m_params.size() > 0){
     if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sLen, dts, true) || !isDouble(sLen)){ 
-      trace(ERROR, "Failed to run runRandstr(%s)!\n", m_params[0].m_expStr.c_str());
+      trace(ERROR, "Failed to run runRandstr(%s)!\n", m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (m_params.size() > 1){ 
       if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sFlags, dts, true)){ 
-        trace(ERROR, "Failed to run runRandstr(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        trace(ERROR, "Failed to run runRandstr(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
         return false;
       }
     }
@@ -1334,12 +1353,12 @@ bool FunctionC::runTrimleft(vector<string>* fieldvalues, map<string,string>* var
   bool repeat=true;
   if (m_params.size() > 0){
     if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){ 
-      trace(ERROR, "Failed to run trimleft(%s)!\n", m_params[0].m_expStr.c_str());
+      trace(ERROR, "Failed to run trimleft(%s)!\n", m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (m_params.size() > 1){ 
       if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sChar, dts, true)){ 
-        trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
         return false;
       }
       if (sChar.length()!=1){
@@ -1348,7 +1367,7 @@ bool FunctionC::runTrimleft(vector<string>* fieldvalues, map<string,string>* var
       }
       if (m_params.size() > 2){ 
         if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRepeat, dts, true)){ 
-          trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+          trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
           return false;
         }
         repeat=(sRepeat.compare("0")!=0);
@@ -1369,12 +1388,12 @@ bool FunctionC::runTrimright(vector<string>* fieldvalues, map<string,string>* va
   bool repeat=true;
   if (m_params.size() > 0){
     if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){ 
-      trace(ERROR, "Failed to run trimright(%s)!\n", m_params[0].m_expStr.c_str());
+      trace(ERROR, "Failed to run trimright(%s)!\n", m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (m_params.size() > 1){ 
       if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sChar, dts, true)){ 
-        trace(ERROR, "Failed to run trimright(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        trace(ERROR, "Failed to run trimright(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
         return false;
       }
       if (sChar.length()!=1){
@@ -1383,7 +1402,7 @@ bool FunctionC::runTrimright(vector<string>* fieldvalues, map<string,string>* va
       }
       if (m_params.size() > 2){ 
         if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRepeat, dts, true)){ 
-          trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+          trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
           return false;
         }
         repeat=(sRepeat.compare("0")!=0);
@@ -1404,12 +1423,12 @@ bool FunctionC::runTrim(vector<string>* fieldvalues, map<string,string>* varvalu
   bool repeat=true;
   if (m_params.size() > 0){
     if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){ 
-      trace(ERROR, "Failed to run trim(%s)!\n", m_params[0].m_expStr.c_str());
+      trace(ERROR, "Failed to run trim(%s)!\n", m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (m_params.size() > 1){ 
       if (!m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sChar, dts, true)){ 
-        trace(ERROR, "Failed to run trim(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+        trace(ERROR, "Failed to run trim(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
         return false;
       }
       if (sChar.length()!=1){
@@ -1418,7 +1437,7 @@ bool FunctionC::runTrim(vector<string>* fieldvalues, map<string,string>* varvalu
       }
       if (m_params.size() > 2){ 
         if (!m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRepeat, dts, true)){ 
-          trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+          trace(ERROR, "Failed to run trimleft(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
           return false;
         }
         repeat=(sRepeat.compare("0")!=0);
@@ -1437,7 +1456,7 @@ bool FunctionC::runCamelstr(vector<string>* fieldvalues, map<string,string>* var
   }
   string sStr;
   if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){ 
-    trace(ERROR, "Failed to run camelstr(%s)!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run camelstr(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
   sResult = camelstr(sStr);
@@ -1452,7 +1471,7 @@ bool FunctionC::runSnakestr(vector<string>* fieldvalues, map<string,string>* var
   }
   string sStr;
   if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){ 
-    trace(ERROR, "Failed to run snakestr(%s)!\n", m_params[0].m_expStr.c_str());
+    trace(ERROR, "Failed to run snakestr(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
   sResult = snakestr(sStr);
@@ -1474,7 +1493,7 @@ bool FunctionC::runTruncdate(vector<string>* fieldvalues, map<string,string>* va
     //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", iSeconds, sTm.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
     return !sResult.empty();
   }else{
-    trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+    trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }  
 }
@@ -1497,11 +1516,11 @@ bool FunctionC::runDateformat(vector<string>* fieldvalues, map<string,string>* v
       dts.datatype = STRING;
       return !sResult.empty();
     }else{
-      trace(ERROR, "(1)Failed to run dateformat(%s, %s)!\n", m_params[0].m_expStr.c_str(), m_params[1].m_expStr.c_str());
+      trace(ERROR, "(1)Failed to run dateformat(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
     }
   }else{
-    trace(ERROR, "(2)Failed to run dateformat(%s, %s)!\n", m_params[0].m_expStr.c_str(), dts.extrainfo.c_str());
+    trace(ERROR, "(2)Failed to run dateformat(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), dts.extrainfo.c_str());
     return false;
   }  
 }
@@ -1650,7 +1669,7 @@ vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
     replacestr(expStr,"%",intToStr(maxFieldNum));
     ExpressionC constExp(expStr);
     if (!isInt(constExp.m_expStr)){
-      trace(ERROR, "(1a)'%s' is not a valid number expresion!\n", m_params[0].m_expStr.c_str());
+      trace(ERROR, "(1a)'%s' is not a valid number expresion!\n", m_params[0].getEntireExpstr().c_str());
       return vExpr;
     }
     begin = max(1,atoi(constExp.m_expStr.c_str()));
@@ -1665,14 +1684,14 @@ vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
     replacestr(expStr,"%",intToStr(maxFieldNum));
     ExpressionC constExp(expStr);
     if (!isInt(constExp.m_expStr)){
-      trace(ERROR, "(1b)'%s' is not a valid number expresion!\n", m_params[1].m_expStr.c_str());
+      trace(ERROR, "(1b)'%s' is not a valid number expresion!\n", m_params[1].getEntireExpstr().c_str());
       return vExpr;
     }
     end = max(1,atoi(constExp.m_expStr.c_str()));
   }else if (isInt(m_params[1].m_expStr))
     end = max(1,min(maxFieldNum,atoi(m_params[1].m_expStr.c_str())));
   else{
-    trace(ERROR, "(1)Invalid end ID for foreach macro function!\n", m_params[1].m_expStr.c_str());
+    trace(ERROR, "(1)Invalid end ID for foreach macro function!\n", m_params[1].getEntireExpstr().c_str());
     return vExpr;
   }
   int iStep = 1;
@@ -1710,7 +1729,7 @@ vector<ExpressionC> FunctionC::expandForeach(vector<ExpressionC> vExps)
     replacestr(expStr,"%",intToStr(vExps.size()));
     ExpressionC constExp(expStr);
     if (!isInt(constExp.m_expStr)){
-      trace(ERROR, "(2a)'%s' is not a valid number expresion!\n", m_params[0].m_expStr.c_str());
+      trace(ERROR, "(2a)'%s' is not a valid number expresion!\n", m_params[0].getEntireExpstr().c_str());
       return vExpr;
     }
     begin = max(1,atoi(constExp.m_expStr.c_str()));
@@ -1725,14 +1744,14 @@ vector<ExpressionC> FunctionC::expandForeach(vector<ExpressionC> vExps)
     replacestr(expStr,"%",intToStr(vExps.size()));
     ExpressionC constExp(expStr);
     if (!isInt(constExp.m_expStr)){
-      trace(ERROR, "(2b)'%s' is not a valid number expresion!\n", m_params[1].m_expStr.c_str());
+      trace(ERROR, "(2b)'%s' is not a valid number expresion!\n", m_params[1].getEntireExpstr().c_str());
       return vExpr;
     }
     end = atoi(constExp.m_expStr.c_str());;
   }else if (isInt(m_params[1].m_expStr))
     end = max(0,min((int)vExps.size(),atoi(m_params[1].m_expStr.c_str())));
   else{
-    trace(ERROR, "(2)Invalid end ID for foreach macro function!\n", m_params[1].m_expStr.c_str());
+    trace(ERROR, "(2)Invalid end ID for foreach macro function!\n", m_params[1].getEntireExpstr().c_str());
     return vExpr;
   }
   for (int i=begin; begin<end?i<=end:i>=end; begin<end?i++:i--){
@@ -1820,6 +1839,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case CALCOL:
       getResult = runCalcol(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case APPENDFILE:
+      getResult = runAppendfile(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case GETWORD:
       getResult = runGetword(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

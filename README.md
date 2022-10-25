@@ -154,6 +154,7 @@ Functions can be used in the expression. We current provide some essential norma
    - switch(input,case1,return1[,case2,result2...][,default]): Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br />
    - greatest(expr1,expr2[,...]) : Normal function. Return the largest one of the given expressions.<br />
    - least(expr1,expr2[,...]) : Normal function. Return the smallest one of the given expressions.<br />
+   - appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
    - Count(expr) : Aggregation function. Count the number of expr.<br />
    - Uniquecount(expr) : Aggregation function. Count the number of distinct expr.<br />
    - Sum(expr) : Aggregation function. Sum the number of expr.<br />

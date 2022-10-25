@@ -549,6 +549,26 @@
    ```
    132000008       DOUBLE  DATE
    ```
+- appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
+   Split columns of a CSV file to different files:<br/>
+   ```
+   [ rquery]$ cat samples/Master.CSV
+   Datestamp|Date|Code|Status
+   20211212|6/6/20|Active|Off
+   20220926|6/6/20|Active|Off
+   [ rquery]$ ./rq -n -q "P d/\|/ | s foreach(1,%,appendFile($,'/tmp/'+fieldname(#)))" samples/Master.CSV -m error
+   1       1       1       1
+   1       1       1       1
+   [ rquery]$ cat /tmp/Datestamp
+   20211212
+   20220926
+   [ rquery]$ cat /tmp/Date
+   6/6/20
+   6/6/20
+   [ rquery]$ cat /tmp/Code
+   Active
+   Active
+   ```
 - sum(expr) - Aggregation function. Sum the number of expr<br/>
    ```
    echo "deptA 2022Jun 123

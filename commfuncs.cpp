@@ -2182,6 +2182,8 @@ short int encodeFunction(string str)
     return CONCATCOL;
   else if(sUpper.compare("CALCOL")==0)
     return CALCOL;
+  else if(sUpper.compare("APPENDFILE")==0)
+    return APPENDFILE;
   else if(sUpper.compare("ZONECONVERT")==0)
     return ZONECONVERT;
   else if(sUpper.compare("RANDOM")==0)
@@ -2932,7 +2934,23 @@ vector <string> getAllTokens(string str, string token)
     return findings;
   }
   return findings;
-}    
+}
+
+bool appendFile(const string & sContent, const string & sFile)
+{
+  ofstream ofs;
+  ofs.open(sFile, ofstream::app);
+  if (ofs.is_open()){
+    char buf[8192];
+    int bsize = 0;
+    //memset( buf, '\0', sizeof(char)*1024 );
+    bsize = sprintf(buf, "%s\n", sContent.c_str());
+    ofs.write(buf, bsize);
+    ofs.close();
+    return true;
+  }else
+    return false;
+}
 
 // check if matched regelar token
 bool matchToken(string str, string token)

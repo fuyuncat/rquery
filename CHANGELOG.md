@@ -2,6 +2,7 @@
 All change logs will be documented here.<br/>
    # [0.981] 2022-10-25
    New feature: New query option extrafilter|e <extra filter conditions> : Provide filter conditions to filt the resultset.<br/>
+   New feature: New function appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
    # [0.981] 2022-10-23
    New feature: New function concat(str1,str2,[...]) : Normal function. Concatenate multiple strings. <br/>
    New feature: New function concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. <br/>

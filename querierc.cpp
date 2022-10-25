@@ -204,8 +204,18 @@ void QuerierC::assignFilter(FilterC* filter)
   //m_filter->dump();
 }
 
-void QuerierC::assignExtraFilter(FilterC* filter)
+void QuerierC::assignExtraFilter(string sFilterStr)
 {
+  FilterC* filter;
+  size_t pos = findFirstSub(sFilterStr, " TRIM ", 0,"''()",'\\',{'(',')'},false );
+  vector<string> vAlias;
+  if (pos != string::npos){
+    filter = new FilterC(trim_copy(sFilterStr.substr(0,pos)));
+    m_trimedSelctions = genSelExpression(trim_copy(sFilterStr.substr(pos+string(" TRIM ").length())), vAlias);
+  }else{
+    filter = new FilterC(trim_copy(sFilterStr));
+  }
+
   if (m_extrafilter){
     m_extrafilter->clear();
     SafeDelete(m_extrafilter);
@@ -2470,6 +2480,7 @@ void QuerierC::applyExtraFilter()
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
   vector< vector< unordered_map<string,string> > > sideDatasets;
+  unordered_map< string, unordered_map<string,string> > sideDatarow;
   unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
   unordered_map< int,int > sideMatchedRowIDs;
 
@@ -2487,6 +2498,8 @@ void QuerierC::applyExtraFilter()
       for (int j=fieldtypes.size(); j<fieldValues.size(); j++)
         fieldtypes.push_back(dts);
       m_extrafilter->analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+      for (int j=0; j<m_trimedSelctions.size(); j++)
+        m_trimedSelctions[j].analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
     }
     varValues["@RAW"]=concatArray(tmpResults[i],m_fielddelim);
     varValues["@LINE"]=intToStr(i);
@@ -2494,8 +2507,20 @@ void QuerierC::applyExtraFilter()
     varValues["@FILELINE"]=intToStr(i);
     varValues["@%"]=intToStr(tmpResults[i].size());
       //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
-    if (!m_extrafilter || m_extrafilter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatasets, &sideDatatypes, sideMatchedRowIDs))
-      m_results.push_back(tmpResults[i]);
+    if (!m_extrafilter || m_extrafilter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatasets, &sideDatatypes, sideMatchedRowIDs)){
+      if (m_trimedSelctions.size()>0){
+        vector<string> trimmedResult;
+        trimmedResult.push_back("");
+        string sResult;
+        DataTypeStruct dts;
+        for (int j=0; j<m_trimedSelctions.size(); j++){
+          m_trimedSelctions[j].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatarow, &sideDatatypes, sResult, dts, true);
+          trimmedResult.push_back(sResult);
+        }
+        m_results.push_back(trimmedResult);
+      }else
+        m_results.push_back(tmpResults[i]);
+    }
   }
 #ifdef __DEBUG__
   m_extrafiltertime += (curtime()-thistime);
@@ -2712,6 +2737,7 @@ void QuerierC::clear()
   m_sideFilters.clear();
   m_sideDatasets.clear();
   m_sideDatatypes.clear();
+  m_trimedSelctions.clear();
   for (unordered_map< string, ofstream* >::iterator it=m_outputfiles.begin();it!=m_outputfiles.end();it++){
     if (it->second && it->second->is_open()){
       it->second->close();

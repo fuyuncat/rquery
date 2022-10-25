@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.982] 2022-10-26
+   Enhancement: extrafilter has a new clause: trim, to specify the selections after trimmed the result set. <br/>
    # [0.981] 2022-10-25
    New feature: New query option extrafilter|e <extra filter conditions> : Provide filter conditions to filt the resultset.<br/>
    New feature: New function appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />

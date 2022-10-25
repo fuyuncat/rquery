@@ -74,14 +74,14 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
       - parse|p /regular string/ : Parse a regular expression string quoted by //<br />
       - set|t field datatype [date format],... : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
       - filter|f <filter conditions> : Filter the parsed records<br />
-      - extrafilter|e <extra filter conditions> : Provide filter conditions to filt the resultset. @N refer to Nth selection of the result set.<br />
+      - extrafilter|e <extra filter conditions> [ trim <selections ...>] : Provide filter conditions to filt the resultset. @N refer to Nth selection of the result set. the trim clause specifys the selections after trimmed the result set.<br />
       - meanwhile|m <actions when searching data> -- Provide actions to be done while doing searching. The result set can be used for two or more files JOIN or IN query.<br />
       - select|s field or expression,... : Fields or expressions to be selected<br />
       - group|g field or expression,... : Fields or expressions to be groupd for aggregation selections<br />
       - sort|o field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
       - limtl n | bottomN,topN : Limited number records to be printed<br />
       - unique|u : Make the returned resutl unique. <br />
-      - >|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file. <br />
+      - \>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file. <br />
 - Variables:
 In any expression of select, filter, group, sort, variables can be used. The variables are in a @Var format. Currently, the variables can be used are,<br />
    - @raw : The raw string of a parsed line<br />

@@ -1433,6 +1433,7 @@
    ```
    Using extrafilter:<br/>
    ```
-   [ rquery]$ ./rq -q "s @1, count(1) | g @1 | e @2=3" timezone.log
-   192.168.1.2     3
+   [ rquery]$ ./rq -q "s @1, count(1) | g @1 | e @2>=3 trim @1+':'+@2" timezone.log
+   192.168.1.1:5
+   192.168.1.2:3
    ```

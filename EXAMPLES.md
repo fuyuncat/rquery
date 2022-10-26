@@ -1437,3 +1437,29 @@
    192.168.1.1:5
    192.168.1.2:3
    ```
+- Show hierarchy (tree) structure <br/>
+   Hierarchy data:<br/>
+   ```
+   [ rquery]$ cat samples/tree.txt
+   ID PID Name Value
+   1 0 Root /
+   2 1 Branch Sub1
+   3 1 Branch Sub2
+   4 2 Leaf file1
+   5 2 Leaf file2
+   6 2 Leaf file3
+   7 3 Leaf file4
+   8 3 Leaf file5
+   ```
+   Show the tree structure:<br/>
+   ```
+   [ rquery]$ ./rq -n -q "s switch(comparenum(@level,0),1,'+','')+pad('-',@level-1)+@4+'('+@3+')' | h k:@1;p:@2" samples/tree.txt
+   /(Root)
+   +Sub2(Branch)
+   +-file5(Leaf)
+   +-file4(Leaf)
+   +Sub1(Branch)
+   +-file3(Leaf)
+   +-file2(Leaf)
+   +-file1(Leaf)
+   ```

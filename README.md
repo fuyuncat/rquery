@@ -81,6 +81,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
       - sort|o field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
       - limtl n | bottomN,topN : Limited number records to be printed<br />
       - unique|u : Make the returned resutl unique. <br />
+      - tree|h k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree. <br />
       - \>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file. <br />
 - Variables:
 In any expression of select, filter, group, sort, variables can be used. The variables are in a @Var format. Currently, the variables can be used are,<br />

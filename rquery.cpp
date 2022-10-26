@@ -66,6 +66,7 @@ void usage()
   printf("\t\tsort|o <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
   printf("\t\tlimt|l <n | bottomN,topN> -- Provide output limit range.\n");
   printf("\t\tunique|u -- Make the returned result unique.\n");
+  printf("\t\ttree|h k:expr1[,expr2...];p:expr1[,expr2...] -- Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree. \n");
   printf("\t\t>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file.\n");
   printf("\t-r|--readmode <buffer|line> -- Provide file read mode, default is buffer.\n");
   printf("\t-s|--skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n");
@@ -299,6 +300,9 @@ void printResult(QuerierC & rq, size_t total)
     rq.sort();
     thisTime = curtime();
     trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
+    rq.tree();
+    thisTime = curtime();
+    trace(DEBUG2, "Treeing: %u\n", thisTime-lastTime);
     rq.setOutputFormat(gv.g_ouputformat);
     rq.outputAndClean();
     thisTime = curtime();
@@ -390,6 +394,13 @@ void processQuery(string sQuery, QuerierC & rq)
   }else if (query.find("u") != query.end()){
     rq.setUniqueResult(true);
   }
+  if (query.find("tree") != query.end()){
+    //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
+    rq.assignTreeStr(query["tree"]);
+  }else if (query.find("h") != query.end()){
+    //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
+    rq.assignTreeStr(query["h"]);
+  }
   if (query.find("limit") != query.end()){
     //trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
     rq.assignLimitStr(query["limit"]);
@@ -457,6 +468,7 @@ void runQuery(vector<string> vContent, QuerierC & rq, short int fileMode=READBUF
         rq.analytic();
         rq.unique();
         rq.sort();
+        rq.tree();
         rq.setOutputFormat(gv.g_ouputformat);
         if (gv.g_printheader && gv.g_ouputformat==TEXT)
           rq.printFieldNames();
@@ -707,6 +719,7 @@ int main(int argc, char *argv[])
         cout << "sort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n";
         cout << "limt <n | bottomN,topN> -- Provide output limit range.\n";
         cout << "unique -- Make the returned resutl unique.\n";
+        cout << "tree k:expr1[,expr2...];p:expr1[,expr2...] -- Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree.\n";
         cout << "output|append -- Set output files, if not set, output to standard terminal (screen). 'output' will overwrite existing files, 'append' will append to existing file.\n";
         cout << "clear -- Clear all query inputs.\n";
         cout << "filemode <buffer|line> -- Provide file read mode, default is buffer.\n";
@@ -860,6 +873,11 @@ int main(int argc, char *argv[])
       }else if (lower_copy(trim_copy(lineInput)).compare("unique")==0){
         rq.setUniqueResult(true);
         cout << "Set returned result unique.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("tree ")==0){
+        string strParam = trim_copy(lineInput).substr(string("tree ").length());
+        rq.assignTreeStr(strParam);
+        cout << "Tree keys are provided.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).compare("output")==0){
         string strParam = trim_copy(lineInput).substr(string("output ").length());

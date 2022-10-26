@@ -556,7 +556,7 @@
    Datestamp|Date|Code|Status
    20211212|6/6/20|Active|Off
    20220926|6/6/20|Active|Off
-   [ rquery]$ ./rq -n -q "P d/\|/ | s foreach(1,%,appendFile($,'/tmp/'+fieldname(#)))" samples/Master.CSV -m error
+   [ rquery]$ ./rq -n -q "P d/\|/ | s foreach(1,%,appendFile($+'\n','/tmp/'+fieldname(#)))" samples/Master.CSV
    1       1       1       1
    1       1       1       1
    [ rquery]$ cat /tmp/Datestamp

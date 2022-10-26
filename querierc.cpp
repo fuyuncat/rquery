@@ -102,6 +102,7 @@ void QuerierC::init()
   m_bToAnalyzeSortMacro = false;
   m_selstr = "";
   m_sortstr = "";
+  m_treestr = "";
   m_fielddelim = "\t";
   m_detectTypeMaxRowNum = 1;
   m_detectedTypeRows = 0;
@@ -115,6 +116,7 @@ void QuerierC::init()
   m_filtertime = 0;
   m_extrafiltertime = 0;
   m_sorttime = 0;
+  m_treetime = 0;
   m_uniquetime = 0;
   m_grouptime = 0;
   m_analytictime = 0;
@@ -495,6 +497,65 @@ bool QuerierC::assignSortStr(string sortstr)
   return analyzeSortStr();
 }
 
+bool QuerierC::analyzeTreeStr()
+{
+  clearTree();
+  vector<string> vRawStrs = split(m_treestr,';',"''()",'\\',{'(',')'},false,true);
+  if (vRawStrs.size()<2){
+    trace(FATAL,"You must provide tree keys and parent keys!\n");
+    return false;
+  }
+  for (int i=0;i<vRawStrs.size();i++){
+    vector<string> vMapStrs = split(vRawStrs[i],':',"''()",'\\',{'(',')'},false,true);
+    if (vMapStrs.size()<2){
+      trace(ERROR,"The key string format should be 'k:expr1...' or 'p:expr1...'!\n");
+      continue;
+    }
+    vector<string> vKeyStrs = split(vMapStrs[1],',',"''()",'\\',{'(',')'},false,true);
+    if (upper_copy(trim_copy(vMapStrs[0])).compare("K")==0){
+      for (int j=0; j<vKeyStrs.size(); j++){
+        m_treeProps.push_back(ExpressionC(vKeyStrs[j]));
+        if (m_treeProps[m_treeProps.size()-1].containAnaFunc() || m_treeProps[m_treeProps.size()-1].containGroupFunc()){
+          trace(FATAL,"Tree key cannot contain any aggregation or analytic function!\n");
+          clearTree();
+          return false;
+        }
+      }
+    }else if (upper_copy(trim_copy(vMapStrs[0])).compare("P")==0){
+      for (int j=0; j<vKeyStrs.size(); j++){
+        m_treeParentProps.push_back(ExpressionC(vKeyStrs[j]));
+        if (m_treeParentProps[m_treeParentProps.size()-1].containAnaFunc() || m_treeParentProps[m_treeParentProps.size()-1].containGroupFunc()){
+          trace(FATAL,"Tree parent key cannot contain any aggregation or analytic function!\n");
+          clearTree();
+          return false;
+        }
+      }
+    }else{
+      trace(ERROR,"Unrecognized flag '%s', it should be K or P!\n", vMapStrs[0].c_str());
+      continue;
+    }
+  }
+  if (m_treeProps.size() != m_treeParentProps.size()){
+    trace(FATAL,"The size of tree key (%d) and parent key (%d) does not match!\n", m_treeProps.size(), m_treeParentProps.size());
+    clearTree();
+    return false;
+  }
+
+  return true;
+}
+
+// m_groups, m_selections should always be analyzed before m_sorts
+bool QuerierC::assignTreeStr(string treestr)
+{
+  if (m_groups.size()>0 || m_sorts.size()>0 || m_initAnaArray.size()>0 || m_aggrOnly || m_bUniqueResult){
+    trace(ERROR,"Tree cannot work with group or sort or unique!\n");
+    return false;
+  }else{
+    m_treestr = treestr;
+    return analyzeTreeStr();
+  }
+}
+
 bool QuerierC::checkSortGroupConflict(const ExpressionC & eSort)
 {
   if (m_groups.size() > 0) {// checking if compatible with GROUP
@@ -662,7 +723,7 @@ void QuerierC::setUserVars(string variables)
     }
     string sName=upper_copy(trim_copy(vNameVal[0])), sValue=trim_copy(vNameVal[1]);
     trace(DEBUG, "Setting variable '%s' value '%s'!\n", sName.c_str(), sValue.c_str());
-    if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0 || sName.compare("FILEID")==0 || sName.compare("FILELINE")==0 || sName.compare("N")==0 || sName.compare("%")==0 || sName.compare("R")==0){
+    if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0 || sName.compare("FILEID")==0 || sName.compare("FILELINE")==0 || sName.compare("N")==0 || sName.compare("%")==0 || sName.compare("R")==0 || sName.compare("LEVEL")==0){
       trace(ERROR, "%s is a reserved word, cannot be used as a variable name!\n", sName.c_str());
       continue;
     }
@@ -673,8 +734,10 @@ void QuerierC::setUserVars(string variables)
     if (m_uservariables.find(sVName) != m_uservariables.end()){
       if (!bGlobal) // reset value for local variables
         m_uservariables[sVName] = sValue;
-    }else
+    }else{
       m_uservariables.insert(pair<string, string> (sVName,sValue));
+      m_uservarinitval.insert(pair<string, string> (sVName,sValue));
+    }
     if (vNameVal.size()>2 && m_uservarexprs.find(sVName) == m_uservarexprs.end()){ // dynamic variable has an expression
       ExpressionC tmpExp = ExpressionC(trim_copy(vNameVal[2]));
       m_uservarexprs.insert(pair<string, ExpressionC> (sVName,tmpExp));
@@ -712,7 +775,7 @@ void QuerierC::setOutputFiles(string outputfilestr, short int outputmode)
 
 bool QuerierC::toGroupOrSort()
 {
-  return (m_groups.size()>0 || m_sorts.size()>0 || m_initAnaArray.size()>0 || m_aggrOnly || m_bUniqueResult);
+  return (m_groups.size()>0 || m_sorts.size()>0 || m_initAnaArray.size()>0 || m_aggrOnly || m_bUniqueResult || (m_treeProps.size()>0 && m_treeProps.size()==m_treeParentProps.size()));
 }
 
 void QuerierC::pairFiledNames(namesaving_smatch matches)
@@ -1166,61 +1229,87 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
       ExpressionC tmpExp;
       if (m_groups.size() == 0 && m_initAggProps.size() == 0 && !m_aggrOnly){
         //trace(DEBUG, " No group! \n");
-        if (!addResultToSet(&fieldValues, &varValues, rowValue, m_selections, &aggGroupProp, &anaFuncData, &anaEvaledExp, matchedSideDatarow, m_results))
-          return false;
+        vector<string> vResults;
+
+        // If need to construct tree, save all fields value to m_results first, process the expressions in tree()
+        if (m_treeProps.size()>0 && m_treeProps.size() == m_treeParentProps.size()){
+          vector<string> extendedRowValues = rowValue;
+          extendedRowValues.push_back(m_filename);
+          extendedRowValues.push_back(intToStr(m_fileid));
+          extendedRowValues.push_back(intToStr(m_fieldnames.size()));
+          appendResultSet(extendedRowValues);
+          ////eval selection expression to get side dataset only.
+          //for (int i=0; i<m_selections.size()l i++)
+          //  m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+          for (int i=0; i<m_treeProps.size(); i++){
+            m_treeProps[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+            vResults.push_back(sResult);
+          }
+          m_treeKeys.push_back(vResults);
+          vResults.clear();
+          for (int i=0; i<m_treeParentProps.size(); i++){
+            m_treeParentProps[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+            vResults.push_back(sResult);
+          }
+          m_treeParentKeys.push_back(vResults);
+          return true;
+        }else{
+          if (!addResultToSet(&fieldValues, &varValues, rowValue, m_selections, &aggGroupProp, &anaFuncData, &anaEvaledExp, matchedSideDatarow, m_results))
+            return false;
 #ifdef __DEBUG__
   m_evalSeltime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
 
-        vector<string> vResults;
-        for (int i=0; i<m_sorts.size(); i++){
-          if (!m_sorts[i].sortKey.containGroupFunc()){
-            //if it has the exact same expression as any selection, get the result from selection
-            int iSel = -1;
-            for (int j=0; j<m_selections.size(); j++)
-              if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
-                iSel = j;
-                break;
+          vResults.clear();
+          for (int i=0; i<m_sorts.size(); i++){
+            if (!m_sorts[i].sortKey.containGroupFunc()){
+              //if it has the exact same expression as any selection, get the result from selection
+              int iSel = -1;
+              for (int j=0; j<m_selections.size(); j++)
+                if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
+                  iSel = j;
+                  break;
+                }
+              if (iSel >= 0){
+                sResult = m_results[m_results.size()-1][iSel + 1];
+                if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
+                  tmpExp = m_selections[iSel];
+                  tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
+                  anaEvaledExp.push_back(tmpExp);
+                }
+              // if the sort key is a integer, get the result from the result set at the same sequence number
+              }else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()){
+                int iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str());
+                sResult = m_results[m_results.size()-1][iSel + 1];
+                if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
+                  tmpExp = m_selections[iSel];
+                  tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
+                  anaEvaledExp.push_back(tmpExp);
+                }
+              }else{
+                tmpExp = m_sorts[i].sortKey;
+               // m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
+                if (m_sorts[i].sortKey.containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
+                  tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
+                  anaEvaledExp.push_back(tmpExp);
+                }else
+                  tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
               }
-            if (iSel >= 0){
-              sResult = m_results[m_results.size()-1][iSel + 1];
-              if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
-                tmpExp = m_selections[iSel];
-                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
-                anaEvaledExp.push_back(tmpExp);
-              }
-            // if the sort key is a integer, get the result from the result set at the same sequence number
-            }else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()){
-              int iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str());
-              sResult = m_results[m_results.size()-1][iSel + 1];
-              if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
-                tmpExp = m_selections[iSel];
-                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
-                anaEvaledExp.push_back(tmpExp);
-              }
+              //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
             }else{
-              tmpExp = m_sorts[i].sortKey;
-             // m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
-              if (m_sorts[i].sortKey.containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
-                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
-                anaEvaledExp.push_back(tmpExp);
-              }else
-                tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+              trace(ERROR, "(3)Invalid using aggregation function in '%s', no group involved!\n", m_sorts[i].sortKey.getEntireExpstr().c_str());
+              return false;
             }
-            //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
-          }else{
-            trace(ERROR, "(3)Invalid using aggregation function in '%s', no group involved!\n", m_sorts[i].sortKey.getEntireExpstr().c_str());
-            return false;
+            vResults.push_back(sResult);
           }
-          vResults.push_back(sResult);
-        }
-        //vResults.push_back(intToStr(m_sortKeys.size())); // add an index for the sort key
-        m_sortKeys.push_back(vResults);
+          //vResults.push_back(intToStr(m_sortKeys.size())); // add an index for the sort key
+          m_sortKeys.push_back(vResults);
 #ifdef __DEBUG__
   m_evalSorttime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
+        }
       }else{ // need to do group. store evaled data in a temp date set
         //trace(DEBUG2, " Grouping! \n");
         vector<string> groupExps;  // the group expressions. as the key of following hash map
@@ -1326,6 +1415,10 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
     m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for (int i=0; i<m_sorts.size(); i++)
     m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  for (int i=0; i<m_treeProps.size(); i++)
+    m_treeProps[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  for (int i=0; i<m_treeParentProps.size(); i++)
+    m_treeParentProps[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for (unordered_map< string,ExpressionC >::iterator it=m_aggFuncExps.begin(); it!=m_aggFuncExps.end(); ++it)
     it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for (int i=0; i<m_anaEvaledExp.size(); i++)
@@ -1610,7 +1703,7 @@ bool QuerierC::group()
 #ifdef __DEBUG__
   long int thistime = curtime();
 #endif // __DEBUG__
-  if ((m_groups.size() == 0 && !m_aggrOnly) || m_groupKeys.size() == 0)
+  if ((m_groups.size() == 0 && !m_aggrOnly) || m_groupKeys.size() == 0 || (m_treeProps.size()>0 && m_treeProps.size() == m_treeParentProps.size()))
     return true;
 
   unordered_map< string,vector<string> > anaFuncData;
@@ -2064,7 +2157,7 @@ bool QuerierC::analytic()
 #ifdef __DEBUG__
   long int thistime = curtime();
 #endif // __DEBUG__
-  if (m_initAnaArray.size() == 0)
+  if (m_initAnaArray.size() == 0 || (m_treeProps.size()>0 && m_treeProps.size() == m_treeParentProps.size()))
     return true;
   if (m_anaSortData.size() != m_anaSortProps.size() || m_anaSortProps.size() != m_anaFuncParaNums.size() || m_anaFuncParaNums.size() != m_anaSortData.size()){
     trace(ERROR, "Analytic functions sorting data size %d, sorting prop size %d, group number size %d do not match!\n", m_anaSortData.size(), m_anaSortProps.size(), m_anaFuncParaNums.size());
@@ -2309,7 +2402,7 @@ bool QuerierC::sort()
   //for (int i=0; i<m_sorts.size(); i++)
   //  trace(DEBUG, "Sorting key '%s'(%d) !\n",m_sorts[i].sortKey.getEntireExpstr().c_str(),i);
   trace(DEBUG2, "Sorting begins, sort key size %d, sort expr number %d!\n",m_sortKeys.size(),m_sorts.size());
-  if (m_sorts.size() == 0 || m_sortKeys.size() == 0){
+  if (m_sorts.size() == 0 || m_sortKeys.size() == 0 || (m_treeProps.size()>0 && m_treeProps.size() == m_treeParentProps.size())){
     //trace(DEBUG2, "No sorting keys %d %d!\n",m_sortKeys.size(),m_sorts.size());
     return true;
   }
@@ -2352,6 +2445,131 @@ bool QuerierC::sort()
   //trace(DEBUG1, "Sorting completed \n");
 #ifdef __DEBUG__
   m_sorttime += (curtime()-thistime);
+#endif // __DEBUG__
+  return true;
+}
+
+void QuerierC::releaseTree(TreeNode* tNode)
+{
+  if (tNode->firstChild)
+    releaseTree(tNode->firstChild);
+  if (tNode->nextSibling)
+    releaseTree(tNode->nextSibling);
+  SafeDelete(tNode);
+}
+
+void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level)
+{
+  if (tNode->rowid>=tmpResults.size()){
+    trace(ERROR, "Node rowid %d is out of result set range (%d)!\n", tNode->rowid, tmpResults.size());
+    return;
+  }
+  vector<string> fieldValues;
+  map<string, string> varValues;
+  for (int i=0; i<tmpResults[tNode->rowid].size()-6; i++)
+    fieldValues.push_back(tmpResults[tNode->rowid][i+1]);
+  varValues.insert( pair<string,string>("@RAW",tmpResults[tNode->rowid][0]));
+  varValues.insert( pair<string,string>("@LINE",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-6]));
+  varValues.insert( pair<string,string>("@ROW",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-5]));
+  varValues.insert( pair<string,string>("@FILELINE",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-4]));
+  varValues.insert( pair<string,string>("@FILE",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-3]));
+  varValues.insert( pair<string,string>("@FILEID",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-2]));
+  varValues.insert( pair<string,string>("@%",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-1]));
+  varValues.insert( pair<string,string>("@LEVEL",intToStr(level)));
+  unordered_map< string,GroupProp > aggGroupProp;
+  unordered_map< string,vector<string> > anaFuncData;
+  unordered_map< int,int > sideMatchedRowIDs;
+  unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
+
+  string sResult;
+  DataTypeStruct dts;
+  for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
+    it->second.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+    m_uservariables[it->first] = sResult;
+    varValues[it->first] = sResult;
+  }
+  varValues.insert(m_uservariables.begin(), m_uservariables.end());
+
+  vector<string> vResult;
+  vResult.push_back("");
+  for (int i=0; i<m_selections.size(); i++){
+    m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+    vResult.push_back(sResult);
+  }
+  m_results.push_back(vResult);
+  if (tNode->firstChild)
+    SetTree(tmpResults, tNode->firstChild, level+1);
+  if (tNode->nextSibling)
+    SetTree(tmpResults, tNode->nextSibling, level);
+}
+
+// construct tree
+bool QuerierC::tree()
+{
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
+  if (m_treeProps.size()==0 || m_treeProps.size()!=m_treeParentProps.size() || m_treeKeys.size()==0 || m_treeKeys.size()!=m_treeParentKeys.size() || m_treeKeys.size()!=m_results.size())
+    return true;
+
+  std::set < TreeNode* > roots;
+  unordered_map< vector<string>, TreeNode*, hash_container< vector<string> > > treeNodes;
+  for (int i=0; i<m_treeKeys.size();i++){
+    if (treeNodes.find(m_treeKeys[i]) != treeNodes.end()){
+      trace(WARNING, "Duplicated tree keys detected, skip one row!\n");
+      continue;
+    }
+    TreeNode* tNode=new TreeNode();
+    tNode->rowid = i;
+    tNode->rowValues = m_results[i];
+    tNode->treeKeys = m_treeKeys[i];
+    tNode->parentKeys = m_treeParentKeys[i];
+    tNode->parentNode=NULL;
+    tNode->firstChild=NULL;
+    tNode->nextSibling=NULL;
+    if (treeNodes.find(m_treeParentKeys[i]) != treeNodes.end()){ // if find this node's parent in the processed nodes, set it as the first child.
+      if (treeNodes[m_treeParentKeys[i]]->firstChild)
+        tNode->nextSibling=treeNodes[m_treeParentKeys[i]]->firstChild;
+      treeNodes[m_treeParentKeys[i]]->firstChild=tNode;
+      tNode->parentNode=treeNodes[m_treeParentKeys[i]];
+    }else{
+      roots.insert(tNode);
+      // iterate all processed nodes, to check which ones are this node's children.
+      for (unordered_map< vector<string>, TreeNode*, hash_container< vector<string> > >::iterator it=treeNodes.begin(); it!=treeNodes.end(); it++){
+        bool bFoundChild=true;
+        for (int k=0; k<it->second->parentKeys.size(); k++)
+          if (it->second->parentKeys[k].compare(m_treeKeys[i][k])!=0){
+            bFoundChild=false;
+            break;
+          }
+        if (bFoundChild){
+          if (it->second->parentNode){
+            trace(ERROR, "Dual parent keys detected, skip one row!\n");
+          }else{
+            std::set < TreeNode* >::iterator itr = roots.find(it->second);
+            if (itr!=roots.end()) // no more a root
+              roots.erase(itr);
+            it->second->parentNode = tNode;
+            if (tNode->firstChild)
+              it->second->nextSibling=tNode->firstChild;
+            tNode->firstChild=it->second;
+          }
+        }
+      }
+    }
+    treeNodes.insert( pair< vector<string>, TreeNode* >(m_treeKeys[i],tNode));;
+  }
+
+  vector< vector<string> > tmpResults = m_results;
+  m_results.clear();
+  for (std::set < TreeNode* >::iterator it = roots.begin(); it!=roots.end(); it++)
+    SetTree(tmpResults, *it, 0);
+  for (std::set < TreeNode* >::iterator it = roots.begin(); it!=roots.end(); it++)
+    releaseTree(*it);
+
+  clearTree();
+#ifdef __DEBUG__
+  m_treetime += (curtime()-thistime);
 #endif // __DEBUG__
   return true;
 }
@@ -2668,7 +2886,7 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
   }
 #ifdef __DEBUG__
   m_totaltime = curtime() - m_querystartat;
-  trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_rawanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_uniquetime, m_grouptime, m_detectedTypeRows, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
+  trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_rawanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_detectedTypeRows, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
 #endif // __DEBUG__
 }
 
@@ -2694,6 +2912,14 @@ void QuerierC::clearSort()
 {
   m_sorts.clear();
   m_sortKeys.clear();
+}
+
+void QuerierC::clearTree()
+{
+  m_treeProps.clear();
+  m_treeParentProps.clear();
+  m_treeKeys.clear();
+  m_treeParentKeys.clear();
 }
 
 void QuerierC::clearAnalytic()
@@ -2723,12 +2949,14 @@ void QuerierC::clear()
   clearGroup();
   clearAnalytic();
   clearSort();
+  clearTree();
   clearFilter();
   m_results.clear();
   m_fieldnames.clear();
   m_fieldtypes.clear();
   m_fieldntypes.clear();
   m_uservariables.clear();
+  m_uservarinitval.clear();
   m_uservarexprs.clear();
   m_selnames.clear();
   m_selections.clear();

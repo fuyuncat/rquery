@@ -2944,7 +2944,7 @@ bool appendFile(const string & sContent, const string & sFile)
     char buf[8192];
     int bsize = 0;
     //memset( buf, '\0', sizeof(char)*1024 );
-    bsize = sprintf(buf, "%s\n", sContent.c_str());
+    bsize = sprintf(buf, "%s", sContent.c_str());
     ofs.write(buf, bsize);
     ofs.close();
     return true;

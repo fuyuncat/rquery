@@ -86,6 +86,7 @@ class QuerierC
     bool assignSortStr(string sortstr);
     bool assignLimitStr(string limitstr);
     bool assignMeanwhileString(string mwstr);
+    bool assignTreeStr(string treestr);
     bool setFieldTypeFromStr(string setstr);
     void setFileName(string filename);
     void setNameline(bool nameline);
@@ -100,6 +101,7 @@ class QuerierC
     bool toGroupOrSort();
     bool group();
     bool sort();
+    bool tree();
     bool analytic();
     void unique();
     bool searchStopped();
@@ -149,6 +151,7 @@ class QuerierC
     int m_detectedTypeRows; // How many rows have been used to detect the data types so far
     string m_selstr; // select raw string
     string m_sortstr; // sort raw string
+    string m_treestr; // tree raw string
     bool m_bSelectContainMacro; // flag indicating if macro function exists in select expressions
     bool m_bToAnalyzeSelectMacro; // whether need to analyze marco in selections
     bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
@@ -177,6 +180,7 @@ class QuerierC
     map<string, DataTypeStruct> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     string m_uservarstr;
     map<string, string> m_uservariables; // User defined variables, map to initial/calculated values
+    map<string, string> m_uservarinitval; // User defined variables initial values
     map<string, ExpressionC> m_uservarexprs; // User defined dynamic variables expressions
     vector<string>  m_selnames; // selection names
     vector<ExpressionC> m_selections;    // selected expressions
@@ -186,6 +190,10 @@ class QuerierC
     int m_limittop;     // output limit top, -1 means no limit
     vector< vector<string> > m_sortKeys;  // extra sorting keys. The sorting keys that are not a parts of selections, it could be aggregation functions
     vector< vector<string> > m_results; // Result set. First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
+    vector<ExpressionC> m_treeProps; // Key Properties (fields) of hierarchy structure (tree)
+    vector<ExpressionC> m_treeParentProps; // Parent Key Properties (fields) of hierarchy structure (tree)
+    vector< vector<string> > m_treeKeys;  // Keys of hierarchy structure (tree)
+    vector< vector<string> > m_treeParentKeys;  // Parent keys of hierarchy structure (tree)
     //vector< vector< vector<string> > > m_analyticresults; // vector to store result set of agg functions, like rank(group, sort, equalincrease)
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     //map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
@@ -206,6 +214,7 @@ class QuerierC
     bool analyzeSelString();
     vector<ExpressionC> genSelExpression(string sSel, vector<string> & vAlias);
     bool analyzeSortStr();
+    bool analyzeTreeStr();
     bool checkSelGroupConflict(const ExpressionC & eSel);
     bool checkSortGroupConflict(const ExpressionC & eSort);
     void addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow);
@@ -227,8 +236,11 @@ class QuerierC
     int searchNextReg();
     int searchNextWild();
     int searchNextDelm();
+    void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level);
+    void releaseTree(TreeNode* tNode);
     void clearGroup();
     void clearSort();
+    void clearTree();
     void clearAnalytic();
     void clearFilter();
 
@@ -242,6 +254,7 @@ class QuerierC
     long int m_filtertime;
     long int m_extrafiltertime;
     long int m_sorttime;
+    long int m_treetime;
     long int m_uniquetime;
     long int m_grouptime;
     long int m_analytictime;

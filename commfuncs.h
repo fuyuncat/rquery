@@ -227,6 +227,18 @@ struct DataTypeStruct{
   //}
 };
 
+struct TreeNode;
+struct TreeNode{
+  int rowid;
+  short int level;
+  vector <string> rowValues;
+  vector <string> treeKeys;
+  vector <string> parentKeys;
+  TreeNode* parentNode=NULL;
+  TreeNode* firstChild=NULL;
+  TreeNode* nextSibling=NULL;
+};
+
 class GlobalVars{
 public:
   GlobalVars();

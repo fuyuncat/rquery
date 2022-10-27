@@ -91,6 +91,7 @@ class ExpressionC
     static std::set<char> m_operators; // "^", "*", "/" should be before "+", "-"
     vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!
     vector<DataTypeStruct>* m_fieldtypes;     // all nodes (parent & children) point to the same address!!!
+    DataTypeStruct* m_rawDatatype;
 
     void dump(int deep);
     bool buildExpression();  // build expression class from the expression string

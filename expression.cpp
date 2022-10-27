@@ -34,6 +34,7 @@ void ExpressionC::init()
   m_parentNode = NULL;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
   m_fieldnames = NULL;
   m_fieldtypes = NULL;
+  m_rawDatatype = NULL;
   m_Function = NULL;
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
@@ -105,6 +106,7 @@ void ExpressionC::copyTo(ExpressionC* node) const
     node->m_expStr = m_expStr;
     node->m_fieldnames = m_fieldnames;
     node->m_fieldtypes = m_fieldtypes;
+    node->m_rawDatatype = m_rawDatatype;
     if(m_Function){
       if (node->m_Function){
         node->m_Function->clear();
@@ -453,6 +455,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
     node->m_parentNode = NULL;
     node->m_fieldnames = NULL;
     node->m_fieldtypes = NULL;
+    node->m_rawDatatype = NULL;
     node->m_expstrAnalyzed = true;    
     // check if it is a variable
     if (expStr[0]=='@'){
@@ -461,9 +464,9 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_expType = VARIABLE;
         node->m_expstrAnalyzed = true;
         node->m_expStr = upper_copy(expStr);
-        if (node->m_expStr.compare("@RAW") == 0 || node->m_expStr.compare("@FILE") == 0)
+        if (node->m_expStr.compare("@RAW") == 0 || node->m_expStr.compare("@FILE") == 0 || node->m_expStr.find("@ROOT(") == 0 || node->m_expStr.find("@PATH(") == 0)
           node->m_datatype.datatype = STRING;
-        else if (node->m_expStr.compare("@LINE") == 0 || node->m_expStr.compare("@FILELINE") == 0 || node->m_expStr.compare("@FILEID") == 0 || node->m_expStr.compare("@ROW") == 0 || node->m_expStr.compare("@ROWSORTED") == 0 || node->m_expStr.compare("@%") == 0)
+        else if (node->m_expStr.compare("@LINE") == 0 || node->m_expStr.compare("@FILELINE") == 0 || node->m_expStr.compare("@FILEID") == 0 || node->m_expStr.compare("@ROW") == 0 || node->m_expStr.compare("@ROWSORTED") == 0 || node->m_expStr.compare("@%") == 0 || node->m_expStr.compare("@LEVEL") == 0 || node->m_expStr.compare("@NODEID") == 0)
           node->m_datatype.datatype = LONG;
         else if (node->m_expStr.find("@FIELD") == 0){
           string sColId = m_expStr.substr(string("@FIELD").length());
@@ -742,6 +745,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
     m_metaDataAnzlyzed = true;
     m_fieldnames = fieldnames;
     m_fieldtypes = fieldtypes;
+    m_rawDatatype = rawDatatype;
     if (m_type == BRANCH){
       dts.datatype=UNKNOWN;
       DataTypeStruct rdatatype = m_rightNode?m_rightNode->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes):dts;
@@ -775,8 +779,10 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
             trace(ERROR, "(1)Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
           }
           m_datatype = (*sideDatatypes)[s1][s2];
-        }else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@FILELINE") == 0 || m_expStr.compare("@FILEID") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0 || m_expStr.compare("@%") == 0)
+        }else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@FILELINE") == 0 || m_expStr.compare("@FILEID") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0 || m_expStr.compare("@%") == 0 || m_expStr.compare("@LEVEL") == 0 || m_expStr.compare("@NODEID") == 0)
           m_datatype.datatype = LONG;
+        else if (m_expStr.find("@ROOT(") == 0 || m_expStr.find("@PATH(") == 0)
+          m_datatype.datatype = STRING;
         else if (m_expStr.find("@FIELD") == 0){
           string sColId = m_expStr.substr(string("@FIELD").length());
           int iColID = isInt(sColId)?atoi(sColId.c_str())-1:-1;
@@ -792,12 +798,12 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
             m_expType = UNKNOWN;
             m_datatype.datatype = UNKNOWN;
           }
-        }else if (m_expStr.find("@N") == 0){ // the latest field
+        }else if (m_expStr.compare("@N") == 0){ // the latest field
           m_expType = COLUMN;
           m_colId = (int)fieldtypes->size()-1;
           m_datatype = (*fieldtypes)[m_colId];
           trace(DEBUG, "Tuning '%s' from VARIABLE to COLUMN(%d).\n", m_expStr.c_str(), m_colId);
-        }else if (m_expStr.length()>2 && m_expStr[1] == '(' && m_expStr[m_expStr.length()-1] == ')'){ // calculate @(N-x)
+        }else if (m_expStr.length()>2 && m_expStr[1] == '(' && m_expStr[2] == 'N'  && m_expStr[m_expStr.length()-1] == ')'){ // calculate @(N-x)
           string expStr = m_expStr.substr(2,m_expStr.length()-3);
           replacestr(expStr,"N",intToStr(fieldtypes->size()));
           ExpressionC constExp(expStr);
@@ -917,6 +923,7 @@ ExpressionC* ExpressionC::cloneMe(){
   node->m_expStr = m_expStr;
   node->m_fieldnames = m_fieldnames;
   node->m_fieldtypes = m_fieldtypes;
+  node->m_rawDatatype = m_rawDatatype;
   if (m_Function)
     node->m_Function = m_Function->cloneMe();
   else
@@ -1298,9 +1305,64 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
         string s1 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0')), s2 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0'));
         if (s1.empty() || s2.empty()){
           trace(ERROR, "(2)Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
+          return false;
         }
         sResult = (*sideDatarow)[s1][s2];
         dts = (*sideDatatypes)[s1][s2];
+        m_datatype = dts;
+        if (!getresultonly){
+          m_expType = CONST;
+          m_expStr = sResult;
+        }
+        return true;
+      }else if(m_expStr.length()>=8 && m_expStr.find("@ROOT(")==0){
+        if (varvalues->find("@ROOT") != varvalues->end())
+          sResult=(*varvalues)["@ROOT"];
+        else{
+          size_t pos=0;
+          string s1 = upper_copy(readQuotedStr(m_expStr, pos, "()", '\0'));
+          if (s1.empty()){
+            trace(ERROR, "(1)Invalide expression in the variable '%s'\n",m_expStr.c_str());
+            return false;
+          }
+          ExpressionC expr = ExpressionC(s1);
+          expr.analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
+          expr.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true);
+        }
+        dts.datatype = STRING;
+        m_datatype = dts;
+        if (!getresultonly){
+          m_expType = CONST;
+          m_expStr = sResult;
+        }
+        return true;
+      }else if(m_expStr.length()>=8 && m_expStr.find("@PATH(")==0){
+        if (varvalues->find("@PATH") != varvalues->end())
+          sResult=(*varvalues)["@PATH"];
+        string sPath, sConn;
+        size_t pos=0;
+        string s1 = upper_copy(readQuotedStr(m_expStr, pos, "()", '\0'));
+        if (s1.empty()){
+          trace(ERROR, "(2)Invalide expression in the variable '%s'\n",m_expStr.c_str());
+          return false;
+        }
+        vector<string> vParams = split(s1,',',"''()",'\\',{'(',')'},false,true);
+        if (vParams.size()==0){
+          trace(ERROR, "Variable @PATH requires at least one parameter!\n");
+          return false;
+        }
+        
+        ExpressionC expr = ExpressionC(trim_copy(vParams[0]));
+        expr.analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
+        expr.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sPath, dts, true);
+        if (vParams.size()>1){
+          expr = ExpressionC(trim_copy(vParams[1]));
+          expr.analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
+          expr.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sConn, dts, true);
+        }else
+          sConn="/";
+        sResult=sResult.empty()?sPath:sResult+sConn+sPath;
+        dts.datatype = STRING;
         m_datatype = dts;
         if (!getresultonly){
           m_expType = CONST;

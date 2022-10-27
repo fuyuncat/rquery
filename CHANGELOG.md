@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.983] 2022-10-27
+   Enhancement: Improved performance of hierarchy(tree) query. <br/>
    # [0.982] 2022-10-26
    Enhancement: extrafilter has a new clause: trim, to specify the selections after trimmed the result set. <br/>
    New feature: New query option tree|h k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. <br/>

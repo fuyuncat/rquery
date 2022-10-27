@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v0.982"
+#define VERSION "v0.983"
 
 #define UNKNOWN 0
 
@@ -237,6 +237,10 @@ struct TreeNode{
   TreeNode* parentNode=NULL;
   TreeNode* firstChild=NULL;
   TreeNode* nextSibling=NULL;
+  
+  bool bInTheTree=false;
+  string sRoot="";
+  string sPath="";
 };
 
 class GlobalVars{

@@ -66,7 +66,7 @@ void usage()
   printf("\t\tsort|o <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
   printf("\t\tlimt|l <n | bottomN,topN> -- Provide output limit range.\n");
   printf("\t\tunique|u -- Make the returned result unique.\n");
-  printf("\t\ttree|h k:expr1[,expr2...];p:expr1[,expr2...] -- Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree. \n");
+  printf("\t\ttree|h k:expr1[,expr2...];p:expr1[,expr2...] -- Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree; @root(expr) for the expression root node; @path(expr[,connector]) for an path (of the expression) from root to current node, connector is used for connecting nodes, default is '/'. \n");
   printf("\t\t>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file.\n");
   printf("\t-r|--readmode <buffer|line> -- Provide file read mode, default is buffer.\n");
   printf("\t-s|--skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n");
@@ -719,7 +719,7 @@ int main(int argc, char *argv[])
         cout << "sort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n";
         cout << "limt <n | bottomN,topN> -- Provide output limit range.\n";
         cout << "unique -- Make the returned resutl unique.\n";
-        cout << "tree k:expr1[,expr2...];p:expr1[,expr2...] -- Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree.\n";
+        cout << "tree k:expr1[,expr2...];p:expr1[,expr2...] -- Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree; @root(expr) for the expression root node; @path(expr[,connector]) for an path (of the expression) from root to current node, connector is used for connecting nodes, default is '/'.\n";
         cout << "output|append -- Set output files, if not set, output to standard terminal (screen). 'output' will overwrite existing files, 'append' will append to existing file.\n";
         cout << "clear -- Clear all query inputs.\n";
         cout << "filemode <buffer|line> -- Provide file read mode, default is buffer.\n";

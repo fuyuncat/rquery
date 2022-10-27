@@ -723,7 +723,7 @@ void QuerierC::setUserVars(string variables)
     }
     string sName=upper_copy(trim_copy(vNameVal[0])), sValue=trim_copy(vNameVal[1]);
     trace(DEBUG, "Setting variable '%s' value '%s'!\n", sName.c_str(), sValue.c_str());
-    if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0 || sName.compare("FILEID")==0 || sName.compare("FILELINE")==0 || sName.compare("N")==0 || sName.compare("%")==0 || sName.compare("R")==0 || sName.compare("LEVEL")==0){
+    if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0 || sName.compare("FILEID")==0 || sName.compare("FILELINE")==0 || sName.compare("N")==0 || sName.compare("%")==0 || sName.compare("R")==0 || sName.compare("LEVEL")==0 || sName.compare("NODEID")==0 || sName.compare("ROOT")==0 || sName.compare("PATH")==0){
       trace(ERROR, "%s is a reserved word, cannot be used as a variable name!\n", sName.c_str());
       continue;
     }
@@ -2458,12 +2458,13 @@ void QuerierC::releaseTree(TreeNode* tNode)
   SafeDelete(tNode);
 }
 
-void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level)
+void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid)
 {
   if (tNode->rowid>=tmpResults.size()){
     trace(ERROR, "Node rowid %d is out of result set range (%d)!\n", tNode->rowid, tmpResults.size());
     return;
   }
+  nodeid++;
   vector<string> fieldValues;
   map<string, string> varValues;
   for (int i=0; i<tmpResults[tNode->rowid].size()-6; i++)
@@ -2476,6 +2477,9 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   varValues.insert( pair<string,string>("@FILEID",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-2]));
   varValues.insert( pair<string,string>("@%",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-1]));
   varValues.insert( pair<string,string>("@LEVEL",intToStr(level)));
+  varValues.insert( pair<string,string>("@NODEID",intToStr(nodeid)));
+  varValues.insert( pair<string,string>("@ROOT",tNode->parentNode?tNode->parentNode->sRoot:""));
+  varValues.insert( pair<string,string>("@PATH",tNode->parentNode?tNode->parentNode->sPath:""));
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
   unordered_map< int,int > sideMatchedRowIDs;
@@ -2498,9 +2502,9 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   }
   m_results.push_back(vResult);
   if (tNode->firstChild)
-    SetTree(tmpResults, tNode->firstChild, level+1);
+    SetTree(tmpResults, tNode->firstChild, level+1, nodeid);
   if (tNode->nextSibling)
-    SetTree(tmpResults, tNode->nextSibling, level);
+    SetTree(tmpResults, tNode->nextSibling, level, nodeid);
 }
 
 // construct tree
@@ -2527,43 +2531,71 @@ bool QuerierC::tree()
     tNode->parentNode=NULL;
     tNode->firstChild=NULL;
     tNode->nextSibling=NULL;
-    if (treeNodes.find(m_treeParentKeys[i]) != treeNodes.end()){ // if find this node's parent in the processed nodes, set it as the first child.
-      if (treeNodes[m_treeParentKeys[i]]->firstChild)
-        tNode->nextSibling=treeNodes[m_treeParentKeys[i]]->firstChild;
-      treeNodes[m_treeParentKeys[i]]->firstChild=tNode;
-      tNode->parentNode=treeNodes[m_treeParentKeys[i]];
-    }else{
-      roots.insert(tNode);
-      // iterate all processed nodes, to check which ones are this node's children.
-      for (unordered_map< vector<string>, TreeNode*, hash_container< vector<string> > >::iterator it=treeNodes.begin(); it!=treeNodes.end(); it++){
-        bool bFoundChild=true;
-        for (int k=0; k<it->second->parentKeys.size(); k++)
-          if (it->second->parentKeys[k].compare(m_treeKeys[i][k])!=0){
-            bFoundChild=false;
-            break;
-          }
-        if (bFoundChild){
-          if (it->second->parentNode){
-            trace(ERROR, "Dual parent keys detected, skip one row!\n");
-          }else{
-            std::set < TreeNode* >::iterator itr = roots.find(it->second);
-            if (itr!=roots.end()) // no more a root
-              roots.erase(itr);
-            it->second->parentNode = tNode;
-            if (tNode->firstChild)
-              it->second->nextSibling=tNode->firstChild;
-            tNode->firstChild=it->second;
-          }
-        }
+    tNode->bInTheTree=false;
+    tNode->sRoot="";
+    tNode->sPath="";
+    treeNodes.insert( pair< vector<string>, TreeNode* >(m_treeKeys[i],tNode)); 
+    //if (treeNodes.find(m_treeParentKeys[i]) != treeNodes.end()){ // if find this node's parent in the processed nodes, set it as the first child.
+    //  if (treeNodes[m_treeParentKeys[i]]->firstChild)
+    //    tNode->nextSibling=treeNodes[m_treeParentKeys[i]]->firstChild;
+    //  treeNodes[m_treeParentKeys[i]]->firstChild=tNode;
+    //  tNode->parentNode=treeNodes[m_treeParentKeys[i]];
+    //}else{
+    //  roots.insert(tNode);
+    //  // iterate all processed nodes, to check which ones are this node's children.
+    //  for (unordered_map< vector<string>, TreeNode*, hash_container< vector<string> > >::iterator it=treeNodes.begin(); it!=treeNodes.end(); it++){
+    //    bool bFoundChild=true;
+    //    for (int k=0; k<it->second->parentKeys.size(); k++)
+    //      if (it->second->parentKeys[k].compare(m_treeKeys[i][k])!=0){
+    //        bFoundChild=false;
+    //        break;
+    //      }
+    //    if (bFoundChild){
+    //      if (it->second->parentNode){
+    //        trace(ERROR, "Dual parent keys detected, skip one row!\n");
+    //      }else{
+    //        std::set < TreeNode* >::iterator itr = roots.find(it->second);
+    //        if (itr!=roots.end()) // no more a root
+    //          roots.erase(itr);
+    //        it->second->parentNode = tNode;
+    //        if (tNode->firstChild)
+    //          it->second->nextSibling=tNode->firstChild;
+    //        tNode->firstChild=it->second;
+    //      }
+    //    }
+    //  }
+    //}
+    //treeNodes.insert( pair< vector<string>, TreeNode* >(m_treeKeys[i],tNode));
+  }
+  
+  for (unordered_map< vector<string>, TreeNode*, hash_container< vector<string> > >::iterator it=treeNodes.begin(); it!=treeNodes.end(); it++){
+    if (it->second->bInTheTree)
+      continue;
+    TreeNode* tNode = it->second;
+    while (tNode && treeNodes.find(tNode->parentKeys) != treeNodes.end()){ // if find this node's parent in the processed nodes, set it as the first child.
+      tNode->bInTheTree=true; // set it to true in case a loop detected, the node will not be added twice.
+      if (treeNodes[tNode->parentKeys] == it->second){ // detect a loop
+        trace(WARNING, "Loop detected, break the loop!\n");
+        //treeNodes[tNode->parentKeys]->parentNode=NULL;
+        break;
       }
+      if (treeNodes[tNode->parentKeys]->firstChild)
+        tNode->nextSibling=treeNodes[tNode->parentKeys]->firstChild;
+      treeNodes[tNode->parentKeys]->firstChild=tNode;
+      tNode->parentNode=treeNodes[tNode->parentKeys];
+      if (tNode->parentNode && tNode->parentNode->bInTheTree) // check if parent has already been built
+        break;
+      tNode=tNode->parentNode;
     }
-    treeNodes.insert( pair< vector<string>, TreeNode* >(m_treeKeys[i],tNode));;
+    if (tNode && !tNode->parentNode)
+      roots.insert(tNode);
   }
 
   vector< vector<string> > tmpResults = m_results;
   m_results.clear();
+  int nodeid=0;
   for (std::set < TreeNode* >::iterator it = roots.begin(); it!=roots.end(); it++)
-    SetTree(tmpResults, *it, 0);
+    SetTree(tmpResults, *it, 0, nodeid);
   for (std::set < TreeNode* >::iterator it = roots.begin(); it!=roots.end(); it++)
     releaseTree(*it);
 

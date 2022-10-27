@@ -236,7 +236,7 @@ class QuerierC
     int searchNextReg();
     int searchNextWild();
     int searchNextDelm();
-    void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level);
+    void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid);
     void releaseTree(TreeNode* tNode);
     void clearGroup();
     void clearSort();

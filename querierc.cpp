@@ -80,6 +80,7 @@ void QuerierC::init()
   m_readmode = READBUFF;
   m_bEof = false;
   m_delmrepeatable = false;
+  m_delmkeepspace = false;
   m_quoters = "";
   m_filename = "";
   m_fileid = 0;
@@ -137,6 +138,7 @@ void QuerierC::setregexp(string regexstr)
   if (trim_copy(regexstr).empty()){
     m_searchMode = DELMSEARCH;
     m_delmrepeatable = false;
+    m_delmkeepspace = false;
     m_regexstr = trim_copy(regexstr);
   }else if ((regexstr[0] == 'w' || regexstr[0] == 'W')&& regexstr[1] == '/' && regexstr[regexstr.length()-1] == '/'){
     m_searchMode = WILDSEARCH;
@@ -156,13 +158,18 @@ void QuerierC::setregexp(string regexstr)
   }else if ((regexstr[0] == 'd' || regexstr[0] == 'D') && regexstr[1] == '/' && (regexstr[regexstr.length()-1] == '/' || (regexstr.length()>3 && regexstr[regexstr.length()-2] == '/'))){
     m_searchMode = DELMSEARCH;
     m_delmrepeatable = false;
+    m_delmkeepspace = false;
     string spattern = "";
-    if (regexstr[regexstr.length()-1] == '/')
+    if (regexstr[regexstr.length()-1] == '/') // end with a / means no extra flags
       spattern = regexstr.substr(2,regexstr.length()-3);
     else{
-      if (regexstr.length()>3 && regexstr[regexstr.length()-2] == '/'){
-        if (regexstr[regexstr.length()-1] == 'r' || regexstr[regexstr.length()-1] == 'R')
+      size_t found = regexstr.find_last_of("/");
+      if (regexstr.length()>3 && found != string::npos){
+        string flags=upper_copy(regexstr.substr(found+1));
+        if (flags.find("R")!=string::npos)
           m_delmrepeatable = true;
+        if (flags.find("S")!=string::npos)
+          m_delmkeepspace = true;
       }else
         trace(FATAL, "'%s' is not a valid searching pattern\n",regexstr.c_str());
       spattern = regexstr.substr(2,regexstr.length()-4);
@@ -174,6 +181,8 @@ void QuerierC::setregexp(string regexstr)
     }
     m_regexstr = vSearchPattern[0];
     replacestr(m_regexstr,{"\\t","\\/","\\v","\\|"},{"\t","/","\v","|"});
+    if (m_regexstr.compare(" ")!=0)
+      m_delmkeepspace = false;
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
         trace(ERROR, "(2)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
@@ -1593,6 +1602,8 @@ int QuerierC::searchNextDelm()
       sLine = m_rawstr;
       m_rawstr = "";
     }
+    if (!m_delmkeepspace && !trim_copy(sLine).empty())
+      sLine = trim_copy(sLine);
 #ifdef __DEBUG__
   m_rawreadtime += (curtime()-thistime);
   thistime = curtime();
@@ -2458,7 +2469,7 @@ void QuerierC::releaseTree(TreeNode* tNode)
   SafeDelete(tNode);
 }
 
-void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid)
+void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid, unordered_map< string,vector<ExpressionC> > & treeFuncs)
 {
   if (tNode->rowid>=tmpResults.size()){
     trace(ERROR, "Node rowid %d is out of result set range (%d)!\n", tNode->rowid, tmpResults.size());
@@ -2478,8 +2489,6 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   varValues.insert( pair<string,string>("@%",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-1]));
   varValues.insert( pair<string,string>("@LEVEL",intToStr(level)));
   varValues.insert( pair<string,string>("@NODEID",intToStr(nodeid)));
-  varValues.insert( pair<string,string>("@ROOT",tNode->parentNode?tNode->parentNode->sRoot:""));
-  varValues.insert( pair<string,string>("@PATH",tNode->parentNode?tNode->parentNode->sPath:""));
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
   unordered_map< int,int > sideMatchedRowIDs;
@@ -2487,24 +2496,54 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
 
   string sResult;
   DataTypeStruct dts;
-  for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
+  for (map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
     it->second.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
     m_uservariables[it->first] = sResult;
     varValues[it->first] = sResult;
   }
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
-
+  
   vector<string> vResult;
+  string sConn="/";
+  for (unordered_map< string,vector<ExpressionC> >::iterator it=treeFuncs.begin(); it!=treeFuncs.end(); it++){
+    vResult.clear();
+    for (int i=0; i<it->second.size(); i++){
+      it->second[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+      vResult.push_back(sResult);
+    }
+    if (vResult.size()>0 && upper_copy(trim_copy(it->first)).find("ROOT(")==0){
+      if (tNode->parentNode && tNode->parentNode->mFuncVals.find(it->first) != tNode->parentNode->mFuncVals.end())
+        tNode->mFuncVals.insert(pair< string,string >(it->first,tNode->parentNode->mFuncVals[it->first]));
+      else
+        tNode->mFuncVals.insert(pair< string,string >(it->first,vResult[0]));
+    }else if (vResult.size()>0 && upper_copy(trim_copy(it->first)).find("PARENT(")==0){
+      if (tNode->parentNode && tNode->parentNode->mParentVals.find(it->first) != tNode->parentNode->mParentVals.end())
+        tNode->mFuncVals.insert(pair< string,string >(it->first,tNode->parentNode->mParentVals[it->first]));
+      else
+        tNode->mFuncVals.insert(pair< string,string >(it->first,""));
+      tNode->mParentVals.insert(pair< string,string >(it->first,vResult[0]));
+    }else if (vResult.size()>0 && upper_copy(trim_copy(it->first)).find("PATH(")==0){
+      sConn=vResult.size()>1?vResult[1]:"/"; 
+      if (tNode->parentNode && tNode->parentNode->mFuncVals.find(it->first) != tNode->parentNode->mFuncVals.end())
+        tNode->mFuncVals.insert(pair< string,string >(it->first,tNode->parentNode->mFuncVals[it->first]+sConn+vResult[0]));
+      else
+        tNode->mFuncVals.insert(pair< string,string >(it->first,vResult[0]));
+    }
+  }
+
+  vResult.clear();
   vResult.push_back("");
   for (int i=0; i<m_selections.size(); i++){
-    m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+    ExpressionC tmpExp = m_selections[i];
+    tmpExp.setTreeFuncs(tNode->mFuncVals);
+    tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
     vResult.push_back(sResult);
   }
   m_results.push_back(vResult);
   if (tNode->firstChild)
-    SetTree(tmpResults, tNode->firstChild, level+1, nodeid);
+    SetTree(tmpResults, tNode->firstChild, level+1, nodeid, treeFuncs);
   if (tNode->nextSibling)
-    SetTree(tmpResults, tNode->nextSibling, level, nodeid);
+    SetTree(tmpResults, tNode->nextSibling, level, nodeid, treeFuncs);
 }
 
 // construct tree
@@ -2532,40 +2571,7 @@ bool QuerierC::tree()
     tNode->firstChild=NULL;
     tNode->nextSibling=NULL;
     tNode->bInTheTree=false;
-    tNode->sRoot="";
-    tNode->sPath="";
     treeNodes.insert( pair< vector<string>, TreeNode* >(m_treeKeys[i],tNode)); 
-    //if (treeNodes.find(m_treeParentKeys[i]) != treeNodes.end()){ // if find this node's parent in the processed nodes, set it as the first child.
-    //  if (treeNodes[m_treeParentKeys[i]]->firstChild)
-    //    tNode->nextSibling=treeNodes[m_treeParentKeys[i]]->firstChild;
-    //  treeNodes[m_treeParentKeys[i]]->firstChild=tNode;
-    //  tNode->parentNode=treeNodes[m_treeParentKeys[i]];
-    //}else{
-    //  roots.insert(tNode);
-    //  // iterate all processed nodes, to check which ones are this node's children.
-    //  for (unordered_map< vector<string>, TreeNode*, hash_container< vector<string> > >::iterator it=treeNodes.begin(); it!=treeNodes.end(); it++){
-    //    bool bFoundChild=true;
-    //    for (int k=0; k<it->second->parentKeys.size(); k++)
-    //      if (it->second->parentKeys[k].compare(m_treeKeys[i][k])!=0){
-    //        bFoundChild=false;
-    //        break;
-    //      }
-    //    if (bFoundChild){
-    //      if (it->second->parentNode){
-    //        trace(ERROR, "Dual parent keys detected, skip one row!\n");
-    //      }else{
-    //        std::set < TreeNode* >::iterator itr = roots.find(it->second);
-    //        if (itr!=roots.end()) // no more a root
-    //          roots.erase(itr);
-    //        it->second->parentNode = tNode;
-    //        if (tNode->firstChild)
-    //          it->second->nextSibling=tNode->firstChild;
-    //        tNode->firstChild=it->second;
-    //      }
-    //    }
-    //  }
-    //}
-    //treeNodes.insert( pair< vector<string>, TreeNode* >(m_treeKeys[i],tNode));
   }
   
   for (unordered_map< vector<string>, TreeNode*, hash_container< vector<string> > >::iterator it=treeNodes.begin(); it!=treeNodes.end(); it++){
@@ -2591,11 +2597,15 @@ bool QuerierC::tree()
       roots.insert(tNode);
   }
 
+  unordered_map< string,vector<ExpressionC> > treeFuncs;
+  for (int i=0; i<m_selections.size(); i++)
+    m_selections[i].getTreeFuncs(treeFuncs);
+
   vector< vector<string> > tmpResults = m_results;
   m_results.clear();
   int nodeid=0;
   for (std::set < TreeNode* >::iterator it = roots.begin(); it!=roots.end(); it++)
-    SetTree(tmpResults, *it, 0, nodeid);
+    SetTree(tmpResults, *it, 0, nodeid, treeFuncs);
   for (std::set < TreeNode* >::iterator it = roots.begin(); it!=roots.end(); it++)
     releaseTree(*it);
 
@@ -2787,84 +2797,11 @@ void QuerierC::output()
   //for (int i=0; i<m_colToRows.size(); i++)
   //  iRowNumFromCols = max(iRowNumFromCols, (int)m_colToRows[i].size());
   for (int i=0; i<m_results.size(); i++){
-    //if (iRowNumFromCols>0){ // convert cols to rows
-    //  int k=0;
-    //  vector<string> datas;
-    //  vector< vector<string> > tmpResult;
-    //  for (int j=1; j<m_results[i].size(); j++){
-    //    if(k<m_colToRows.size() && j-1>=m_colToRows[k][0] && j-1<=m_colToRows[k][m_colToRows[k].size()-1]){ // the selection is a part of a COLTOROW function
-    //      datas.push_back(m_results[i][j]);
-    //      if (j-1==m_colToRows[k][m_colToRows[k].size()-1] || j-1==m_results[i].size()-1){ // if current selection is the last one, complement empty strings
-    //        datas.insert(datas.end(),iRowNumFromCols-(int)datas.size(),"");
-    //        tmpResult.push_back(datas);
-    //        datas.clear();
-    //        k++;
-    //      }
-    //    }else{ // the selection is not a part of any COLTOROW function
-    //      datas.push_back(m_results[i][j]);
-    //      datas.insert(datas.end(),iRowNumFromCols-1,"");
-    //      tmpResult.push_back(datas);
-    //      datas.clear();
-    //    }
-    //  }
-    //  for (int j=0;j<iRowNumFromCols;j++){
-    //    datas.clear();
-    //    datas.push_back("");
-    //    for (int k=0;k<tmpResult.size();k++)
-    //      datas.push_back(tmpResult[k][j]);
-    //    formatoutput(datas, i);
-    //  }
-    //}else
-      formatoutput(m_results[i], i);
+    formatoutput(m_results[i], i);
   }
 #ifdef __DEBUG__
   m_outputtime += (curtime()-thistime);
 #endif // __DEBUG__
-}
-
-int QuerierC::boostmatch(vector<string> *result)
-{
-  //namesaving_smatch matches(m_regexstr);
-  smatch matches;
-  //boost::match_results<string::const_iterator>  matches;
-  if ( result != NULL ) {
-    //printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexstr.c_str());
-    result->clear();
-    try{
-      //if (boost::regex_match(m_rawstr, matches, m_regexp, boost::match_perl|boost::match_extra)) {
-      if (regex_match(m_rawstr, matches, m_regexp)) {
-        //printf("Matched %d!\n", matches.size());
-        //for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
-        //  printf("%s: %s\n",string(*it).c_str(),matches[*it].str().c_str());
-        for (int i=1; i<matches.size(); i++){
-          //result->push_back(matches[i].str());
-          //printf("Matching %s => %s\n",matches[i].first, matches[i].second);
-          result->push_back(matches[i]);
-        }
-      }
-    }catch (exception& e) {
-      trace(ERROR, "Regular search exception: %s\n", e.what());
-      return -1;
-    }
-    return result->size();
-  }else
-    return -1;
-}
-
-int QuerierC::boostmatch(map<string,string> & result)
-{
-  namesaving_smatch matches(m_regexstr);
-  //printf("Matching %s => %s\n",m_rawstr.c_str(), m_regexstr.c_str());
-  try{
-    if (regex_match(m_rawstr, matches, m_regexp)) {
-      for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
-        result[string(*it)] = matches[*it].str();
-    }
-  }catch (exception& e) {
-    trace(ERROR, "Regular match exception: %s\n", e.what());
-    return -1;
-  }
-  return result.size();
 }
 
 long QuerierC::getMatchedCount()
@@ -3017,6 +2954,7 @@ void QuerierC::clear()
   m_nameline = false;
   m_bEof = false;
   m_delmrepeatable = false;
+  m_delmkeepspace = false;
   m_bNamePrinted = false;
   m_aggrOnly = false;
   m_bUniqueResult = false;

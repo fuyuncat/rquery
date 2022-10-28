@@ -1,5 +1,11 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.983] 2022-10-28
+   New feature: new hierarchy variable @NODEID: an unique sequence id of the node of the tree. <br/>
+   New feature: new function : root(expr) : Hierarchy function. Returns the expression of the root node.<br/>
+   New feature: new function : parent(expr) : Hierarchy function. Returns the expression of the parent node.<br/>
+   New feature: new function : path(expr[,connector]) : Hierarchy function. Returns an path (of the expression) from root to current node, connector is used for connecting nodes, default is '/'.<br/>
+   New feature: new delimiter parsing flag : s : The leading&trail space will be reserved when the delmiter is space.. <br/>
    # [0.983] 2022-10-27
    Enhancement: Improved performance of hierarchy(tree) query. <br/>
    # [0.982] 2022-10-26

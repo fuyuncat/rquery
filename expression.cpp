@@ -464,7 +464,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_expType = VARIABLE;
         node->m_expstrAnalyzed = true;
         node->m_expStr = upper_copy(expStr);
-        if (node->m_expStr.compare("@RAW") == 0 || node->m_expStr.compare("@FILE") == 0 || node->m_expStr.find("@ROOT(") == 0 || node->m_expStr.find("@PATH(") == 0)
+        if (node->m_expStr.compare("@RAW") == 0 || node->m_expStr.compare("@FILE") == 0)
           node->m_datatype.datatype = STRING;
         else if (node->m_expStr.compare("@LINE") == 0 || node->m_expStr.compare("@FILELINE") == 0 || node->m_expStr.compare("@FILEID") == 0 || node->m_expStr.compare("@ROW") == 0 || node->m_expStr.compare("@ROWSORTED") == 0 || node->m_expStr.compare("@%") == 0 || node->m_expStr.compare("@LEVEL") == 0 || node->m_expStr.compare("@NODEID") == 0)
           node->m_datatype.datatype = LONG;
@@ -781,8 +781,6 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
           m_datatype = (*sideDatatypes)[s1][s2];
         }else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@FILELINE") == 0 || m_expStr.compare("@FILEID") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0 || m_expStr.compare("@%") == 0 || m_expStr.compare("@LEVEL") == 0 || m_expStr.compare("@NODEID") == 0)
           m_datatype.datatype = LONG;
-        else if (m_expStr.find("@ROOT(") == 0 || m_expStr.find("@PATH(") == 0)
-          m_datatype.datatype = STRING;
         else if (m_expStr.find("@FIELD") == 0){
           string sColId = m_expStr.substr(string("@FIELD").length());
           int iColID = isInt(sColId)?atoi(sColId.c_str())-1:-1;
@@ -1315,60 +1313,6 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
           m_expStr = sResult;
         }
         return true;
-      }else if(m_expStr.length()>=8 && m_expStr.find("@ROOT(")==0){
-        if (varvalues->find("@ROOT") != varvalues->end())
-          sResult=(*varvalues)["@ROOT"];
-        else{
-          size_t pos=0;
-          string s1 = upper_copy(readQuotedStr(m_expStr, pos, "()", '\0'));
-          if (s1.empty()){
-            trace(ERROR, "(1)Invalide expression in the variable '%s'\n",m_expStr.c_str());
-            return false;
-          }
-          ExpressionC expr = ExpressionC(s1);
-          expr.analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
-          expr.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true);
-        }
-        dts.datatype = STRING;
-        m_datatype = dts;
-        if (!getresultonly){
-          m_expType = CONST;
-          m_expStr = sResult;
-        }
-        return true;
-      }else if(m_expStr.length()>=8 && m_expStr.find("@PATH(")==0){
-        if (varvalues->find("@PATH") != varvalues->end())
-          sResult=(*varvalues)["@PATH"];
-        string sPath, sConn;
-        size_t pos=0;
-        string s1 = upper_copy(readQuotedStr(m_expStr, pos, "()", '\0'));
-        if (s1.empty()){
-          trace(ERROR, "(2)Invalide expression in the variable '%s'\n",m_expStr.c_str());
-          return false;
-        }
-        vector<string> vParams = split(s1,',',"''()",'\\',{'(',')'},false,true);
-        if (vParams.size()==0){
-          trace(ERROR, "Variable @PATH requires at least one parameter!\n");
-          return false;
-        }
-        
-        ExpressionC expr = ExpressionC(trim_copy(vParams[0]));
-        expr.analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
-        expr.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sPath, dts, true);
-        if (vParams.size()>1){
-          expr = ExpressionC(trim_copy(vParams[1]));
-          expr.analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
-          expr.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sConn, dts, true);
-        }else
-          sConn="/";
-        sResult=sResult.empty()?sPath:sResult+sConn+sPath;
-        dts.datatype = STRING;
-        m_datatype = dts;
-        if (!getresultonly){
-          m_expType = CONST;
-          m_expStr = sResult;
-        }
-        return true;
       }else{
         trace(ERROR, "Cannot find VARIABLE '%s'\n",m_expStr.c_str());
         return false;
@@ -1540,6 +1484,58 @@ bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaF
     bool bGotAnaFunc = (m_leftNode && m_leftNode->getAnaFuncs(anaFuncs, anaParaNums));
     bGotAnaFunc = (m_rightNode && m_rightNode->getAnaFuncs(anaFuncs, anaParaNums));
     return bGotAnaFunc;
+  }
+}
+
+bool ExpressionC::getTreeFuncs(unordered_map< string,vector<ExpressionC> > & treeFuncs)
+{
+  //trace(DEBUG2,"Checking '%s'(%d %d %d)\n",getEntireExpstr().c_str(),m_type,m_expType,m_Function?m_Function->isAggFunc():-1);
+  if (m_type == LEAF && m_expType == FUNCTION && m_Function){
+    if (m_Function->isTree()){
+      vector<ExpressionC> vParams;
+      if (treeFuncs.find(m_Function->m_expStr) == treeFuncs.end()){
+        vParams.clear();
+        for (int i=0; i<m_Function->m_params.size();i++)
+          vParams.push_back(m_Function->m_params[i]);
+        treeFuncs.insert(pair< string,vector<ExpressionC> >(m_Function->m_expStr,vParams));
+      }
+      return true; // the parameter expressions of an aggregation function should not include another aggregation function
+    }else { // check the paramters of normal functions
+      //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
+      bool bGotTreeFunc = false;
+      for (int i=0;i<m_Function->m_params.size();i++){
+        //trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
+        bGotTreeFunc = m_Function->m_params[i].getTreeFuncs(treeFuncs)||bGotTreeFunc;
+      }
+      return bGotTreeFunc;
+    }
+  }else{
+    bool bGotTreeFunc = (m_leftNode && m_leftNode->getTreeFuncs(treeFuncs));
+    bGotTreeFunc = (m_rightNode && m_rightNode->getTreeFuncs(treeFuncs));
+    return bGotTreeFunc;
+  }
+}
+
+void ExpressionC::setTreeFuncs(unordered_map< string,string > & treeFuncVals)
+{
+  if (m_type == LEAF && m_expType == FUNCTION && m_Function){
+    if (m_Function->isTree() && treeFuncVals.find(m_Function->m_expStr) != treeFuncVals.end()){
+      m_expType = CONST;
+      m_expStr = treeFuncVals[m_Function->m_expStr];
+      m_Function->clear();
+      SafeDelete(m_Function);
+    }else { // check the paramters of normal functions
+      //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
+      for (int i=0;i<m_Function->m_params.size();i++){
+        //trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
+        m_Function->m_params[i].setTreeFuncs(treeFuncVals);
+      }
+    }
+  }else{
+    if (m_leftNode)
+      m_leftNode->setTreeFuncs(treeFuncVals);
+    if (m_rightNode)
+      m_rightNode->setTreeFuncs(treeFuncVals);
   }
 }
 

@@ -52,6 +52,7 @@ class FunctionC
     bool isAggFunc() const;
     bool isMacro() const;
     bool isAnalytic() const;
+    bool isTree() const;
     bool containRefVar() const; // check if the function (parameters) contains reference variable @R[][]
     void dump();
     FunctionC* cloneMe();

@@ -885,7 +885,7 @@
    2131    131
    11      12      21
    ```
-- allcol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check all field fulfil a condition, e.g. allcol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.>0.<br />
+- allcol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check all field fulfil a condition, e.g. allcol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be referred in an expression.<br />
    ```
    rq -q "p d/ /r | s foreach(1,%,$,2) | f allcol(1,%,$,2) > 0" samples/anyall.txt
    ```
@@ -894,6 +894,57 @@
    123     2231    2
    2131    131
    11      12      21
+   ```
+- root(expr) : Hierarchy function. Returns the expression of the root node.<br />
+   ```
+   rq -n -q "s switch(comparenum(@level,0),1,'+','')+pad('-',@level-1)+@4+'('+@3+')', 'Root:'+root(@4) | h k:@1;p:@2" samples/loop.txt
+   ```
+   Returns result:<br/>
+   ```
+   /(Root) Root:/
+   +Sub1(Branch)   Root:/
+   +-file1(Leaf)   Root:/
+   +-file2(Leaf)   Root:/
+   +-file3(Leaf)   Root:/
+   +Sub2(Branch)   Root:/
+   +-file4(Leaf)   Root:/
+   +-file5(Leaf)   Root:/
+   Loop1(Branch)   Root:Loop1
+   +Loop2(Branch)  Root:Loop1
+   ```
+- parent(expr) : Hierarchy function. Returns the expression of the parent node.<br />
+   ```
+   rq -n -q "s switch(comparenum(@level,0),1,'+','')+pad('-',@level-1)+@4+'('+@3+')', 'Parent:'+parent(@4) | h k:@1;p:@2" samples/loop.txt
+   ```
+   Returns result:<br/>
+   ```
+   /(Root) Parent:
+   +Sub1(Branch)   Parent:/
+   +-file1(Leaf)   Parent:Sub1
+   +-file2(Leaf)   Parent:Sub1
+   +-file3(Leaf)   Parent:Sub1
+   +Sub2(Branch)   Parent:/
+   +-file4(Leaf)   Parent:Sub2
+   +-file5(Leaf)   Parent:Sub2
+   Loop1(Branch)   Parent:
+   +Loop2(Branch)  Parent:Loop1
+   ```
+- path(expr[,connector]) : Hierarchy function. Returns an path (of the expression) from root to current node, connector is used for connecting nodes, default is '/'.<br />
+   ```
+   rq -n -q "s switch(comparenum(@level,0),1,'+','')+pad('-',@level-1)+@4+'('+@3+')', 'Full path:'+path(@4,'-') | h k:@1;p:@2" samples/loop.txt
+   ```
+   Returns result:<br/>
+   ```
+   /(Root) Full path:/
+   +Sub1(Branch)   Full path:/-Sub1
+   +-file1(Leaf)   Full path:/-Sub1-file1
+   +-file2(Leaf)   Full path:/-Sub1-file2
+   +-file3(Leaf)   Full path:/-Sub1-file3
+   +Sub2(Branch)   Full path:/-Sub2
+   +-file4(Leaf)   Full path:/-Sub2-file4
+   +-file5(Leaf)   Full path:/-Sub2-file5
+   Loop1(Branch)   Full path:Loop1
+   +Loop2(Branch)  Full path:Loop1-Loop2
    ```
 
 # Examples and scenarios

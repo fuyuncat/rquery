@@ -110,8 +110,6 @@ class QuerierC
     void clear();
     void outputExtraInfo(size_t total, bool bPrintHeader);
     void outputAndClean();
-    int boostmatch( vector<string> *result = NULL);
-    int boostmatch( map<string,string> & result);
     void printFieldNames();
     void setFieldDatatype(string field, int datetype, string extrainfo="");
     long getMatchedCount();
@@ -130,6 +128,7 @@ class QuerierC
     short int m_readmode;
     bool m_bEof;
     bool m_delmrepeatable;
+    bool m_delmkeepspace; // whether to trim the space for delimeter search
     string m_fielddelim;
     
     short int m_outputformat; // TEXT or JSON
@@ -236,7 +235,7 @@ class QuerierC
     int searchNextReg();
     int searchNextWild();
     int searchNextDelm();
-    void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid);
+    void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid, unordered_map< string,vector<ExpressionC> > & treeFuncs);
     void releaseTree(TreeNode* tNode);
     void clearGroup();
     void clearSort();

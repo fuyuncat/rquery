@@ -2306,6 +2306,12 @@ short int encodeFunction(string str)
     return ALLCOL;
   else if(sUpper.compare("COLTOROW")==0)
     return COLTOROW;
+  else if(sUpper.compare("ROOT")==0)
+    return ROOT;
+  else if(sUpper.compare("PATH")==0)
+    return PATH;
+  else if(sUpper.compare("PARENT")==0)
+    return PARENT;
   else
     return UNKNOWN;
 }

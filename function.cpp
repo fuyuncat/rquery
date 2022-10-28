@@ -138,6 +138,11 @@ bool FunctionC::isAnalytic() const
   return (m_funcID==RANK || m_funcID==DENSERANK || m_funcID==PREVIOUS || m_funcID==NEXT || m_funcID==NEARBY || m_funcID==SEQNUM || m_funcID==SUMA || m_funcID==COUNTA || m_funcID==UNIQUECOUNTA || m_funcID==MAXA || m_funcID==MINA || m_funcID==AVERAGEA);
 }
 
+bool FunctionC::isTree() const
+{
+  return (m_funcID==ROOT || m_funcID==PATH || m_funcID==PARENT);
+}
+
 bool FunctionC::containRefVar() const
 {
   for (int i=0;i<m_params.size();i++)
@@ -263,6 +268,9 @@ bool FunctionC::analyzeExpStr()
     case FIELDNAME:
     case CONCAT:
     case CONCATCOL:
+    case ROOT:
+    case PATH:
+    case PARENT:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -1941,6 +1949,11 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case NOW:
       getResult = runNow(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case ROOT:
+    case PATH:
+    case PARENT:
+      getResult=true;
       break;
     case SUM:
     case COUNT:

@@ -181,6 +181,9 @@ using namespace std;
 #define COLTOROW 502
 #define ANYCOL 503
 #define ALLCOL 504
+#define ROOT 801
+#define PATH 802
+#define PARENT 803
 
 #define TEXT 1
 #define JSON 2
@@ -239,8 +242,8 @@ struct TreeNode{
   TreeNode* nextSibling=NULL;
   
   bool bInTheTree=false;
-  string sRoot="";
-  string sPath="";
+  unordered_map< string,string > mFuncVals;
+  unordered_map< string,string > mParentVals; // reserved value for children
 };
 
 class GlobalVars{

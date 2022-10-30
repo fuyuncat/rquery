@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.99] 2022-10-31
+   Fixed bug: Multiple FOREACH functions do not work properly. <br/>
    # [0.983] 2022-10-28
    New feature: new hierarchy variable @NODEID: an unique sequence id of the node of the tree. <br/>
    New feature: new function : root(expr) : Hierarchy function. Returns the expression of the root node.<br/>

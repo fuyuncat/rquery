@@ -182,7 +182,7 @@ void QuerierC::setregexp(string regexstr)
     m_regexstr = vSearchPattern[0];
     replacestr(m_regexstr,{"\\t","\\/","\\v","\\|"},{"\t","/","\v","|"});
     if (m_regexstr.compare(" ")!=0)
-      m_delmkeepspace = false;
+      m_delmkeepspace = true;
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
         trace(ERROR, "(2)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
@@ -413,18 +413,22 @@ bool QuerierC::analyzeSelString(){
       i += params.size()-1;
     }
   }
+  
+  int l=0, k=0; // indexes of m_colToRows
+  int extendedSelNum = 0; // extended selection number caused by foreach
+  vector<ExpressionC> tmpSels=m_selections; // temp selections in case foreach expanding selections.
   // then process FOREACH
-  for (int i=0; i<m_selections.size(); i++){
-    if (m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && (m_selections[i].m_Function->m_funcID == ANYCOL || m_selections[i].m_Function->m_funcID == ALLCOL)){
-      trace(FATAL, "Marco function %s can not be used in SELECT", m_selections[i].getEntireExpstr().c_str());
+  for (int i=0; i<tmpSels.size(); i++){
+    if (tmpSels[i].m_expType == FUNCTION && tmpSels[i].m_Function && (tmpSels[i].m_Function->m_funcID == ANYCOL || tmpSels[i].m_Function->m_funcID == ALLCOL)){
+      trace(FATAL, "Marco function %s can not be used in SELECT", tmpSels[i].getEntireExpstr().c_str());
       return false;
     }
-    if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->isAnalytic())
-      trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", m_selections[i].m_Function->m_expStr.c_str(),m_selections[i].m_Function->m_anaParaNums[0],m_selections[i].m_Function->m_params.size());
-    //trace(DEBUG, "Got selection expression '%s'!\n", m_selections[i].getEntireExpstr().c_str());
+    if (tmpSels[i].m_type == LEAF && tmpSels[i].m_expType == FUNCTION && tmpSels[i].m_Function && tmpSels[i].m_Function->isAnalytic())
+      trace(DEBUG,"QuerierC: The analytic function '%s' group size %d, param size %d \n", tmpSels[i].m_Function->m_expStr.c_str(),tmpSels[i].m_Function->m_anaParaNums[0],tmpSels[i].m_Function->m_params.size());
+    //trace(DEBUG, "Got selection expression '%s'!\n", tmpSels[i].getEntireExpstr().c_str());
 
     // if macro function is involved, need to wait util the first data analyzed to analyze select expression
-    if (m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->m_funcID == FOREACH){
+    if (tmpSels[i].m_expType == FUNCTION && tmpSels[i].m_Function && tmpSels[i].m_Function->m_funcID == FOREACH){
       if (m_fieldtypes.size()==0){
         m_bSelectContainMacro = true;
         m_bToAnalyzeSelectMacro = true;
@@ -434,16 +438,21 @@ bool QuerierC::analyzeSelString(){
         trace(DEBUG2,"Skiping select FOREACH: '%s'\n",m_selections[i].m_expStr.c_str());
         return true;
       }else{
-        switch(m_selections[i].m_Function->m_funcID){
+        switch(tmpSels[i].m_Function->m_funcID){
           case FOREACH:{
             if (m_groups.size()>0)
-              vExpandedExpr = m_selections[i].m_Function->expandForeach(m_groups);
+              vExpandedExpr = tmpSels[i].m_Function->expandForeach(m_groups);
             else
-              vExpandedExpr = m_selections[i].m_Function->expandForeach(m_fieldtypes.size());
-            trace(DEBUG2,"Expanding FOREACH: '%s'\n",m_selections[i].m_expStr.c_str());
-            m_selections.erase(m_selections.begin()+i);
-            m_selnames.erase(m_selnames.begin()+i);
-            int l=0, k=0;
+              vExpandedExpr = tmpSels[i].m_Function->expandForeach(m_fieldtypes.size());
+            trace(DEBUG2,"Expanding FOREACH: '%s'\n",tmpSels[i].m_expStr.c_str());
+            m_selections.erase(m_selections.begin()+i+extendedSelNum);
+            m_selnames.erase(m_selnames.begin()+i+extendedSelNum);
+            // go through m_colToRows to search the selection matches current foreach selection, treat l,k as a cursor.
+            if (l<m_colToRows.size()&&k>=m_colToRows[l].size()){ // k could be increased by previous foreach expanding.
+                k=0;
+                l++;
+            }
+            // find the element in m_colToRows matching current foreach selections.
             while(l<m_colToRows.size()&&m_colToRows[l][k]<i){
               k++;
               if (k>=m_colToRows[l].size()){
@@ -459,9 +468,11 @@ bool QuerierC::analyzeSelString(){
             // expand and insert FOREACH selections.
             for (int j=0; j<vExpandedExpr.size(); j++){
               trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
-              if (bToConvColToRow)
-                m_colToRows[l].insert(m_colToRows[l].begin()+k+j,i);
-              m_selnames.insert(m_selnames.begin()+i,vExpandedExpr[j].getEntireExpstr());
+              if (bToConvColToRow){
+                m_colToRows[l].insert(m_colToRows[l].begin()+k,i+j+extendedSelNum);
+                k++;
+              }
+              m_selnames.insert(m_selnames.begin()+i+j+extendedSelNum,vExpandedExpr[j].getEntireExpstr());
               //m_selnames.push_back(vExpandedExpr[j].getEntireExpstr());
               checkSelGroupConflict(vExpandedExpr[j]);
               if (vExpandedExpr[j].containGroupFunc())
@@ -470,10 +481,12 @@ bool QuerierC::analyzeSelString(){
                 bNonGroupFuncSel = true;
               vExpandedExpr[j].getAggFuncs(m_initAggProps);
               vExpandedExpr[j].getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
-              m_selections.insert(m_selections.begin()+i,vExpandedExpr[j]);
-              i++;
+              m_selections.insert(m_selections.begin()+i+j+extendedSelNum,vExpandedExpr[j]);
+              //i++;
             }
+            extendedSelNum+=vExpandedExpr.size()-1;
             m_bToAnalyzeSelectMacro = false;
+            //l++;
             break;
           }
         }
@@ -481,15 +494,15 @@ bool QuerierC::analyzeSelString(){
       }
     }
 
-    checkSelGroupConflict(m_selections[i]);
-    if (m_selections[i].containGroupFunc())
+    checkSelGroupConflict(tmpSels[i]);
+    if (tmpSels[i].containGroupFunc())
       bGroupFunc = true;
     else
       bNonGroupFuncSel = true;
 
-    m_selections[i].getAggFuncs(m_initAggProps);
-    m_selections[i].getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
-    //trace(DEBUG, "Selection: '%s'!\n", m_selections[i].getEntireExpstr().c_str());
+    tmpSels[i].getAggFuncs(m_initAggProps);
+    tmpSels[i].getAnaFuncs(m_initAnaArray, m_anaFuncParaNums);
+    //trace(DEBUG, "Selection: '%s'!\n", tmpSels[i].getEntireExpstr().c_str());
   }
   m_aggrOnly = (bGroupFunc && !bNonGroupFuncSel && m_groups.size()==0);
   if (bGroupFunc && bNonGroupFuncSel && m_groups.size() == 0){ // selection has non-aggregation function but non group field.
@@ -797,10 +810,12 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
     for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
       if (&(matches[i]) == &(matches[*it])){
         m_fieldnames.push_back(upper_copy(string(*it)));
+        m_fieldInitNames.push_back(upper_copy(string(*it)));
         foundName = true;
       }
     if (!foundName){
       m_fieldnames.push_back("@FIELD"+intToStr(i));
+      m_fieldInitNames.push_back("@FIELD"+intToStr(i));
     }
   }
 }
@@ -1468,8 +1483,10 @@ int QuerierC::searchNextReg()
           m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
           m_bToAnalyzeSortMacro = m_bSortContainMacro;
         }
-        if (m_fieldnames.size() == 0)
+        if (m_fieldnames.size() == 0){
+          m_fieldInitNames.clear();
           pairFiledNames(m_matches);
+        }
         trialAnalyze(matcheddata);
       }
       // append variables
@@ -1542,8 +1559,10 @@ int QuerierC::searchNextWild()
     m_line++;
     m_fileline++;
     if (m_nameline && m_line==1){ // use the first line as field names
-      for (int i=0; i<matcheddata.size(); i++)
+      for (int i=0; i<matcheddata.size(); i++){
         m_fieldnames.push_back(matcheddata[i]);
+        m_fieldInitNames.push_back(matcheddata[i]);
+      }
       m_nameline = false;
       m_line--;
       m_fileline--;
@@ -1561,9 +1580,13 @@ int QuerierC::searchNextWild()
         m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
         m_bToAnalyzeSortMacro = m_bSortContainMacro;
       }
-      if (m_fieldnames.size() == 0)
-        for (int i=1;i<matcheddata.size();i++)
+      if (m_fieldnames.size() == 0){
+        int initSize=min(m_fieldInitNames.size(),matcheddata.size());
+        for (int i=0; i<initSize; i++)
+          m_fieldnames.push_back(m_fieldInitNames[i]);
+        for (int i=initSize+1;i<matcheddata.size();i++)
           m_fieldnames.push_back("@FIELD"+intToStr(i));
+      }
       trialAnalyze(matcheddata);
     }
     // append variables
@@ -1627,8 +1650,10 @@ int QuerierC::searchNextDelm()
     m_line++;
     m_fileline++;
     if (m_nameline && m_line==1){ // use the first line as field names
-      for (int i=0; i<matcheddata.size(); i++)
+      for (int i=0; i<matcheddata.size(); i++){
         m_fieldnames.push_back(matcheddata[i]);
+        m_fieldInitNames.push_back(matcheddata[i]);
+      }
       m_nameline = false;
       m_line--;
       m_fileline--;
@@ -1646,9 +1671,13 @@ int QuerierC::searchNextDelm()
         m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
         m_bToAnalyzeSortMacro = m_bSortContainMacro;
       }
-      if (m_fieldnames.size() == 0)
-        for (int i=1;i<matcheddata.size();i++)
+      if (m_fieldnames.size() == 0){
+        int initSize=min(m_fieldInitNames.size(),matcheddata.size());
+        for (int i=0; i<initSize; i++)
+          m_fieldnames.push_back(m_fieldInitNames[i]);
+        for (int i=initSize+1;i<matcheddata.size();i++)
           m_fieldnames.push_back("@FIELD"+intToStr(i));
+      }
       trialAnalyze(matcheddata);
     }
 #ifdef __DEBUG__
@@ -2922,6 +2951,7 @@ void QuerierC::clear()
   clearFilter();
   m_results.clear();
   m_fieldnames.clear();
+  m_fieldInitNames.clear();
   m_fieldtypes.clear();
   m_fieldntypes.clear();
   m_uservariables.clear();

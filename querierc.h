@@ -171,6 +171,7 @@ class QuerierC
     FilterC* m_filter;
     FilterC* m_extrafilter; // an extra filter to filter the result set.
     vector<ExpressionC> m_trimedSelctions; // trimmed selections in the extra filter.
+    vector<string> m_fieldInitNames;    // field names, in case field size changes, we need to keep the initial field names.
     vector<string> m_fieldnames;    // field names
     //vector<int> m_fieldtypes;       // field datatype in sequence
     //map<string, int> m_fieldntypes; // field datatype by names, set by setFieldDatatype

@@ -2,6 +2,7 @@
 All change logs will be documented here.<br/>
    # [0.99] 2022-10-31
    Fixed bug: Multiple FOREACH functions do not work properly. <br/>
+   New feature: new function when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else". <br/>
    # [0.983] 2022-10-28
    New feature: new hierarchy variable @NODEID: an unique sequence id of the node of the tree. <br/>
    New feature: new function : root(expr) : Hierarchy function. Returns the expression of the root node.<br/>

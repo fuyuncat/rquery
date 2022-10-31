@@ -195,6 +195,14 @@
    ```
    12
    ```
+- when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else".<br />
+   ```
+   rq -q "s when(@1>0 and 1=1,@2,@3)" "1 aaa bbb"
+   ```
+   Returns result:<br/>
+   ```
+   aaa
+   ```
 - switch(expr, case1, return1[, case2, return2 ...][, default]) : Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br/>
    ```
    echo "aaa

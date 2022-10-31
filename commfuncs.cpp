@@ -2210,6 +2210,8 @@ short int encodeFunction(string str)
     return DATATYPE;
   else if(sUpper.compare("SWITCH")==0)
     return SWITCH;
+  else if(sUpper.compare("WHEN")==0)
+    return WHEN;
   else if(sUpper.compare("PAD")==0)
     return PAD;
   else if(sUpper.compare("ASCII")==0)

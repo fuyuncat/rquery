@@ -15,6 +15,7 @@
 #include <string.h>
 #include <math.h>
 #include "expression.h"
+#include "filter.h"
 #include "function.h"
 
 void FunctionC::init()
@@ -32,6 +33,7 @@ void FunctionC::init()
   m_bDistinct = false;
   m_anaParaNums.clear();
   m_params.clear();       // parameter expressions
+  m_filters.clear();
 }
 
 FunctionC::FunctionC()
@@ -83,6 +85,7 @@ void FunctionC::copyTo(FunctionC* node) const
     node->m_funcName = m_funcName;
     node->m_funcID = m_funcID;
     node->m_params = m_params;
+    node->m_filters = m_filters;
     node->m_anaParaNums = m_anaParaNums;
     node->m_bDistinct = m_bDistinct;
     node->m_fieldnames = m_fieldnames;
@@ -95,6 +98,7 @@ void FunctionC::copyTo(FunctionC* node) const
 void FunctionC::clear(){
   m_anaParaNums.clear();
   m_params.clear();
+  m_filters.clear();
   init();
 }
 
@@ -106,6 +110,7 @@ void FunctionC::setExpStr(string expStr)
     m_funcName = "";
     m_funcID = UNKNOWN;
     m_params.clear();
+    m_filters.clear();
   }
 }
 
@@ -213,32 +218,37 @@ bool FunctionC::analyzeExpStr()
         m_expstrAnalyzed = false;
         return false;
       }
-      if (m_funcID == GROUPLIST){ // GROUPLIST([distinct ]expr[,delimiter][,asc|desc])
-        if (i == 0){ // check distinct keyword for GROUPLIST
-          vector<string> vGLExprPara = split(trim_copy(sParam),' ',"''()",'\\',{'(',')'},true,true);
-          if (vGLExprPara.size() == 2){
-            if (upper_copy(trim_copy(vGLExprPara[0])).compare("DISTINCT") == 0)
-              m_bDistinct = true;
-            else
-              trace(WARNING, "'%s' is not a correct keywork, do you mean DISTINCT?\n", vGLExprPara[0].c_str());
-            sParam = trim_copy(vGLExprPara[1]);
+      if (m_funcID==WHEN && i<vParams.size()-1 && i%2==0){
+        FilterC tmpFilter(sParam);
+        m_filters.push_back(tmpFilter);
+      }else{
+        if (m_funcID == GROUPLIST){ // GROUPLIST([distinct ]expr[,delimiter][,asc|desc])
+          if (i == 0){ // check distinct keyword for GROUPLIST
+            vector<string> vGLExprPara = split(trim_copy(sParam),' ',"''()",'\\',{'(',')'},true,true);
+            if (vGLExprPara.size() == 2){
+              if (upper_copy(trim_copy(vGLExprPara[0])).compare("DISTINCT") == 0)
+                m_bDistinct = true;
+              else
+                trace(WARNING, "'%s' is not a correct keywork, do you mean DISTINCT?\n", vGLExprPara[0].c_str());
+              sParam = trim_copy(vGLExprPara[1]);
+            }
+            eParam = ExpressionC(sParam);
+            m_params.push_back(eParam);
+          }else if(i == 1){ // delimiter for GROUPLIST
+            eParam = ExpressionC(sParam);
+            if (eParam.m_type!=LEAF || eParam.m_expType!=CONST){
+              trace(WARNING, "delimiter for GROUPLIST only accept const, '%s' is not a const. Will use a SPACE as delimiter!\n", sParam.c_str());
+              eParam = ExpressionC(" ");
+            }
+            m_params.push_back(eParam);
+          }else{
+            eParam = ExpressionC(sParam);
+            m_params.push_back(eParam);
           }
-          eParam = ExpressionC(sParam);
-          m_params.push_back(eParam);
-        }else if(i == 1){ // delimiter for GROUPLIST
-          eParam = ExpressionC(sParam);
-          if (eParam.m_type!=LEAF || eParam.m_expType!=CONST){
-            trace(WARNING, "delimiter for GROUPLIST only accept const, '%s' is not a const. Will use a SPACE as delimiter!\n", sParam.c_str());
-            eParam = ExpressionC(" ");
-          }
-          m_params.push_back(eParam);
         }else{
           eParam = ExpressionC(sParam);
           m_params.push_back(eParam);
         }
-      }else{
-        eParam = ExpressionC(sParam);
-        m_params.push_back(eParam);
       }
     }
   }
@@ -335,6 +345,7 @@ bool FunctionC::analyzeExpStr()
     case COLTOROW:
     case ANYCOL:
     case ALLCOL:
+    case WHEN:
       m_datatype.datatype = ANY;
       break;
     default:{
@@ -369,6 +380,10 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
     m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
     trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
   }
+  for (int i=0; i<m_filters.size(); i++){
+    m_filters[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
+    trace(DEBUG2, "Analyzing filter '%s' in function '%s' (%d)\n", m_filters[i].m_expStr.c_str(), m_expStr.c_str(),m_filters[i].columnsAnalyzed());
+  }
   if (m_funcID == TRUNCDATE || m_funcID==GROUPLIST)
     m_datatype = m_params[0].m_datatype;
   return m_datatype;
@@ -391,6 +406,7 @@ FunctionC* FunctionC::cloneMe(){
   node->m_funcName = m_funcName;
   node->m_funcID = m_funcID;
   node->m_params = m_params;
+  node->m_filters = m_filters;
   node->m_anaParaNums = m_anaParaNums;
   node->m_bDistinct = m_bDistinct;
   node->m_fieldnames = m_fieldnames;
@@ -1590,6 +1606,31 @@ bool FunctionC::runSwitch(vector<string>* fieldvalues, map<string,string>* varva
   return true;
 }
 
+// when(condition1,return1[,condition1,result2...],else): if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided.
+bool FunctionC::runWhen(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 2 || m_filters.size()<1){
+    trace(ERROR, "when() function accepts at least three parameters.\n");
+    return false;
+  }
+  if (m_params.size() != m_filters.size() + 1){
+    trace(ERROR, "Return expression number (%d) does not match condtion number (%d) in when() function!\n", m_params.size(), m_filters.size());
+    return false;
+  }
+  vector< vector< unordered_map<string,string> > > sideDatasets;
+  unordered_map< int,int > sideMatchedRowIDs;
+  for (int i=0; i<m_filters.size(); i++){
+    if (m_filters[i].compareExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &sideDatasets, sideDatatypes, sideMatchedRowIDs) && m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true))
+      return true;
+  }
+  if (m_params[m_params.size()-1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true))
+    return true;
+  else{
+    trace(ERROR, "Failed to run when()!\n");
+    return false;
+  }
+}
+
 bool FunctionC::runPad(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 2){
@@ -1925,6 +1966,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case SWITCH:
       getResult = runSwitch(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case WHEN:
+      getResult = runWhen(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case GREATEST:
       getResult = runGreatest(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

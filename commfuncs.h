@@ -165,6 +165,7 @@ using namespace std;
 #define CONCATCOL 113
 #define CALCOL 114
 #define APPENDFILE 115
+#define WHEN 116
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203

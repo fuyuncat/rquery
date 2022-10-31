@@ -154,7 +154,8 @@ Functions can be used in the expression. We current provide some essential norma
    - addtime(date, number, unit) : Normal function. Increase a datetime, unit can be s-second(default),m-minute,h-hour,d-day,n-month,y-year, number can be positive or negative interger.<br />
    - now() : Normal function. Get current date time.<br />
    - truncdate(date,seconds) : Normal function. Truncate a date a number is multiple of the given second number.<br />
-   - switch(input,case1,return1[,case2,result2...][,default]): Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br />
+   - switch(input,case1,return1[,case2,return2...][,default]): Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br />
+   - when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else".<br />
    - greatest(expr1,expr2[,...]) : Normal function. Return the largest one of the given expressions.<br />
    - least(expr1,expr2[,...]) : Normal function. Return the smallest one of the given expressions.<br />
    - appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />

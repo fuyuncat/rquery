@@ -466,7 +466,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_expStr = upper_copy(expStr);
         if (node->m_expStr.compare("@RAW") == 0 || node->m_expStr.compare("@FILE") == 0)
           node->m_datatype.datatype = STRING;
-        else if (node->m_expStr.compare("@LINE") == 0 || node->m_expStr.compare("@FILELINE") == 0 || node->m_expStr.compare("@FILEID") == 0 || node->m_expStr.compare("@ROW") == 0 || node->m_expStr.compare("@ROWSORTED") == 0 || node->m_expStr.compare("@%") == 0 || node->m_expStr.compare("@LEVEL") == 0 || node->m_expStr.compare("@NODEID") == 0)
+        else if (node->m_expStr.compare("@LINE") == 0 || node->m_expStr.compare("@FILELINE") == 0 || node->m_expStr.compare("@FILEID") == 0 || node->m_expStr.compare("@ROW") == 0 || node->m_expStr.compare("@ROWSORTED") == 0 || node->m_expStr.compare("@%") == 0 || node->m_expStr.compare("@LEVEL") == 0 || node->m_expStr.compare("@NODEID") == 0 || node->m_expStr.compare("@ISLEAF") == 0)
           node->m_datatype.datatype = LONG;
         else if (node->m_expStr.find("@FIELD") == 0){
           string sColId = m_expStr.substr(string("@FIELD").length());
@@ -779,7 +779,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
             trace(ERROR, "(1)Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
           }
           m_datatype = (*sideDatatypes)[s1][s2];
-        }else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@FILELINE") == 0 || m_expStr.compare("@FILEID") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0 || m_expStr.compare("@%") == 0 || m_expStr.compare("@LEVEL") == 0 || m_expStr.compare("@NODEID") == 0)
+        }else if (m_expStr.compare("@LINE") == 0 || m_expStr.compare("@FILELINE") == 0 || m_expStr.compare("@FILEID") == 0 || m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0 || m_expStr.compare("@%") == 0 || m_expStr.compare("@LEVEL") == 0 || m_expStr.compare("@NODEID") == 0 || m_expStr.compare("@ISLEAF") == 0)
           m_datatype.datatype = LONG;
         else if (m_expStr.find("@FIELD") == 0){
           string sColId = m_expStr.substr(string("@FIELD").length());

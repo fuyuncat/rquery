@@ -296,13 +296,13 @@ void printResult(QuerierC & rq, size_t total)
     rq.unique();// unique must be done before sort
     thisTime = curtime();
     trace(DEBUG2, "Unique: %u\n", thisTime-lastTime);
+    rq.tree();
+    thisTime = curtime();
+    trace(DEBUG2, "Treeing: %u\n", thisTime-lastTime);
     lastTime = thisTime;
     rq.sort();
     thisTime = curtime();
     trace(DEBUG2, "Sorting: %u\n", thisTime-lastTime);
-    rq.tree();
-    thisTime = curtime();
-    trace(DEBUG2, "Treeing: %u\n", thisTime-lastTime);
     rq.setOutputFormat(gv.g_ouputformat);
     rq.outputAndClean();
     thisTime = curtime();
@@ -467,8 +467,8 @@ void runQuery(vector<string> vContent, QuerierC & rq, short int fileMode=READBUF
         rq.group();
         rq.analytic();
         rq.unique();
-        rq.sort();
         rq.tree();
+        rq.sort();
         rq.setOutputFormat(gv.g_ouputformat);
         if (gv.g_printheader && gv.g_ouputformat==TEXT)
           rq.printFieldNames();

@@ -569,8 +569,8 @@ bool QuerierC::analyzeTreeStr()
 // m_groups, m_selections should always be analyzed before m_sorts
 bool QuerierC::assignTreeStr(string treestr)
 {
-  if (m_groups.size()>0 || m_sorts.size()>0 || m_initAnaArray.size()>0 || m_aggrOnly || m_bUniqueResult){
-    trace(ERROR,"Tree cannot work with group or sort or unique!\n");
+  if (m_groups.size()>0 || m_initAnaArray.size()>0 || m_aggrOnly || m_bUniqueResult){
+    trace(ERROR,"Tree cannot work with group or unique or analytic functions!\n");
     return false;
   }else{
     m_treestr = treestr;
@@ -2518,6 +2518,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   varValues.insert( pair<string,string>("@%",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-1]));
   varValues.insert( pair<string,string>("@LEVEL",intToStr(level)));
   varValues.insert( pair<string,string>("@NODEID",intToStr(nodeid)));
+  varValues.insert( pair<string,string>("@ISLEAF",intToStr(tNode->firstChild?0:1)));
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
   unordered_map< int,int > sideMatchedRowIDs;
@@ -2569,6 +2570,30 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
     vResult.push_back(sResult);
   }
   m_results.push_back(vResult);
+
+  vResult.clear();
+  for (int i=0; i<m_sorts.size(); i++){
+    //if it has the exact same expression as any selection, get the result from selection
+    int iSel = -1;
+    for (int j=0; j<m_selections.size(); j++)
+      if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
+        iSel = j;
+        break;
+      }
+    if (iSel >= 0){
+      sResult = m_results[m_results.size()-1][iSel + 1];
+    // if the sort key is a integer, get the result from the result set at the same sequence number
+    }else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()){
+      int iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str());
+      sResult = m_results[m_results.size()-1][iSel + 1];
+    }else{
+      m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+    }
+    //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
+    vResult.push_back(sResult);
+  }
+  m_sortKeys.push_back(vResult);
+
   if (tNode->firstChild)
     SetTree(tmpResults, tNode->firstChild, level+1, nodeid, treeFuncs);
   if (tNode->nextSibling)

@@ -131,6 +131,14 @@
    ```
    weq
    ```
+- getword(str,delimiter,part_index) : Normal function. Get a part of a string splitted by delimiter.<br/>
+   ```
+   rq -q "s getpart(@raw,'0#0',2)" "sfsaf0#0qqq0#0aaa"
+   ```
+   Returns result:<br/>
+   ```
+   qqq
+   ```
 - countstr(str,substr) : Normal function. count occurences of substr in str.<br/>
    ```
    rq -q "s countstr(@raw,'123')" "asg123aad123,123;;wrew"

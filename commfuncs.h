@@ -166,6 +166,7 @@ using namespace std;
 #define CALCOL 114
 #define APPENDFILE 115
 #define WHEN 116
+#define GETPART 117
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203

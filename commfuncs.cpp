@@ -2172,6 +2172,8 @@ short int encodeFunction(string str)
     return COUNTWORD;
   else if(sUpper.compare("GETWORD")==0)
     return GETWORD;
+  else if(sUpper.compare("GETPART")==0)
+    return GETPART;
   else if(sUpper.compare("COUNTSTR")==0)
     return COUNTSTR;
   else if(sUpper.compare("FIELDNAME")==0)

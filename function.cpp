@@ -262,6 +262,7 @@ bool FunctionC::analyzeExpStr()
     case DATEFORMAT:
     case PAD:
     case GETWORD:
+    case GETPART:
     case RANDSTR:
     case TRIMLEFT:
     case TRIMRIGHT:
@@ -710,7 +711,7 @@ bool FunctionC::runGetword(vector<string>* fieldvalues, map<string,string>* varv
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sPos, dts, true) && isInt(sPos)){
     int iPos = atoi(sPos.c_str());
     if (iPos<=0){
-      trace(ERROR, "%s cannot be zero a negative number!\n", sPos.c_str(), m_params[0].getEntireExpstr().c_str());
+      trace(ERROR, "%s cannot be zero a negative number in getword()!\n", sPos.c_str(), m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (m_params.size() == 3){
@@ -722,18 +723,49 @@ bool FunctionC::runGetword(vector<string>* fieldvalues, map<string,string>* varv
     std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
     vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true,true);
     if (vWords.size() == 0){
-      trace(WARNING, "No word found in '%s'!\n", m_params[0].getEntireExpstr().c_str());
+      trace(ERROR, "No word found in '%s'!\n", m_params[0].getEntireExpstr().c_str());
       return false;
     }
     if (iPos>0 && iPos<=vWords.size()){
       sResult = vWords[iPos-1];
       return true;
     }else{
-      trace(WARNING, "%s is out of range of the word list in '%s'!\n", m_params[1].getEntireExpstr().c_str(), m_params[0].getEntireExpstr().c_str());
+      trace(ERROR, "%s is out of range of the word list in '%s'!\n", m_params[1].getEntireExpstr().c_str(), m_params[0].getEntireExpstr().c_str());
       return false;
     }
   }else{
     trace(ERROR, "(2)Failed to run getword(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runGetpart(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 3){
+    trace(ERROR, "getpart(str,delimiter,part_index) function accepts only three parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sPos, sDelm; 
+  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sRaw, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sDelm, dts, true) && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sPos, dts, true) && isInt(sPos)){
+    int iPos = atoi(sPos.c_str());
+    if (iPos<=0){
+      trace(ERROR, "%s cannot be zero a negative number in getpart()!\n", sPos.c_str(), m_params[0].getEntireExpstr().c_str());
+      return false;
+    }
+    vector<string> vWords = split(sRaw,sDelm,"",'\0',{},true,true);
+    if (vWords.size() == 0){
+      trace(ERROR, "'%s' cannot be splited by '%s' in getpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+      return false;
+    }
+    if (iPos>0 && iPos<=vWords.size()){
+      sResult = vWords[iPos-1];
+      return true;
+    }else{
+      trace(ERROR, "%s is out of range of the part list in '%s'!\n", m_params[2].getEntireExpstr().c_str(), m_params[0].getEntireExpstr().c_str());
+      return false;
+    }
+  }else{
+    trace(ERROR, "(2)Failed to run getpart(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1894,6 +1926,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case GETWORD:
       getResult = runGetword(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case GETPART:
+      getResult = runGetpart(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case RANDSTR:
       getResult = runRandstr(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

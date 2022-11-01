@@ -87,6 +87,7 @@ class QuerierC
     bool assignLimitStr(string limitstr);
     bool assignMeanwhileString(string mwstr);
     bool assignTreeStr(string treestr);
+    bool assignReportStr(string reportstr);
     bool setFieldTypeFromStr(string setstr);
     void setFileName(string filename);
     void setNameline(bool nameline);
@@ -151,6 +152,7 @@ class QuerierC
     string m_selstr; // select raw string
     string m_sortstr; // sort raw string
     string m_treestr; // tree raw string
+    string m_reportstr; // report raw string
     bool m_bSelectContainMacro; // flag indicating if macro function exists in select expressions
     bool m_bToAnalyzeSelectMacro; // whether need to analyze marco in selections
     bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
@@ -210,11 +212,15 @@ class QuerierC
     unordered_map< string,vector< vector<string> > > m_anaSortData; // data to be sorted for analytic function
     unordered_map< string,vector<SortProp> > m_anaSortProps; // sort props of sorting data for analytic function
     unordered_map< string,vector<int> > m_anaFuncParaNums; // The number of parameter (splitted by ;) in each part (splitted by ,) of analytic function
+    unordered_map< int,string > m_reportNames; // report aggregation operations. mapping <selectionIndex>:<aggregation operation>
+    unordered_map< int,short int > m_reportOps; // report aggregation operations. mapping <selectionIndex>:<aggregation operation>
+    unordered_map< int,double > m_reportResult; // report aggregation results. mapping <selectionIndex>:<result>
 
     bool analyzeSelString();
     vector<ExpressionC> genSelExpression(string sSel, vector<string> & vAlias);
     bool analyzeSortStr();
     bool analyzeTreeStr();
+    bool analyzeReportStr();
     bool checkSelGroupConflict(const ExpressionC & eSel);
     bool checkSortGroupConflict(const ExpressionC & eSort);
     void addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow);
@@ -236,12 +242,14 @@ class QuerierC
     int searchNextReg();
     int searchNextWild();
     int searchNextDelm();
+    void genReport(vector<string> datas);
     void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid, unordered_map< string,vector<ExpressionC> > & treeFuncs);
     void releaseTree(TreeNode* tNode);
     void clearGroup();
     void clearSort();
     void clearTree();
     void clearAnalytic();
+    void clearReport();
     void clearFilter();
 
 #ifdef __DEBUG__

@@ -50,6 +50,8 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - sort <field or expression [asc|desc],...> : Sorting keys to decide order of the output records<br />
          - limt <n | bottomN,topN> : Limited number records to be printed<br />
          - unique : Make the returned resutl unique.<br />
+         - tree k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree. <br />
+         - report SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br />
          - -v|--variable \"name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]..]\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. Dynamic variable is not supported in the aggregation & analytic functions in current version. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files<br />
          - run [query] : Run the preprocessed query of a provided query (refering to below part)<br />
 - options
@@ -84,6 +86,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
       - limtl n | bottomN,topN : Limited number records to be printed<br />
       - unique|u : Make the returned resutl unique. <br />
       - tree|h k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree. <br />
+      - report|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br />
       - \>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file. <br />
 - Variables:
 In any expression of select, filter, group, sort, variables can be used. The variables are in a @Var format. Currently, the variables can be used are,<br />

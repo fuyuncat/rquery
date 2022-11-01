@@ -67,6 +67,7 @@ void usage()
   printf("\t\tlimt|l <n | bottomN,topN> -- Provide output limit range.\n");
   printf("\t\tunique|u -- Make the returned result unique.\n");
   printf("\t\ttree|h k:expr1[,expr2...];p:expr1[,expr2...] -- Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree. \n");
+  printf("\t\treport|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. \n");
   printf("\t\t>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file.\n");
   printf("\t-r|--readmode <buffer|line> -- Provide file read mode, default is buffer.\n");
   printf("\t-s|--skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n");
@@ -401,6 +402,13 @@ void processQuery(string sQuery, QuerierC & rq)
     //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
     rq.assignTreeStr(query["h"]);
   }
+  if (query.find("report") != query.end()){
+    //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
+    rq.assignReportStr(query["report"]);
+  }else if (query.find("r") != query.end()){
+    //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
+    rq.assignReportStr(query["r"]);
+  }
   if (query.find("limit") != query.end()){
     //trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
     rq.assignLimitStr(query["limit"]);
@@ -721,6 +729,7 @@ int main(int argc, char *argv[])
         cout << "unique -- Make the returned resutl unique.\n";
         cout << "tree k:expr1[,expr2...];p:expr1[,expr2...] -- Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree.\n";
         cout << "output|append -- Set output files, if not set, output to standard terminal (screen). 'output' will overwrite existing files, 'append' will append to existing file.\n";
+        cout << "report|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. \n";
         cout << "clear -- Clear all query inputs.\n";
         cout << "filemode <buffer|line> -- Provide file read mode, default is buffer.\n";
         cout << "skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n";

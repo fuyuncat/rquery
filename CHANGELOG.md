@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.991] 2022-11-01
+   New feature: new query option: report|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br/>
    # [0.99] 2022-10-31
    Fixed bug: Multiple FOREACH functions do not work properly. <br/>
    New feature: new function when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else". <br/>

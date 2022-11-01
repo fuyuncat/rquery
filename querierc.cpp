@@ -104,6 +104,7 @@ void QuerierC::init()
   m_selstr = "";
   m_sortstr = "";
   m_treestr = "";
+  m_reportstr = "";
   m_fielddelim = "\t";
   m_detectTypeMaxRowNum = 1;
   m_detectedTypeRows = 0;
@@ -576,6 +577,48 @@ bool QuerierC::assignTreeStr(string treestr)
     m_treestr = treestr;
     return analyzeTreeStr();
   }
+}
+
+bool QuerierC::analyzeReportStr()
+{
+  clearReport();
+  vector<string> vRawStrs = split(m_reportstr,',',"''()",'\\',{'(',')'},false,true);
+  if (vRawStrs.size()<2){
+    trace(FATAL,"You must provide at one pair of selection index and aggregation operation!\n");
+    return false;
+  }
+  for (int i=0;i<vRawStrs.size();i++){
+    vector<string> vMapStrs = split(vRawStrs[i],':',"''()",'\\',{'(',')'},false,true);
+    if (vMapStrs.size()<2){
+      trace(FATAL,"The pair format should be 'selection_index:operation...'!\n");
+      continue;
+    }
+    if (isInt(trim_copy(vMapStrs[0]))){
+      int iSelIdx = atoi(trim_copy(vMapStrs[0]).c_str());
+      //if (iSelIdx>=1 && iSelIdx<= m_selections.size()){ // in case FOREACH
+        short int iOp=encodeFunction(upper_copy(trim_copy(vMapStrs[1])));
+        if (iOp!=SUM && iOp!=COUNT && iOp!=AVERAGE && iOp!=MAX && iOp!=MIN)
+          trace(WARNING,"%s is not a valid operation, it can only be SUM/COUNT/AVERAGE/MAX/MIN, will set it to SUM!\n", vMapStrs[1].c_str());
+        m_reportOps.insert(pair< int,short int >(iSelIdx,iOp));
+        m_reportResult.insert(pair< int,double >(iSelIdx,0));
+        m_reportNames.insert(pair< int,string >(iSelIdx,upper_copy(trim_copy(vMapStrs[1]))));
+      //}else{
+      //  trace(FATAL,"%d is out of selection range %d!\n", iSelIdx, m_selections.size());
+      //  continue;
+      //}
+    }else{
+      trace(FATAL,"The selection index should be an integer number, starting from 1!\n");
+      continue;
+    }
+  }
+
+  return true;
+}
+
+bool QuerierC::assignReportStr(string reportstr)
+{
+  m_reportstr = reportstr;
+  return analyzeReportStr();
 }
 
 bool QuerierC::checkSortGroupConflict(const ExpressionC & eSort)
@@ -2841,6 +2884,36 @@ void QuerierC::applyExtraFilter()
 #endif // __DEBUG__
 }
 
+void QuerierC::genReport(vector<string> datas)
+{
+  if (m_outputrow<m_limitbottom-1 || (m_limittop>=0 && m_outputrow+1>m_limittop)){
+    return;
+  }
+
+  if (m_reportResult.size()>0){
+    for (int i=1; i<datas.size(); i++){
+      if (i<datas.size() && isDouble(datas[i]) && m_reportOps.find(i)!=m_reportOps.end() && m_reportResult.find(i)!=m_reportResult.end()){
+        switch (m_reportOps[i]){
+          case COUNT:
+            m_reportResult[i]++;
+            break;
+          case MAX:
+            m_reportResult[i] = m_outputrow<=m_limitbottom-1?atof(datas[i].c_str()):max(m_reportResult[i],atof(datas[i].c_str()));
+            break;
+          case MIN:
+            m_reportResult[i] = m_outputrow<=m_limitbottom-1?atof(datas[i].c_str()):min(m_reportResult[i],atof(datas[i].c_str()));
+            break;
+          case AVERAGE:
+          case SUM:
+          default:
+            m_reportResult[i]+=atof(datas[i].c_str());
+            break;
+        }
+      }
+    }
+  }
+}
+
 void QuerierC::output()
 {
 #ifdef __DEBUG__
@@ -2851,6 +2924,7 @@ void QuerierC::output()
   //for (int i=0; i<m_colToRows.size(); i++)
   //  iRowNumFromCols = max(iRowNumFromCols, (int)m_colToRows[i].size());
   for (int i=0; i<m_results.size(); i++){
+    genReport(m_results[i]);
     formatoutput(m_results[i], i);
   }
 #ifdef __DEBUG__
@@ -2892,6 +2966,24 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
     if (m_outputrow>0)
       printf("\n");
     printf("\t],\n");
+    if (m_reportResult.size()>0){
+      outputstream(-1, "\t\"reports\": [\n");
+      outputstream(-1, "\t\t{\n");
+      for (int i=1; i<=m_selections.size(); i++){
+        if (m_reportOps.find(i)!=m_reportOps.end() && m_reportResult.find(i)!=m_reportResult.end() && m_reportNames.find(i)!=m_reportNames.end()){
+          if (m_reportOps[i] == AVERAGE)
+            m_reportResult[i]=m_reportResult[i]/(m_outputrow-m_limitbottom+1);
+          outputstream(-1, "\t\t\t\"%s\": %.2f",m_reportNames[i].c_str(),m_reportResult[i]);
+        }else
+          outputstream(-1, "\t\t\t\"\": \"\"");
+        if (i == m_selections.size())
+          outputstream(-1, "\n");
+        else
+          outputstream(-1, ",\n");
+      }
+      outputstream(-1, "\t\t}");
+      outputstream(-1, "\t],\n");
+    }
     //if (mode == READLINE)
     //  printf("\"ReadLines\": %d,\n", total);
     //else
@@ -2899,13 +2991,26 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
     printf("\t\"MatchedLines\": %ld,\n", m_line);
     printf("\t\"SelectedRows\": %ld\n", m_outputrow-m_limitbottom+1);
     printf("}\n");
-  }else if (bPrintHeader){
-    //if (mode == READLINE)
-    //  printf("Read %d lines(s).\n", total);
-    //else
-    //  printf("Read %d byte(s).\n", total);
-    printf("Pattern matched %ld line(s).\n", m_line);
-    printf("Selected %ld row(s).\n", m_outputrow-m_limitbottom+1);
+  }else{
+    if (m_reportResult.size()>0){
+      for (int i=1; i<=m_selections.size(); i++){
+        if (m_reportOps.find(i)!=m_reportOps.end() && m_reportResult.find(i)!=m_reportResult.end()){
+          if (m_reportOps[i] == AVERAGE)
+            m_reportResult[i]=m_reportResult[i]/(m_outputrow-m_limitbottom+1);
+          outputstream(-1, "%.2f%s", m_reportResult[i],i<m_selections.size()?m_fielddelim.c_str():"");
+        }else
+          outputstream(-1, " %s", i<m_selections.size()?m_fielddelim.c_str():"");
+      }
+      outputstream(-1, "\n");
+    }
+    if (bPrintHeader){
+      //if (mode == READLINE)
+      //  printf("Read %d lines(s).\n", total);
+      //else
+      //  printf("Read %d byte(s).\n", total);
+      printf("Pattern matched %ld line(s).\n", m_line);
+      printf("Selected %ld row(s).\n", m_outputrow-m_limitbottom+1);
+    }
   }
 #ifdef __DEBUG__
   m_totaltime = curtime() - m_querystartat;
@@ -2945,6 +3050,13 @@ void QuerierC::clearTree()
   m_treeParentKeys.clear();
 }
 
+void QuerierC::clearReport()
+{
+  m_reportOps.clear();
+  m_reportResult.clear();
+  m_reportNames.clear();
+}
+
 void QuerierC::clearAnalytic()
 {
   m_initAnaArray.clear();
@@ -2973,6 +3085,7 @@ void QuerierC::clear()
   clearAnalytic();
   clearSort();
   clearTree();
+  clearReport();
   clearFilter();
   m_results.clear();
   m_fieldnames.clear();

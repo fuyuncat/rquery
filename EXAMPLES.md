@@ -1530,3 +1530,13 @@
    +-file2(Leaf)
    +-file1(Leaf)
    ```
+- Generate a summary report for those selected output rows <br/>
+   ```
+   rq -n -q "p d/\t/ | s foreach(1,%,$) | r 2:sum,3:average,4:count,5:max | l 2,3" samples/matrix.tsv
+   ```
+   Return reseult:<br/>
+   ```
+   b       0.9     0.2     0.4     0.7
+   c       0.2     0.0     0.6     0.5
+           1.10    0.10    2.00    0.70
+   ```

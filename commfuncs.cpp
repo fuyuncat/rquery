@@ -2273,6 +2273,8 @@ short int encodeFunction(string str)
     return LEAST;
   else if(sUpper.compare("SUMALL")==0)
     return SUMALL;
+  else if(sUpper.compare("EVAL")==0)
+    return EVAL;
   else if(sUpper.compare("ROUND")==0)
     return ROUND;
   else if(sUpper.compare("LOG")==0)
@@ -2740,6 +2742,7 @@ bool evalDouble(string str1, int operate, string str2, double& result)
     trace(ERROR, "Invalid DOUBLE data detected!\n");
     return false;
   }
+  double dNum1=atof(str1.c_str()), dNum2=atof(str2.c_str());
   switch(operate){
   case PLUS:
     result = atof(str1.c_str()) + atof(str2.c_str());
@@ -2837,9 +2840,12 @@ bool anyDataOperate(string str1, int operate, string str2, DataTypeStruct dts, s
 {
   switch (dts.datatype){
     case LONG:{
-      long rslt;
-      bool gotResult = evalLong(str1, operate, str2, rslt);
-      result = longToStr(rslt);
+      //long rslt;
+      //bool gotResult = evalLong(str1, operate, str2, rslt);
+      //result = longToStr(rslt);
+      double rslt;
+      bool gotResult = evalDouble(str1, operate, str2, rslt);
+      result = (long)rslt==rslt?longToStr((long)rslt):doubleToStr(rslt);
       return gotResult;
     }case INTEGER:{
       int rslt;

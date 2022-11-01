@@ -164,6 +164,7 @@ Functions can be used in the expression. We current provide some essential norma
    - greatest(expr1[,expr2,...]) : Normal function. Return the largest one of the given expressions. The expression can be a foreach function.<br />
    - least(expr1[,expr2,...]) : Normal function. Return the smallest one of the given expressions. The expression can be a foreach function.<br />
    - appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
+   - eval(expr_str) : Normal function. Eval the input string as an expression.<br />
    - Count(expr) : Aggregation function. Count the number of expr.<br />
    - Uniquecount(expr) : Aggregation function. Count the number of distinct expr.<br />
    - Sum(expr) : Aggregation function. Sum the number of expr.<br />

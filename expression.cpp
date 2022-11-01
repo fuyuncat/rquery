@@ -356,7 +356,9 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
         //newNode = new ExpressionC();
         if (!BuildTree(expStr.substr(1,expStr.length()-2),newNode,NULL))
           return NULL;
+        newNode=newNode->getTopParent();
         newNode->m_parentNode = parentNode;
+        parentNode->m_leftNode = newNode;
       }else{ // atom expression to be built as a leaf
         buildLeafNode(expStr, newNode);
       }

@@ -145,14 +145,14 @@ void QuerierC::setregexp(string regexstr)
     m_searchMode = WILDSEARCH;
     vector<string> vSearchPattern = split(regexstr.substr(2,regexstr.length()-3),'/',"",'\\',{'(',')'},false,true);
     if (vSearchPattern.size() == 0){
-      trace(ERROR, "(1)'%s' is an unrecognized pattern!\n", regexstr.c_str());
+      trace(FATAL, "(1)'%s' is an unrecognized pattern!\n", regexstr.c_str());
       return;
     }
     m_regexstr = vSearchPattern[0];
     replacestr(m_regexstr,{"\\t","\\/","\\v","\\|"},{"\t","/","\v","|"});
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
-        trace(ERROR, "(1)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
+        trace(FATAL, "(1)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
       else
         m_quoters = vSearchPattern[1];
     }
@@ -177,7 +177,7 @@ void QuerierC::setregexp(string regexstr)
     }
     vector<string> vSearchPattern = split(spattern,'/',"",'\\',{'(',')'},false,true);
     if (vSearchPattern.size() == 0){
-      trace(ERROR, "(1)'%s' is an unrecognized pattern!\n", regexstr.c_str());
+      trace(FATAL, "(1)'%s' is an unrecognized pattern!\n", regexstr.c_str());
       return;
     }
     m_regexstr = vSearchPattern[0];
@@ -236,14 +236,14 @@ void QuerierC::assignExtraFilter(string sFilterStr)
   unordered_map< string,GroupProp > initAggProps;
   m_extrafilter->getAggFuncs(initAggProps);
   if (initAggProps.size()>0){
-    trace(ERROR, "Extra filter cannot have any aggregation function!\n");
+    trace(FATAL, "Extra filter cannot have any aggregation function!\n");
     return;
   }
   unordered_map< string,vector<ExpressionC> > initAnaArray;
   unordered_map< string,vector<int> > anaFuncParaNums;
   m_extrafilter->getAnaFuncs(initAnaArray, anaFuncParaNums);
   if (initAnaArray.size()>0){
-    trace(ERROR, "Extra filter cannot have any analytic function!\n");
+    trace(FATAL, "Extra filter cannot have any analytic function!\n");
     return;
   }
   //m_extrafilter->dump();
@@ -313,7 +313,7 @@ bool QuerierC::assignLimitStr(string limitstr)
   if (isInt(sFirst))
     iFirst = atoi(sFirst.c_str());
   else{
-    trace(ERROR, "%s is not a valid limit number!\n", sFirst.c_str());
+    trace(FATAL, "%s is not a valid limit number!\n", sFirst.c_str());
     return false;
   }
   if (vLimits.size() > 1){
@@ -322,7 +322,7 @@ bool QuerierC::assignLimitStr(string limitstr)
       m_limitbottom = iFirst;
       m_limittop = atoi(sSecond.c_str());
     }else{
-      trace(ERROR, "%s is not a valid limit number!\n", sSecond.c_str());
+      trace(FATAL, "%s is not a valid limit number!\n", sSecond.c_str());
       return false;
     }
   }else
@@ -362,7 +362,7 @@ vector<ExpressionC> QuerierC::genSelExpression(string sSel, vector<string> & vAl
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelStrs[i].c_str());
     string sSel = trim_copy(vSelStrs[i]);
     if (sSel.empty()){
-      trace(ERROR, "Empty selection string!\n");
+      trace(FATAL, "Empty selection string!\n");
       continue;
     }
     vector<string> vSelAlias = split(sSel," as ","''()",'\\',{'(',')'},false,true);
@@ -531,7 +531,7 @@ bool QuerierC::analyzeTreeStr()
   for (int i=0;i<vRawStrs.size();i++){
     vector<string> vMapStrs = split(vRawStrs[i],':',"''()",'\\',{'(',')'},false,true);
     if (vMapStrs.size()<2){
-      trace(ERROR,"The key string format should be 'k:expr1...' or 'p:expr1...'!\n");
+      trace(ERROR,"The key string format should be 'k:expr1...' or 'p:expr1..., skip it'!\n");
       continue;
     }
     vector<string> vKeyStrs = split(vMapStrs[1],',',"''()",'\\',{'(',')'},false,true);
@@ -554,7 +554,7 @@ bool QuerierC::analyzeTreeStr()
         }
       }
     }else{
-      trace(ERROR,"Unrecognized flag '%s', it should be K or P!\n", vMapStrs[0].c_str());
+      trace(ERROR,"Unrecognized flag '%s', it should be K or P, skip it!\n", vMapStrs[0].c_str());
       continue;
     }
   }

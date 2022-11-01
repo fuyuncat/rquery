@@ -348,6 +348,7 @@ bool FunctionC::analyzeExpStr()
     case ANYCOL:
     case ALLCOL:
     case WHEN:
+    case EVAL:
       m_datatype.datatype = ANY;
       break;
     default:{
@@ -1860,6 +1861,27 @@ bool FunctionC::runSumall(vector<string>* fieldvalues, map<string,string>* varva
   return true;
 }
 
+bool FunctionC::runEval(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "eval() function accepts only one parameter.\n");
+    return false;
+  }
+  string sExpr;
+  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sExpr, dts, true)){
+    trace(ERROR, "Failed to get '%s'.\n",m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+  ExpressionC expr = ExpressionC(sExpr);
+  expr.analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
+  if (!expr.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true)){
+    trace(ERROR, "Failed to run eval(%s)!\n",m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+
+  return true;
+}
+
 // expand foreach to a vector of expression
 // foreach(beginid,endid,macro_expr[,step]). $ stands for field, # stands for field sequence, % stands for the largest field sequence ID.
 vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
@@ -1981,7 +2003,7 @@ vector<ExpressionC> FunctionC::expandForeach(vector<ExpressionC> vExps)
 bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
   bool getResult = false;
-    switch(m_funcID){
+  switch(m_funcID){
     case UPPER:
       getResult = runUpper(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
@@ -2143,6 +2165,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case SUMALL:
       getResult = runSumall(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case EVAL:
+      getResult = runEval(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case ROUND:
       getResult = runRound(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

@@ -6,6 +6,8 @@ All change logs will be documented here.<br/>
    Enhancement: functions greatest and least can accept foreach as a parameter now. <br/>
    Enhancement: function round accept the second parameter as scale now. <br/>
    Enhancement: function replace can replace mutiple string pairs now. <br/>
+   New feature: new function eval(expr_str) : Normal function. Eval the input string as an expression. <br/>
+   Bug fix: Expression goes wrong if quotered 2 or more operator, e.g. (a*b-c)/d . <br/>
    # [0.99] 2022-10-31
    Fixed bug: Multiple FOREACH functions do not work properly. <br/>
    New feature: new function when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else". <br/>

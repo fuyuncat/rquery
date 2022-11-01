@@ -618,6 +618,14 @@
    Active
    Active
    ```
+- eval(expr_str) : Normal function. Eval the input string as an expression.<br/>
+   ```
+   echo "(2*10-2)/10.0" | ./rq -q "s eval(@raw)"
+   ```
+   Returns result:<br/>
+   ```
+   1.8
+   ```
 - sum(expr) - Aggregation function. Sum the number of expr<br/>
    ```
    echo "deptA 2022Jun 123

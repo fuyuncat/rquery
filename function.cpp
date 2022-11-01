@@ -1684,48 +1684,108 @@ bool FunctionC::runPad(vector<string>* fieldvalues, map<string,string>* varvalue
 
 bool FunctionC::runGreatest(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() <= 1){
-    trace(ERROR, "greatest() function accepts at least two parameters.\n");
+  if (m_params.size() < 1){
+    trace(ERROR, "greatest() function accepts at least one parameter.\n");
     return false;
   }
-  DataTypeStruct dts1, dts2;
-  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts1, true))
-    return false;
   string scomp;
-  for (int i=1;i<m_params.size();i++){
-    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true))
-      return false;
-    dts = getCompatibleDataType(dts1, dts2);
-    if (dts.datatype == ANY || dts.datatype == UNKNOWN)
-      dts.datatype = STRING;
-    
-    //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
-    if (anyDataCompare(scomp,sResult,dts)>0)
-      sResult = scomp;
+  DataTypeStruct dts1, dts2;
+  for (int i=0;i<m_params.size();i++){
+    if (m_params[i].m_type == LEAF && m_params[i].m_expType == FUNCTION && m_params[i].m_Function && m_params[i].m_Function->m_funcID==FOREACH){
+      vector<ExpressionC> vExpandedExpr = m_params[i].m_Function->expandForeach(fieldvalues->size());
+      for (int j=0; j<vExpandedExpr.size(); j++){
+        vExpandedExpr[j].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
+        if (!vExpandedExpr[j].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true)){
+          trace(ERROR, "(%d-%d-%s)Failed to run greatest()!\n",i,j,vExpandedExpr[i].getEntireExpstr().c_str());
+          return false;
+        }
+        if (i==0 && j==0){
+          dts1 = dts2;
+          sResult = scomp;
+        }else{
+          dts = getCompatibleDataType(dts1, dts2);
+          if (dts.datatype == ANY || dts.datatype == UNKNOWN)
+            dts.datatype = STRING;
+          
+          //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
+          if (anyDataCompare(scomp,sResult,dts)>0)
+            sResult = scomp;
+        }
+      }
+    }else{
+      if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true)){
+        trace(ERROR, "greatest() function failed to get the value of '%s'.\n",m_params[i].getEntireExpstr().c_str());
+        return false;
+      }
+      if (i==0){
+        dts1 = dts2;
+        sResult = scomp;
+      }else{
+        dts = getCompatibleDataType(dts1, dts2);
+        if (dts.datatype == ANY || dts.datatype == UNKNOWN)
+          dts.datatype = STRING;
+        
+        //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
+        if (anyDataCompare(scomp,sResult,dts)>0)
+          sResult = scomp;
+      }
+    }
   }
+
   dts.datatype = ANY;
   return true;
 }
 
 bool FunctionC::runLeast(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() <= 1){
-    trace(ERROR, "least() function accepts at least two parameters.\n");
+  if (m_params.size() < 1){
+    trace(ERROR, "least() function accepts at least one parameter.\n");
     return false;
   }
-  DataTypeStruct dts1, dts2;
-  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts1, true))
-    return false;
   string scomp;
-  for (int i=1;i<m_params.size();i++){
-    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true))
-      return false;
-    dts = getCompatibleDataType(dts1, dts2);
-    if (dts.datatype == ANY)
-      dts.datatype = STRING;
-    if (anyDataCompare(scomp,sResult,dts)<0)
-      sResult = scomp;
+  DataTypeStruct dts1, dts2;
+  for (int i=0;i<m_params.size();i++){
+    if (m_params[i].m_type == LEAF && m_params[i].m_expType == FUNCTION && m_params[i].m_Function && m_params[i].m_Function->m_funcID==FOREACH){
+      vector<ExpressionC> vExpandedExpr = m_params[i].m_Function->expandForeach(fieldvalues->size());
+      for (int j=0; j<vExpandedExpr.size(); j++){
+        vExpandedExpr[j].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
+        if (!vExpandedExpr[j].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true)){
+          trace(ERROR, "(%d-%d-%s)Failed to run least()!\n",i,j,vExpandedExpr[i].getEntireExpstr().c_str());
+          return false;
+        }
+        if (i==0 && j==0){
+          dts1 = dts2;
+          sResult = scomp;
+        }else{
+          dts = getCompatibleDataType(dts1, dts2);
+          if (dts.datatype == ANY || dts.datatype == UNKNOWN)
+            dts.datatype = STRING;
+          
+          //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
+          if (anyDataCompare(scomp,sResult,dts)<0)
+            sResult = scomp;
+        }
+      }
+    }else{
+      if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true)){
+        trace(ERROR, "least() function failed to get the value of '%s'.\n",m_params[i].getEntireExpstr().c_str());
+        return false;
+      }
+      if (i==0){
+        dts1 = dts2;
+        sResult = scomp;
+      }else{
+        dts = getCompatibleDataType(dts1, dts2);
+        if (dts.datatype == ANY || dts.datatype == UNKNOWN)
+          dts.datatype = STRING;
+        
+        //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
+        if (anyDataCompare(scomp,sResult,dts)<0)
+          sResult = scomp;
+      }
+    }
   }
+
   dts.datatype = ANY;
   return true;
 }

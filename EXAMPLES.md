@@ -251,6 +251,17 @@
    ```
    eee
    ```
+   Another example:<br/>
+   ```
+   rq -n -q "p d/\t/ | s foreach(1,%,$), greatest(foreach(2,%,$))  " samples/matrix.tsv
+   ```
+   Returns result:<br/>
+   ```
+   a       0.1     0.5     0.3     0.0     0.5
+   b       0.9     0.2     0.4     0.7     0.9
+   c       0.2     0.0     0.6     0.5     0.6
+   d       0.0     0.5     0.3     0.1     0.5
+   ```
 - least(expr1, expr2[, expr3...]) : Normal function. urn the smallest one of the given expressions<br/>
    ```
    echo "aaa,bbb,ccc,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s least(@1,@2,@3,@4,@5)"
@@ -258,6 +269,17 @@
    Returns result:<br/>
    ```
    aaa
+   ```
+   Another example:<br/>
+   ```
+   rq -n -q "p d/\t/ | s foreach(1,%,$), least(foreach(2,%,$))  " samples/matrix.tsv
+   ```
+   Returns result:<br/>
+   ```
+   a       0.1     0.5     0.3     0.0     0.0
+   b       0.9     0.2     0.4     0.7     0.2
+   c       0.2     0.0     0.6     0.5     0.0
+   d       0.0     0.5     0.3     0.1     0.0
    ```
 - floor(floatNum) : Normal function. Get the floor integer number of a given float number<br/>
    ```

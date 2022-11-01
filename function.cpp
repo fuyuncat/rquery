@@ -286,7 +286,6 @@ bool FunctionC::analyzeExpStr()
       break;
     case FLOOR:
     case CEIL:
-    case ROUND:
     case INSTR:
     case COMPARESTR:
     case NOCASECOMPARESTR:
@@ -314,6 +313,7 @@ bool FunctionC::analyzeExpStr()
     case APPENDFILE:
       m_datatype.datatype = LONG;
       break;
+    case ROUND:
     case TIMEDIFF:
     case LOG:
     case AVERAGE:
@@ -323,6 +323,7 @@ bool FunctionC::analyzeExpStr()
     case ABS:
     case TOFLOAT:
     case CALCOL:
+    case SUMALL:
       m_datatype.datatype = DOUBLE;
       break;
     case NOW:
@@ -1320,14 +1321,27 @@ bool FunctionC::runAddtime(vector<string>* fieldvalues, map<string,string>* varv
 
 bool FunctionC::runRound(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() != 1){
-    trace(ERROR, "round(num) function accepts only one parameter.\n");
+  if (m_params.size() != 1 && m_params.size() != 2){
+    trace(ERROR, "round(num) function accepts only one or two parameters.\n");
     return false;
   }
-  string sNum; 
+  string sNum;
+  int scale=0;
+  if (m_params.size() == 2){
+    if (m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sNum, dts, true) && isInt(sNum)){
+      scale = max(0,atoi(sNum.c_str()));
+    }else{
+      trace(ERROR, "Failed to run round(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+      return false;
+    }
+  }
   if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sNum, dts, true) && isDouble(sNum)){
-    sResult = intToStr(round(atof(sNum.c_str())));
-    dts.datatype = LONG;
+    char buf[1024];
+    int bsize = 0;
+    memset( buf, '\0', sizeof(char)*1024 );
+    bsize = sprintf(buf, ("%."+intToStr(scale)+"f").c_str(), atof(sNum.c_str()));
+    sResult = string(buf);
+    dts.datatype = DOUBLE;
     return true;
   }else{
     trace(ERROR, "Failed to run round(%s)!\n", m_params[0].getEntireExpstr().c_str());
@@ -1790,6 +1804,48 @@ bool FunctionC::runLeast(vector<string>* fieldvalues, map<string,string>* varval
   return true;
 }
 
+bool FunctionC::runSumall(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 1){
+    trace(ERROR, "sumall() function accepts at least one parameter.\n");
+    return false;
+  }
+  string scomp;
+  double dResult=0;
+  DataTypeStruct dts1, dts2;
+  for (int i=0;i<m_params.size();i++){
+    if (m_params[i].m_type == LEAF && m_params[i].m_expType == FUNCTION && m_params[i].m_Function && m_params[i].m_Function->m_funcID==FOREACH){
+      vector<ExpressionC> vExpandedExpr = m_params[i].m_Function->expandForeach(fieldvalues->size());
+      for (int j=0; j<vExpandedExpr.size(); j++){
+        vExpandedExpr[j].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, sideDatatypes);
+        if (!vExpandedExpr[j].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true) || !isDouble(scomp)){
+          trace(ERROR, "(%d-%d-%s)Failed to run sumall()!\n",i,j,vExpandedExpr[i].getEntireExpstr().c_str());
+          return false;
+        }
+        if (i==0 && j==0){
+          dResult = atof(scomp.c_str());
+        }else{
+          dResult += atof(scomp.c_str());
+        }
+      }
+    }else{
+      if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, scomp, dts2, true) || !isDouble(scomp)){
+        trace(ERROR, "sumall() function failed to get the value of '%s'.\n",m_params[i].getEntireExpstr().c_str());
+        return false;
+      }
+      if (i==0){
+        dResult = atof(scomp.c_str());
+      }else{
+        dResult += atof(scomp.c_str());
+      }
+    }
+  }
+
+  dts.datatype = DOUBLE;
+  sResult = doubleToStr(dResult);
+  return true;
+}
+
 // expand foreach to a vector of expression
 // foreach(beginid,endid,macro_expr[,step]). $ stands for field, # stands for field sequence, % stands for the largest field sequence ID.
 vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
@@ -2070,6 +2126,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case LEAST:
       getResult = runLeast(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case SUMALL:
+      getResult = runSumall(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case ROUND:
       getResult = runRound(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);

@@ -2254,6 +2254,8 @@ short int encodeFunction(string str)
     return GREATEST;
   else if(sUpper.compare("LEAST")==0)
     return LEAST;
+  else if(sUpper.compare("SUMALL")==0)
+    return SUMALL;
   else if(sUpper.compare("ROUND")==0)
     return ROUND;
   else if(sUpper.compare("LOG")==0)

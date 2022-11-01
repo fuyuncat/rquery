@@ -281,6 +281,17 @@
    c       0.2     0.0     0.6     0.5     0.0
    d       0.0     0.5     0.3     0.1     0.0
    ```
+- sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
+   ```
+   rq -n -q "p d/\t/ | s foreach(1,%,$), round(sumall(foreach(2,%,$)),1)  " samples/matrix.tsv 
+   ```
+   Returns result:<br/>
+   ```
+   a       0.1     0.5     0.3     0.0     0.9
+   b       0.9     0.2     0.4     0.7     2.2
+   c       0.2     0.0     0.6     0.5     1.3
+   d       0.0     0.5     0.3     0.1     0.9
+   ```
 - floor(floatNum) : Normal function. Get the floor integer number of a given float number<br/>
    ```
    echo "3.1415926"|rq -q "s floor(@raw)"
@@ -297,13 +308,13 @@
    ```
    4
    ```
-- round(floatNum) : Normal function. Round a given float number<br/>
+- round(floatNum,scale) : Normal function. Round a given float number<br/>
    ```
-   echo "3.1415926"|rq -q "s round(@raw*10)/10"
+   rq -q "s round(@raw,2)" "3.1415926"
    ```
    Returns result:<br/>
    ```
-   3
+   3.14
    ```
 - log(num) : Normal function. Get the log result of a given float number<br/>
    ```

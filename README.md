@@ -125,6 +125,7 @@ Functions can be used in the expression. We current provide some essential norma
    - concat(str1,str2,[...]) : Normal function. Concatenate multiple strings. <br/>
    - concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br/>
    - calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br/>
+   - sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
    - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
    - comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates, return -1 if date1 less than date2, return 0 if date1 equal to date2, return 1 if date1 greater than date2. date1 and date2 should have the same dateformat.<br />
    - datatype(expr) : Normal function. Return the date type of the expression.<br/>
@@ -140,7 +141,7 @@ Functions can be used in the expression. We current provide some essential norma
    - pad(seed,len) : Normal function. Construct a new string from seed multiple len times.<br />
    - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
    - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
-   - round(num) : Normal function. Round a given float number.<br />
+   - round(num,scale) : Normal function. Round a given float number.<br />
    - log(num) : Normal function. Get the log result of a given float number.<br />
    - mod(num,div) : Normal function. Get the mod of a number.<br />
    - abs(num) : Normal function. Get the abs value of a given float number.<br />

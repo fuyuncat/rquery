@@ -788,8 +788,25 @@ void replacestr(string & sRaw, const vector<string> & vReplace, const vector<str
     trace(ERROR, "Replace string array size %d doesnot match new string array size %d! \n", vReplace.size(), vNew.size());
     return;
   }
-  for (int i=0; i<vReplace.size(); i++)
-    replacestr(sRaw,vReplace[i],vNew[i]);
+  //for (int i=0; i<vReplace.size(); i++)
+  //  replacestr(sRaw,vReplace[i],vNew[i]);
+  string newStr="";
+  size_t pos=0;
+  while (pos<sRaw.length()){
+    bool bMatched=false;
+    for (int i=0; i<vReplace.size(); i++){
+      if (!vReplace[i].empty() && sRaw.length()-pos>=vReplace[i].length() && sRaw.substr(pos,vReplace[i].length()).compare(vReplace[i])==0){
+        newStr.append(vNew[i]);
+        pos+=vReplace[i].length()-1;
+        bMatched=true;
+        break;
+      }
+    }
+    if (!bMatched)
+      newStr.append(sRaw.substr(pos,1));
+    pos++;
+  }
+  sRaw = newStr;
 }
 
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)

@@ -5,6 +5,7 @@ All change logs will be documented here.<br/>
    New feature: new function sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
    Enhancement: functions greatest and least can accept foreach as a parameter now. <br/>
    Enhancement: function round accept the second parameter as scale now. <br/>
+   Enhancement: function replace can replace mutiple string pairs now. <br/>
    # [0.99] 2022-10-31
    Fixed bug: Multiple FOREACH functions do not work properly. <br/>
    New feature: new function when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else". <br/>

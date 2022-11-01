@@ -110,7 +110,7 @@ Functions can be used in the expression. We current provide some essential norma
    - isnull(expr) : Normal function. Return 1 if the size of the give parameter is 0, otherwise return 0<br />
    - instr(str,sub) : Normal function. Return the position of a sub string in a string. Return -1 if caannot find the sub string<br />
    - substr(str,pos,len) : Normal function. Get a substring of a string, start from pos. If len is not provide, get the sub string till the end of the string.<br />
-   - replace(str,sub1,sub2) : Normal function. Replace all sub1 in a string with sub2.<br />
+   - replace(str,replace1,new1[,replace2,new2...]) : Normal function. Replace all replace strings in a string with new strings.<br />
    - regreplace(str,pattern,sub) : Normal function. Replace all regular pattern in a string with sub (capturing group supported).<br />
    - regmatch(str,pattern,sub) : Normal function. Return an expression including the capturing groups matched a regular pattern. Use {N} to stand for the matched groups<br />
    - comparestr(str1,str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />

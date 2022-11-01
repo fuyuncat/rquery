@@ -629,19 +629,33 @@ bool FunctionC::runRevertstr(vector<string>* fieldvalues, map<string,string>* va
 
 bool FunctionC::runReplace(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() != 3){
-    trace(ERROR, "replace(str, tobereplaced, newstr) function accepts only three parameters.\n");
+  if (m_params.size() < 3){
+    trace(ERROR, "replace(str, tobereplaced, newstr) function accepts at least three parameters.\n");
     return false;
   }
-  string sReplace, sNew; 
-  if (m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true) && m_params[1].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sReplace, dts, true) && m_params[2].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sNew, dts, true)){
-    replacestr(sResult, sReplace, sNew);
-    dts.datatype = STRING;
-    return true;
-  }else{
-    trace(ERROR, "Failed to run replace(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
+  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts, true)){
+    trace(ERROR, "(%s)Failed to run replace()!\n",m_params[0].getEntireExpstr().c_str());
     return false;
   }
+  vector<string> vReplace, vNew;
+  string sStr;
+  for (int i=1;i<m_params.size();i++){
+    if (!m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sStr, dts, true)){
+      trace(ERROR, "(%d-%s)Failed to run replace()!\n", i,m_params[i].getEntireExpstr().c_str());
+      return false;
+    }
+    if (i%2==1)
+      vReplace.push_back(sStr);
+    else
+      vNew.push_back(sStr);
+  }
+  if (vNew.size()<vReplace.size()){
+    trace(WARNING, "The replace strings does not pair to the new strings, the last one will not be replaced!\n");
+    vNew.push_back(vReplace[vReplace.size()-1]);
+  }
+  replacestr(sResult, vReplace, vNew);
+  dts.datatype = STRING;
+  return true;
 }
 
 bool FunctionC::runRegreplace(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)

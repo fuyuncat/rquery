@@ -85,11 +85,11 @@
    ```
 - replace(str, sub, new) : Normal function. Replace all sub1 in a string with sub2<br/>
    ```
-   echo "AAABBBcccDDDEEE"|rq -q "s replace(@raw,'ccc','333')"
+   rq -q "s replace(@raw, 'aaa','111','bbb','222','ccc','333')" "sfasfaaadfscccasdfasfbbbsafsaaadf"
    ```
    Returns result:<br/>
    ```
-   AAABBB333DDDEEE
+   sfasf111dfs333asdfasf222safs111df
    ```
 - regreplace(str, pattern, new) : Normal function. Replace all regular pattern in a string with sub (capturing group supported).<br/>
    ```

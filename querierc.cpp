@@ -654,7 +654,7 @@ bool QuerierC::analyzeSortStr(){
     trace(DEBUG, "Processing sorting keys (%d) '%s'!\n", i, vSorts[i].c_str());
     string sSort = trim_copy(vSorts[i]);
     if (sSort.empty()){
-      trace(ERROR, "Empty sorting key!\n");
+      trace(FATAL, "Empty sorting key!\n");
       return false;
     }
     vector<string> vKP = split(sSort,' ',"''()",'\\',{'(',')'},false,true);
@@ -748,11 +748,11 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
     vector<string> vField = split(vSetFields[i],' ',"''()",'\\',{'(',')'},false,true);
     vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"''()",'\\',{'(',')'},false,true);
     if (vField[0].empty()){
-      trace(ERROR, "Field name is empty!\n");
+      trace(FATAL, "Field name is empty!\n");
       return false;
     }
     if (vField.size()<2){
-      trace(ERROR, "SET field type failed! Correct format is SET <FIELD> <TYPE>!\n");
+      trace(FATAL, "SET field type failed! Correct format is SET <FIELD> <TYPE>!\n");
       return false;
     }
     int iType = encodeDatatype(vField[1]);
@@ -760,7 +760,7 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
     if (vField[0][0]='@' && vField[0].length()>1 && isInt(vField[0].substr(1))) // convert filed abbrevasion
       fieldname = "@FIELD"+vField[0].substr(1);
     if (iType == UNKNOWN){
-      trace(ERROR, "Unknown data type %s!\n", vField[1].c_str());
+      trace(FATAL, "Unknown data type %s!\n", vField[1].c_str());
       return false;
     }else if(iType == DATE && vField.size() >= 2){
       trace(DEBUG, "SET field '%s' type '%s' extrainfor '%s'!\n",fieldname.c_str(),decodeDatatype(iType).c_str(),trim_pair(vField[2],"''").c_str());
@@ -783,13 +783,13 @@ void QuerierC::setUserVars(string variables)
   for (int i=0; i<vVariables.size(); i++){
     vector<string> vNameVal = split(trim_copy(vVariables[i]),':',"''()",'\\',{'(',')'},false,true);
     if (vNameVal.size()<2){
-      trace(ERROR, "Incorrect variable format!\n", vVariables[i].c_str());
+      trace(FATAL, "Incorrect variable format!\n", vVariables[i].c_str());
       continue;
     }
     string sName=upper_copy(trim_copy(vNameVal[0])), sValue=trim_copy(vNameVal[1]);
     trace(DEBUG, "Setting variable '%s' value '%s'!\n", sName.c_str(), sValue.c_str());
     if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0 || sName.compare("FILEID")==0 || sName.compare("FILELINE")==0 || sName.compare("N")==0 || sName.compare("%")==0 || sName.compare("R")==0 || sName.compare("LEVEL")==0 || sName.compare("NODEID")==0 || sName.compare("ROOT")==0 || sName.compare("PATH")==0){
-      trace(ERROR, "%s is a reserved word, cannot be used as a variable name!\n", sName.c_str());
+      trace(FATAL, "%s is a reserved word, cannot be used as a variable name!\n", sName.c_str());
       continue;
     }
     bool bGlobal=false;

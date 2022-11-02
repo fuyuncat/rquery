@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [0.991] 2022-11-02
+   Enhancement: Compare two ANY date type data as STRING. <br/>
    # [0.991] 2022-11-01
    New feature: new query option: report|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br/>
    New feature: new function sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>

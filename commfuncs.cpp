@@ -2479,7 +2479,9 @@ int anyDataCompare(string str1, string str2, DataTypeStruct dts){
       }else{
         return -101;
       }
-    }case STRING:{
+    }
+    case ANY:
+    case STRING:{
       //string newstr1=trim_one(str1,'\''),newstr2=trim_one(str2,'\'');
       //newstr1=trim_one(newstr1,'/');newstr2=trim_one(newstr2,'/');
       return str1.compare(str2);
@@ -2629,7 +2631,9 @@ int anyDataCompare(string str1, int comparator, string str2, DataTypeStruct dts)
       }else{
         return -101;
       }
-    }case STRING:{
+    }
+    case ANY:
+    case STRING:{
       //string newstr1=trim_one(str1,'\''),newstr2=trim_one(str2,'\'');
       //newstr1=trim_one(newstr1,'/');newstr2=trim_one(newstr2,'/');
       switch (comparator){

@@ -2843,6 +2843,8 @@ void QuerierC::applyExtraFilter()
   unordered_map< int,int > sideMatchedRowIDs;
 
   vector<DataTypeStruct> fieldtypes;
+  for (int i=0;i<m_selections.size();i++)
+    fieldtypes.push_back(m_selections[i].m_datatype);
 
   m_colToRows.clear();
   vector< vector<string> > tmpResults = m_results;
@@ -2851,7 +2853,7 @@ void QuerierC::applyExtraFilter()
     fieldValues.clear();
     for (int j=1; j<tmpResults[i].size(); j++)
       fieldValues.push_back(tmpResults[i][j]);
-    if (fieldValues.size()>fieldtypes.size()){
+    if (fieldValues.size()>0){ 
       DataTypeStruct dts;
       dts.datatype = ANY;
       for (int j=fieldtypes.size(); j<fieldValues.size(); j++)

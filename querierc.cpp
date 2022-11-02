@@ -156,7 +156,7 @@ void QuerierC::setregexp(string regexstr)
       else
         m_quoters = vSearchPattern[1];
     }
-  }else if ((regexstr[0] == 'd' || regexstr[0] == 'D') && regexstr[1] == '/' && (regexstr[regexstr.length()-1] == '/' || (regexstr.length()>3 && regexstr[regexstr.length()-2] == '/'))){
+  }else if ((regexstr[0] == 'd' || regexstr[0] == 'D') && regexstr[1] == '/'){
     m_searchMode = DELMSEARCH;
     m_delmrepeatable = false;
     m_delmkeepspace = false;
@@ -2604,6 +2604,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
     }
   }
 
+  //m_colToRows.clear();
   vResult.clear();
   vResult.push_back("");
   for (int i=0; i<m_selections.size(); i++){
@@ -2612,7 +2613,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
     tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
     vResult.push_back(sResult);
   }
-  m_results.push_back(vResult);
+  appendResultSet(vResult);
 
   vResult.clear();
   for (int i=0; i<m_sorts.size(); i++){
@@ -2843,6 +2844,7 @@ void QuerierC::applyExtraFilter()
 
   vector<DataTypeStruct> fieldtypes;
 
+  m_colToRows.clear();
   vector< vector<string> > tmpResults = m_results;
   m_results.clear();
   for (int i=0; i<tmpResults.size(); i++){
@@ -2874,9 +2876,9 @@ void QuerierC::applyExtraFilter()
           m_trimedSelctions[j].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatarow, &sideDatatypes, sResult, dts, true);
           trimmedResult.push_back(sResult);
         }
-        m_results.push_back(trimmedResult);
+        appendResultSet(trimmedResult);
       }else
-        m_results.push_back(tmpResults[i]);
+        appendResultSet(tmpResults[i]);
     }
   }
 #ifdef __DEBUG__

@@ -763,6 +763,18 @@ bool FilterC::containAnaFunc() const
   return false;
 }
 
+bool FilterC::isConst() const
+{
+  if (m_type == LEAF){
+    if ((m_leftExpression && m_leftExpression->m_expType==CONST) && (m_rightExpression && m_rightExpression->m_expType==CONST))
+      return true;
+  }else{
+    if ((m_leftNode && m_leftNode->isConst()) && (m_rightNode && m_rightNode->isConst()))
+      return true;
+  }
+  return false;
+}
+
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
 bool FilterC::evalAnaExprs(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly)
 {

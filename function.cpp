@@ -123,6 +123,10 @@ bool FunctionC::isConst() const
       if (m_params[i].m_expType != CONST)
         return false;
     }
+    for (int i=0; i<m_filters.size(); i++){
+      if (!m_filters[i].isConst())
+        return false;
+    }
     return true;
   }
   return false;
@@ -777,7 +781,8 @@ bool FunctionC::runGetpart(vector<string>* fieldvalues, map<string,string>* varv
       sResult = vWords[iPos-1];
       return true;
     }else{
-      trace(ERROR, "%s is out of range of the part list in '%s'!\n", m_params[2].getEntireExpstr().c_str(), m_params[0].getEntireExpstr().c_str());
+      sResult = "";
+      trace(WARNING, "%s is out of range of the part list in '%s'!\n", m_params[2].getEntireExpstr().c_str(), m_params[0].getEntireExpstr().c_str());
       return false;
     }
   }else{

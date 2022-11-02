@@ -828,57 +828,59 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         int lefParPos = m_expStr.find("(");
         if (m_expStr.length()>2 && m_expStr[0] != '\'' && lefParPos>0 && m_expStr[m_expStr.length()-1] == ')')
           m_expType = FUNCTION;
-        if (m_expType == CONST){
-          // check if it is a time, quoted by {}
-          int iOffSet;
-          if (m_expStr.length()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.length()-1]=='}'){
-            if (isDate(m_expStr.substr(1,m_expStr.length()-2),iOffSet,m_datatype.extrainfo)){
-              m_datatype.datatype = DATE;
-            }else{
-              trace(ERROR,"Failed to get the date format from '%s'.\n", m_expStr.c_str());
-              m_metaDataAnzlyzed = false;
-              dts.datatype = UNKNOWN;
-              return dts;
+        else{
+          if (m_expType == CONST){
+            // check if it is a time, quoted by {}
+            int iOffSet;
+            if (m_expStr.length()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.length()-1]=='}'){
+              if (isDate(m_expStr.substr(1,m_expStr.length()-2),iOffSet,m_datatype.extrainfo)){
+                m_datatype.datatype = DATE;
+              }else{
+                trace(ERROR,"Failed to get the date format from '%s'.\n", m_expStr.c_str());
+                m_metaDataAnzlyzed = false;
+                dts.datatype = UNKNOWN;
+                return dts;
+              }
+              trace(DEBUG, "Expression '%s' type is CONST, data type is DATE\n", m_expStr.c_str());
+              return m_datatype;
             }
-            trace(DEBUG, "Expression '%s' type is CONST, data type is DATE\n", m_expStr.c_str());
-            return m_datatype;
+            // check if it is a string, quoted by ''
+            if (m_expStr.length()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.length()-1]=='\''){
+              m_datatype.datatype = STRING;
+              trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
+              return m_datatype;
+            }
+            // check if it is a regular expression string, quoted by //
+            if (m_expStr.length()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.length()-1]=='/'){
+              m_datatype.datatype = STRING;
+              trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
+              return m_datatype;
+            }
           }
-          // check if it is a string, quoted by ''
-          if (m_expStr.length()>1 && m_expStr[0]=='\'' && m_expStr[m_expStr.length()-1]=='\''){
-            m_datatype.datatype = STRING;
-            trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
-            return m_datatype;
+          // check if it is a column
+          for (int i=0; i<fieldnames->size(); i++){
+            if (upper_copy(m_expStr).compare(upper_copy((*fieldnames)[i])) == 0){
+              m_expStr = trim_copy(upper_copy(m_expStr));
+              m_expType = COLUMN;
+              m_colId = i;
+              m_datatype = (*fieldtypes)[i];
+              trace(DEBUG, "Expression '%s' type is COLUMN, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
+              return m_datatype;
+            }
           }
-          // check if it is a regular expression string, quoted by //
-          if (m_expStr.length()>1 && m_expStr[0]=='/' && m_expStr[m_expStr.length()-1]=='/'){
-            m_datatype.datatype = STRING;
-            trace(DEBUG, "Expression '%s' type is CONST, data type is STRING\n", m_expStr.c_str());
-            return m_datatype;
+          if (isInt(m_expStr)){
+            m_expType = CONST;
+            m_datatype.datatype = INTEGER;
+          }else if (isLong(m_expStr)){
+            m_expType = CONST;
+            m_datatype.datatype = LONG;
+          }else if (isDouble(m_expStr)){
+            m_expType = CONST;
+            m_datatype.datatype = DOUBLE;
+          }else{
+            m_expType = UNKNOWN;
+            m_datatype.datatype = UNKNOWN;
           }
-        }
-        // check if it is a column
-        for (int i=0; i<fieldnames->size(); i++){
-          if (upper_copy(m_expStr).compare(upper_copy((*fieldnames)[i])) == 0){
-            m_expStr = trim_copy(upper_copy(m_expStr));
-            m_expType = COLUMN;
-            m_colId = i;
-            m_datatype = (*fieldtypes)[i];
-            trace(DEBUG, "Expression '%s' type is COLUMN, data type is %s\n", m_expStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
-            return m_datatype;
-          }
-        }
-        if (isInt(m_expStr)){
-          m_expType = CONST;
-          m_datatype.datatype = INTEGER;
-        }else if (isLong(m_expStr)){
-          m_expType = CONST;
-          m_datatype.datatype = LONG;
-        }else if (isDouble(m_expStr)){
-          m_expType = CONST;
-          m_datatype.datatype = DOUBLE;
-        }else{
-          m_expType = UNKNOWN;
-          m_datatype.datatype = UNKNOWN;
         }
       }
       if (m_expType == FUNCTION){

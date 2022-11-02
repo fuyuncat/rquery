@@ -4,6 +4,7 @@ All change logs will be documented here.<br/>
    Enhancement: getpart will return empty string if the given index is out of range. <br/>
    Bux fix: when function does not work properly if the condition filter is not const. <br/>
    Bux fix: delimiter parsing cannot have r and s flags at the same time. <br/>
+   Bux fix: Some functions (e.g. switch) does not work properly in dynamic variable. <br/>
    # [0.992] 2022-11-02
    Enhancement: Compare two ANY date type data as STRING. <br/>
    # [0.991] 2022-11-01

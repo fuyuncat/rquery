@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [1.01] 2022-11-02
+   Enhancement: The main filter will not be applied to the dynamic variable @R, instead, it can define its own filter (like a sidework filter), if multiple variable @R defined, only the first defined filter works. <br/>
    # [1.0] 2022-11-02
    Enhancement: @R can be used in the user defined dynamic variable, it will be working as the first sidework datasets. <br/>
    # [0.993] 2022-11-02

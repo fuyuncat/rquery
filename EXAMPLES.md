@@ -1581,3 +1581,51 @@
    c       0.2     0.0     0.6     0.5
            1.10    0.10    2.00    0.70
    ```
+- Use @R as a dynamic variable to get the unique data <br/>
+   Original data:<br/>
+   ```
+   [ rquery]$ cat samples/dupids.txt
+   1231
+   1231
+   11
+   23
+   11
+   255
+   21
+   121
+   21
+   1232
+   ```
+   Filtered reseult:<br/>
+   ```
+   [ rquery]$ rq -v "r:0:@1" -q "s @raw | f @1 noin @r[1][1]" samples/dupids.txt
+   1231
+   11
+   23
+   255
+   21
+   121
+   1232
+   ```
+- Use @R as a dynamic variable to get the duplicated data <br/>
+   Original data:<br/>
+   ```
+   [ rquery]$ cat samples/dupids.txt
+   1231
+   1231
+   11
+   23
+   11
+   255
+   21
+   121
+   21
+   1232
+   ```
+   Filtered reseult:<br/>
+   ```
+   [ rquery]$ rq -v "v:0:@v+1;r:0:@1:@1 noin @r[1][1];r:0:@v" -q "s @raw,@r[1][2] | f @1=@r[1][1]" samples/dupids.txt
+   1231    0
+   11      1
+   21      2
+   ```

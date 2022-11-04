@@ -97,7 +97,7 @@ In any expression of select, filter, group, sort, variables can be used. The var
    - @fileline : The line sequence number of current file matched lines<br />
    - @row : The sequence number of output records<br />
    - @filedN : The field of a parsed line, N is the sequence number of the field. It matches to the Capturing Group in the regular expression.<br />
-   - @R[side work id][filed name/id] : The referred side work data set queried by MEANWHILE command. "side work id" is the sequence id of the side work query in MEANWHILE command, starting from 1; "filed name/id" is the field name, alias or ID (starting from 1)<br />
+   - @R[side work id][filed name/id] : The referred side work data set queried by MEANWHILE command. "side work id" is the sequence id of the side work query in MEANWHILE command, starting from 1; "filed name/id" is the field name, alias or ID (starting from 1). Note: if R is defined in the user defined dynamic variable, the first dataset of @R will be the user defined variable values, the index of the dataset retrieved from MEANWHILE will start from 2.<br />
    - @% : Number of the fields.<br />
    - @N : The last field, it can be an expression, e.g. @(N-3) .<br />
 - Fields:<br />

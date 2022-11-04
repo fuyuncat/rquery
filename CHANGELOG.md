@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [1.0] 2022-11-02
+   Enhancement: @R can be used in the user defined dynamic variable, it will be working as the first sidework datasets. <br/>
    # [0.993] 2022-11-02
    Enhancement: getpart will return empty string if the given index is out of range. <br/>
    Bux fix: when function does not work properly if the condition filter is not const. <br/>

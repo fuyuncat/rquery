@@ -779,6 +779,7 @@ void QuerierC::setUserVars(string variables)
   m_uservarstr = variables;
   //m_uservariables.clear();
   //m_uservarexprs.clear();
+  int fakeId = 1;
   vector<string> vVariables = split(variables,';',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vVariables.size(); i++){
     vector<string> vNameVal = split(trim_copy(vVariables[i]),':',"''()",'\\',{'(',')'},false,true);
@@ -788,8 +789,40 @@ void QuerierC::setUserVars(string variables)
     }
     string sName=upper_copy(trim_copy(vNameVal[0])), sValue=trim_copy(vNameVal[1]);
     trace(DEBUG, "Setting variable '%s' value '%s'!\n", sName.c_str(), sValue.c_str());
-    if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0 || sName.compare("FILEID")==0 || sName.compare("FILELINE")==0 || sName.compare("N")==0 || sName.compare("%")==0 || sName.compare("R")==0 || sName.compare("LEVEL")==0 || sName.compare("NODEID")==0 || sName.compare("ROOT")==0 || sName.compare("PATH")==0){
+    // name cannot be a keyword used by the predefined variables
+    if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0 || sName.compare("FILEID")==0 || sName.compare("FILELINE")==0 || sName.compare("N")==0 || sName.compare("%")==0 || sName.compare("LEVEL")==0 || sName.compare("NODEID")==0 || sName.compare("ROOT")==0 || sName.compare("PATH")==0){
       trace(FATAL, "%s is a reserved word, cannot be used as a variable name!\n", sName.c_str());
+      continue;
+    }
+    // fake R variable as a sidework dataset
+    if (sName.compare("R")==0){
+      vector<ExpressionC> vr;
+      vector<string> va;
+      if (m_sideSelections.size()>0){
+        vr = m_sideSelections[0];
+        va = m_sideAlias[0];
+      }
+      vr.push_back(intToStr(fakeId));
+      va.push_back("");
+      if (m_sideSelections.size()>0){
+        m_sideSelections[0] = vr;
+        m_sideAlias[0] = va;
+      }else{
+        m_sideSelections.push_back(vr);
+        m_sideAlias.push_back(va);
+      }
+      if (m_sideFilters.size()==0){
+        FilterC filter;
+        filter.setExpstr("1=1");
+        m_sideFilters.push_back(filter);
+      }
+      fakeId++;
+      ExpressionC tmpExp;
+      if (vNameVal.size()>2)
+        tmpExp = ExpressionC(trim_copy(vNameVal[2]));
+      else
+        tmpExp = ExpressionC("''");
+      m_fakeRExprs.push_back(tmpExp);
       continue;
     }
     bool bGlobal=false;
@@ -1217,7 +1250,7 @@ void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * 
           m_sideSelections[i][j].evalExpression(pfieldValues, pvarValues, paggGroupProp, panaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
           thisResult.insert(pair<string,string>(m_sideAlias[i][j].empty()?intToStr(j+1):m_sideAlias[i][j], sResult));
         }
-        if (m_sideDatasets.size()<=i){
+        if (m_sideDatasets.size()<=i){ // first row of this sidework dataset
           resultSet.push_back(thisResult);
           m_sideDatasets.push_back(resultSet);
         }else
@@ -1268,10 +1301,25 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
   if (matched) {// calculate dynamic variables
     string sResult;
     DataTypeStruct dts;
+    
     for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
       it->second.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
       m_uservariables[it->first] = sResult;
       varValues[it->first] = sResult;
+    }
+    unordered_map<string,string> fakeResult; // faked sidework dataset from variable R
+    for (int i=0; i<m_fakeRExprs.size(); i++){
+      m_fakeRExprs[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+      fakeResult.insert(pair<string,string>(intToStr(i+1),sResult));
+    }
+    if (fakeResult.size()>0){
+      if (m_sideDatasets.size()==0){ // first row of the faked sidework dataset
+        vector< unordered_map<string,string> > vFakeR; 
+        vFakeR.push_back(fakeResult);
+        m_sideDatasets.push_back(vFakeR);
+      }else{
+        m_sideDatasets[0].push_back(fakeResult);
+      }
     }
   }
   // doing side work
@@ -1460,6 +1508,8 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
     analyzeSortStr();
   for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it)
     it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  for(int i=0; i<m_fakeRExprs.size(); i++)
+    m_fakeRExprs[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for (int i=0; i<m_sideSelections.size(); i++){
     unordered_map<string,DataTypeStruct> sideSelDatatypes;
     for (int j=0; j<m_sideSelections[i].size(); j++){
@@ -3099,6 +3149,7 @@ void QuerierC::clear()
   m_uservariables.clear();
   m_uservarinitval.clear();
   m_uservarexprs.clear();
+  m_fakeRExprs.clear();
   m_selnames.clear();
   m_selections.clear();
   m_sideSelections.clear();

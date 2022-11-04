@@ -184,6 +184,7 @@ class QuerierC
     map<string, string> m_uservariables; // User defined variables, map to initial/calculated values
     map<string, string> m_uservarinitval; // User defined variables initial values
     map<string, ExpressionC> m_uservarexprs; // User defined dynamic variables expressions
+    vector<ExpressionC> m_fakeRExprs; // expressions of user defined R variable as fake sidework dataset.
     vector<string>  m_selnames; // selection names
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions

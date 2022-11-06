@@ -1305,13 +1305,13 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
   bool matched = (!m_filter || m_filter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &m_sideDatasets, &m_sideDatatypes, sideMatchedRowIDs));
   string sResult;
   DataTypeStruct dts;
-  if (matched) {// calculate dynamic variables    
-    for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
-      it->second.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
-      m_uservariables[it->first] = sResult;
-      varValues[it->first] = sResult;
-    }
+  //if (matched) {// calculate dynamic variables    
+  for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
+    it->second.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+    m_uservariables[it->first] = sResult;
+    varValues[it->first] = sResult;
   }
+  //}
 
   // add fake sidework data no mattter if filter matched.
   unordered_map<string,string> fakeResult; // faked sidework dataset from variable R
@@ -2901,6 +2901,22 @@ void QuerierC::applyExtraFilter()
   for (int i=0;i<m_selections.size();i++)
     fieldtypes.push_back(m_selections[i].m_datatype);
 
+  vector<ExpressionC> tmpSels = m_trimedSelctions;
+  int extendedSelNum=0;
+  // process foreach
+  for (int i=0; i<m_trimedSelctions.size(); i++){
+    if (m_trimedSelctions[i].m_expType == FUNCTION && m_trimedSelctions[i].m_Function && m_trimedSelctions[i].m_Function->m_funcID == FOREACH){
+      vector<ExpressionC> vExpandedExpr = m_trimedSelctions[i].m_Function->expandForeach(fieldtypes.size());
+      tmpSels.erase(tmpSels.begin()+i+extendedSelNum);
+      for (int j=0; j<vExpandedExpr.size();j++)
+        tmpSels.insert(tmpSels.begin()+i+j+extendedSelNum,vExpandedExpr[j]);
+      extendedSelNum+=vExpandedExpr.size()-1;
+    }
+  }
+  m_extrafilter->analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  for (int j=0; j<tmpSels.size(); j++)
+    tmpSels[j].analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+
   m_colToRows.clear();
   vector< vector<string> > tmpResults = m_results;
   m_results.clear();
@@ -2908,14 +2924,14 @@ void QuerierC::applyExtraFilter()
     fieldValues.clear();
     for (int j=1; j<tmpResults[i].size(); j++)
       fieldValues.push_back(tmpResults[i][j]);
-    if (fieldValues.size()>0){ 
+    if (fieldValues.size()>fieldtypes.size()){ 
       DataTypeStruct dts;
       dts.datatype = ANY;
       for (int j=fieldtypes.size(); j<fieldValues.size(); j++)
         fieldtypes.push_back(dts);
       m_extrafilter->analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-      for (int j=0; j<m_trimedSelctions.size(); j++)
-        m_trimedSelctions[j].analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+      for (int j=0; j<tmpSels.size(); j++)
+        tmpSels[j].analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
     }
     varValues["@RAW"]=concatArray(tmpResults[i],m_fielddelim);
     varValues["@LINE"]=intToStr(i);
@@ -2924,13 +2940,13 @@ void QuerierC::applyExtraFilter()
     varValues["@%"]=intToStr(tmpResults[i].size());
       //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
     if (!m_extrafilter || m_extrafilter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatasets, &sideDatatypes, sideMatchedRowIDs)){
-      if (m_trimedSelctions.size()>0){
+      if (tmpSels.size()>0){
         vector<string> trimmedResult;
         trimmedResult.push_back("");
         string sResult;
         DataTypeStruct dts;
-        for (int j=0; j<m_trimedSelctions.size(); j++){
-          m_trimedSelctions[j].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatarow, &sideDatatypes, sResult, dts, true);
+        for (int j=0; j<tmpSels.size(); j++){
+          tmpSels[j].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatarow, &sideDatatypes, sResult, dts, true);
           trimmedResult.push_back(sResult);
         }
         appendResultSet(trimmedResult);

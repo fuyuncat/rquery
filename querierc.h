@@ -107,6 +107,7 @@ class QuerierC
     void unique();
     bool searchStopped();
     void applyExtraFilter();
+    void applyExtraFilter(vector<string> aRow, const map<string, string> & varValues);
     void output();
     void clear();
     void outputExtraInfo(size_t total, bool bPrintHeader);
@@ -172,7 +173,9 @@ class QuerierC
     //vector<namesaving_smatch> m_results;
     FilterC* m_filter;
     FilterC* m_extrafilter; // an extra filter to filter the result set.
+    vector<ExpressionC> m_trimedInitSels; // Initial trimmed selections in the extra filter, in case FOREACH involved, and the field size variable.
     vector<ExpressionC> m_trimedSelctions; // trimmed selections in the extra filter.
+    vector<DataTypeStruct> m_trimmedFieldtypes; // field type of the trimmed selections.
     vector<string> m_fieldInitNames;    // field names, in case field size changes, we need to keep the initial field names.
     vector<string> m_fieldnames;    // field names
     //vector<int> m_fieldtypes;       // field datatype in sequence
@@ -229,7 +232,7 @@ class QuerierC
     void getSideDatarow(unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);
     bool matchFilter(const vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);  // eval expression in aggregation paramter and store in a data set
-    void appendResultSet(vector<string> vResult); // add a row to result set, doing columns to rows if coltorow involved
+    void appendResultSet(vector<string> vResult, const map<string, string> & varValues, bool bApplyExtraFilter); // add a row to result set, doing columns to rows if coltorow involved
     bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow, vector< vector<string> > & resultSet); // add a data row to a result set
     //void mergeSort(int iLeft, int iMid, int iRight);
     void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);

@@ -223,7 +223,7 @@ void QuerierC::assignExtraFilter(string sFilterStr)
   vector<string> vAlias;
   if (pos != string::npos){
     filter = new FilterC(trim_copy(sFilterStr.substr(0,pos)));
-    m_trimedSelctions = genSelExpression(trim_copy(sFilterStr.substr(pos+string(" TRIM ").length())), vAlias);
+    m_trimedInitSels = genSelExpression(trim_copy(sFilterStr.substr(pos+string(" TRIM ").length())), vAlias);
   }else{
     filter = new FilterC(trim_copy(sFilterStr));
   }
@@ -1076,7 +1076,7 @@ void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,st
   }
 }
 
-void QuerierC::appendResultSet(vector<string> vResult)
+void QuerierC::appendResultSet(vector<string> vResult, const map<string, string> & varValues, bool bApplyExtraFilter)
 {
   int iRowNumFromCols = 0;
   for (int i=0; i<m_colToRows.size(); i++)
@@ -1106,10 +1106,17 @@ void QuerierC::appendResultSet(vector<string> vResult)
       datas.push_back("");
       for (int k=0;k<tmpResult.size();k++)
         datas.push_back(tmpResult[k][j]);
-      m_results.push_back(datas);
+      if (bApplyExtraFilter)
+        applyExtraFilter(datas, varValues);
+      else
+        m_results.push_back(datas);
     }
-  }else
-    m_results.push_back(vResult);
+  }else{
+    if (bApplyExtraFilter)
+      applyExtraFilter(vResult, varValues);
+    else
+      m_results.push_back(vResult);
+  }
 }
 
 // add a data row to a result set
@@ -1146,7 +1153,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
     vResults.push_back(sResult);
   }
   if (&m_results == &resultSet)
-    appendResultSet(vResults);
+    appendResultSet(vResults, (*varvalues), true);
   else
     resultSet.push_back(vResults);
   // add output file mapping with result.
@@ -1357,7 +1364,7 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
           extendedRowValues.push_back(m_filename);
           extendedRowValues.push_back(intToStr(m_fileid));
           extendedRowValues.push_back(intToStr(m_fieldnames.size()));
-          appendResultSet(extendedRowValues);
+          appendResultSet(extendedRowValues, varValues, true);
           ////eval selection expression to get side dataset only.
           //for (int i=0; i<m_selections.size()l i++)
           //  m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
@@ -1471,7 +1478,7 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
 #endif // __DEBUG__
       }
     }else{
-      appendResultSet(rowValue);
+      appendResultSet(rowValue, varValues, true);
       addResultOutputFileMap(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow);
       vector<ExpressionC> vKeys;
       for (int i=0;i<m_sorts.size();i++)
@@ -1548,6 +1555,33 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
       m_anaEvaledExp[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   if (m_outputfileexp)
     m_outputfileexp->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+
+  // analyze extra filter
+  if (m_extrafilter){
+    m_trimmedFieldtypes.clear();
+    for (int i=0;i<m_selections.size();i++)
+      m_trimmedFieldtypes.push_back(m_selections[i].m_datatype);
+
+    m_extrafilter->analyzeColumns(&m_selnames, &m_trimmedFieldtypes, &m_rawDatatype, &m_sideDatatypes);
+  
+    if (m_trimedInitSels.size() > 0){
+      vector<ExpressionC> tmpSels = m_trimedInitSels;
+      int extendedSelNum=0;
+      // process foreach
+      for (int i=0; i<m_trimedInitSels.size(); i++){
+        if (m_trimedInitSels[i].m_expType == FUNCTION && m_trimedInitSels[i].m_Function && m_trimedInitSels[i].m_Function->m_funcID == FOREACH){
+          vector<ExpressionC> vExpandedExpr = m_trimedInitSels[i].m_Function->expandForeach(m_trimmedFieldtypes.size());
+          tmpSels.erase(tmpSels.begin()+i+extendedSelNum);
+          for (int j=0; j<vExpandedExpr.size();j++)
+            tmpSels.insert(tmpSels.begin()+i+j+extendedSelNum,vExpandedExpr[j]);
+          extendedSelNum+=vExpandedExpr.size()-1;
+        }
+      }
+      m_trimedSelctions = tmpSels;
+      for (int j=0; j<m_trimedSelctions.size(); j++)
+        m_trimedSelctions[j].analyzeColumns(&m_selnames, &m_trimmedFieldtypes, &m_rawDatatype, &m_sideDatatypes);
+    }
+  }
 }
 
 int QuerierC::searchNextReg()
@@ -1893,7 +1927,7 @@ bool QuerierC::group()
         m_selections[i].evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
       vResults.push_back(sResult);
     }
-    appendResultSet(vResults);
+    appendResultSet(vResults, varValues, true);
     addResultOutputFileMap(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow);
 
     vResults.clear();
@@ -2366,7 +2400,7 @@ bool QuerierC::analytic()
         trace(DEBUG, "Selection '%s'(%d) contains analytic function, assign result '%s' (was '%s')\n", m_sorts[j].sortKey.getEntireExpstr().c_str(),j,sResult.c_str(),tmpResults[i][j+1].c_str());
         tmpSortKeys[i][j] = sResult;
       }
-    appendResultSet(tmpResults[i]); 
+    appendResultSet(tmpResults[i], varValues, true); 
     m_sortKeys.push_back(tmpSortKeys[i]);
     addResultOutputFileMap(&vfieldvalues, &varValues, &dummyAggGroupProp, &anaFinalResult, &matchedSideDatarow);
   }
@@ -2401,9 +2435,10 @@ void QuerierC::unique()
     }else
       tmpResult.push_back(m_results[i]);
   }
+  map<string, string> varValues;
   m_results.clear();
   for (int i=0;i<tmpResult.size();i++)
-    appendResultSet(tmpResult[i]);
+    appendResultSet(tmpResult[i], varValues, false);
   trace(DEBUG, "Result number after unique: %d.\n",m_results.size());
 #ifdef __DEBUG__
   m_uniquetime += (curtime()-thistime);
@@ -2668,7 +2703,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
     tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
     vResult.push_back(sResult);
   }
-  appendResultSet(vResult);
+  appendResultSet(vResult, varValues, true);
 
   vResult.clear();
   for (int i=0; i<m_sorts.size(); i++){
@@ -2873,14 +2908,56 @@ void QuerierC::printFieldNames()
   m_bNamePrinted = true;
 }
 
-void QuerierC::applyExtraFilter()
+void QuerierC::applyExtraFilter(vector<string> aRow, const map<string, string> & varValues)
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
 #endif // __DEBUG__
   if (!m_extrafilter)
     return;
+
   vector<string> fieldValues;
+  unordered_map< string,GroupProp > aggGroupProp;
+  unordered_map< string,vector<string> > anaFuncData;
+  vector< vector< unordered_map<string,string> > > sideDatasets;
+  unordered_map< string, unordered_map<string,string> > sideDatarow;
+  unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
+  unordered_map< int,int > sideMatchedRowIDs;
+  map<string, string> newVarVals = varValues;
+
+  fieldValues.clear();
+  for (int j=1; j<aRow.size(); j++)
+    fieldValues.push_back(aRow[j]);
+  newVarVals["@RAW"]=concatArray(aRow,m_fielddelim);
+  newVarVals["@%"]=intToStr(aRow.size());
+    //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
+  if (!m_extrafilter || m_extrafilter->compareExpression(&fieldValues, &newVarVals, &aggGroupProp, &anaFuncData, &sideDatasets, &sideDatatypes, sideMatchedRowIDs)){
+    if (m_trimedSelctions.size()>0){
+      vector<string> trimmedResult;
+      trimmedResult.push_back("");
+      string sResult;
+      DataTypeStruct dts;
+      for (int j=0; j<m_trimedSelctions.size(); j++){
+        m_trimedSelctions[j].evalExpression(&fieldValues, &newVarVals, &aggGroupProp, &anaFuncData, &sideDatarow, &sideDatatypes, sResult, dts, true);
+        trimmedResult.push_back(sResult);
+      }
+      //appendResultSet(trimmedResult, newVarVals, false); // to avoid recursive call
+      m_results.push_back(trimmedResult);
+    }else
+      //appendResultSet(aRow, newVarVals, false); // to avoid recursive call
+      m_results.push_back(aRow);
+  }
+#ifdef __DEBUG__
+  m_extrafiltertime += (curtime()-thistime);
+#endif // __DEBUG__
+}
+
+void QuerierC::applyExtraFilter()
+{
+  return;
+  if (!m_extrafilter)
+    return;
+
   map<string, string> varValues;
   varValues.insert( pair<string,string>("@RAW",""));
   varValues.insert( pair<string,string>("@LINE","0"));
@@ -2890,73 +2967,12 @@ void QuerierC::applyExtraFilter()
   varValues.insert( pair<string,string>("@FILE",m_filename));
   varValues.insert( pair<string,string>("@FILEID",intToStr(m_fileid)));
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
-  unordered_map< string,GroupProp > aggGroupProp;
-  unordered_map< string,vector<string> > anaFuncData;
-  vector< vector< unordered_map<string,string> > > sideDatasets;
-  unordered_map< string, unordered_map<string,string> > sideDatarow;
-  unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
-  unordered_map< int,int > sideMatchedRowIDs;
-
-  vector<DataTypeStruct> fieldtypes;
-  for (int i=0;i<m_selections.size();i++)
-    fieldtypes.push_back(m_selections[i].m_datatype);
-
-  vector<ExpressionC> tmpSels = m_trimedSelctions;
-  int extendedSelNum=0;
-  // process foreach
-  for (int i=0; i<m_trimedSelctions.size(); i++){
-    if (m_trimedSelctions[i].m_expType == FUNCTION && m_trimedSelctions[i].m_Function && m_trimedSelctions[i].m_Function->m_funcID == FOREACH){
-      vector<ExpressionC> vExpandedExpr = m_trimedSelctions[i].m_Function->expandForeach(fieldtypes.size());
-      tmpSels.erase(tmpSels.begin()+i+extendedSelNum);
-      for (int j=0; j<vExpandedExpr.size();j++)
-        tmpSels.insert(tmpSels.begin()+i+j+extendedSelNum,vExpandedExpr[j]);
-      extendedSelNum+=vExpandedExpr.size()-1;
-    }
-  }
-  m_extrafilter->analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-  for (int j=0; j<tmpSels.size(); j++)
-    tmpSels[j].analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
 
   m_colToRows.clear();
   vector< vector<string> > tmpResults = m_results;
   m_results.clear();
-  for (int i=0; i<tmpResults.size(); i++){
-    fieldValues.clear();
-    for (int j=1; j<tmpResults[i].size(); j++)
-      fieldValues.push_back(tmpResults[i][j]);
-    if (fieldValues.size()>fieldtypes.size()){ 
-      DataTypeStruct dts;
-      dts.datatype = ANY;
-      for (int j=fieldtypes.size(); j<fieldValues.size(); j++)
-        fieldtypes.push_back(dts);
-      m_extrafilter->analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-      for (int j=0; j<tmpSels.size(); j++)
-        tmpSels[j].analyzeColumns(&m_selnames, &fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-    }
-    varValues["@RAW"]=concatArray(tmpResults[i],m_fielddelim);
-    varValues["@LINE"]=intToStr(i);
-    varValues["@ROW"]=intToStr(i);
-    varValues["@FILELINE"]=intToStr(i);
-    varValues["@%"]=intToStr(tmpResults[i].size());
-      //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
-    if (!m_extrafilter || m_extrafilter->compareExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatasets, &sideDatatypes, sideMatchedRowIDs)){
-      if (tmpSels.size()>0){
-        vector<string> trimmedResult;
-        trimmedResult.push_back("");
-        string sResult;
-        DataTypeStruct dts;
-        for (int j=0; j<tmpSels.size(); j++){
-          tmpSels[j].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &sideDatarow, &sideDatatypes, sResult, dts, true);
-          trimmedResult.push_back(sResult);
-        }
-        appendResultSet(trimmedResult);
-      }else
-        appendResultSet(tmpResults[i]);
-    }
-  }
-#ifdef __DEBUG__
-  m_extrafiltertime += (curtime()-thistime);
-#endif // __DEBUG__
+  for (int i=0; i<tmpResults.size(); i++)
+    applyExtraFilter(tmpResults[i], varValues);
 }
 
 void QuerierC::genReport(vector<string> datas)
@@ -3166,6 +3182,7 @@ void QuerierC::clear()
   m_fieldnames.clear();
   m_fieldInitNames.clear();
   m_fieldtypes.clear();
+  m_trimmedFieldtypes.clear();
   m_fieldntypes.clear();
   m_uservariables.clear();
   m_uservarinitval.clear();
@@ -3179,6 +3196,7 @@ void QuerierC::clear()
   m_sideDatasets.clear();
   m_sideDatatypes.clear();
   m_trimedSelctions.clear();
+  m_trimedInitSels.clear();
   for (unordered_map< string, ofstream* >::iterator it=m_outputfiles.begin();it!=m_outputfiles.end();it++){
     if (it->second && it->second->is_open()){
       it->second->close();

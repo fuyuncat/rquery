@@ -708,7 +708,7 @@ bool QuerierC::analyzeSortStr(){
     // discard non integer CONST
     // Any INTEGER number will be mapped to the correspond sequence of the selections.
     // Thus, m_selections should always be analyzed before m_sorts
-    if (keyProp.sortKey.m_type==BRANCH || keyProp.sortKey.m_expType != CONST || (!isInt(keyProp.sortKey.m_expStr) && !isLong(keyProp.sortKey.m_expStr)) || atoi(keyProp.sortKey.m_expStr.c_str())>=m_selections.size()){
+    if (keyProp.sortKey.m_type==BRANCH || keyProp.sortKey.m_expType != CONST || isInt(keyProp.sortKey.m_expStr) || isLong(keyProp.sortKey.m_expStr) || atoi(keyProp.sortKey.m_expStr.c_str())>=m_selections.size()){
       m_sorts.push_back(keyProp);
     }
   }
@@ -873,6 +873,7 @@ void QuerierC::setOutputFiles(string outputfilestr, short int outputmode)
   if (m_outputfileexp)
     SafeDelete(m_outputfileexp);
   m_outputfileexp = new ExpressionC(outputfilestr);
+  m_outputfileexp->getAggFuncs(m_initAggProps);
   m_outputmode = outputmode;
 }
 
@@ -1073,6 +1074,7 @@ void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,st
       m_resultfiles.push_back(ofs);
     }else
       m_resultfiles.push_back(it->second);
+    trace(DEBUG2, "Result ID: %d, ResultFIle ID: %d: File %s!\n", m_results.size()-1, m_resultfiles.size()-1, sResult.c_str());
   }
 }
 
@@ -1153,7 +1155,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
     vResults.push_back(sResult);
   }
   if (&m_results == &resultSet)
-    appendResultSet(vResults, (*varvalues), true);
+    appendResultSet(vResults, (*varvalues), m_initAnaArray.size()==0);
   else
     resultSet.push_back(vResults);
   // add output file mapping with result.
@@ -1364,7 +1366,7 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
           extendedRowValues.push_back(m_filename);
           extendedRowValues.push_back(intToStr(m_fileid));
           extendedRowValues.push_back(intToStr(m_fieldnames.size()));
-          appendResultSet(extendedRowValues, varValues, true);
+          appendResultSet(extendedRowValues, varValues, false);
           ////eval selection expression to get side dataset only.
           //for (int i=0; i<m_selections.size()l i++)
           //  m_selections[i].evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
@@ -1381,61 +1383,65 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
           m_treeParentKeys.push_back(vResults);
           return true;
         }else{
+          size_t beforeSize = m_results.size(); // to check if the result row filtered by extra filter.
           if (!addResultToSet(&fieldValues, &varValues, rowValue, m_selections, &aggGroupProp, &anaFuncData, &anaEvaledExp, matchedSideDatarow, m_results))
             return false;
+          // add sort keys. result set size increased means the current row is not filtered by extra filter.
+          if (beforeSize<m_results.size()){
 #ifdef __DEBUG__
   m_evalSeltime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
-
-          vResults.clear();
-          for (int i=0; i<m_sorts.size(); i++){
-            if (!m_sorts[i].sortKey.containGroupFunc()){
-              //if it has the exact same expression as any selection, get the result from selection
-              int iSel = -1;
-              for (int j=0; j<m_selections.size(); j++)
-                if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
-                  iSel = j;
-                  break;
+            vResults.clear();
+            for (int i=0; i<m_sorts.size(); i++){
+              if (!m_sorts[i].sortKey.containGroupFunc()){
+                //if it has the exact same expression as any selection, get the result from selection
+                int iSel = -1;
+                for (int j=0; j<m_selections.size(); j++)
+                  if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
+                    iSel = j;
+                    break;
+                  }
+                if (iSel >= 0){
+                  sResult = m_results[m_results.size()-1][iSel + 1];
+                  if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
+                    tmpExp = m_selections[iSel];
+                    tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
+                    anaEvaledExp.push_back(tmpExp);
+                  }
+                // if the sort key is a integer, get the result from the result set at the same sequence number
+                //}else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<=m_selections.size()){
+                }else if (m_sorts[i].iSel>=0){
+                  //int iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str())-1;
+                  sResult = m_results[m_results.size()-1][m_sorts[i].iSel + 1];
+                  if (m_selections[m_sorts[i].iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
+                    tmpExp = m_selections[m_sorts[i].iSel];
+                    tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
+                    anaEvaledExp.push_back(tmpExp);
+                  }
+                }else{
+                  tmpExp = m_sorts[i].sortKey;
+                 // m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
+                  if (m_sorts[i].sortKey.containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
+                    tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
+                    anaEvaledExp.push_back(tmpExp);
+                  }else
+                    tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
                 }
-              if (iSel >= 0){
-                sResult = m_results[m_results.size()-1][iSel + 1];
-                if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
-                  tmpExp = m_selections[iSel];
-                  tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
-                  anaEvaledExp.push_back(tmpExp);
-                }
-              // if the sort key is a integer, get the result from the result set at the same sequence number
-              }else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()){
-                int iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str());
-                sResult = m_results[m_results.size()-1][iSel + 1];
-                if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
-                  tmpExp = m_selections[iSel];
-                  tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
-                  anaEvaledExp.push_back(tmpExp);
-                }
+                //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
               }else{
-                tmpExp = m_sorts[i].sortKey;
-               // m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
-                if (m_sorts[i].sortKey.containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
-                  tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
-                  anaEvaledExp.push_back(tmpExp);
-                }else
-                  tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+                trace(ERROR, "(3)Invalid using aggregation function in '%s', no group involved!\n", m_sorts[i].sortKey.getEntireExpstr().c_str());
+                return false;
               }
-              //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
-            }else{
-              trace(ERROR, "(3)Invalid using aggregation function in '%s', no group involved!\n", m_sorts[i].sortKey.getEntireExpstr().c_str());
-              return false;
+              vResults.push_back(sResult);
             }
-            vResults.push_back(sResult);
-          }
-          //vResults.push_back(intToStr(m_sortKeys.size())); // add an index for the sort key
-          m_sortKeys.push_back(vResults);
+            //vResults.push_back(intToStr(m_sortKeys.size())); // add an index for the sort key
+            m_sortKeys.push_back(vResults);
 #ifdef __DEBUG__
   m_evalSorttime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
+          }
         }
       }else{ // need to do group. store evaled data in a temp date set
         //trace(DEBUG2, " Grouping! \n");
@@ -1542,8 +1548,14 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
   }
   for (int i=0; i<m_groups.size(); i++)
     m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-  for (int i=0; i<m_sorts.size(); i++)
+  for (int i=0; i<m_sorts.size(); i++){
     m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
+    if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())>0 && atoi(m_sorts[i].sortKey.m_expStr.c_str())<=m_selections.size()){
+      m_sorts[i].iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str()) - 1;
+      m_sorts[i].sortKey.m_datatype = m_selections[m_sorts[i].iSel].m_datatype;
+    }else
+      m_sorts[i].iSel = -1;
+  }
   for (int i=0; i<m_treeProps.size(); i++)
     m_treeProps[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for (int i=0; i<m_treeParentProps.size(); i++)
@@ -1927,35 +1939,39 @@ bool QuerierC::group()
         m_selections[i].evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
       vResults.push_back(sResult);
     }
+    size_t beforeSize = m_results.size(); // too check if the row filtered by the extra filter
     appendResultSet(vResults, varValues, true);
     addResultOutputFileMap(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow);
 
-    vResults.clear();
-    for (int i=0; i<m_sorts.size(); i++){
-      string sResult;
-      //if it has the exact same expression as any selection, get the result from selection
-      int iSel = -1;
-      for (int j=0; j<m_selections.size(); j++)
-        if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
-          iSel = j;
-          break;
+    if (beforeSize < m_results.size()){
+      vResults.clear();
+      for (int i=0; i<m_sorts.size(); i++){
+        string sResult;
+        //if it has the exact same expression as any selection, get the result from selection
+        int iSel = -1;
+        for (int j=0; j<m_selections.size(); j++)
+          if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
+            iSel = j;
+            break;
+          }
+        if (iSel >= 0){
+          vResults.push_back(m_results[m_results.size()-1][iSel + 1]);
+        // if sort key is a sequence number, the selection index has been retrieved in analyzing.
+        //}else if ((m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && //atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size())){
+        }else if (m_sorts[i].iSel>0){
+          vResults.push_back(m_results[m_results.size()-1][m_sorts[i].iSel + 1]);
+        }else{
+          if (m_sorts[i].sortKey.containAnaFunc()){ // eval analytic function processing data anaFuncData
+            tmpExp = m_sorts[i].sortKey;
+            tmpExp.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
+            anaEvaledExp.push_back(tmpExp);
+          }else
+            m_sorts[i].sortKey.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+          vResults.push_back(sResult);
         }
-      if (iSel >= 0){
-        vResults.push_back(m_results[m_results.size()-1][iSel + 1]);
-      // if the sort key is a integer, get the result from the result set at the same sequence number
-      }else if ((m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size())){
-        vResults.push_back(m_results[m_results.size()-1][atoi(m_sorts[i].sortKey.m_expStr.c_str()) + 1]);
-      }else{ // sort expressions
-        if (m_sorts[i].sortKey.containAnaFunc()){ // eval analytic function processing data anaFuncData
-          tmpExp = m_sorts[i].sortKey;
-          tmpExp.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, false);
-          anaEvaledExp.push_back(tmpExp);
-        }else
-          m_sorts[i].sortKey.evalExpression(&m_aggRowValues[*it], &varValues, &m_aggGroupProp[*it], &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
-        vResults.push_back(sResult);
       }
+      m_sortKeys.push_back(vResults);
     }
-    m_sortKeys.push_back(vResults);
 
     m_anaEvaledExp.push_back(anaEvaledExp);
     addAnaFuncData(anaFuncData);
@@ -2392,16 +2408,19 @@ bool QuerierC::analytic()
         trace(DEBUG, "Selection '%s'(%d) contains analytic function, assign result '%s' (was '%s')\n", m_selections[j].getEntireExpstr().c_str(),j,sResult.c_str(),tmpResults[i][j+1].c_str());
         tmpResults[i][j+1] = sResult;
       }
-    for (int j=0; j<m_sorts.size(); j++)
-      if (m_sorts[j].sortKey.containAnaFunc()){
-        string sResult;
-        m_anaEvaledExp[i][anaExpID].evalAnalyticFunc(&(m_anaFuncResult[i]), sResult);
-        anaExpID++;
-        trace(DEBUG, "Selection '%s'(%d) contains analytic function, assign result '%s' (was '%s')\n", m_sorts[j].sortKey.getEntireExpstr().c_str(),j,sResult.c_str(),tmpResults[i][j+1].c_str());
-        tmpSortKeys[i][j] = sResult;
-      }
+    size_t beforeSize = m_results.size(); // too check if the row filtered by the extra filter
     appendResultSet(tmpResults[i], varValues, true); 
-    m_sortKeys.push_back(tmpSortKeys[i]);
+    if (beforeSize < m_results.size()) {
+      for (int j=0; j<m_sorts.size(); j++)
+        if (m_sorts[j].sortKey.containAnaFunc()){
+          string sResult;
+          m_anaEvaledExp[i][anaExpID].evalAnalyticFunc(&(m_anaFuncResult[i]), sResult);
+          anaExpID++;
+          trace(DEBUG, "Selection '%s'(%d) contains analytic function, assign result '%s' (was '%s')\n", m_sorts[j].sortKey.getEntireExpstr().c_str(),j,sResult.c_str(),tmpResults[i][j+1].c_str());
+          tmpSortKeys[i][j] = sResult;
+        }
+      m_sortKeys.push_back(tmpSortKeys[i]);
+    }
     addResultOutputFileMap(&vfieldvalues, &varValues, &dummyAggGroupProp, &anaFinalResult, &matchedSideDatarow);
   }
   clearAnalytic();
@@ -2612,8 +2631,12 @@ bool QuerierC::sort()
   //vector< vector<string> >::iterator it = m_sortKeys.begin();
   //std::sort(it, it+m_sortKeys.size()-1, sortVectorLambda);
   vector< vector<string> > tmpResults = m_results;
-  for (int i=0; i<m_sortKeys.size(); i++)
+  vector< ofstream* > tmpRsltFiles = m_resultfiles;
+  for (int i=0; i<m_sortKeys.size(); i++){
     m_results[i] = tmpResults[atoi(m_sortKeys[i][m_sortKeys[i].size()-1].c_str())];
+    if (i<m_resultfiles.size())
+      m_resultfiles[i] = tmpRsltFiles[atoi(m_sortKeys[i][m_sortKeys[i].size()-1].c_str())];
+  }
   clearSort();
   //trace(DEBUG1, "Sorting completed \n");
 #ifdef __DEBUG__
@@ -2703,30 +2726,33 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
     tmpExp.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
     vResult.push_back(sResult);
   }
+  size_t beforeSize = m_results.size(); // too check if the row filtered by the extra filter
   appendResultSet(vResult, varValues, true);
 
-  vResult.clear();
-  for (int i=0; i<m_sorts.size(); i++){
-    //if it has the exact same expression as any selection, get the result from selection
-    int iSel = -1;
-    for (int j=0; j<m_selections.size(); j++)
-      if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
-        iSel = j;
-        break;
+  if (beforeSize < m_results.size()){
+    vResult.clear();
+    for (int i=0; i<m_sorts.size(); i++){
+      //if it has the exact same expression as any selection, get the result from selection
+      int iSel = -1;
+      for (int j=0; j<m_selections.size(); j++)
+        if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
+          iSel = j;
+          break;
+        }
+      if (iSel >= 0){
+        sResult = m_results[m_results.size()-1][iSel + 1];
+      // if the sort key is a integer, get the result from the result set at the same sequence number
+      //}else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<=m_selections.size()){
+      }else if (m_sorts[i].iSel >= 0) {
+        sResult = m_results[m_results.size()-1][m_sorts[i].iSel + 1];
+      }else{
+        m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
       }
-    if (iSel >= 0){
-      sResult = m_results[m_results.size()-1][iSel + 1];
-    // if the sort key is a integer, get the result from the result set at the same sequence number
-    }else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<m_selections.size()){
-      int iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str());
-      sResult = m_results[m_results.size()-1][iSel + 1];
-    }else{
-      m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
+      //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
+      vResult.push_back(sResult);
     }
-    //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
-    vResult.push_back(sResult);
+    m_sortKeys.push_back(vResult);
   }
-  m_sortKeys.push_back(vResult);
 
   if (tNode->firstChild)
     SetTree(tmpResults, tNode->firstChild, level+1, nodeid, treeFuncs);
@@ -2913,8 +2939,10 @@ void QuerierC::applyExtraFilter(vector<string> aRow, const map<string, string> &
 #ifdef __DEBUG__
   long int thistime = curtime();
 #endif // __DEBUG__
-  if (!m_extrafilter)
+  if (!m_extrafilter){
+    m_results.push_back(aRow);
     return;
+  }
 
   vector<string> fieldValues;
   unordered_map< string,GroupProp > aggGroupProp;

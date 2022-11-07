@@ -53,12 +53,14 @@ private:
 struct SortProp{
   ExpressionC sortKey;
   short int direction; //1 ASC; 2 DESC
+  int iSel=-1; //1 ASC; 2 DESC
 
   SortProp& operator=(SortProp other)
   {
     if (this != &other){
       other.sortKey.copyTo(&(sortKey));
       direction=other.direction;
+      iSel=other.iSel;
     }
     return *this;
   }

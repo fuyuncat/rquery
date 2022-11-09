@@ -1,5 +1,5 @@
 # rquery
-&nbsp;&nbsp;&nbsp;RQuery is a tool to search string block/file/folder using regular/delimiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. <br />
+&nbsp;&nbsp;&nbsp;RQuery is a tool to search text content/file/folder using regular/delimiter/wildcard expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. <br />
 &nbsp;&nbsp;&nbsp;Contact Email: fuyuncat@gmail.com<br />
 <br />
 # Install
@@ -85,7 +85,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
       - sort|o field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
       - limtl n | bottomN,topN : Limited number records to be printed<br />
       - unique|u : Make the returned resutl unique. <br />
-      - tree|h k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree. <br />
+      - tree|h k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree; @ISLEAF indicate if the node is a leaf. <br />
       - report|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br />
       - \>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file. <br />
 - Variables:
@@ -100,6 +100,9 @@ In any expression of select, filter, group, sort, variables can be used. The var
    - @R[side work id][filed name/id] : The referred side work data set queried by MEANWHILE command. "side work id" is the sequence id of the side work query in MEANWHILE command, starting from 1; "filed name/id" is the field name, alias or ID (starting from 1). Note: if R is defined in the user defined dynamic variable, the first dataset of @R will be the user defined variable values, the index of the dataset retrieved from MEANWHILE will start from 2.<br />
    - @% : Number of the fields.<br />
    - @N : The last field, it can be an expression, e.g. @(N-3) .<br />
+   - @nodeid : An unique sequence id of the node of the tree in the hierarchical query.<br />
+   - @isleaf : Indicate if the node is a leaf in the hierarchical query .<br />
+   - @level : The level of the node in the tree in the hierarchical query .<br />
 - Fields:<br />
 Fields are the Capturing Group or Named Capturing Group in the regular expression. If it's a Named Capturing Group, the name can be used as the field name, or a variable @N or @fieldN can be mapped to a Capturing Group. <br />
 - Functions:<br />

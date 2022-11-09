@@ -1598,7 +1598,7 @@
    ```
    Filtered reseult:<br/>
    ```
-   [ rquery]$ rq -v "r:0:@1" -q "s @raw | f @1 noin @r[1][1]" samples/dupids.txt
+   [ rquery]$ rq -n -v "r:@v;v:0:@1" -q "s @raw | f @1 noin @r[1][1]" samples/dupids.txt
    1231
    11
    23
@@ -1624,7 +1624,7 @@
    ```
    Filtered reseult:<br/>
    ```
-   [ rquery]$ rq -v "v:0:@v+1;r:0:@1:@1 noin @r[1][1];r:0:@v" -q "s @raw,@r[1][2] | f @1=@r[1][1]" samples/dupids.txt
+   [ rquery]$ ./rq -v "r:@v;v:0:@1" -q "s @raw | f @1 in @r[1][1]" samples/dupids.txt -m error
    1231    0
    11      1
    21      2

@@ -186,9 +186,10 @@ class QuerierC
     DataTypeStruct m_rawDatatype;  // @raw data type for special cases, e.g. each line contains only one data
     map<string, DataTypeStruct> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     string m_uservarstr;
+    vector<string> m_uservalnames; // the names of user defined variables, we use this vector to keep the order of calculation.
     map<string, string> m_uservariables; // User defined variables, map to initial/calculated values
     map<string, string> m_uservarinitval; // User defined variables initial values
-    map<string, ExpressionC> m_uservarexprs; // User defined dynamic variables expressions
+    map<string, ExpressionC> m_uservarexprs; // User defined dynamic variables expressions; we cannot unordered_map, as we need to calculate the dynamic variables according to their input sequnence!
     vector<ExpressionC> m_fakeRExprs; // expressions of user defined R variable as fake sidework dataset.
     vector<string>  m_selnames; // selection names
     vector<ExpressionC> m_selections;    // selected expressions

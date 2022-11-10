@@ -937,7 +937,7 @@ void QuerierC::analyzeFiledTypes(vector<string> matches)
     m_rawDatatype.datatype = STRING;
   for (int i=1; i<matches.size(); i++){
     dts = DataTypeStruct();
-    if (m_fieldnames.size()>i-1 && m_fieldntypes.find(m_fieldnames[i-1]) != m_fieldntypes.end()) 
+    if (m_detectedTypeRows>m_detectTypeMaxRowNum && m_fieldnames.size()>i-1 && m_fieldntypes.find(m_fieldnames[i-1]) != m_fieldntypes.end()) 
       m_fieldtypes.push_back(m_fieldntypes[m_fieldnames[i-1]]);
     else if (m_fieldntypes.find("@FIELD"+intToStr(i)) != m_fieldntypes.end())
       m_fieldtypes.push_back(m_fieldntypes["@FIELD"+intToStr(i)]);
@@ -951,7 +951,7 @@ void QuerierC::analyzeFiledTypes(vector<string> matches)
         m_fieldtypes.push_back(dts); 
       if (m_fieldtypes[i-1].datatype==UNKNOWN)
         m_fieldtypes[i-1].datatype = STRING; // set UNKNOWN (real) data as STRING
-      if (m_fieldnames.size()>i-1)
+      if (m_fieldnames.size()>i-1 && m_detectedTypeRows>=m_detectTypeMaxRowNum)
         m_fieldntypes.insert( pair<string, DataTypeStruct>(m_fieldnames[i-1],dts) );
     }
     trace(DEBUG, "Detected column '%s' data type '%s' extrainfo '%s'\n", m_fieldnames[i-1].c_str(), decodeDatatype(m_fieldtypes[m_fieldtypes.size()-1].datatype).c_str(),m_fieldtypes[m_fieldtypes.size()-1].extrainfo.c_str());

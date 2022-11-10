@@ -1676,7 +1676,7 @@
    Filtered reseult:<br/>
    ```
    [ rquery]$ ./rq -v "r:@v;v:0:@1" -q "s @raw | f @1 in @r[1][1]" samples/dupids.txt -m error
-   1231    0
-   11      1
-   21      2
+   1231
+   11
+   21
    ```

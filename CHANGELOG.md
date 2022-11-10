@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [1.03] 2022-11-10
+   Bux fix: option detecttyperows does not work as expected. <br/>
    # [1.02] 2022-11-10
    Enhancement: The dynamic variables will be calculated BEFORE filter (the filter can use the current calculated variables), it also keep the order of input. <br/>
    New feature: New functions: rcount([sideid][,fieldid][,value_expr]), rmember(sideid,fieldid,seqnum), rmemberid(sideid,fieldid,value_expr). <br/>

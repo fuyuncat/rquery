@@ -823,6 +823,11 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         }
         //trace(DEBUG, "Expression '%s' type is %s, data type is '%s'\n", m_expStr.c_str(), decodeExptype(m_expType).c_str(),decodeDatatype(m_datatype.datatype).c_str());
         return m_datatype;
+      }else if (m_expType == COLUMN){ // field data type could be detected more than once.
+        if (m_colId>=0 && m_colId<fieldtypes->size())
+          m_datatype = (*fieldtypes)[m_colId];
+        else
+          m_datatype.datatype = UNKNOWN;
       }
       if (m_datatype.datatype == UNKNOWN){
         // check if it is a function FUNCNAME(...)

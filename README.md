@@ -134,7 +134,7 @@ Functions can be used in the expression. We current provide some essential norma
    - rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
    - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
    - comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates, return -1 if date1 less than date2, return 0 if date1 equal to date2, return 1 if date1 greater than date2. date1 and date2 should have the same dateformat.<br />
-   - datatype(expr) : Normal function. Return the date type of the expression.<br/>
+   - datatype(expr) : Normal function. Return the date type of the expression. If the expresion is a field, like @1, it will return the data type of the field.<br/>
    - toint(str) : Normal function. Conver a string to integer.<br/>
    - tolong(str) : Normal function. Conver a string to long.<br/>
    - tofloat(str) : Normal function. Conver a string to float.<br/>

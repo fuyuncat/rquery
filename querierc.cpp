@@ -924,7 +924,7 @@ void QuerierC::setFieldDatatype(string field, int datetype, string extrainfo)
 void QuerierC::analyzeFiledTypes(vector<string> matches)
 {
   m_detectedTypeRows++;
-  m_fieldtypes.clear();
+  //m_fieldtypes.clear();
   DataTypeStruct dts;
   dts.datatype = detectDataType(matches[0], dts.extrainfo);
   dts.datatype = dts.datatype==UNKNOWN?STRING:dts.datatype;

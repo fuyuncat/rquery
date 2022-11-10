@@ -626,6 +626,57 @@
    ```
    1.8
    ```
+- rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
+   ```
+   rq -v "r:@1" -q "s @raw, rcount(1,1,@raw) " samples/dupids.txt
+   ```
+   Returns result:<br/>
+   ```
+   1231    1
+   1231    2
+   11      1
+   23      1
+   11      2
+   255     1
+   21      1
+   121     1
+   21      2
+   1232    1
+   ```
+- rmember(sideid,fieldid,seqnum) : Normal function. Return the member value of the specified side work, field id and sequence number. sideid is the id the side work, fieldid is id the field in the side work, seqnum is the member sequence number. <br/>
+   ```
+   rq -v "r:@1" -q "s @line, @raw, rmember(1,1,@line) " samples/dupids.txt
+   ```
+   Returns result:<br/>
+   ```
+   1       1231    1231
+   2       1231    1231
+   3       11      11
+   4       23      23
+   5       11      11
+   6       255     255
+   7       21      21
+   8       121     121
+   9       21      21
+   10      1232    1232
+   ```
+- rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
+   ```
+   rq -v "r:@raw" -q "s @raw, rmemberid(1,1,@raw) " samples/dupids.txt
+   ```
+   Returns result:<br/>
+   ```
+   1231    1
+   1231    1
+   11      3
+   23      4
+   11      3
+   255     6
+   21      7
+   121     8
+   21      7
+   1232    10
+   ```
 - sum(expr) - Aggregation function. Sum the number of expr<br/>
    ```
    echo "deptA 2022Jun 123

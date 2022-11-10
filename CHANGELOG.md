@@ -2,6 +2,7 @@
 All change logs will be documented here.<br/>
    # [1.02] 2022-11-10
    Enhancement: The dynamic variables will be calculated BEFORE filter (the filter can use the current calculated variables), it also keep the order of input. <br/>
+   New feature: New functions: rcount([sideid][,fieldid][,value_expr]), rmember(sideid,fieldid,seqnum), rmemberid(sideid,fieldid,value_expr). <br/>
    # [1.01] 2022-11-07
    Enhancement: FOREACH can be used in the TRIM clause in the EXTRAFILTER. <br/>
    Enhancement: Extrafilter will use less memory. <br/>

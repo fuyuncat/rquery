@@ -66,7 +66,7 @@ class FilterC
     bool expstrAnalyzed();
     bool containAnaFunc() const; // check if the expression contains analytic function
     bool isConst() const;
-    bool evalAnaExprs(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly); // eval expressions in the filter, to get anaFuncs
+    bool evalAnaExprs(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly); // eval expressions in the filter, to get anaFuncs
     FilterC* cloneMe();
     std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap

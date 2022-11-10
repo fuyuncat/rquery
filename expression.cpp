@@ -1190,7 +1190,7 @@ bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
-bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly)
+bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly)
 {
   if (!fieldvalues || !varvalues || !aggFuncs || !anaFuncs){
     trace(ERROR, "Insufficient metadata!\n");
@@ -1216,7 +1216,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             if (m_Function->m_params.size()>0){
               // we dont bother with the paramter, as it has already been evaled in querierc.evalAggExpNode()
               // calculate the parameter here will cause duplicated calculation if the same aggregation function involved multiple times in the selection/sort
-              //m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sideDatarow, sideDatatypes, sResult, extrainfo);
+              //m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sideDatasets, sideDatarow, sideDatatypes, sResult, extrainfo);
               it->second.funcID = m_Function->m_funcID;
               dts = m_Function->m_datatype;
               if (calAggFunc(it->second, m_Function, sResult)){
@@ -1238,7 +1238,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             string tmpRslt;
             if (it->second.size()==0)// Empty vector means it's still doing raw data matching, only need to eval parameter expressions. Only retrieve once for each analytic function (identified by its expression str)
               for (int i=0;i<m_Function->m_params.size();i++){
-                m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, sideDatarow, sideDatatypes, tmpRslt, dts, true);
+                m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, sideDatasets, sideDatarow, sideDatatypes, tmpRslt, dts, true);
                 it->second.push_back(tmpRslt);
               }
             else // otherwise, the passed-in vector is analytic function result, need to return it to do other operation, e.g. filter
@@ -1250,7 +1250,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             return false;
           }
         }else{
-          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, sResult, dts);
+          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, sResult, dts);
           m_datatype = dts;
           if (!getresultonly && gotResult){
             m_expType = CONST;
@@ -1329,11 +1329,11 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
   }else{
     string leftRst = "", rightRst = "";
     DataTypeStruct leftDts, rightDts;
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, leftRst, leftDts, getresultonly)){
+    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, leftRst, leftDts, getresultonly)){
       trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
       return false;
     }
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatarow, sideDatatypes, rightRst, rightDts, getresultonly)){
+    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, rightRst, rightDts, getresultonly)){
       trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
       return false;
     }
@@ -1381,11 +1381,12 @@ bool ExpressionC::mergeConstNodes(string & sResult)
           map<string,string> mvarvalues;
           unordered_map< string,GroupProp > aggFuncs;
           unordered_map< string,vector<string> > anaFuncs;
+          vector< vector< unordered_map<string,string> > > sideDatasets;
           unordered_map< string, unordered_map<string,string> > sideDatarow;
           unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
           m_Function->analyzeColumns(&vfieldnames, &fieldtypes, &rawDatatype, &sideDatatypes);
           DataTypeStruct dts;
-          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,&anaFuncs,&sideDatarow,&sideDatatypes,sResult,dts);
+          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,&anaFuncs,&sideDatasets,&sideDatarow,&sideDatatypes,sResult,dts);
           if (gotResult){
             m_expStr = sResult;
             m_expType = CONST;

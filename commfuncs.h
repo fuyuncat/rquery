@@ -169,6 +169,9 @@ using namespace std;
 #define GETPART 117
 #define SUMALL 118
 #define EVAL 119
+#define RCOUNT 120
+#define RMEMBER 121
+#define RMEMBERID 122
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203

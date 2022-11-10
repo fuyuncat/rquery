@@ -2275,6 +2275,12 @@ short int encodeFunction(string str)
     return SUMALL;
   else if(sUpper.compare("EVAL")==0)
     return EVAL;
+  else if(sUpper.compare("RCOUNT")==0)
+    return RCOUNT;
+  else if(sUpper.compare("RMEMBER")==0)
+    return RMEMBER;
+  else if(sUpper.compare("RMEMBERID")==0)
+    return RMEMBERID;
   else if(sUpper.compare("ROUND")==0)
     return ROUND;
   else if(sUpper.compare("LOG")==0)

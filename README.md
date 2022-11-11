@@ -62,7 +62,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
    - --readmode | -r buffer|line : File read mode, buffer(default) or line.<br />
    - --buffsize | -b size : The buffer size when read mode is buffer, default is 16384.<br />
    - --skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0.<br />
-   - --variable | -v "name1:value1[ name2:value2..]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
+   - --variable | -v "name1:value1[;name2:value2..]|name1:initvalue1:expression1[;name2:initvalue2:expression2...]|r:expression1[:filter][;r:expression2...]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
    - --detecttyperows | -d <N> : How many matched rows will be used for detecting data types, default is 1.<br />
    - --delimiter | -i <string> : Specify the delimiter of the fields, TAB will be adapted if this option is not provided <br/>
    - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
@@ -96,7 +96,7 @@ In any expression of select, filter, group, sort, variables can be used. The var
    - @line : The line sequence number of all matched lines<br />
    - @fileline : The line sequence number of current file matched lines<br />
    - @row : The sequence number of output records<br />
-   - @filedN : The field of a parsed line, N is the sequence number of the field. It matches to the Capturing Group in the regular expression.<br />
+   - @fieldN : The field of a parsed line, N is the sequence number of the field. It matches to the Capturing Group in the regular expression.<br />
    - @R[side work id][filed name/id] : The referred side work data set queried by MEANWHILE command. "side work id" is the sequence id of the side work query in MEANWHILE command, starting from 1; "filed name/id" is the field name, alias or ID (starting from 1). Note: if R is defined in the user defined dynamic variable, the first dataset of @R will be the user defined variable values, the index of the dataset retrieved from MEANWHILE will start from 2.<br />
    - @% : Number of the fields.<br />
    - @N : The last field, it can be an expression, e.g. @(N-3) .<br />
@@ -171,6 +171,7 @@ Functions can be used in the expression. We current provide some essential norma
    - least(expr1[,expr2,...]) : Normal function. Return the smallest one of the given expressions. The expression can be a foreach function.<br />
    - appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
    - eval(expr_str) : Normal function. Eval the input string as an expression.<br />
+   - exec(expr_str) : Normal function. Run a system command and return the result.<br />
    - Count(expr) : Aggregation function. Count the number of expr.<br />
    - Uniquecount(expr) : Aggregation function. Count the number of distinct expr.<br />
    - Sum(expr) : Aggregation function. Sum the number of expr.<br />
@@ -191,9 +192,9 @@ Functions can be used in the expression. We current provide some essential norma
    - coltorow(exp1[,exp2 ... ] ) : Macro function. Make the columns to rows. Accept multiple parameter, also accept foreach(). The row number will be the maximum number of parameter of all coltorow functions. <br />
    - anycol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check any field fulfil a condition, e.g. anycol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br />
    - allcol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check all field fulfil a condition, e.g. allcol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br />
-   - root(expr) : Hierarchy function. Returns the expression of the root node.<br /> 
-   - parent(expr) : Hierarchy function. Returns the expression of the parent node.<br /> 
-   - path(expr[,connector]) : Hierarchy function. Returns an path (of the expression) from root to current node, connector is used for connecting nodes, default is '/'.<br /> 
+   - root(expr) : Hierarchical function. Returns the expression of the root node.<br /> 
+   - parent(expr) : Hierarchical function. Returns the expression of the parent node.<br /> 
+   - path(expr[,connector]) : Hierarchical function. Returns an path (of the expression) from root to current node, connector is used for connecting nodes, default is '/'.<br /> 
 # Example and scenarios
 - Query an apache or nginx access log, to get the number of hits from different clients, and the browser is Chrome or Firefox<br />
 `./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '(Chrome|Firefox)' | select host, count(1) | group host | sort count(1) desc" < access.log`

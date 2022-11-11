@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [1.03] 2022-11-11
+   New feature: new function exec(expr_str) : Normal function. Run a system command and return the result. <br/>
    # [1.03] 2022-11-10
    Bux fix: option detecttyperows does not work as expected. <br/>
    # [1.02] 2022-11-10

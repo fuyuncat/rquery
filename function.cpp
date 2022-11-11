@@ -286,6 +286,7 @@ bool FunctionC::analyzeExpStr()
     case ROOT:
     case PATH:
     case PARENT:
+    case EXEC:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -1889,6 +1890,22 @@ bool FunctionC::runEval(vector<string>* fieldvalues, map<string,string>* varvalu
   return true;
 }
 
+bool FunctionC::runExec(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "exec() function accepts only one parameter.\n");
+    return false;
+  }
+  string sCmd;
+  if (!m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, sCmd, dts, true)){
+    trace(ERROR, "Failed to get '%s' for exec().\n",m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+  sResult = exec(sCmd);
+
+  return true;
+}
+
 bool FunctionC::runRcount(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts)
 {
   if (!sideDatasets){
@@ -2334,6 +2351,9 @@ bool FunctionC::runFunction(vector<string>* fieldvalues, map<string,string>* var
       break;
     case NOW:
       getResult = runNow(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, sResult, dts);
+      break;
+    case EXEC:
+      getResult = runExec(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, sResult, dts);
       break;
     case ROOT:
     case PATH:

@@ -172,6 +172,7 @@ using namespace std;
 #define RCOUNT 120
 #define RMEMBER 121
 #define RMEMBERID 122
+#define EXEC 123
 #define RANK 201
 #define PREVIOUS 202
 #define NEXT 203
@@ -326,6 +327,9 @@ public:
 void trace(short level, const char *fmt, ...);
 void exitProgram(short int code);
 void clearGroupPropMap(unordered_map< string,GroupProp > & aggProps); // manually free the memory of GroupProp, as it's not freed in the destructor to improve performance. 
+#if defined unix || defined __unix || defined __unix__ || defined __APPLE__ || defined __MACH__ || defined __linux__ || defined linux || defined __linux || defined __FreeBSD__ || defined __ANDROID__
+string exec(const string & cmd);
+#endif
 
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(const string & str, size_t& pos, const string & quoters, const char & escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  

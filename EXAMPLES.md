@@ -626,6 +626,14 @@
    ```
    1.8
    ```
+- exec(expr_str) : Normal function. Run a system command and return the result.<br/>
+   ```
+   rq -q "s @line, exec('date')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1       Fri Nov 11 13:32:49 AEDT 2022
+   ```
 - rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
    ```
    rq -v "r:@1" -q "s @raw, rcount(1,1,@raw) " samples/dupids.txt

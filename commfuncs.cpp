@@ -19,6 +19,16 @@
 #include <sys/time.h>
 #include <math.h> 
 #include <random>
+
+#if defined unix || defined __unix || defined __unix__ || defined __APPLE__ || defined __MACH__ || defined __linux__ || defined linux || defined __linux || defined __FreeBSD__ || defined __ANDROID__
+#include <cstdio>
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <array>
+#endif
+
 //#include <cstdlib>
 //#include <chrono>
 //#include <sstream>
@@ -184,6 +194,21 @@ void TimeZone::dump()
     printf("%s:%d\n",it->first.c_str(),it->second);
 }
 
+#if defined unix || defined __unix || defined __unix__ || defined __APPLE__ || defined __MACH__ || defined __linux__ || defined linux || defined __linux || defined __FreeBSD__ || defined __ANDROID__
+string exec(const string & cmd) {
+  array<char, 128> buffer;
+  string result;
+  unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+  if (!pipe) {
+    //throw runtime_error("popen() failed!");
+    trace(ERROR, "Failed to run system command '%s'!\n", cmd.c_str());
+  }
+  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    result += buffer.data();
+  }
+  return trim_right(result,'\n');
+}
+#endif
 
 // manually free the memory of GroupProp, as it's not freed in the destructor to improve performance.
 void clearGroupPropMap(unordered_map< string,GroupProp > & aggProps)
@@ -2281,6 +2306,8 @@ short int encodeFunction(string str)
     return RMEMBER;
   else if(sUpper.compare("RMEMBERID")==0)
     return RMEMBERID;
+  else if(sUpper.compare("EXEC")==0)
+    return EXEC;
   else if(sUpper.compare("ROUND")==0)
     return ROUND;
   else if(sUpper.compare("LOG")==0)

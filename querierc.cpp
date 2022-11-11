@@ -937,14 +937,21 @@ void QuerierC::analyzeFiledTypes(vector<string> matches)
     m_rawDatatype.datatype = STRING;
   for (int i=1; i<matches.size(); i++){
     dts = DataTypeStruct();
-    if (m_detectedTypeRows>m_detectTypeMaxRowNum && m_fieldnames.size()>i-1 && m_fieldntypes.find(m_fieldnames[i-1]) != m_fieldntypes.end()) 
-      m_fieldtypes.push_back(m_fieldntypes[m_fieldnames[i-1]]);
-    else if (m_fieldntypes.find("@FIELD"+intToStr(i)) != m_fieldntypes.end())
-      m_fieldtypes.push_back(m_fieldntypes["@FIELD"+intToStr(i)]);
-    else{
+    if (m_detectedTypeRows>m_detectTypeMaxRowNum && m_fieldnames.size()>i-1 && m_fieldntypes.find(m_fieldnames[i-1]) != m_fieldntypes.end()){
+      if (m_fieldtypes.size()>i-1)
+        m_fieldtypes[i-1] = m_fieldntypes[m_fieldnames[i-1]];
+      else
+        m_fieldtypes.push_back(m_fieldntypes[m_fieldnames[i-1]]);
+    }else if (m_fieldntypes.find("@FIELD"+intToStr(i)) != m_fieldntypes.end()){
+      if (m_fieldtypes.size()>i-1)
+        m_fieldtypes[i-1] = m_fieldntypes["@FIELD"+intToStr(i)];
+      else
+        m_fieldtypes.push_back(m_fieldntypes["@FIELD"+intToStr(i)]);
+    }else{
       dts.datatype = detectDataType(matches[i], dts.extrainfo);
       dts.datatype = dts.datatype==UNKNOWN?STRING:dts.datatype;
       // trace(DEBUG2, "Detected column '%s' from '%s', data type '%s' extrainfo '%s'\n", m_fieldnames[i-1].c_str(), string(matches[i]).c_str(), decodeDatatype(dts.datatype).c_str(), dts.extrainfo.c_str());
+      // if the date type was detected previous, get the compitable data type.
       if (m_fieldtypes.size()>i-1)
         m_fieldtypes[i-1] = getCompatibleDataType(m_fieldtypes[i-1], dts);
       else
@@ -956,6 +963,8 @@ void QuerierC::analyzeFiledTypes(vector<string> matches)
     }
     trace(DEBUG, "Detected column '%s' data type '%s' extrainfo '%s'\n", m_fieldnames[i-1].c_str(), decodeDatatype(m_fieldtypes[m_fieldtypes.size()-1].datatype).c_str(),m_fieldtypes[m_fieldtypes.size()-1].extrainfo.c_str());
   }
+  if (m_fieldtypes.size()>matches.size()-1) // removed the redundant field data types in case the number of field changed.
+    m_fieldtypes.erase(m_fieldtypes.begin()+matches.size()-1, m_fieldtypes.end());
 }
 
 void QuerierC::getSideDatarow(unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow)

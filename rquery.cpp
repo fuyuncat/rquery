@@ -618,7 +618,7 @@ int main(int argc, char *argv[])
       gv.g_ouputformat = (lower_copy(string(argv[i+1])).compare("json")!=0?TEXT:JSON);
       i++;
     }else if (lower_copy(string(argv[i])).compare("-i")==0 || lower_copy(string(argv[i])).compare("--delimiter")==0){
-      if (i>=argc-1 || argv[i+1][0] == '-'){
+      if (i>=argc-1){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }

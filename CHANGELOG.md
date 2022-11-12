@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [1.1] 2022-11-12
+   Enhancement: optimized runtime methods (evalExpression, runFunction) using a runtime data struct. <br/>
    # [1.03] 2022-11-11
    New feature: new function exec(expr_str) : Normal function. Run a system command and return the result. <br/>
    Bux fix: Variable field size may cause incorrect data type detected. <br/>

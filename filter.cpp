@@ -776,52 +776,53 @@ bool FilterC::isConst() const
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
-bool FilterC::evalAnaExprs(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly)
+bool FilterC::evalAnaExprs(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, string & sResult, DataTypeStruct & dts, bool getresultonly)
 {
   if (m_type == LEAF){
     if (m_leftExpression && m_leftExpression->containAnaFunc()){
       ExpressionC tmpExp;
       tmpExp = *m_leftExpression;
-      tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, sResult, dts, false);
+      tmpExp.evalExpression(rds, sResult, dts, false);
       anaEvaledExp->push_back(tmpExp);
     }
     if (m_rightExpression && m_rightExpression->containAnaFunc()){
       ExpressionC tmpExp;
       tmpExp = *m_rightExpression;
-      tmpExp.evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, sResult, dts, false);
+      tmpExp.evalExpression(rds, sResult, dts, false);
       anaEvaledExp->push_back(tmpExp);
     }
     return true;
   }else{
-    if ((m_leftNode && m_leftNode->evalAnaExprs(fieldvalues, varvalues, aggFuncs, anaFuncs, anaEvaledExp, sideDatasets, sideDatarow, sideDatatypes, sResult, dts, getresultonly)) && (m_rightNode && m_rightNode->evalAnaExprs(fieldvalues, varvalues, aggFuncs, anaFuncs, anaEvaledExp, sideDatasets, sideDatarow, sideDatatypes, sResult, dts, getresultonly)))
+    if ((m_leftNode && m_leftNode->evalAnaExprs(rds, anaEvaledExp, sResult, dts, getresultonly)) && (m_rightNode && m_rightNode->evalAnaExprs(rds, anaEvaledExp, sResult, dts, getresultonly)))
       return true;
   }
   return false;
 }
 
-bool FilterC::compareIn(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes)
+bool FilterC::compareIn(RuntimeDataStruct & rds)
 {
   string leftRst, sResult;
   DataTypeStruct dts1, dts2;
   unordered_map< string, unordered_map<string,string> > sideDatarow;
-  bool bDoAggFilter = (aggFuncs && aggFuncs->size()>0);
-  // dont do filte in two scenarios: 1: aggFuncs prvoided, but no aggregation function involved in the expression (except CONST); 2: no aggFuncs provided, but aggregation function involved in the expression;
+  bool bDoAggFilter = (rds.aggFuncs && rds.aggFuncs->size()>0);
+  // dont do filte in two scenarios: 1: rds.aggFuncs prvoided, but no aggregation function involved in the expression (except CONST); 2: no rds.aggFuncs provided, but aggregation function involved in the expression;
   if ((!bDoAggFilter && m_leftExpression && m_leftExpression->containGroupFunc()) || (bDoAggFilter && !m_leftExpression->containGroupFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)))
     return true;
-  if (!m_leftExpression || !m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, &sideDatarow, sideDatatypes, leftRst, dts1, true)){
+  if (!m_leftExpression || !m_leftExpression->evalExpression(rds, leftRst, dts1, true)){
     trace(ERROR, "Failed to get the value to be compared in IN!\n"); 
     return false;
   }
   if (m_rightExpression && m_rightExpression->containRefVar()){
     int sidWorkID = m_rightExpression->getSideWorkID()-1;
-    if (sidWorkID>=sideDatasets->size()){
+    if (sidWorkID>=rds.sideDatasets->size()){
       //trace(ERROR, "%d is an invalide side work ID!\n", sidWorkID);
       return false;
     }
-    for (int i=0;i<(*sideDatasets)[sidWorkID].size();i++){
+    rds.sideDatarow = &sideDatarow;
+    for (int i=0;i<(*rds.sideDatasets)[sidWorkID].size();i++){
       sideDatarow.clear();
-      sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*sideDatasets)[sidWorkID][i]));
-      if (!m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, &sideDatarow, sideDatatypes, sResult, dts2, true)){
+      sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*rds.sideDatasets)[sidWorkID][i]));
+      if (!m_rightExpression->evalExpression(rds, sResult, dts2, true)){
         trace(ERROR, "Failed to get result of IN element %s!\n", m_rightExpression->getEntireExpstr().c_str());
         return false;
       }
@@ -839,7 +840,7 @@ bool FilterC::compareIn(vector<string>* fieldvalues, map<string,string>* varvalu
     for (int i=0;i<m_inExpressions.size();i++){
       if ((!bDoAggFilter && m_inExpressions[i].containGroupFunc()) || (bDoAggFilter && !m_inExpressions[i].containGroupFunc() && !(m_inExpressions[i].m_type==LEAF&&m_inExpressions[i].m_expType==CONST)))
         return false;
-      if (!m_inExpressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, &sideDatarow, sideDatatypes, sResult, dts2, true)){
+      if (!m_inExpressions[i].evalExpression(rds, sResult, dts2, true)){
         trace(ERROR, "Failed to get result of IN element %s!\n", m_inExpressions[i].getEntireExpstr().c_str());
         return false;
       }
@@ -851,27 +852,27 @@ bool FilterC::compareIn(vector<string>* fieldvalues, map<string,string>* varvalu
   return false;
 }
 
-bool FilterC::compareExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, unordered_map< int,int > & sideMatchedRowIDs){
+bool FilterC::compareExpression(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs){
   sideMatchedRowIDs.clear();
-  return compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
+  return compareExpressionI(rds, sideMatchedRowIDs);
 }
 
-bool FilterC::joinMatch(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & sideDatarow, const short int & sidWorkID)
+bool FilterC::joinMatch(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & sideDatarow, const short int & sidWorkID)
 {
-  if (sidWorkID<sideDatasets->size()){
-    for (int i=0;i<(*sideDatasets)[sidWorkID].size();i++){
+  if (sidWorkID<rds.sideDatasets->size()){
+    for (int i=0;i<(*rds.sideDatasets)[sidWorkID].size();i++){
       // construct current side work
       if (i==0)
-        sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*sideDatasets)[sidWorkID][i]));
+        sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*rds.sideDatasets)[sidWorkID][i]));
       else
-        sideDatarow[intToStr(sidWorkID+1)] = (*sideDatasets)[sidWorkID][i];
-      if (sidWorkID<sideDatasets->size()-1){ // construct other side work 
-        if (joinMatch(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs, sideDatarow, sidWorkID+1))
+        sideDatarow[intToStr(sidWorkID+1)] = (*rds.sideDatasets)[sidWorkID][i];
+      if (sidWorkID<rds.sideDatasets->size()-1){ // construct other side work 
+        if (joinMatch(rds, sideMatchedRowIDs, sideDatarow, sidWorkID+1))
           return true;
       }else{
         string leftRst = "", rightRst = "";
         DataTypeStruct dts1, dts2;
-        if (m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, &sideDatarow, sideDatatypes, leftRst, dts1, true) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, &sideDatarow, sideDatatypes, rightRst, dts2, true)){
+        if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
           if (anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1){
             sideMatchedRowIDs.insert(pair< int,int >(sidWorkID,i));
             return true;
@@ -883,28 +884,29 @@ bool FilterC::joinMatch(vector<string>* fieldvalues, map<string,string>* varvalu
   return false;
 }
 
-bool FilterC::compareTwoSideExp(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, unordered_map< int,int > & sideMatchedRowIDs)
+bool FilterC::compareTwoSideExp(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs)
 {
   if (m_leftExpression && m_rightExpression){
     string leftRst = "", rightRst = "";
     DataTypeStruct dts1, dts2;
     unordered_map< string, unordered_map<string,string> > sideDatarow;
+    rds.sideDatarow = &sideDatarow;
     if (m_leftExpression->containRefVar() || m_rightExpression->containRefVar()){ // do join checking
-      if (sideMatchedRowIDs.size() == sideDatasets->size()) { // already matched by other filter
-        for (int i=0; i<sideDatasets->size(); i++){
-          sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i), (*sideDatasets)[i][sideMatchedRowIDs[i]]));
+      if (sideMatchedRowIDs.size() == rds.sideDatasets->size()) { // already matched by other filter
+        for (int i=0; i<rds.sideDatasets->size(); i++){
+          sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i), (*rds.sideDatasets)[i][sideMatchedRowIDs[i]]));
         }
-        if (m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, &sideDatarow, sideDatatypes, leftRst, dts1, true) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, &sideDatarow, sideDatatypes, rightRst, dts2, true)){
+        if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
           return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
         }else
           return false;
       }else{ // nested loop join side work datasets
         unordered_map< string, unordered_map<string,string> > sideDatarow;
-        return joinMatch(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs, sideDatarow, 0);
+        return joinMatch(rds, sideMatchedRowIDs, sideDatarow, 0);
       }
       return false;
     }else{
-      if (m_leftExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, &sideDatarow, sideDatatypes, leftRst, dts1, true) && m_rightExpression->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, &sideDatarow, sideDatatypes, rightRst, dts2, true)){
+      if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
         return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
       }else
         return false;
@@ -914,15 +916,15 @@ bool FilterC::compareTwoSideExp(vector<string>* fieldvalues, map<string,string>*
 }
 
 // calculate an expression prediction. no predication or comparasion failed means alway false
-bool FilterC::compareExpressionI(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, unordered_map< int,int > & sideMatchedRowIDs){
+bool FilterC::compareExpressionI(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs){
   bool result=false;
   if (m_type == BRANCH){
     if (!m_leftNode || !m_rightNode)
       return false;
     if (m_junction == AND)
-      return m_leftNode->compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs) && m_rightNode->compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
+      return m_leftNode->compareExpressionI(rds, sideMatchedRowIDs) && m_rightNode->compareExpressionI(rds, sideMatchedRowIDs);
     else
-      return m_leftNode->compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs) || m_rightNode->compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
+      return m_leftNode->compareExpressionI(rds, sideMatchedRowIDs) || m_rightNode->compareExpressionI(rds, sideMatchedRowIDs);
   }else if(m_type == LEAF){
     if (m_leftExpression && m_leftExpression->m_type == LEAF && m_leftExpression->m_expType == FUNCTION && m_leftExpression->m_Function && (m_leftExpression->m_Function->m_funcID==ANYCOL || m_leftExpression->m_Function->m_funcID==ALLCOL)) { // left anycol/allcol
       if (m_rightExpression && m_rightExpression->m_type == LEAF && m_rightExpression->m_expType == FUNCTION && m_rightExpression->m_Function && (m_rightExpression->m_Function->m_funcID==ANYCOL || m_rightExpression->m_Function->m_funcID==ALLCOL)) {
@@ -930,14 +932,14 @@ bool FilterC::compareExpressionI(vector<string>* fieldvalues, map<string,string>
         return false;
       }
       bool bResult = (m_leftExpression->m_Function->m_funcID==ALLCOL);
-      vector<ExpressionC> vExpandedExpr = m_leftExpression->m_Function->expandForeach(fieldvalues->size());
+      vector<ExpressionC> vExpandedExpr = m_leftExpression->m_Function->expandForeach(rds.fieldvalues->size());
       FilterC tmpFilter;
       copyTo(&tmpFilter);
       // compare each field using a temporary filter
       for (int i=0; i<vExpandedExpr.size(); i++){
         vExpandedExpr[i].copyTo(tmpFilter.m_leftExpression);
         tmpFilter.m_leftExpression->analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, m_sideDatatypes);
-        bool bThis = tmpFilter.compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
+        bool bThis = tmpFilter.compareExpressionI(rds, sideMatchedRowIDs);
         bResult = m_leftExpression->m_Function->m_funcID==ALLCOL?(bResult&&bThis):(bResult||bThis);
       }
       return bResult;
@@ -948,28 +950,28 @@ bool FilterC::compareExpressionI(vector<string>* fieldvalues, map<string,string>
         return false;
       }
       bool bResult = (m_rightExpression->m_Function->m_funcID==ALLCOL);
-      vector<ExpressionC> vExpandedExpr = m_rightExpression->m_Function->expandForeach(fieldvalues->size());
+      vector<ExpressionC> vExpandedExpr = m_rightExpression->m_Function->expandForeach(rds.fieldvalues->size());
       FilterC tmpFilter;
       copyTo(&tmpFilter);
       // compare each field
       for (int i=0; i<vExpandedExpr.size(); i++){
         vExpandedExpr[i].copyTo(tmpFilter.m_rightExpression);
-        bool bThis = tmpFilter.compareExpressionI(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
+        bool bThis = tmpFilter.compareExpressionI(rds, sideMatchedRowIDs);
         bResult = m_rightExpression->m_Function->m_funcID==ALLCOL?(bResult&&bThis):(bResult||bThis);
       }
       return bResult;
     }
     if (m_comparator == IN || m_comparator == NOIN){
-      return compareIn(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes)?(m_comparator == IN?true:false):(m_comparator == IN?false:true);
+      return compareIn(rds)?(m_comparator == IN?true:false):(m_comparator == IN?false:true);
     }
     else{
-      if (aggFuncs && aggFuncs->size()==0 && anaFuncs && anaFuncs->size()==0){ // in the matching the raw data process, dont compare aggregation function
+      if (rds.aggFuncs && rds.aggFuncs->size()==0 && rds.anaFuncs && rds.anaFuncs->size()==0){ // in the matching the raw data process, dont compare aggregation function
         if (m_leftExpression && m_rightExpression){
           // do not filter if aggregation function involved
           if (m_leftExpression->containGroupFunc() || m_rightExpression->containGroupFunc() || m_leftExpression->containAnaFunc() || m_rightExpression->containAnaFunc())
             return true;
           else{ // no aggregation function in either left or right expression. do filter comparasion
-            return compareTwoSideExp(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
+            return compareTwoSideExp(rds, sideMatchedRowIDs);
           }
         }else
           return false;
@@ -979,11 +981,11 @@ bool FilterC::compareExpressionI(vector<string>* fieldvalues, map<string,string>
           if ((!m_leftExpression->containGroupFunc() && !m_leftExpression->containAnaFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)) || (m_rightExpression->containGroupFunc() && m_rightExpression->containAnaFunc() && !(m_rightExpression->m_type==LEAF&&m_rightExpression->m_expType==CONST)))
             return true;
           else{ // aggregation/analytic function in either left or right expression. do filter comparasion
-            if ((m_leftExpression->containGroupFunc() || m_rightExpression->containGroupFunc()) && aggFuncs->size()==0) // return true if aggFuncs is empty when comparing aggregation function
+            if ((m_leftExpression->containGroupFunc() || m_rightExpression->containGroupFunc()) && rds.aggFuncs->size()==0) // return true if rds.aggFuncs is empty when comparing aggregation function
               return true;
-            if ((m_leftExpression->containAnaFunc() || m_rightExpression->containAnaFunc()) && anaFuncs->size()==0) // return true if anaFuncs is empty when comparing analytic function
+            if ((m_leftExpression->containAnaFunc() || m_rightExpression->containAnaFunc()) && rds.anaFuncs->size()==0) // return true if anaFuncs is empty when comparing analytic function
               return true;
-            return compareTwoSideExp(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatatypes, sideMatchedRowIDs);
+            return compareTwoSideExp(rds, sideMatchedRowIDs);
           }
         }else
           return false;

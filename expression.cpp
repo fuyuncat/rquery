@@ -1195,9 +1195,9 @@ bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
-bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector< vector< unordered_map<string,string> > >* sideDatasets, unordered_map< string, unordered_map<string,string> >* sideDatarow, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes, string & sResult, DataTypeStruct & dts, bool getresultonly)
+bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts, bool getresultonly)
 {
-  if (!fieldvalues || !varvalues || !aggFuncs || !anaFuncs){
+  if (!rds.fieldvalues || !rds.fieldvalues || !rds.aggFuncs || !rds.anaFuncs){
     trace(ERROR, "Insufficient metadata!\n");
     return false;
   }
@@ -1215,13 +1215,13 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
       //trace(DEBUG2, "Expression '%s' is a fucntion.. \n",m_expStr.c_str());
       if (m_Function){
         if (m_Function->isAggFunc()){
-          // looks like this part is duplicated with querierc.evalAggExpNode(), but dont change aggFuncs values, as the same aggregation function may present multiple times in the selections/sorts clauses.
-          unordered_map< string,GroupProp >::iterator it = aggFuncs->find(m_Function->m_expStr);
-          if (it != aggFuncs->end()){
+          // looks like this part is duplicated with querierc.evalAggExpNode(), but dont change rds.aggFuncs values, as the same aggregation function may present multiple times in the selections/sorts clauses.
+          unordered_map< string,GroupProp >::iterator it = rds.aggFuncs->find(m_Function->m_expStr);
+          if (it != rds.aggFuncs->end()){
             if (m_Function->m_params.size()>0){
               // we dont bother with the paramter, as it has already been evaled in querierc.evalAggExpNode()
               // calculate the parameter here will cause duplicated calculation if the same aggregation function involved multiple times in the selection/sort
-              //m_Function->m_params[0].evalExpression(fieldvalues, varvalues, aggFuncs, sideDatasets, sideDatarow, sideDatatypes, sResult, extrainfo);
+              //m_Function->m_params[0].evalExpression(rds, sResult, extrainfo);
               it->second.funcID = m_Function->m_funcID;
               dts = m_Function->m_datatype;
               if (calAggFunc(it->second, m_Function, sResult)){
@@ -1237,25 +1237,28 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
             return false;
           }
         }else if (m_Function->isAnalytic()){
-          unordered_map< string,vector<string> >::iterator it = anaFuncs->find(m_Function->m_expStr);
-          if (it != anaFuncs->end()){
+          unordered_map< string,vector<string> >::iterator it = rds.anaFuncs->find(m_Function->m_expStr);
+          if (it != rds.anaFuncs->end()){
+            unordered_map< string,vector<string> > * oldAnaFuncs = rds.anaFuncs;
             unordered_map< string,vector<string> > dummyAnaFuncs;
+            rds.anaFuncs = &dummyAnaFuncs;
             string tmpRslt;
             if (it->second.size()==0)// Empty vector means it's still doing raw data matching, only need to eval parameter expressions. Only retrieve once for each analytic function (identified by its expression str)
               for (int i=0;i<m_Function->m_params.size();i++){
-                m_Function->m_params[i].evalExpression(fieldvalues, varvalues, aggFuncs, &dummyAnaFuncs, sideDatasets, sideDatarow, sideDatatypes, tmpRslt, dts, true);
+                m_Function->m_params[i].evalExpression(rds, tmpRslt, dts, true);
                 it->second.push_back(tmpRslt);
               }
             else // otherwise, the passed-in vector is analytic function result, need to return it to do other operation, e.g. filter
               sResult = it->second[0];
             dts = m_Function->m_datatype;
+            rds.anaFuncs = oldAnaFuncs;
             return true;
           }else{
             trace(ERROR, "Failed to find analytic function '%s' dataset when evaling '%s'!\n", m_Function->m_expStr.c_str(), getTopParent()->getEntireExpstr().c_str());
             return false;
           }
         }else{
-          bool gotResult = m_Function->runFunction(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, sResult, dts);
+          bool gotResult = m_Function->runFunction(rds, sResult, dts);
           m_datatype = dts;
           if (!getresultonly && gotResult){
             m_expType = CONST;
@@ -1265,8 +1268,8 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
         }
       }
     }else if (m_expType == COLUMN){
-      if (m_colId >= 0 && m_colId<fieldvalues->size()){
-        sResult = (*fieldvalues)[m_colId];
+      if (m_colId >= 0 && m_colId<rds.fieldvalues->size()){
+        sResult = (*rds.fieldvalues)[m_colId];
         dts = (*m_fieldtypes)[m_colId];
         m_datatype = dts;
         if (!getresultonly){
@@ -1280,7 +1283,7 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
           if ((*m_fieldnames)[i].compare(m_expStr) == 0)
             break;
         if (i<m_fieldnames->size()){
-          sResult = (*fieldvalues)[i];
+          sResult = (*rds.fieldvalues)[i];
           dts = (*m_fieldtypes)[i];
           m_datatype = dts;
           if (!getresultonly){
@@ -1298,10 +1301,10 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
       //  //trace(DEBUG, "Skip @row & @rowsorted ... \n");
       //  return true;
       //}
-      if (varvalues->find(m_expStr) != varvalues->end()){
-        //trace(DEBUG, "Assigning '%s' to '%s' ... \n", (*varvalues)[m_expStr].c_str(), m_expStr.c_str());
-        //dumpMap(*varvalues);
-        sResult = (*varvalues)[m_expStr];
+      if (rds.varvalues->find(m_expStr) != rds.varvalues->end()){
+        //trace(DEBUG, "Assigning '%s' to '%s' ... \n", (*rds.varvalues)[m_expStr].c_str(), m_expStr.c_str());
+        //dumpMap(*rds.varvalues);
+        sResult = (*rds.varvalues)[m_expStr];
         dts = m_datatype;
         if (!getresultonly){
           m_expType = CONST;
@@ -1315,8 +1318,8 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
           trace(ERROR, "(2)Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
           return false;
         }
-        sResult = (*sideDatarow)[s1][s2];
-        dts = (*sideDatatypes)[s1][s2];
+        sResult = (*rds.sideDatarow)[s1][s2];
+        dts = (*rds.sideDatatypes)[s1][s2];
         m_datatype = dts;
         if (!getresultonly){
           m_expType = CONST;
@@ -1334,11 +1337,11 @@ bool ExpressionC::evalExpression(vector<string>* fieldvalues, map<string,string>
   }else{
     string leftRst = "", rightRst = "";
     DataTypeStruct leftDts, rightDts;
-    if (!m_leftNode || !m_leftNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, leftRst, leftDts, getresultonly)){
+    if (!m_leftNode || !m_leftNode->evalExpression(rds, leftRst, leftDts, getresultonly)){
       trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
       return false;
     }
-    if (!m_rightNode || !m_rightNode->evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, sideDatasets, sideDatarow, sideDatatypes, rightRst, rightDts, getresultonly)){
+    if (!m_rightNode || !m_rightNode->evalExpression(rds, rightRst, rightDts, getresultonly)){
       trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
       return false;
     }
@@ -1391,7 +1394,15 @@ bool ExpressionC::mergeConstNodes(string & sResult)
           unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
           m_Function->analyzeColumns(&vfieldnames, &fieldtypes, &rawDatatype, &sideDatatypes);
           DataTypeStruct dts;
-          gotResult = m_Function->runFunction(&vfieldvalues,&mvarvalues,&aggFuncs,&anaFuncs,&sideDatasets,&sideDatarow,&sideDatatypes,sResult,dts);
+          RuntimeDataStruct rds;
+          rds.fieldvalues = &vfieldvalues;
+          rds.varvalues = &mvarvalues;
+          rds.aggFuncs = &aggFuncs;
+          rds.anaFuncs = &anaFuncs;
+          rds.sideDatasets = &sideDatasets;
+          rds.sideDatarow = &sideDatarow;
+          rds.sideDatatypes = &sideDatatypes;
+          gotResult = m_Function->runFunction(rds,sResult,dts);
           if (gotResult){
             m_expStr = sResult;
             m_expType = CONST;

@@ -1688,3 +1688,18 @@
    11
    21
    ```
+-- Find out the top Swap usage processes <br/>
+   ```
+   # rq -v "pid:1:trim(getpart(@file,'/',2))" -q "s @pid, @2, when(isnull(@pid), '', exec('ps -p '+@pid+' -o args | grep -v COMMAND')) | f trim(@1)='VmSwap:' and @pid reglike '\d+' " /proc/*/status -m error | sort -k 2nr
+   1286    9676    /usr/lib/polkit-1/polkitd --no-debug
+   13231   5872    php-fpm: master process (/etc/php-fpm.conf)
+   13236   4516    php-fpm: pool www
+   1184    4476    php-fpm: pool www
+   29363   4288    /usr/bin/python3 -c from pyovpn.log.logworker import start ; start()
+   13243   4280    php-fpm: pool www
+   13237   4272    php-fpm: pool www
+   29465   4268    php-fpm: pool www
+   13235   4252    php-fpm: pool www
+   13238   4176    php-fpm: pool www
+   ...
+   ```   

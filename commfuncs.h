@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v1.03"
+#define VERSION "v1.1"
 
 #define UNKNOWN 0
 
@@ -309,6 +309,17 @@ public:
   ~GroupProp();
   GroupProp& operator=(const GroupProp& other);
   void clear();
+};
+
+// runtime data struct. The memory of the pointers pointing to should never be freed from this struct.
+struct RuntimeDataStruct{
+  vector<string>* fieldvalues = NULL;
+  map<string,string>* varvalues = NULL;
+  unordered_map< string,GroupProp >* aggFuncs = NULL;
+  unordered_map< string,vector<string> >* anaFuncs = NULL;
+  vector< vector< unordered_map<string,string> > >* sideDatasets = NULL;
+  unordered_map< string, unordered_map<string,string> >* sideDatarow = NULL;
+  unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes = NULL;
 };
 
 extern GlobalVars gv;

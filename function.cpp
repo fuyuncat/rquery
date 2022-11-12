@@ -287,6 +287,8 @@ bool FunctionC::analyzeExpStr()
     case PATH:
     case PARENT:
     case EXEC:
+    case DETECTDT:
+    case REGGET:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -318,6 +320,12 @@ bool FunctionC::analyzeExpStr()
     case APPENDFILE:
     case RCOUNT:
     case RMEMBERID:
+    case ISLONG:
+    case ISDOUBLE:
+    case ISDATE:
+    case ISSTRING:
+    case COUNTPART:
+    case REGCOUNT:
       m_datatype.datatype = LONG;
       break;
     case ROUND:
@@ -701,6 +709,51 @@ bool FunctionC::runRegmatch(RuntimeDataStruct & rds, string & sResult, DataTypeS
   }
 }
 
+bool FunctionC::runRegcount(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "regcount(str, regex_pattern) function accepts only two parameters.\n");
+    return false;
+  }
+  string str, sPattern; 
+  if (m_params[0].evalExpression(rds, str, dts, true) && m_params[1].evalExpression(rds, sPattern, dts, true)){
+    vector <string> results = getAllTokens(str, sPattern);
+    sResult = intToStr(results.size());
+    dts.datatype = LONG;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run regcount(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runRegget(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 3){
+    trace(ERROR, "regget(str, regex_pattern, idxnum) function accepts only three parameters.\n");
+    return false;
+  }
+  string str, sPattern, sNum; 
+  if (m_params[0].evalExpression(rds, str, dts, true) && m_params[1].evalExpression(rds, sPattern, dts, true) && m_params[2].evalExpression(rds, sNum, dts, true) && isInt(sNum)){
+    vector <string> results = getAllTokens(str, sPattern);
+    int iNum = atoi(sNum.c_str());
+    if (iNum>0 && iNum<=results.size()){
+      sResult = results[iNum-1];
+    }else if (iNum<0 && abs(iNum)<=results.size()){
+      sResult = results[iNum+results.size()];
+    }else{
+      sResult = "";
+      trace(ERROR, "%d is out of range of matched tokens in regget(%s, %s, %s).\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
+    }
+    
+    dts.datatype = STRING;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run regget(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
 bool FunctionC::runCountword(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 1 && m_params.size() != 2){
@@ -734,7 +787,7 @@ bool FunctionC::runGetword(RuntimeDataStruct & rds, string & sResult, DataTypeSt
   string sRaw, sPos, sQuoters=""; 
   if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sPos, dts, true) && isInt(sPos)){
     int iPos = atoi(sPos.c_str());
-    if (iPos<=0){
+    if (iPos==0){
       trace(ERROR, "%s cannot be zero a negative number in getword()!\n", sPos.c_str(), m_params[0].getEntireExpstr().c_str());
       return false;
     }
@@ -752,6 +805,9 @@ bool FunctionC::runGetword(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     }
     if (iPos>0 && iPos<=vWords.size()){
       sResult = vWords[iPos-1];
+      return true;
+    }else if (iPos<0 && abs(iPos)<=vWords.size()){
+      sResult = vWords[iPos+vWords.size()];
       return true;
     }else{
       trace(ERROR, "%s is out of range of the word list in '%s'!\n", m_params[1].getEntireExpstr().c_str(), m_params[0].getEntireExpstr().c_str());
@@ -772,7 +828,7 @@ bool FunctionC::runGetpart(RuntimeDataStruct & rds, string & sResult, DataTypeSt
   string sRaw, sPos, sDelm; 
   if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sDelm, dts, true) && m_params[2].evalExpression(rds, sPos, dts, true) && isInt(sPos)){
     int iPos = atoi(sPos.c_str());
-    if (iPos<=0){
+    if (iPos==0){
       trace(ERROR, "%s cannot be zero a negative number in getpart()!\n", sPos.c_str(), m_params[0].getEntireExpstr().c_str());
       return false;
     }
@@ -784,11 +840,35 @@ bool FunctionC::runGetpart(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     if (iPos>0 && iPos<=vWords.size()){
       sResult = vWords[iPos-1];
       return true;
+    }else if (iPos<0 && abs(iPos)<=vWords.size()){
+      sResult = vWords[iPos+vWords.size()];
+      return true;
     }else{
       sResult = "";
       trace(WARNING, "%s is out of range of the part list in '%s'!\n", m_params[2].getEntireExpstr().c_str(), m_params[0].getEntireExpstr().c_str());
       return false;
     }
+  }else{
+    trace(ERROR, "(2)Failed to run getpart(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runCountpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 2){
+    trace(ERROR, "countpart(str,delimiter) function accepts only two parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sDelm; 
+  if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sDelm, dts, true)){
+    vector<string> vWords = split(sRaw,sDelm,"",'\0',{},true,true);
+    if (vWords.size() == 0){
+      trace(ERROR, "'%s' cannot be splited by '%s' in getpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+      return false;
+    }
+    sResult = intToStr(vWords.size());
+    return true;
   }else{
     trace(ERROR, "(2)Failed to run getpart(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
     return false;
@@ -1094,6 +1174,99 @@ bool FunctionC::runDatatype(RuntimeDataStruct & rds, string & sResult, DataTypeS
     return true;
   }else{
     trace(ERROR, "Failed to run datatype(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runDetectdt(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "detectdt() function accepts only one parameter.\n");
+    return false;
+  }
+  bool gotResult = m_params[0].evalExpression(rds, sResult, dts, true);
+  if (gotResult){
+    string extrainfo;
+    short int iType = detectDataType(sResult, extrainfo);
+    sResult = decodeDatatype(iType==UNKNOWN?STRING:iType);
+    dts.datatype = STRING;
+    return true;
+  }else{
+    trace(ERROR, "Failed to run detectdt(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIslong(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "islong() function accepts only one parameter.\n");
+    return false;
+  }
+  bool gotResult = m_params[0].evalExpression(rds, sResult, dts, true);
+  if (gotResult){
+    sResult = intToStr(isLong(sResult));
+    dts.datatype = LONG;
+    return true;
+  }else{
+    sResult = "0";
+    trace(ERROR, "Failed to run islong(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsdouble(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isdouble() function accepts only one parameter.\n");
+    return false;
+  }
+  bool gotResult = m_params[0].evalExpression(rds, sResult, dts, true);
+  if (gotResult){
+    sResult = intToStr(isDouble(sResult));
+    dts.datatype = LONG;
+    return true;
+  }else{
+    sResult = "0";
+    trace(ERROR, "Failed to run isdouble(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsdate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isdate() function accepts only one parameter.\n");
+    return false;
+  }
+  bool gotResult = m_params[0].evalExpression(rds, sResult, dts, true);
+  if (gotResult){
+    string extrainfo = "";
+    int iOffSet;
+    sResult = intToStr(isDate(sResult, iOffSet, extrainfo));
+    dts.datatype = LONG;
+    return true;
+  }else{
+    sResult = "0";
+    trace(ERROR, "Failed to run isdate(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsstring(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isstring() function accepts only one parameter.\n");
+    return false;
+  }
+  bool gotResult = m_params[0].evalExpression(rds, sResult, dts, true);
+  if (gotResult){
+    sResult = "1";
+    dts.datatype = LONG;
+    return true;
+  }else{
+    sResult = "0";
+    trace(ERROR, "Failed to run isstring(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1986,17 +2159,27 @@ bool FunctionC::runRmember(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     trace(ERROR, "%d is out of range of side work data set (%d) for rmember()!\n",iS1, rds.sideDatasets->size());
     return false;
   }
-  int nid = atoi(mid.c_str())-1;
-  if (nid < 0 || nid >= (*rds.sideDatasets)[iS1].size()){
+  int nid = atoi(mid.c_str());
+  if (nid > 0 || nid <= (*rds.sideDatasets)[iS1].size()){
+    if ((*rds.sideDatasets)[iS1][nid-1].find(s2)!=(*rds.sideDatasets)[iS1][nid-1].end()){
+      sResult = (*rds.sideDatasets)[iS1][nid-1][s2];
+      return true;
+    }else{
+      sResult = ""; // return empty if not found.
+      return true;
+    }
+  }else if (nid < 0 || abs(nid) <= (*rds.sideDatasets)[iS1].size()){
+    if ((*rds.sideDatasets)[iS1][nid+(*rds.sideDatasets)[iS1].size()].find(s2)!=(*rds.sideDatasets)[iS1][nid+(*rds.sideDatasets)[iS1].size()].end()){
+      sResult = (*rds.sideDatasets)[iS1][nid+(*rds.sideDatasets)[iS1].size()][s2];
+      return true;
+    }else{
+      sResult = ""; // return empty if not found.
+      return true;
+    }
+  }else{
     trace(ERROR, "%d is out of range of side work data result set (%d) for rmember()!\n", nid, (*rds.sideDatasets)[iS1].size());
     return false;
   }
-  if ((*rds.sideDatasets)[iS1][nid].find(s2)!=(*rds.sideDatasets)[iS1][nid].end()){
-    sResult = (*rds.sideDatasets)[iS1][nid][s2];
-    return true;
-  }
-  sResult = ""; // return empty if not found.
-  return true;
 }
 
 bool FunctionC::runRmemberid(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
@@ -2354,6 +2537,30 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case EXEC:
       getResult = runExec(rds, sResult, dts);
+      break;
+    case DETECTDT:
+      getResult = runDetectdt(rds, sResult, dts);
+      break;
+    case ISLONG:
+      getResult = runIslong(rds, sResult, dts);
+      break;
+    case ISDOUBLE:
+      getResult = runIsdouble(rds, sResult, dts);
+      break;
+    case ISDATE:
+      getResult = runIsdate(rds, sResult, dts);
+      break;
+    case ISSTRING:
+      getResult = runIsstring(rds, sResult, dts);
+      break;
+    case COUNTPART:
+      getResult = runCountpart(rds, sResult, dts);
+      break;
+    case REGCOUNT:
+      getResult = runRegcount(rds, sResult, dts);
+      break;
+    case REGGET:
+      getResult = runRegget(rds, sResult, dts);
       break;
     case ROOT:
     case PATH:

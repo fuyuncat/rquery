@@ -1370,7 +1370,7 @@ string stripTimeZone(string str, int & iOffSet, string & sTimeZone)
   int iTZ = 0;
   while ((sRaw[iTZ]!='+'&&sRaw[iTZ]!='-') && iTZ<sRaw.length()){
     iTZ++;
-    if (sRaw[iTZ]=='+'||sRaw[iTZ]=='-'){
+    if (iTZ>0 && sRaw[iTZ-1]==' ' && (sRaw[iTZ]=='+'||sRaw[iTZ]=='-')){
       int opos = iTZ+1;
       while (opos<sRaw.length()&&sRaw[opos]>='0'&&sRaw[opos]<='9')
         opos++;
@@ -1571,9 +1571,11 @@ bool isDate(const string& str, int & iOffSet, string& fmt)
       return true;
     }else{
       for (std::set<string>::iterator it = alltimefmt.begin(); it != alltimefmt.end(); ++it) {
-        if (str.length()<=10 && strToDate(str, tm, iOffSet, (*it))){
-          fmt = (*it);
-          return true;
+        if (str.length()<=10){
+          if (strToDate(str, tm, iOffSet, (*it))){
+            fmt = (*it);
+            return true;
+          }
         }else{ 
           for (std::set<string>::iterator ij = alljunction.begin(); ij != alljunction.end(); ++ij) {
             for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
@@ -2318,6 +2320,22 @@ short int encodeFunction(string str)
     return TRUNCDATE;
   else if(sUpper.compare("NOW")==0)
     return NOW;
+  else if(sUpper.compare("DETECTDT")==0)
+    return DETECTDT;
+  else if(sUpper.compare("ISLONG")==0)
+    return ISLONG;
+  else if(sUpper.compare("ISDOUBLE")==0)
+    return ISDOUBLE;
+  else if(sUpper.compare("ISDATE")==0)
+    return ISDATE;
+  else if(sUpper.compare("ISSTRING")==0)
+    return ISSTRING;
+  else if(sUpper.compare("COUNTPART")==0)
+    return COUNTPART;
+  else if(sUpper.compare("REGCOUNT")==0)
+    return REGCOUNT;
+  else if(sUpper.compare("REGGET")==0)
+    return REGGET;
   else if(sUpper.compare("SUM")==0)
     return SUM;
   else if(sUpper.compare("COUNT")==0)

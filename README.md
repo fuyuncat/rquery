@@ -117,11 +117,14 @@ Functions can be used in the expression. We current provide some essential norma
    - replace(str,replace1,new1[,replace2,new2...]) : Normal function. Replace all replace strings in a string with new strings.<br />
    - regreplace(str,pattern,sub) : Normal function. Replace all regular pattern in a string with sub (capturing group supported).<br />
    - regmatch(str,pattern,sub) : Normal function. Return an expression including the capturing groups matched a regular pattern. Use {N} to stand for the matched groups<br />
+   - regcount(str,pattern) : Normal function. Get the number of regular pattern matchs in a string.<br />
+   - regget(str,pattern,idxnum) : Normal function. Get the regular pattern matched string with specific sequence number in a string. if idxnum is a negtive number, it will start searching from the end of the string.<br />
    - comparestr(str1,str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - nocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - countword(str,[ingnore_quoters]) : Normal function. Get the number of word in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br />
-   - getword(str,wordnum,[ingnore_quoters]) : Normal function. Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br />
-   - getword(str,delimiter,part_index) : Normal function. Get a part of a string splitted by delimiter. <br />
+   - getword(str,wordnum,[ingnore_quoters]) : Normal function. Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word. if wordnum is a negtive number, it will start searching from the end of the string.<br />
+   - getpart(str,delimiter,part_index) : Normal function. Get a part of a string splitted by delimiter. if part_index is a negtive number, it will start searching from the end of the string.<br />
+   - countpart(str,delimiter) : Normal function. Get the number parts in a string splitted by delimiter. if part_index is a negtive number, it will start searching from the end of the string.<br />
    - countstr(str,substr) : Normal function. count occurences of substr in str.<br />
    - trimleft(str[,char][,repeat(1|0)]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br />
    - trimright(str[,char][,repeat(1|0)]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
@@ -131,11 +134,16 @@ Functions can be used in the expression. We current provide some essential norma
    - calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br/>
    - sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
    - rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
-   - rmember(sideid,fieldid,seqnum) : Normal function. Return the member value of the specified side work, field id and sequence number. sideid is the id the side work, fieldid is id the field in the side work, seqnum is the member sequence number. <br/>
+   - rmember(sideid,fieldid,seqnum) : Normal function. Return the member value of the specified side work, field id and sequence number. sideid is the id the side work, fieldid is id the field in the side work, seqnum is the member sequence number. if seqnum is a negtive number, it will start searching from the end of the array.<br/>
    - rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
    - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
    - comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates, return -1 if date1 less than date2, return 0 if date1 equal to date2, return 1 if date1 greater than date2. date1 and date2 should have the same dateformat.<br />
-   - datatype(expr) : Normal function. Return the date type of the expression. If the expresion is a field, like @1, it will return the data type of the field.<br/>
+   - datatype(expr) : Normal function. Return the date type of the expression. If the expresion is a field or function, like @1, it will return the data type of the field/function.<br/>
+   - detectdt(str) : Normal function. Detect the data type of a string.<br/>
+   - islong(str) : Normal function. Check if a string can be a long value.<br/>
+   - isDouble(str) : Normal function. Check if a string can be a double value.<br/>
+   - isDate(str) : Normal function. Check if a string can be a date value.<br/>
+   - isstring(str) : Normal function. Check if a string can be a string value.<br/>
    - toint(str) : Normal function. Conver a string to integer.<br/>
    - tolong(str) : Normal function. Conver a string to long.<br/>
    - tofloat(str) : Normal function. Conver a string to float.<br/>

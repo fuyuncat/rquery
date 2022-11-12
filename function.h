@@ -137,6 +137,14 @@ class FunctionC
     bool runTruncdate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runNow(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runExec(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runDetectdt(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIslong(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsdouble(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsdate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsstring(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runCountpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runRegcount(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runRegget(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 
   protected:
     void init();

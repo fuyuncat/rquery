@@ -2218,6 +2218,8 @@ short int encodeFunction(string str)
     return GETWORD;
   else if(sUpper.compare("GETPART")==0)
     return GETPART;
+  else if(sUpper.compare("GETPARTS")==0)
+    return GETPARTS;
   else if(sUpper.compare("COUNTSTR")==0)
     return COUNTSTR;
   else if(sUpper.compare("FIELDNAME")==0)
@@ -3007,17 +3009,19 @@ string getFirstToken(string str, string token){
 }
 
 //get all matched regelar token from a string
-vector <string> getAllTokens(string str, string token)
+vector < vector <string> > getAllTokens(string str, string token)
 {
-  vector <string> findings;
+  vector < vector <string> > findings;
   sregex regexp = sregex::compile(token);
   smatch matches;
   string::const_iterator searchStart( str.begin() );
   try{
-    while ( regex_search( searchStart, str.end(), matches, regexp ) )
-    {
-        findings.push_back(matches[0]);  
-        searchStart = matches.suffix().first;
+    while ( regex_search( searchStart, str.end(), matches, regexp ) ){
+      vector<string> vmatches;
+      for (int i=0; i<matches.size(); i++)
+        vmatches.push_back(matches[i]);
+      findings.push_back(vmatches);  
+      searchStart = matches.suffix().first;
     }
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());

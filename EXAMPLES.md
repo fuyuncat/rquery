@@ -107,6 +107,22 @@
    ```
    I found ",ccc," .
    ```
+- regcount(str,pattern) : Normal function. Get the number of regular pattern matchs in a string.<br />
+   ```
+   rq -q "s regcount('11.0.asf.12.12.12.12','\d+')" " "
+   ```
+   Returns result:<br/>
+   ```
+   6
+   ```
+- regget(str,pattern,idxnum[, matchseq]) : Normal function. Get the regular pattern matched string with specific sequence number in a string. if idxnum is a negtive number, it will start searching from the end of the string. The default value of matchseq is 0, which means return the whole matched string, it can also be a negative number.<br />
+   ```
+   rq -q "s regget('11.0.asf.12.12.18.12','(\d+)\.(\d+)',-1,2)" " "
+   ```
+   Returns result:<br/>
+   ```
+   12
+   ```
 - pad(seed, times) : Normal function. Construct a new string from seed multiple len times<br/>
    ```
    echo ""|rq -q "s pad('abcde',3)"
@@ -131,13 +147,29 @@
    ```
    weq
    ```
-- getword(str,delimiter,part_index) : Normal function. Get a part of a string splitted by delimiter.<br/>
+- getpart(str,delimiter,part_index[,quoters]) : Normal function. Get a part of a string splitted by delimiter. The optional parameter quoters defines the the quoters, it can be multiple pairs, the delimiters between the quoters will be skipped.<br/>
    ```
    rq -q "s getpart(@raw,'0#0',2)" "sfsaf0#0qqq0#0aaa"
    ```
    Returns result:<br/>
    ```
    qqq
+   ```
+- getparts(str,delimiter,startindex[,endindex][,quoters]) : Normal function. Get a group of parts of a string splitted by delimiter, and concatenant them using the delimiter. if startindex/endindex is a negtive number, it will start searching from the end of the string, if the calculated endindex is located before startindex, it will reverse concatenant the parts. The optional parameter quoters defines the the quoters, it can be multiple pairs, the delimiters between the quoters will be skipped.<br />
+   ```
+   rq -q "s getparts('/usr/lib/boost/lib','/',1, -2)" " "
+   ```
+   Returns result:<br/>
+   ```
+   /usr/lib/boost
+   ```
+- countpart(str,delimiter[,quoters]) : Normal function. Get the number parts in a string splitted by delimiter. if part_index is a negtive number, it will start searching from the end of the string. The optional parameter quoters defines the the quoters, it can be multiple pairs, the delimiters between the quoters will be skipped.<br />
+   ```
+   rq -q "s countpart(@raw,'0#0','[]')" "sfsaf0#0qqq0#0aa[0#0]a"
+   ```
+   Returns result:<br/>
+   ```
+   3
    ```
 - countstr(str,substr) : Normal function. count occurences of substr in str.<br/>
    ```
@@ -202,103 +234,6 @@
    Returns result:<br/>
    ```
    12
-   ```
-- when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else".<br />
-   ```
-   rq -q "s when(@1>0 and 1=1,@2,@3)" "1 aaa bbb"
-   ```
-   Returns result:<br/>
-   ```
-   aaa
-   ```
-- switch(expr, case1, return1[, case2, return2 ...][, default]) : Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br/>
-   ```
-   echo "aaa
-   bbb
-   ccc
-   aaa
-   ccc"| rq -q "s switch(@raw,'aaa',111,'bbb',222)"
-   ```
-   Returns result:<br/>
-   ```
-   111
-   222
-   ccc
-   111
-   ccc
-   ```
-   Another example:<br/>
-   ```
-   echo "aaa
-   bbb
-   ccc
-   aaa
-   ccc"| rq -q "s switch(@raw,'aaa',111,'bbb',222,000)"
-   ```
-   Returns result:<br/>
-   ```
-   111
-   222
-   000
-   111
-   000
-   ```
-- greatest(expr1, expr2[, expr3...]) : Normal function. Return the largest one of the given expressions<br/>
-   ```
-   echo "aaa,bbb,,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s greatest(@1,@2,@3,@4,@5)"
-   ```
-   Returns result:<br/>
-   ```
-   eee
-   ```
-   Another example:<br/>
-   ```
-   rq -n -q "p d/\t/ | s foreach(1,%,$), greatest(foreach(2,%,$))  " samples/matrix.tsv
-   ```
-   Returns result:<br/>
-   ```
-   a       0.1     0.5     0.3     0.0     0.5
-   b       0.9     0.2     0.4     0.7     0.9
-   c       0.2     0.0     0.6     0.5     0.6
-   d       0.0     0.5     0.3     0.1     0.5
-   ```
-- least(expr1, expr2[, expr3...]) : Normal function. urn the smallest one of the given expressions<br/>
-   ```
-   echo "aaa,bbb,ccc,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s least(@1,@2,@3,@4,@5)"
-   ```
-   Returns result:<br/>
-   ```
-   aaa
-   ```
-   Another example:<br/>
-   ```
-   rq -n -q "p d/\t/ | s foreach(1,%,$), least(foreach(2,%,$))  " samples/matrix.tsv
-   ```
-   Returns result:<br/>
-   ```
-   a       0.1     0.5     0.3     0.0     0.0
-   b       0.9     0.2     0.4     0.7     0.2
-   c       0.2     0.0     0.6     0.5     0.0
-   d       0.0     0.5     0.3     0.1     0.0
-   ```
-- sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
-   ```
-   rq -n -q "p d/\t/ | s foreach(1,%,$), round(sumall(foreach(2,%,$)),1)  " samples/matrix.tsv 
-   ```
-   Returns result:<br/>
-   ```
-   a       0.1     0.5     0.3     0.0     0.9
-   b       0.9     0.2     0.4     0.7     2.2
-   c       0.2     0.0     0.6     0.5     1.3
-   d       0.0     0.5     0.3     0.1     0.9
-   ```
-- floor(floatNum) : Normal function. Get the floor integer number of a given float number<br/>
-   ```
-   echo "3.1415926"|rq -q "s floor(@raw)"
-   ```
-   Returns result:<br/>
-   ```
-   3
    ```
 - ceil(floatNum) : Normal function. Get the ceil integer number of a given float number<br/>
    ```
@@ -598,6 +533,46 @@
    ```
    132000008       DOUBLE  DATE
    ```
+- detectdt(str) : Normal function. Detect the data type of a string.<br/>
+   ```
+   rq -q "s detectdt('2022-11-18')" " "
+   ```
+   Returns result:<br/>
+   ```
+   DATE
+   ```
+- islong(str) : Normal function. Check if a string can be a long value.<br/>
+   ```
+   rq -q "s islong('11.0')" " "
+   ```
+   Returns result:<br/>
+   ```
+   0
+   ```
+- isdouble(str) : Normal function. Check if a string can be a double value.<br/>
+   ```
+   rq -q "s isdouble('11.0')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- isdate(str) : Normal function. Check if a string can be a date value.<br/>
+   ```
+   rq -q "s isdate('2022-11-18')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- isstring(str) : Normal function. Check if a string can be a string value.<br/>
+   ```
+   rq -q "s isstring('11.0')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
 - appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
    Split columns of a CSV file to different files:<br/>
    ```
@@ -617,6 +592,103 @@
    [ rquery]$ cat /tmp/Code
    Active
    Active
+   ```
+- when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else".<br />
+   ```
+   rq -q "s when(@1>0 and 1=1,@2,@3)" "1 aaa bbb"
+   ```
+   Returns result:<br/>
+   ```
+   aaa
+   ```
+- switch(expr, case1, return1[, case2, return2 ...][, default]) : Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br/>
+   ```
+   echo "aaa
+   bbb
+   ccc
+   aaa
+   ccc"| rq -q "s switch(@raw,'aaa',111,'bbb',222)"
+   ```
+   Returns result:<br/>
+   ```
+   111
+   222
+   ccc
+   111
+   ccc
+   ```
+   Another example:<br/>
+   ```
+   echo "aaa
+   bbb
+   ccc
+   aaa
+   ccc"| rq -q "s switch(@raw,'aaa',111,'bbb',222,000)"
+   ```
+   Returns result:<br/>
+   ```
+   111
+   222
+   000
+   111
+   000
+   ```
+- greatest(expr1, expr2[, expr3...]) : Normal function. Return the largest one of the given expressions<br/>
+   ```
+   echo "aaa,bbb,,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s greatest(@1,@2,@3,@4,@5)"
+   ```
+   Returns result:<br/>
+   ```
+   eee
+   ```
+   Another example:<br/>
+   ```
+   rq -n -q "p d/\t/ | s foreach(1,%,$), greatest(foreach(2,%,$))  " samples/matrix.tsv
+   ```
+   Returns result:<br/>
+   ```
+   a       0.1     0.5     0.3     0.0     0.5
+   b       0.9     0.2     0.4     0.7     0.9
+   c       0.2     0.0     0.6     0.5     0.6
+   d       0.0     0.5     0.3     0.1     0.5
+   ```
+- least(expr1, expr2[, expr3...]) : Normal function. urn the smallest one of the given expressions<br/>
+   ```
+   echo "aaa,bbb,ccc,ddd,eee"|rq -q "p /([^,]*),([^,]*),([^,]*),([^,]*),([^,^\n]*)/ | s least(@1,@2,@3,@4,@5)"
+   ```
+   Returns result:<br/>
+   ```
+   aaa
+   ```
+   Another example:<br/>
+   ```
+   rq -n -q "p d/\t/ | s foreach(1,%,$), least(foreach(2,%,$))  " samples/matrix.tsv
+   ```
+   Returns result:<br/>
+   ```
+   a       0.1     0.5     0.3     0.0     0.0
+   b       0.9     0.2     0.4     0.7     0.2
+   c       0.2     0.0     0.6     0.5     0.0
+   d       0.0     0.5     0.3     0.1     0.0
+   ```
+- sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
+   ```
+   rq -n -q "p d/\t/ | s foreach(1,%,$), round(sumall(foreach(2,%,$)),1)  " samples/matrix.tsv 
+   ```
+   Returns result:<br/>
+   ```
+   a       0.1     0.5     0.3     0.0     0.9
+   b       0.9     0.2     0.4     0.7     2.2
+   c       0.2     0.0     0.6     0.5     1.3
+   d       0.0     0.5     0.3     0.1     0.9
+   ```
+- floor(floatNum) : Normal function. Get the floor integer number of a given float number<br/>
+   ```
+   echo "3.1415926"|rq -q "s floor(@raw)"
+   ```
+   Returns result:<br/>
+   ```
+   3
    ```
 - eval(expr_str) : Normal function. Eval the input string as an expression.<br/>
    ```

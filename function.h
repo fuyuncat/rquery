@@ -89,6 +89,7 @@ class FunctionC
     bool runCountword(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runGetword(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runGetpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runCountstr(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runFieldname(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runConcat(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);

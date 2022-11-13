@@ -174,6 +174,7 @@ using namespace std;
 #define COUNTPART 75
 #define REGCOUNT 76
 #define REGGET 77
+#define GETPARTS 78
 #define SUM 101
 #define COUNT 102
 #define UNIQUECOUNT 103
@@ -369,7 +370,7 @@ int startsWithWords(string str, vector<string> words, int offset); // detect if 
 int startsWithWords(string str, vector<string> words); // detect if string start with special words
 string removeSpace(string originalStr, string keepPattern); //remove space
 string getFirstToken(string str, string token); //get the first matched regelar token from a string
-vector <string> getAllTokens(string str, string token); //get all matched regelar token from a string
+vector < vector <string> > getAllTokens(string str, string token); //get all matched regelar token from a string
 bool matchToken(string str, string token); // check if matched regelar token
 
 string trim_pair(const string & str, const string & pair);

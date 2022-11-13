@@ -118,31 +118,50 @@ Functions can be used in the expression. We current provide some essential norma
    - regreplace(str,pattern,sub) : Normal function. Replace all regular pattern in a string with sub (capturing group supported).<br />
    - regmatch(str,pattern,sub) : Normal function. Return an expression including the capturing groups matched a regular pattern. Use {N} to stand for the matched groups<br />
    - regcount(str,pattern) : Normal function. Get the number of regular pattern matchs in a string.<br />
-   - regget(str,pattern,idxnum) : Normal function. Get the regular pattern matched string with specific sequence number in a string. if idxnum is a negtive number, it will start searching from the end of the string.<br />
+   - regget(str,pattern,idxnum[, matchseq]) : Normal function. Get the regular pattern matched string with specific sequence number in a string. if idxnum is a negtive number, it will start searching from the end of the string. The default value of matchseq is 0, which means return the whole matched string, it can also be a negative number.<br />
    - comparestr(str1,str2) : Normal function. Compare str1 to str2, case sensitive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - nocaseComparestr(str1,str2) : Normal function. Compare str1 to str2, case insensive, return -1 if str1 less than str2, return 0 if str1 equal to str2, return 1 if str1 greater than str2<br />
    - countword(str,[ingnore_quoters]) : Normal function. Get the number of word in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word<br />
    - getword(str,wordnum,[ingnore_quoters]) : Normal function. Get a word specified sequence number in a string. Any substring separated by space/tab/newline/punctuation marks will be count as a word. if ingnore_quoters (in pairs, e.g. ''"") provided, the whole string between quoters will be counted as one word. if wordnum is a negtive number, it will start searching from the end of the string.<br />
-   - getpart(str,delimiter,part_index) : Normal function. Get a part of a string splitted by delimiter. if part_index is a negtive number, it will start searching from the end of the string.<br />
-   - countpart(str,delimiter) : Normal function. Get the number parts in a string splitted by delimiter. if part_index is a negtive number, it will start searching from the end of the string.<br />
+   - getpart(str,delimiter,part_index[,quoters]) : Normal function. Get a part of a string splitted by delimiter. if part_index is a negtive number, it will start searching from the end of the string. The optional parameter quoters defines the the quoters, it can be multiple pairs, the delimiters between the quoters will be skipped.<br />
+   - getparts(str,delimiter,startindex[,endindex][,quoters]) : Normal function. Get a group of parts of a string splitted by delimiter, and concatenant them using the delimiter. if startindex/endindex is a negtive number, it will start searching from the end of the string, if the calculated endindex is located before startindex, it will reverse concatenant the parts. The optional parameter quoters defines the the quoters, it can be multiple pairs, the delimiters between the quoters will be skipped.<br />
+   - countpart(str,delimiter[,quoters]) : Normal function. Get the number parts in a string splitted by delimiter. if part_index is a negtive number, it will start searching from the end of the string. The optional parameter quoters defines the the quoters, it can be multiple pairs, the delimiters between the quoters will be skipped.<br />
    - countstr(str,substr) : Normal function. count occurences of substr in str.<br />
    - trimleft(str[,char][,repeat(1|0)]) : Normal function. Trim all char from left of the string, if char is not provided, all space (including tab) will be trimmed.<br />
    - trimright(str[,char][,repeat(1|0)]) : Normal function. Trim all char from right of the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    - trim(str[,char][,repeat(1|0]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    - concat(str1,str2,[...]) : Normal function. Concatenate multiple strings. <br/>
-   - concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br/>
-   - calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br/>
-   - sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
-   - rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
-   - rmember(sideid,fieldid,seqnum) : Normal function. Return the member value of the specified side work, field id and sequence number. sideid is the id the side work, fieldid is id the field in the side work, seqnum is the member sequence number. if seqnum is a negtive number, it will start searching from the end of the array.<br/>
-   - rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
+   - pad(seed,len) : Normal function. Construct a new string from seed multiple len times.<br />
+   - randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br />
+   - camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
+   - snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
+   - findnth(str,sub[,Nth]) : Normal function. Find the position of Nth sub in str, if Nth is positive number, search from head, if Nth is negative, search from tail.<br />
+   - revertstr(str) : Normal function. Convert a string to reverse sequence (e.g. abc -> cba).<br />
+   - ascii(char) : Normal function. Get the ascii code of a char.<br />
+   - char(int) : Normal function. Get character of an ascii code number.<br />
+
+   - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
+   - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
+   - round(num,scale) : Normal function. Round a given float number.<br />
+   - log(num) : Normal function. Get the log result of a given float number.<br />
+   - mod(num,div) : Normal function. Get the mod of a number.<br />
+   - abs(num) : Normal function. Get the abs value of a given float number.<br />
+   - random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br />
+
+   - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
+   - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />
+   - addtime(date, number, unit) : Normal function. Increase a datetime, unit can be s-second(default),m-minute,h-hour,d-day,n-month,y-year, number can be positive or negative interger.<br />
+   - now() : Normal function. Get current date time.<br />
+   - truncdate(date,seconds) : Normal function. Truncate a date a number is multiple of the given second number.<br />
+
+   - fieldname(fieldid) : Normal function. Return the filed name of a field (column).<br />
    - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
    - comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates, return -1 if date1 less than date2, return 0 if date1 equal to date2, return 1 if date1 greater than date2. date1 and date2 should have the same dateformat.<br />
    - datatype(expr) : Normal function. Return the date type of the expression. If the expresion is a field or function, like @1, it will return the data type of the field/function.<br/>
    - detectdt(str) : Normal function. Detect the data type of a string.<br/>
    - islong(str) : Normal function. Check if a string can be a long value.<br/>
-   - isDouble(str) : Normal function. Check if a string can be a double value.<br/>
-   - isDate(str) : Normal function. Check if a string can be a date value.<br/>
+   - isdouble(str) : Normal function. Check if a string can be a double value.<br/>
+   - isdate(str) : Normal function. Check if a string can be a date value.<br/>
    - isstring(str) : Normal function. Check if a string can be a string value.<br/>
    - toint(str) : Normal function. Conver a string to integer.<br/>
    - tolong(str) : Normal function. Conver a string to long.<br/>
@@ -153,27 +172,6 @@ Functions can be used in the expression. We current provide some essential norma
    - hextodec(str) : Normal function. Conver a hex number to decimal number.<br/>
    - dectobin(num) : Normal function. Conver a decimal number to binary formatted string.<br/>
    - bintodec(str) : Normal function. Conver a binary number to decimal number.<br/>
-   - pad(seed,len) : Normal function. Construct a new string from seed multiple len times.<br />
-   - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
-   - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
-   - round(num,scale) : Normal function. Round a given float number.<br />
-   - log(num) : Normal function. Get the log result of a given float number.<br />
-   - mod(num,div) : Normal function. Get the mod of a number.<br />
-   - abs(num) : Normal function. Get the abs value of a given float number.<br />
-   - random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br />
-   - randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br />
-   - camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
-   - snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
-   - findnth(str,sub[,Nth]) : Normal function. Find the position of Nth sub in str, if Nth is positive number, search from head, if Nth is negative, search from tail.<br />
-   - revertstr(str) : Normal function. Convert a string to reverse sequence (e.g. abc -> cba).<br />
-   - fieldname(fieldid) : Normal function. Return the filed name of a field (column).<br />
-   - ascii(char) : Normal function. Get the ascii code of a char.<br />
-   - char(int) : Normal function. Get character of an ascii code number.<br />
-   - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
-   - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />
-   - addtime(date, number, unit) : Normal function. Increase a datetime, unit can be s-second(default),m-minute,h-hour,d-day,n-month,y-year, number can be positive or negative interger.<br />
-   - now() : Normal function. Get current date time.<br />
-   - truncdate(date,seconds) : Normal function. Truncate a date a number is multiple of the given second number.<br />
    - switch(input,case1,return1[,case2,return2...][,default]): Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br />
    - when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else".<br />
    - greatest(expr1[,expr2,...]) : Normal function. Return the largest one of the given expressions. The expression can be a foreach function.<br />
@@ -181,6 +179,13 @@ Functions can be used in the expression. We current provide some essential norma
    - appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
    - eval(expr_str) : Normal function. Eval the input string as an expression.<br />
    - exec(expr_str) : Normal function. Run a system command and return the result.<br />
+   - sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
+   - rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
+   - rmember(sideid,fieldid,seqnum) : Normal function. Return the member value of the specified side work, field id and sequence number. sideid is the id the side work, fieldid is id the field in the side work, seqnum is the member sequence number. if seqnum is a negtive number, it will start searching from the end of the array.<br/>
+   - rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
+   - concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br/>
+   - calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br/>
+
    - Count(expr) : Aggregation function. Count the number of expr.<br />
    - Uniquecount(expr) : Aggregation function. Count the number of distinct expr.<br />
    - Sum(expr) : Aggregation function. Sum the number of expr.<br />
@@ -188,6 +193,7 @@ Functions can be used in the expression. We current provide some essential norma
    - Min(expr) : Aggregation function. Get the minimum value of expr.<br />
    - Average(expr) : Aggregation function. Get the average value of expr.<br />
    - Grouplist([distinct ]expr[,delimiter][,asc|desc]) : Aggregation function. Combine the specific expr in a group to a string. distinct is a key word to indicate if the elements should be distinct, delimiter is a string to be the delimiter, asc|desc keywords indicate whether do sorting.<br />
+
    - Rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
    - Denserank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />
    - Nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />
@@ -197,13 +203,16 @@ Functions can be used in the expression. We current provide some essential norma
    - Averagea([group1,group2...];expr) : Analytic function. Caluclate average of expr of each group.<br />
    - maxa([group1,group2...];expr) : Analytic function. Get the maximum value of expr of each group.<br />
    - mina([group1,group2...];expr) : Analytic function. Get the minimum value of expr of each group.<br />
+
    - foreach(beginid,endid,macro_expr[,step]) : Macro function. make a macro expression list for all fields from beginid to endid. $ stands for field ($ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. For example, foreach(%-2,2,substr($,2,3)+#) will make this expression list: substr(@field{N-2},2,3)+N..,substr(@field3,2,3)+3,substr(@field2,2,3)+2. It can only be used in "select" and "sort". It cannot be a part of expression.<br />
    - coltorow(exp1[,exp2 ... ] ) : Macro function. Make the columns to rows. Accept multiple parameter, also accept foreach(). The row number will be the maximum number of parameter of all coltorow functions. <br />
    - anycol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check any field fulfil a condition, e.g. anycol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br />
    - allcol(start,end,expr[,step]) : Macro function. Can be used in filter only, to check all field fulfil a condition, e.g. allcol(1,%,$). $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br />
+
    - root(expr) : Hierarchical function. Returns the expression of the root node.<br /> 
    - parent(expr) : Hierarchical function. Returns the expression of the parent node.<br /> 
    - path(expr[,connector]) : Hierarchical function. Returns an path (of the expression) from root to current node, connector is used for connecting nodes, default is '/'.<br /> 
+
 # Example and scenarios
 - Query an apache or nginx access log, to get the number of hits from different clients, and the browser is Chrome or Firefox<br />
 `./rq -q "parse /(?P<host>\S+) (\S+) (?P<user>\S+) \[(?P<time>[^\n]+)\] \\\"(?P<request>[^\n]*)\\\" (?P<status>[0-9]+) (?P<size>\S+) \\\"(?P<referrer>[^\n]*)\\\" \\\"(?P<agent>[^\n]*)\\\"/|filter agent reglike '(Chrome|Firefox)' | select host, count(1) | group host | sort count(1) desc" < access.log`

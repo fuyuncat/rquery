@@ -5,6 +5,10 @@ All change logs will be documented here.<br/>
    Enhancement: The sequence number parameter in getword() getpart() rmember() can be negative, which means doing reversed searching. <br/>
    Bux fix: Date type format "%Y-%m-%d" cannot be recognized. <br/>
    New feature: new functions: detectdt(str), islong(str), isdouble(str), isdate(str), isstring(str), countpart(str,delimiter), regcount(str,pattern), regget(str,pattern,idxnum). <br/>
+   New feature: new functions: getparts(str,delimiter,startindex[,endindex][,quoters]). <br/>
+   Enhancement: getpart(), getparts(), countpart() will return/count the empty part. <br/>
+   Enhancement: getpart(), getparts(), countpart() have an optional paramter to get the quoters. <br/>
+   Enhancement: regget() have an optional paramter to indicate return which matched part. <br/>
    # [1.03] 2022-11-11
    New feature: new function exec(expr_str) : Normal function. Run a system command and return the result. <br/>
    Bux fix: Variable field size may cause incorrect data type detected. <br/>

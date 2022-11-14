@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v1.1"
+#define VERSION "v1.11"
 
 #define UNKNOWN 0
 
@@ -84,6 +84,7 @@ using namespace std;
 #define COLUMN 2
 #define VARIABLE 3
 #define FUNCTION 4
+#define MACROPARA 5
 
 #define ASC 1
 #define DESC 2
@@ -198,9 +199,10 @@ using namespace std;
 #define COLTOROW 502
 #define ANYCOL 503
 #define ALLCOL 504
-#define ROOT 801
-#define PATH 802
-#define PARENT 803
+#define ROOT 601
+#define PATH 602
+#define PARENT 603
+#define USERMACROFUNC 888
 
 #define TEXT 1
 #define JSON 2
@@ -320,6 +322,20 @@ public:
   void clear();
 };
 
+//struct MacroParaStruct{
+//  string name; // parameter name
+//  int seq; // sequence id of the parameter
+//  string initval; // initial value of the parameter.
+//};
+
+class ExpressionC;
+
+struct MacroFuncStruct{
+  string sFuncName; // function name
+  ExpressionC* funcExpr; // function expression
+  vector <string> vParaNames; // parameter name
+};
+
 // runtime data struct. The memory of the pointers pointing to should never be freed from this struct.
 struct RuntimeDataStruct{
   vector<string>* fieldvalues = NULL;
@@ -329,9 +345,12 @@ struct RuntimeDataStruct{
   vector< vector< unordered_map<string,string> > >* sideDatasets = NULL;
   unordered_map< string, unordered_map<string,string> >* sideDatarow = NULL;
   unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes = NULL;
+  unordered_map< string,string >* macroFuncParas = NULL;
+  unordered_map< string,MacroFuncStruct >* macroFuncExprs = NULL;
 };
 
 extern GlobalVars gv;
+extern std::set<string> g_userMacroFuncNames; // the global array is used for identify the user defined macro functions
 
 class TimeZone{
 public:
@@ -352,7 +371,7 @@ string exec(const string & cmd);
 #endif
 
 //string string_format( const string& format, Args ... args );
-string readQuotedStr(const string & str, size_t& pos, const string & quoters, const char & escape = '\\'); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
+string readQuotedStr(const string & str, size_t& pos, const string & targetquoters, const string & quoters = "", const char & escape = '\\', std::set<char> nestedQuoters={}); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 int matchQuoters(const string & listStr, const size_t & offset, const string & quoters); // detect if quoters matched.
 vector<string> split(const string & str, string delim = " ", string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 vector<string> split(const string & str, char delim = ' ', string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'}, bool repeatable=false, bool skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting

@@ -296,22 +296,23 @@ void trace(short level, const char *fmt, ...)
 }
 
 // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
-string readQuotedStr(const string & str, size_t& pos, const string & quoters, const char & escape)
+string readQuotedStr(const string & str, size_t& pos, const string & targetquoters, const string & quoters, const char & escape, std::set<char> nestedQuoters)
 {
   string trimmedStr="";
-  if (quoters.length()<2)
+  if (targetquoters.length()<2)
     return trimmedStr;
   size_t quoteStart = -1, i = pos, quoteDeep=0;
   bool quoted = false;
+  vector<int> q;
   while(i < str.length()) {
     if (quoteDeep > 0){ // checking right quoter only when the string is quoted.
-      if (str[i]==escape && i<str.length()-1 && (str[i+1] == quoters[0] || str[i+1] == quoters[1])){ // skip escape
+      if (str[i]==escape && i<str.length()-1 && (str[i+1] == targetquoters[0] || str[i+1] == targetquoters[1])){ // skip escape
         i++;
         trimmedStr.push_back(str[i]);
       }
-      if (quoteDeep>1 || str[i]!=quoters[1])
+      if (quoteDeep>1 || (str[i]!=targetquoters[1] || q.size()>0))
         trimmedStr.push_back(str[i]);
-      if (str[i] == quoters[1]){
+      if (str[i] == targetquoters[1] && q.size()==0){
         if (i>0 && str[i-1]!=escape){
           quoteDeep--;
           if (quoteDeep == 0){
@@ -321,9 +322,26 @@ string readQuotedStr(const string & str, size_t& pos, const string & quoters, co
             //return str.substr(quoteStart,pos-quoteStart);
           }
         }
+      }else{
+        if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+          if (i>0 && str[i-1]!=escape){
+            q.pop_back();
+            //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+            ++i;
+            continue;
+          }
+        if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
+          for (int k=0; k<(int)(quoters.length()/2); k++){
+            if (str[i] == quoters[k*2])
+              if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
+                //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+                q.push_back(k*2+1); // quoted start, need to pair the right quoter
+                break;
+              }
+          }
       }
     }
-    if (str[i] == quoters[0])
+    if (str[i] == targetquoters[0] && q.size()==0)
       if (i==0 || (i>0 && str[i-1]!=escape)){
         quoteDeep++;
         if (quoteDeep == 1)
@@ -331,6 +349,7 @@ string readQuotedStr(const string & str, size_t& pos, const string & quoters, co
       }
     i++;
   }
+  pos = -1; // not find
   return "";
 }
 
@@ -2390,6 +2409,8 @@ short int encodeFunction(string str)
     return PATH;
   else if(sUpper.compare("PARENT")==0)
     return PARENT;
+  else if (g_userMacroFuncNames.find(sUpper)!=g_userMacroFuncNames.end())
+    return USERMACROFUNC;
   else
     return UNKNOWN;
 }

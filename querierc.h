@@ -94,6 +94,7 @@ class QuerierC
     void setFileName(string filename);
     void setNameline(bool nameline);
     void setUserVars(string variables);
+    void setUserMaroFuncs(string macrostr);
     void setUniqueResult(bool bUnique);
     void setOutputFiles(string outputfilestr, short int outputmode=OVERWRITE);
     void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
@@ -191,6 +192,9 @@ class QuerierC
     map<string, string> m_uservarinitval; // User defined variables initial values
     map<string, ExpressionC> m_uservarexprs; // User defined dynamic variables expressions; we cannot unordered_map, as we need to calculate the dynamic variables according to their input sequnence!
     vector<ExpressionC> m_fakeRExprs; // expressions of user defined R variable as fake sidework dataset.
+    string m_usermacrostr; // user defined macro functions string
+    unordered_map< string,MacroFuncStruct > m_userMacroExprs; // the expressions of the user defined macro. mapping: func_name:expression
+    //unordered_map< string,vector< MacroParaStruct > > m_userMacroParas; // the parameters of the user defined macro. mapping: func_name:Parameters; 
     vector<string>  m_selnames; // selection names
     vector<ExpressionC> m_selections;    // selected expressions
     vector<ExpressionC> m_groups;    // group expressions

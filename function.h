@@ -146,6 +146,7 @@ class FunctionC
     bool runCountpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runRegcount(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runRegget(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runUsermacro(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 
   protected:
     void init();

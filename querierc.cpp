@@ -779,6 +779,7 @@ void QuerierC::setUserVars(string variables)
   m_uservarstr = variables;
   //m_uservariables.clear();
   //m_uservarexprs.clear();
+  m_uservalnames.clear();
   int fakeId = 1;
   vector<ExpressionC> fakeSels;
   vector<string> fakeAlias;
@@ -829,10 +830,10 @@ void QuerierC::setUserVars(string variables)
       if (!bGlobal) // reset value for local variables
         m_uservariables[sVName] = sValue;
     }else{
-      m_uservalnames.push_back(sVName);
       m_uservariables.insert(pair<string, string> (sVName,sValue));
       m_uservarinitval.insert(pair<string, string> (sVName,sValue));
     }
+    m_uservalnames.push_back(sVName);
     if (vNameVal.size()>2 && m_uservarexprs.find(sVName) == m_uservarexprs.end()){ // dynamic variable has an expression
       ExpressionC tmpExp = ExpressionC(trim_copy(vNameVal[2]));
       m_uservarexprs.insert(pair<string, ExpressionC> (sVName,tmpExp));
@@ -849,6 +850,53 @@ void QuerierC::setUserVars(string variables)
     }
   }
   m_fakeRExprs = fakeExprs;
+}
+
+std::set<string> g_userMacroFuncNames; // the global array is used for identify the user defined macro functions
+
+void QuerierC::setUserMaroFuncs(string macrostr)
+{
+  g_userMacroFuncNames.clear();
+  trace(DEBUG, "Setting macro functions from '%s' !\n", macrostr.c_str());
+  m_usermacrostr = macrostr;
+  vector<string> vMacroraws = split(macrostr,';',"''()",'\\',{'(',')'},false,true);
+  for (int i=0; i<vMacroraws.size(); i++){
+    vector<string> vNameVal = split(trim_copy(vMacroraws[i]),':',"''()",'\\',{'(',')'},false,true);
+    if (vNameVal.size()<2){
+      trace(FATAL, "Incorrect macro function format!\n", vMacroraws[i].c_str());
+      continue;
+    }
+    string sFuncName = upper_copy(trim_copy(vNameVal[0]));
+    // check name used
+    if (encodeFunction(sFuncName) != UNKNOWN){
+      trace(FATAL, "You cannot use '%s' as the macro function name, it has been used by an inline function!\n", vNameVal[0].c_str());
+      continue;
+    }
+    if (m_userMacroExprs.find(sFuncName) != m_userMacroExprs.end()){
+      trace(FATAL, "You cannot use '%s' as the macro function name, it has been used by another macro function!\n", vNameVal[0].c_str());
+      continue;
+    }
+    string expStr = trim_copy(vNameVal[1]);
+    MacroFuncStruct mfs;
+    mfs.sFuncName = sFuncName;
+    mfs.funcExpr = new ExpressionC(expStr);
+    size_t pos=0;
+    while (pos>=0){ // search the parameters
+      string sParastr = trim_copy(readQuotedStr(expStr, pos, "~~", "''", '\0', {}));
+      if (sParastr.empty() || pos<0)
+        break;
+      vector<string> vMacroNamVal = split(sParastr,'=',"''()",'\\',{'(',')'},false,true);
+      if (vMacroNamVal.size()==0 || trim_copy(vMacroNamVal[0]).empty()){
+        trace(FATAL, "(1) Macro function parameter '%s' has an invalid definition! \n", sParastr.c_str());
+        return;
+      }
+      string paraName = upper_copy(trim_copy(vMacroNamVal[0]));
+      if (find(mfs.vParaNames.begin(), mfs.vParaNames.end(), paraName) == mfs.vParaNames.end())
+        mfs.vParaNames.push_back(paraName);
+    }
+    m_userMacroExprs.insert(pair< string,MacroFuncStruct >(sFuncName,mfs));
+    g_userMacroFuncNames.insert(sFuncName);
+  }
 }
 
 void QuerierC::setFileName(string filename)
@@ -1003,6 +1051,7 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
     rds.sideDatasets = &m_sideDatasets;
     rds.sideDatarow = &matchedSideDatarow;
     rds.sideDatatypes = &m_sideDatatypes;
+    rds.macroFuncExprs = &m_userMacroExprs;
     //trace(DEBUG2, "Eval aggregation function expression '%s'\n", ite->second.getEntireExpstr().c_str());
     if (ite->second.m_expType==FUNCTION && ite->second.m_Function && ite->second.m_Function->isAggFunc() && ite->second.m_Function->m_params.size()>0 && ite->second.m_Function->m_params[0].evalExpression(rds, sResult, dts, true)){
       it->second.funcID = ite->second.m_funcID;
@@ -1093,6 +1142,7 @@ void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,st
     rds.sideDatasets = &m_sideDatasets;
     rds.sideDatarow = matchedSideDatarow;
     rds.sideDatatypes = &m_sideDatatypes;
+    rds.macroFuncExprs = &m_userMacroExprs;
     m_outputfileexp->evalExpression(rds, sResult, dts, true);
     unordered_map< string, ofstream* >::iterator it = m_outputfiles.find(sResult);
     if (it == m_outputfiles.end()){
@@ -1166,6 +1216,7 @@ bool QuerierC::addResultToSet(vector<string>* fieldvalues, map<string,string>* v
   rds.sideDatasets = &m_sideDatasets;
   rds.sideDatarow = &matchedSideDatarow;
   rds.sideDatatypes = &m_sideDatatypes;
+  rds.macroFuncExprs = &m_userMacroExprs;
   for (int i=0; i<expressions.size(); i++){
     dts = DataTypeStruct();
     tmpExp = ExpressionC();
@@ -1297,6 +1348,7 @@ void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * 
     rds.sideDatasets = &m_sideDatasets;
     rds.sideDatarow = &matchedSideDatarow;
     rds.sideDatatypes = &m_sideDatatypes;
+    rds.macroFuncExprs = &m_userMacroExprs;
     for(int i=nRealSWStart;i<m_sideSelections.size();i++){
       vector< unordered_map<string,string> > resultSet;
       sideMatchedRowIDs.clear();
@@ -1361,6 +1413,7 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
   rds.sideDatasets = &m_sideDatasets;
   rds.sideDatarow = &matchedSideDatarow;
   rds.sideDatatypes = &m_sideDatatypes;
+  rds.macroFuncExprs = &m_userMacroExprs;
 
   string sResult;
   DataTypeStruct dts;
@@ -1614,6 +1667,8 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
     }else
       m_sorts[i].iSel = -1;
   }
+  for (unordered_map< string,MacroFuncStruct >::iterator it=m_userMacroExprs.begin(); it!=m_userMacroExprs.end(); it++)
+    it->second.funcExpr->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for (int i=0; i<m_treeProps.size(); i++)
     m_treeProps[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for (int i=0; i<m_treeParentProps.size(); i++)
@@ -1967,6 +2022,7 @@ bool QuerierC::group()
   rds.sideDatasets = &m_sideDatasets;
   rds.sideDatarow = &matchedSideDatarow;
   rds.sideDatatypes = &m_sideDatatypes;
+  rds.macroFuncExprs = &m_userMacroExprs;
   for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
     rds.fieldvalues = &m_aggRowValues[*it];
     rds.aggFuncs = &m_aggGroupProp[*it];
@@ -2448,6 +2504,7 @@ bool QuerierC::analytic()
   rds.sideDatasets = &m_sideDatasets;
   rds.sideDatarow = &matchedSideDatarow;
   rds.sideDatatypes = &m_sideDatatypes;
+  rds.macroFuncExprs = &m_userMacroExprs;
   vector< vector<string> > tmpResults = m_results;
   vector< vector<string> > tmpSortKeys = m_sortKeys;
   m_results.clear();
@@ -2761,6 +2818,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   rds.sideDatasets = &m_sideDatasets;
   rds.sideDatarow = &matchedSideDatarow;
   rds.sideDatatypes = &m_sideDatatypes;
+  rds.macroFuncExprs = &m_userMacroExprs;
 
   string sResult;
   DataTypeStruct dts;
@@ -3043,6 +3101,7 @@ void QuerierC::applyExtraFilter(vector<string> aRow, const map<string, string> &
   rds.sideDatasets = &sideDatasets;
   rds.sideDatarow = &matchedSideDatarow;
   rds.sideDatatypes = &sideDatatypes;
+  rds.macroFuncExprs = &m_userMacroExprs;
 
   fieldValues.clear();
   for (int j=1; j<aRow.size(); j++)
@@ -3308,6 +3367,12 @@ void QuerierC::clear()
   m_uservarinitval.clear();
   m_uservarexprs.clear();
   m_fakeRExprs.clear();
+  for (unordered_map< string,MacroFuncStruct >::iterator it=m_userMacroExprs.begin(); it!=m_userMacroExprs.end(); it++){
+    it->second.funcExpr->clear();
+    SafeDelete(it->second.funcExpr);
+  }
+  m_userMacroExprs.clear();
+  //m_userMacroParas.clear();
   m_selnames.clear();
   m_selections.clear();
   m_sideSelections.clear();

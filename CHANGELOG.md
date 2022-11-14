@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [1.11] 2022-11-13
+   New feature: New runtime option : macrofunc | -u : funcname1:expression1[;funcname1:expression1..] -- Define macro functions for any expression.<br/>
    # [1.1] 2022-11-12
    Enhancement: optimized runtime methods (evalExpression, runFunction) using a runtime data struct. <br/>
    Enhancement: The sequence number parameter in getword() getpart() rmember() can be negative, which means doing reversed searching. <br/>

@@ -857,6 +857,7 @@ bool FilterC::compareExpression(RuntimeDataStruct & rds, unordered_map< int,int 
   return compareExpressionI(rds, sideMatchedRowIDs);
 }
 
+// join match, sideMatchedRowIDs returns the matched IDs
 bool FilterC::joinMatch(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & sideDatarow, const short int & sidWorkID)
 {
   if (sidWorkID<rds.sideDatasets->size()){
@@ -872,7 +873,11 @@ bool FilterC::joinMatch(RuntimeDataStruct & rds, unordered_map< int,int > & side
       }else{
         string leftRst = "", rightRst = "";
         DataTypeStruct dts1, dts2;
-        if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
+        unordered_map< string, unordered_map<string,string> >* oldSideDatarow = rds.sideDatarow;
+        rds.sideDatarow = &sideDatarow;
+        bool evaled = m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true);
+        rds.sideDatarow = oldSideDatarow;
+        if (evaled){
           if (anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1){
             sideMatchedRowIDs.insert(pair< int,int >(sidWorkID,i));
             return true;

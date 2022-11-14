@@ -171,7 +171,7 @@ bool FunctionC::analyzeExpStr()
     return false;
   }
   size_t iPos = 0;
-  string strParams = readQuotedStr(m_expStr, iPos, "()", '\0');
+  string strParams = readQuotedStr(m_expStr, iPos, "()", "''", '\0', {});
   //if (iPos<0 || strParams.empty()){
   //  trace(ERROR, "No quoted parameters found in '%s'!\n", m_expStr.c_str());
   //  m_expstrAnalyzed = false;
@@ -366,10 +366,11 @@ bool FunctionC::analyzeExpStr()
     case WHEN:
     case EVAL:
     case RMEMBER:
+    case USERMACROFUNC:
       m_datatype.datatype = ANY;
       break;
     default:{
-      trace(ERROR, "Function(1) '%s' is not supported yet!\n", m_funcName.c_str());
+      trace(FATAL, "Function(1) '%s' is not supported yet!\n", m_funcName.c_str());
       m_datatype.datatype = UNKNOWN;
     }
   }
@@ -2138,6 +2139,33 @@ bool FunctionC::runExec(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
   return true;
 }
 
+bool FunctionC::runUsermacro(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  unordered_map< string,string > mFuncParas;
+  if (!rds.macroFuncExprs || rds.macroFuncExprs->find(m_funcName)==rds.macroFuncExprs->end()){
+    trace(ERROR, "Failed to get the macro function '%s' definition.\n",m_funcName.c_str());
+    return false;
+  }
+  for (int i=0; i<m_params.size(); i++){
+    string paraVal;
+    if (!m_params[i].evalExpression(rds, paraVal, dts, true)){
+      trace(ERROR, "Failed to get the parameter value of '%s'.\n",m_funcName.c_str());
+      return false;
+    }
+    if (i<(*rds.macroFuncExprs)[m_funcName].vParaNames.size())
+      mFuncParas.insert(pair< string,string >((*rds.macroFuncExprs)[m_funcName].vParaNames[i],paraVal));
+    else
+      trace(WARNING, "The passed in parameter number is more the defined number!\n",m_funcName.c_str());
+  }
+  rds.macroFuncParas = &mFuncParas;
+  if (!(*rds.macroFuncExprs)[m_funcName].funcExpr || !(*rds.macroFuncExprs)[m_funcName].funcExpr->evalExpression(rds, sResult, dts, true)){
+    trace(ERROR, "Failed to get the result of the macro function '%s' definition.\n",m_funcName.c_str());
+    return false;
+  }
+
+  return true;
+}
+
 bool FunctionC::runRcount(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
   if (!rds.sideDatasets){
@@ -2623,6 +2651,9 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case REGGET:
       getResult = runRegget(rds, sResult, dts);
+      break;
+    case USERMACROFUNC:
+      getResult = runUsermacro(rds, sResult, dts);
       break;
     case ROOT:
     case PATH:

@@ -82,6 +82,7 @@ void usage()
   printf("\t-d|--detecttyperows <N> : How many matched rows will be used for detecting data types, default is 1.\n");
   printf("\t-i|--delimiter <string> : Specify the delimiter of the fields, TAB will be adapted if this option is not provided\n");
   printf("\t-v|--variable \"name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]]..\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files.\n");
+  printf("\t-u|--macrofunc \"funcname1:expression1[;funcname1:expression1...]\" -- Define macro functions, ~var[=default]~ represents the pass in parameter .\n");
   printf("More information can be found at https://github.com/fuyuncat/rquery .\n");
 }
 
@@ -631,6 +632,13 @@ int main(int argc, char *argv[])
       }
       rq.setUserVars(trim_copy(string(argv[i+1])));
       i++;
+    }else if (lower_copy(string(argv[i])).compare("-u")==0 || lower_copy(string(argv[i])).compare("--macrofunc")==0){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
+        trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        exitProgram(1);
+      }
+      rq.setUserMaroFuncs(trim_copy(string(argv[i+1])));
+      i++;
     }else if (lower_copy(string(argv[i])).compare("-s")==0 || lower_copy(string(argv[i])).compare("--skip")==0){
       if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
@@ -744,6 +752,7 @@ int main(int argc, char *argv[])
         cout << "format <text|json> -- Provide output format, default is text.\n";
         cout << "delimiter <string> -- Specify the delimiter of the fields, TAB will be adapted if this option is not provided.\n";
         cout << "var \"name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]]..\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files.\n\n";
+        cout << "macrofunc \"funcname1:expression1[;funcname1:expression1...]\" -- Define macro functions, ~var[=default]~ represents the pass in parameter.\n\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("load ")==0){
         string strParam = trim_copy(lineInput).substr(string("load ").length());
@@ -836,8 +845,13 @@ int main(int argc, char *argv[])
         cout << "Fileds data type has been set up.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("var ")==0){
-        string strParam = trim_one(trim_copy(lineInput).substr(string("set ").length()),'"');
+        string strParam = trim_one(trim_copy(lineInput).substr(string("var ").length()),'"');
         rq.setUserVars(strParam);
+        cout << "Variables have been set up.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("macrofunc ")==0){
+        string strParam = trim_one(trim_copy(lineInput).substr(string("macrofunc ").length()),'"');
+        rq.setUserMaroFuncs(strParam);
         cout << "Variables have been set up.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("filter ")==0){

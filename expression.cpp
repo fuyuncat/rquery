@@ -36,11 +36,13 @@ void ExpressionC::init()
   m_fieldtypes = NULL;
   m_rawDatatype = NULL;
   m_Function = NULL;
+  m_macroParaDefExpr = NULL;
 
   m_metaDataAnzlyzed = false; // analyze column name to column id.
   m_expstrAnalyzed = false;   // if expression string analyzed
 
   //m_operators = {'^','*','/','+','-'};
+  //m_macroParaDefault.clear();
   m_operators.clear();
   m_operators.insert('^');m_operators.insert('*');m_operators.insert('/');m_operators.insert('+');m_operators.insert('-'); // "^", "*", "/" should be before "+", "-"
 }
@@ -89,6 +91,43 @@ ExpressionC::ExpressionC(ExpressionC* node)
   }
 }
 
+ExpressionC* ExpressionC::cloneMe(){
+  ExpressionC* node = new ExpressionC();
+  node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
+  node->m_expstrAnalyzed = m_expstrAnalyzed;
+  //node->predStr = predStr;
+  node->m_type = m_type;
+  node->m_operate = m_operate;
+  node->m_colId = m_colId;
+  node->m_datatype = m_datatype;
+  node->m_expType = m_expType;
+  node->m_funcID = m_funcID;
+  node->m_expStr = m_expStr;
+  node->m_fieldnames = m_fieldnames;
+  node->m_fieldtypes = m_fieldtypes;
+  node->m_rawDatatype = m_rawDatatype;
+  if (m_Function)
+    node->m_Function = m_Function->cloneMe();
+  else
+    node->m_Function = NULL;
+  if (m_macroParaDefExpr)
+    node->m_macroParaDefExpr = m_macroParaDefExpr->cloneMe();
+  else
+    node->m_macroParaDefExpr = NULL;
+  if (m_type == BRANCH){
+    node->m_leftNode = new ExpressionC();
+    node->m_leftNode = m_leftNode->cloneMe();
+    node->m_rightNode = new ExpressionC();
+    node->m_rightNode = m_rightNode->cloneMe();
+    node->m_leftNode->m_parentNode = node;
+    node->m_rightNode->m_parentNode = node;
+  }else{
+    node->m_leftNode = NULL;
+    node->m_rightNode = NULL;
+  }
+  return node;
+}
+
 void ExpressionC::copyTo(ExpressionC* node) const
 {
   if (!node || this==node)
@@ -116,6 +155,15 @@ void ExpressionC::copyTo(ExpressionC* node) const
       m_Function->copyTo(node->m_Function);
     }else
       node->m_Function = NULL;
+    if(m_macroParaDefExpr){
+      if (node->m_macroParaDefExpr){
+        node->m_macroParaDefExpr->clear();
+        SafeDelete(node->m_macroParaDefExpr);
+      }
+      node->m_macroParaDefExpr = new ExpressionC();
+      m_macroParaDefExpr->copyTo(node->m_macroParaDefExpr);
+    }else
+      node->m_macroParaDefExpr = NULL;
     if (m_type == BRANCH){
       if (m_leftNode){
         if (node->m_leftNode){
@@ -157,6 +205,11 @@ void ExpressionC::clear(){
     SafeDelete(m_Function);
   }
   m_operators.clear();
+  if (m_macroParaDefExpr){
+    m_macroParaDefExpr->clear();
+    SafeDelete(m_macroParaDefExpr);
+  }
+  //m_macroParaDefault.clear();
   
   init();
 }
@@ -487,11 +540,26 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         node->m_expstrAnalyzed = false;
         return false;
       }
+    }else if (expStr[0] == '~'){ // checking User Defined Macro Function Parameter ~nam[=val]~
+      size_t pos=0;
+      string sParastr = trim_copy(readQuotedStr(expStr, pos, "~~", "''", '\0', {}));
+      vector<string> vMacroNamVal = split(sParastr,'=',"''()",'\\',{'(',')'},false,true);
+      if (vMacroNamVal.size()==0 || trim_copy(vMacroNamVal[0]).empty()){
+        trace(FATAL, "(2) Macro function parameter '%s' has an invalid definition! \n", sParastr.c_str());
+        return false;
+      }
+      node->m_expStr = upper_copy(trim_copy(vMacroNamVal[0]));
+      node->m_expType = MACROPARA;
+      node->m_expstrAnalyzed = true;
+      node->m_datatype.datatype = ANY;
+      if (vMacroNamVal.size()>1)
+        node->m_macroParaDefExpr = new ExpressionC(trim_copy(vMacroNamVal[1]));
+      return true;
     }else if (expStr[0] == '\''){ // checking STRING string
       if (expStr.length()>1 && expStr[expStr.length()-1] == '\''){ // whole string is a STRING string
         int iOffSet;
         size_t iPos = 0;
-        node->m_expStr = readQuotedStr(expStr, iPos, "''", '\\');
+        node->m_expStr = readQuotedStr(expStr, iPos, "''", "", '\\', {});
         replacestr(node->m_expStr,{"\\'","\\t","\\v","\\n","\\r"},{"'","\t","\v","\n","\r"});
         trace(DEBUG, "Read STRING \"%s\" . \n", node->m_expStr.c_str());
         if (isDate(node->m_expStr, iOffSet, node->m_datatype.extrainfo))
@@ -777,7 +845,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
           m_datatype.datatype = STRING;
         else if(m_expStr.length()>=8 && m_expStr[1]=='R'&&m_expStr[2]=='['){
           size_t pos=0;
-          string s1 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0')), s2 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0'));
+          string s1 = upper_copy(readQuotedStr(m_expStr, pos, "[]", "''", '\0', {})), s2 = upper_copy(readQuotedStr(m_expStr, pos, "[]", "''", '\0', {}));
           if (s1.empty() || s2.empty()){
             trace(ERROR, "(1)Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
           }
@@ -823,6 +891,9 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         }
         //trace(DEBUG, "Expression '%s' type is %s, data type is '%s'\n", m_expStr.c_str(), decodeExptype(m_expType).c_str(),decodeDatatype(m_datatype.datatype).c_str());
         return m_datatype;
+      }else if (m_expType == MACROPARA){ // analy columns of the macro para default value.
+        if (m_macroParaDefExpr)
+          m_datatype = m_macroParaDefExpr->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes);
       }else if (m_expType == COLUMN){ // field data type could be detected more than once.
         if (m_colId>=0 && m_colId<fieldtypes->size())
           m_datatype = (*fieldtypes)[m_colId];
@@ -915,39 +986,6 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
 
 bool ExpressionC::columnsAnalyzed(){
     return m_metaDataAnzlyzed;
-}
-
-ExpressionC* ExpressionC::cloneMe(){
-  ExpressionC* node = new ExpressionC();
-  node->m_metaDataAnzlyzed = m_metaDataAnzlyzed;
-  node->m_expstrAnalyzed = m_expstrAnalyzed;
-  //node->predStr = predStr;
-  node->m_type = m_type;
-  node->m_operate = m_operate;
-  node->m_colId = m_colId;
-  node->m_datatype = m_datatype;
-  node->m_expType = m_expType;
-  node->m_funcID = m_funcID;
-  node->m_expStr = m_expStr;
-  node->m_fieldnames = m_fieldnames;
-  node->m_fieldtypes = m_fieldtypes;
-  node->m_rawDatatype = m_rawDatatype;
-  if (m_Function)
-    node->m_Function = m_Function->cloneMe();
-  else
-    node->m_Function = NULL;
-  if (m_type == BRANCH){
-    node->m_leftNode = new ExpressionC();
-    node->m_leftNode = m_leftNode->cloneMe();
-    node->m_rightNode = new ExpressionC();
-    node->m_rightNode = m_rightNode->cloneMe();
-    node->m_leftNode->m_parentNode = node;
-    node->m_rightNode->m_parentNode = node;
-  }else{
-    node->m_leftNode = NULL;
-    node->m_rightNode = NULL;
-  }
-  return node;
 }
 
 // get all involved colIDs in this expression
@@ -1313,7 +1351,7 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
         return true;
       }else if(m_expStr.length()>=8 && m_expStr[1]=='R'&&m_expStr[2]=='['){
         size_t pos=0;
-        string s1 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0')), s2 = upper_copy(readQuotedStr(m_expStr, pos, "[]", '\0'));
+        string s1 = upper_copy(readQuotedStr(m_expStr, pos, "[]", "''", '\0', {})), s2 = upper_copy(readQuotedStr(m_expStr, pos, "[]", "''", '\0', {}));
         if (s1.empty() || s2.empty()){
           trace(ERROR, "(2)Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
           return false;
@@ -1329,6 +1367,24 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
       }else{
         trace(ERROR, "Cannot find VARIABLE '%s'\n",m_expStr.c_str());
         return false;
+      }
+    }else if (m_expType == MACROPARA){
+      if (rds.macroFuncParas && rds.macroFuncParas->find(m_expStr)!=rds.macroFuncParas->end()){
+        sResult = (*rds.macroFuncParas)[m_expStr];
+        dts.datatype = ANY;
+        return true;
+      }else{
+        // use default value
+        if (m_macroParaDefExpr){
+          if (!m_macroParaDefExpr->evalExpression(rds, sResult, dts, getresultonly)){
+            trace(ERROR, "Failed to get the default value from '%s' for \n", m_expStr.c_str());
+            return false;
+          }
+          return true;
+        }else{
+          trace(ERROR, "Please provide the value of macro function parameter '%s'\n",m_expStr.c_str());
+          return false;
+        }
       }
     }else{
       trace(ERROR, "Unknown expression type of '%s'\n",m_expStr.c_str());
@@ -1566,7 +1622,7 @@ int ExpressionC::getSideWorkID() const
   if (m_type == LEAF){
     if (m_expType == VARIABLE && m_expStr.length()>=8 && m_expStr[1]=='R' && m_expStr[2]=='['){
       size_t pos=0;
-      string sID = readQuotedStr(m_expStr, pos, "[]", '\0');
+      string sID = readQuotedStr(m_expStr, pos, "[]", "''", '\0', {});
       if (isInt(sID))
         return atoi(sID.c_str());
       else

@@ -42,7 +42,7 @@ class ExpressionC
     short int m_type;       // 1: BRANCH; 2: LEAF
     short int m_operate;    // if type is BRANCH, 1: +; 2: -; 3: *; 4: /; 5: ^; . Otherwise, it's meaningless
     DataTypeStruct m_datatype;   // 1: STRING; 2: LONG; 3: INTEGER; 4: DOUBLE; 5: DATE; 6: TIMESTAMP; 7: BOOLEAN. Otherwise, it's meaningless
-    short int m_expType;    // if type is LEAF, the expression string type. 1: CONST, 2: COLUMN, 3: VARIABLE, 4:FUNCTION
+    short int m_expType;    // if type is LEAF, the expression string type. 1: CONST, 2: COLUMN, 3: VARIABLE, 4:FUNCTION, 5:MACROPARA
     short int m_funcID; // function ID when expression type is FUNCTION
     string m_expStr;  // if type is LEAF, the expression string, either be a CONST, COLUMN or FUNCTION; if type is BRANCH, it's the full expression string
     int m_colId;      // if type is LEAF, and the expression string type is COLUMN. it's id of column. Otherwise, it's meaningless
@@ -94,6 +94,9 @@ class ExpressionC
     vector<string>* m_fieldnames;  // all nodes (parent & children) point to the same address!!!
     vector<DataTypeStruct>* m_fieldtypes;     // all nodes (parent & children) point to the same address!!!
     DataTypeStruct* m_rawDatatype;
+
+    //unordered_map< string,string > m_macroParaDefault; // the initial value of the user defined macro function parameters.
+    ExpressionC* m_macroParaDefExpr; // if m_expType is MACROPARA, the default expression of the parameter.
 
     void dump(int deep);
     bool buildExpression();  // build expression class from the expression string

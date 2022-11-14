@@ -1775,3 +1775,8 @@
    13238   4176    php-fpm: pool www
    ...
    ```   
+-- Define macro function to make the query commands simple and clear <br/>
+   ```
+   # rq -u "myfunc:substr(~a~,instr(~a~,'.')+1,~b=3~)" -q "s myfunc(@1,5), myfunc(@2)" "asds.12345678 aasf.abcdefgh"
+   12345   abc
+   ```   

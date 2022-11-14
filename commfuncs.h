@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v1.11"
+#define VERSION "v1.12"
 
 #define UNKNOWN 0
 
@@ -176,25 +176,85 @@ using namespace std;
 #define REGCOUNT 76
 #define REGGET 77
 #define GETPARTS 78
-#define SUM 101
-#define COUNT 102
-#define UNIQUECOUNT 103
-#define MAX 104
-#define MIN 105
-#define AVERAGE 106
-#define GROUPLIST 107
-#define RANK 201
-#define PREVIOUS 202
-#define NEXT 203
-#define SEQNUM 204
-#define DENSERANK 205
-#define NEARBY 206
-#define SUMA 207
-#define COUNTA 208
-#define UNIQUECOUNTA 209
-#define MAXA 210
-#define MINA 211
-#define AVERAGEA 212
+#define ISLEAP 79
+#define WEEKDAY 80
+#define MONTHFIRSTDAY 81
+#define MONTHFIRSTMONDAY 82
+#define YEARWEEK 83
+#define DATETOLONG 84
+#define LONGTODATE 85
+#define URLENCODE 86
+#define URLDECODE 87
+#define BASE64ENCODE 88
+#define BASE64DECODE 89
+#define MD5 90
+#define HASH 91
+#define ISIP 92
+#define ISIPV6 93
+#define ISMAC 94
+#define MYIPS 95
+#define HOSTNAME 96
+#define RMEMBERS 97
+#define ISFILE 98
+#define ISFOLDER 99
+#define FILEEXIST 100
+#define ACOS 101
+#define ACOSH 102
+#define ASIN 103
+#define ASINH 104
+#define ATAN 105
+#define ATAN2 106
+#define ATANH 107
+#define CBRT 108
+#define COPYSIGN 109
+#define COS 110
+#define COSH 111
+#define ERF 112
+#define EXP 113
+#define EXP2 114
+#define FMA 115
+#define FMOD 116
+#define FPCLASSIFY 117
+#define HYPOT 118
+#define ILOGB 119
+#define ISFINITE 120
+#define ISINF 121
+#define ISNORMAL 122
+#define LGAMMA 123
+#define LOG10 124
+#define LOG2 125
+#define POW 126
+#define REMAINDER 127
+#define SCALBLN 128
+#define SCALBN 129
+#define SIN 130
+#define SINH 131
+#define SQRT 132
+#define TAN 133
+#define TANH 134
+#define TGAMMA 135
+#define PI 136
+#define TRUNCDATEU 137
+#define YEARDAY 138
+#define SUM 201
+#define COUNT 202
+#define UNIQUECOUNT 203
+#define MAX 204
+#define MIN 205
+#define AVERAGE 206
+#define GROUPLIST 207
+#define RANK 301
+#define PREVIOUS 302
+#define NEXT 303
+#define SEQNUM 304
+#define DENSERANK 305
+#define NEARBY 306
+#define SUMA 307
+#define COUNTA 308
+#define UNIQUECOUNTA 309
+#define MAXA 310
+#define MINA 311
+#define AVERAGEA 312
 #define FOREACH 501
 #define COLTOROW 502
 #define ANYCOL 503
@@ -428,6 +488,7 @@ int hextodec(const string& str);
 string dectobin(const int & val);
 int bintodec(const string& str);
 
+void cleanuptm(struct tm & tm); // clean up the messy date in tm, e.g. 2022 10 18 839979404 32764 839979424 => 2022 10 18 0 0 0
 bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt=DATEFMT);
 int localOffset();
 struct tm zonetime(time_t t1, string zone);
@@ -441,6 +502,10 @@ void addhours(struct tm & tm, int hours);
 void addseconds(struct tm & tm, int seconds);
 void addtime(struct tm & tm, int diff, char unit='S');
 string truncdate(const string & datesrc, const string & fmt, const int & seconds);
+string truncdateu(const string & datesrc, const string & fmt, const char & unit);
+string monthfirstmonday(const string & datesrc, const string & fmt);
+int yearweek(const string & datesrc, const string & fmt);
+int yearday(const string & datesrc, const string & fmt);
 struct tm convertzone(const struct tm & tm, const string & fromzone, const string & tozone);
 string convertzone(const string & sdate, const string & sFmt, const string & fromzone, const string & tozone);
 

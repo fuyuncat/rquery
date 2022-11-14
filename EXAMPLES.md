@@ -299,6 +299,78 @@
    ```
    2022-07-29:18:56:36     2022-07-29:18:00:00
    ```
+- truncdateu(date,unit) : Normal function. Truncate a date to a specific unit. s:second, m:minute, h:hour, d:day, b:month.<br/>
+   ```
+   rq -q "s now(), truncdateu(now(),'d')" " "
+   ```
+   Returns result:<br/>
+   ```
+   2022-11-18 19:17:31     2022-11-01 00:00:00
+   ```
+- isleap(date) : Normal function. If the year of the date is a leap year, return 1, otherwise, return 0.<br/>
+   ```
+   rq -q "s isleap('2022-11-18')" " "
+   ```
+   Returns result:<br/>
+   ```
+   0
+   ```
+- weekday(date) : Normal function. Return the the week day of the date, 1: Monday ... 7: Sunday.<br/>
+   ```
+   rq -q "s weekday(now())" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- monthfirstday(date) : Normal function. Return the date of the first day of the month.<br/>
+   ```
+   rq -q "s monthfirstday(now())" " "
+   ```
+   Returns result:<br/>
+   ```
+   2022-11-01 00:00:00
+   ```
+- monthfirstmonday(date) : Normal function. Return the date of the first Monday of the month.<br/>
+   ```
+   rq -q "s monthfirstmonday(now())" " "
+   ```
+   Returns result:<br/>
+   ```
+   2022-11-07 19:19:55
+   ```
+- yearweek(date) : Normal function. Return the week number of the date in the year.<br/>
+   ```
+   rq -q "s yearweek(now())" " "
+   ```
+   Returns result:<br/>
+   ```
+   46
+   ```
+- yearday(date) : Normal function. Return the day number of the date in the year.<br/>
+   ```
+   rq -q "s yearday(now())" " "
+   ```
+   Returns result:<br/>
+   ```
+   317
+   ```
+- datetolong(date) : Normal function. Return the seconds since 1970-01-01 00:00:00.<br/>
+   ```
+   rq -q "s datetolong(now())" " "
+   ```
+   Returns result:<br/>
+   ```
+   1668453667
+   ```
+- longtodate(seconds) : Normal function. Conver the a number of seconds since 1970-01-01 00:00:00 to a date.<br/>
+   ```
+   rq -q "s longtodate(1670483858)" " "
+   ```
+   Returns result:<br/>
+   ```
+   2022-12-08 07:17:38
+   ```
 - random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br/>
    ```
    rq -q "s random()" " "

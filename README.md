@@ -54,7 +54,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - tree k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree. <br />
          - report SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br />
          - variable name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]..] -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. Dynamic variable is not supported in the aggregation & analytic functions in current version. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files<br />
-         - macrofunc : funcname1:expression1[;funcname1:expression1..] -- Define macro functions for any expression. The parameter has a "~name[=default]~" format. The function passed in parameters keep the same order of the parameters presenting in the expression string, if the same parameter presents multiple time, the order sequence of the first occurence is the order of the passed in parameter.<br />
+         - macrofunc : funcname1:expression1[;funcname1:expression1..] -- Define macro functions for any expression. The function name cannot be any inline function name. The parameter has a "~name[=default]~" format. The function passed in parameters keep the same order of the parameters presenting in the expression string, if the same parameter presents multiple time, the order sequence of the first occurence is the order of the passed in parameter.<br />
          - run [query] : Run the preprocessed query of a provided query (refering to below part)<br />
 - options
    - --help|-h<br />
@@ -65,8 +65,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
    - --buffsize | -b size : The buffer size when read mode is buffer, default is 16384.<br />
    - --skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0.<br />
    - --variable | -v : "name1:value1[;name2:value2..]|name1:initvalue1:expression1[;name2:initvalue2:expression2...]|r:expression1[:filter][;r:expression2...]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
-   - --macrofunc | -u : funcname1:expression1[;funcname1:expression1..] -- Define macro functions for any expression. The parameter has a "~name[=default]~" format. The function passed in parameters keep the same order of the parameters presenting in the expression string, if the same parameter presents multiple time, the order sequence of the first occurence is the order of the passed in parameter.
-   - --macrofunc | -u "funcname1:expression1[;funcname1:expression1...]" -- Define macro functions, ~var[=default]~ represents the pass in parameter .<br />
+   - --macrofunc | -u : funcname1:expression1[;funcname1:expression1..] -- Define macro functions for any expression. The function name cannot be any inline function name. The parameter has a "~name[=default]~" format. The function passed in parameters keep the same order of the parameters presenting in the expression string, if the same parameter presents multiple time, the order sequence of the first occurence is the order of the passed in parameter.
    - --detecttyperows | -d <N> : How many matched rows will be used for detecting data types, default is 1.<br />
    - --delimiter | -i <string> : Specify the delimiter of the fields, TAB will be adapted if this option is not provided <br/>
    - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
@@ -156,6 +155,15 @@ Functions can be used in the expression. We current provide some essential norma
    - addtime(date, number, unit) : Normal function. Increase a datetime, unit can be s-second(default),m-minute,h-hour,d-day,n-month,y-year, number can be positive or negative interger.<br />
    - now() : Normal function. Get current date time.<br />
    - truncdate(date,seconds) : Normal function. Truncate a date a number is multiple of the given second number.<br />
+   - truncdateu(date,unit) : Normal function. Truncate a date to a specific unit. s:second, m:minute, h:hour, d:day, b:month.<br />
+   - isleap(date) : Normal function. If the year of the date is a leap year, return 1, otherwise, return 0.<br />
+   - weekday(date) : Normal function. Return the the week day of the date, 1: Monday ... 7: Sunday.<br />
+   - monthfirstday(date) : Normal function. Return the date of the first day of the month.<br />
+   - monthfirstmonday(date) : Normal function. Return the date of the first Monday of the month.<br />
+   - yearweek(date) : Normal function. Return the week number of the date in the year.<br />
+   - yearday(date) : Normal function. Return the day number of the date in the year.<br />
+   - datetolong(date) : Normal function. Return the seconds since 1970-01-01 00:00:00.<br />
+   - longtodate(seconds) : Normal function. Conver the a number of seconds since 1970-01-01 00:00:00 to a date.<br />
 
    - fieldname(fieldid) : Normal function. Return the filed name of a field (column).<br />
    - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />

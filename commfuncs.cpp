@@ -177,6 +177,7 @@ void TimeZone::init()
         sOff = "0"+sOff;
       string curtime = time+" +"+sOff;
       char * c = strptime(curtime.c_str(), sFm.c_str(), &tm);
+      cleanuptm(tm);
       if (c && c == curtime.c_str()+curtime.length())
         m_nameoffmap.insert(pair<string,int>(tm.tm_zone?string(tm.tm_zone):"", tm.tm_gmtoff/36));
       //if (strToDate(curtime, tm, iCurOff, sFm))
@@ -1308,6 +1309,22 @@ int bintodec(const string& str)
   return val;
 }
 
+void cleanuptm(struct tm & tm)
+{
+  if (abs(tm.tm_gmtoff) > 43200)
+    tm.tm_gmtoff = 0;
+  if (abs(tm.tm_sec > 60))
+    tm.tm_sec = 0;
+  if (abs(tm.tm_min > 60))
+    tm.tm_min = 0;
+  if (abs(tm.tm_hour > 60))
+    tm.tm_hour = 0;
+  if (abs(tm.tm_mday > 32))
+    tm.tm_mday = 1;
+  if (abs(tm.tm_mon > 12))
+    tm.tm_mday = 0;
+}
+
 #if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
 extern int putenv(char*);
 #endif
@@ -1316,8 +1333,8 @@ extern int putenv(char*);
 struct tm zonetime(time_t t1, string zone)
 {
   char const* tmp = getenv( "TZ" );
+  trace(DEBUG2, "(zonetime) begin TZ: %s, offset: %d \n", tmp, timezone);
   struct tm tm;
-  string sOldTimeZone = tmp?string(tmp):"";
   string sNewTimeZone = zone;
 #if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
   putenv(const_cast<char *>(string("TZ="+sNewTimeZone).c_str()));
@@ -1332,15 +1349,25 @@ struct tm zonetime(time_t t1, string zone)
   //trace(DEBUG2, "Setting timezone to '%s'(%d)\n", sNewTimeZone.c_str(), iOffSet);
   tm = *(localtime(&t1));
 #if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
-  putenv(const_cast<char *>(string("TZ="+sOldTimeZone).c_str()));
+  if (tmp)
+    putenv(const_cast<char *>(string("TZ="+string(tmp)).c_str()));
+  else
+    unsetenv("TZ");
   system("set"); 
 #elif defined _WIN32 || defined _WIN64
-  putenv(("TZ="+sOldTimeZone).c_str());
+  if (tmp)
+    putenv(("TZ="+string(tmp)).c_str());
+  else
+    unsetenv("TZ");
   tzset();
 #else
-  setenv("TZ", sOldTimeZone.c_str(), 1);
+  if (tmp)
+    setenv("TZ", tmp, 1);
+  else
+    unsetenv("TZ");
   tzset();
 #endif
+  trace(DEBUG2, "(zonetime) end TZ: %s, offset: %d\n", getenv( "TZ" ), timezone);
   return tm;
 }
 
@@ -1522,6 +1549,8 @@ bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
   }
   // bare in mind: strptime will ignore %z. means we need to treat its returned time as GMT time
   char * c = strptime(sRaw.c_str(), sFm.c_str(), &tm);
+  // if the date lack of some time info, e.g. 2022-11-18 dont have time info, the time info like tm_sec in tm will be a random number. need to use cleanuptm to do cleanup.
+  cleanuptm(tm);
   if (c && c == sRaw.c_str()+sRaw.length()){
   //if (c && string(c).empty()){
     //trace(DEBUG2, "(1)Converting '%s' => %d %d %d %d %d %d %d offset %d format '%s' \n",sRaw.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, iOffSet, sFm.c_str());
@@ -1774,21 +1803,138 @@ string truncdate(const string & datesrc, const string & fmt, const int & seconds
   string sResult, sFmt = fmt;
   int iOffSet;
   if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
-    trace(ERROR, "'%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
+    trace(ERROR, "(truncdate) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
   else if (strToDate(datesrc, tm, iOffSet, sFmt)){
     time_t t1 = mktime(&tm) - timezone; // adjust timezone
     time_t t2 = (time_t)(trunc((long double)t1/seconds))*seconds - timezone; // adjust timezone for gmtime
-    trace(DEBUG2, "(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d seconds: %d t2: %d timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, seconds, (long) t2, timezone);
+    trace(DEBUG2, "(truncdate)(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d seconds: %d t2: %d timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, seconds, (long) t2, timezone);
     //tm = *(localtime(&t2));
     tm = *(gmtime(&t2));
     //tm = zonetime(t2, 0); // as tm returned from strToDate is GMT time
     sResult = dateToStr(tm, iOffSet, sFmt);
-    trace(DEBUG2, "(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    trace(DEBUG2, "(truncdate)(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
     //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", seconds, datesrc.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
   }else{
-    trace(ERROR, "'%s' is not a correct date!\n", datesrc.c_str());
+    trace(ERROR, "(truncdate)'%s' is not a correct date!\n", datesrc.c_str());
   }
   return sResult;
+}
+
+string truncdateu(const string & datesrc, const string & fmt, const char & unit)
+{
+  struct tm tm;
+  string sResult, sFmt = fmt;
+  int iOffSet;
+  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+    trace(ERROR, "(truncdateu) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
+  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+    switch(unit){
+      case 'b':
+      case 'B':
+        tm.tm_mon = 0;
+        tm.tm_mday = 1;
+        tm.tm_min = 0;
+        tm.tm_sec = 0;
+        // adjust timezone
+        addhours(tm, -1*(tm.tm_hour+(iOffSet/100)));
+        //if (iOffSet<0)
+        //  addtime(tm, 1, 'd');
+        break;
+      case 'd':
+      case 'D':
+      default:
+        tm.tm_mday = 1;
+        tm.tm_min = 0;
+        tm.tm_sec = 0;
+        // adjust timezone
+        addhours(tm, -1*(tm.tm_hour+(iOffSet/100)));
+        //if (iOffSet<0)
+        //  addtime(tm, 1, 'd');
+        break;
+      case 'h':
+      case 'H':
+        tm.tm_min = 0;
+        tm.tm_sec = 0;
+        // adjust timezone
+        addhours(tm, -1*(tm.tm_hour+(iOffSet/100)));
+        break;
+      case 'm':
+      case 'M':
+        tm.tm_min = 0;
+        tm.tm_sec = 0;
+        break;
+      case 's':
+      case 'S':
+        tm.tm_sec = 0;
+        break;
+    }
+    time_t t1 = mktime(&tm) - timezone - timezone; // adjust timezone, one for mktime converting, one for the gmtime
+    trace(DEBUG2, "(truncdateu)(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, timezone);
+    tm = *(gmtime(&t1));
+    sResult = dateToStr(tm, iOffSet, sFmt);
+    trace(DEBUG2, "(truncdateu)(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", seconds, datesrc.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
+  }else{
+    trace(ERROR, "(truncdateu) '%s' is not a correct date!\n", datesrc.c_str());
+  }
+  return sResult;
+}
+
+string monthfirstmonday(const string & datesrc, const string & fmt)
+{
+  struct tm tm;
+  string sResult, sFmt = fmt;
+  int iOffSet;
+  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+    trace(ERROR, "(monthfirstmonday) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
+  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+    trace(DEBUG2, "(monthfirstmonday)(a)get monthfirstmonday '%s' (%d) %d %d %d %d %d %d; timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    tm.tm_mday = tm.tm_mday%7;
+    if (tm.tm_mday == 0)
+      tm.tm_mday = 7;
+    int stdwday = tm.tm_wday==0?7:tm.tm_wday;
+    if (stdwday!=1)
+      tm.tm_mday = tm.tm_mday>=stdwday?tm.tm_mday-(stdwday-1):tm.tm_mday+(8-stdwday);
+    time_t t1 = mktime(&tm) - timezone - timezone; // adjust timezone, one for mktime converting, one for the gmtime
+    tm = *(gmtime(&t1));
+    sResult = dateToStr(tm, iOffSet, sFmt);
+    trace(DEBUG2, "(monthfirstmonday)(b)get monthfirstmonday '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+  }else{
+    trace(ERROR, "(monthfirstmonday) '%s' is not a correct date!\n", datesrc.c_str());
+  }
+  return sResult;
+}
+
+int yearweek(const string & datesrc, const string & fmt)
+{
+  struct tm tm;
+  string sResult, sFmt = fmt;
+  int iOffSet;
+  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+    trace(ERROR, "(yearweek) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
+  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+    // get the day in the first week
+    int sday = tm.tm_yday%7;
+    return (tm.tm_yday-sday)/7+(sday>=tm.tm_wday?1:0);
+  }else{
+    trace(ERROR, "(yearweek) '%s' is not a correct date!\n", datesrc.c_str());
+    return -1;
+  }
+}
+
+int yearday(const string & datesrc, const string & fmt)
+{
+  struct tm tm;
+  string sResult, sFmt = fmt;
+  int iOffSet;
+  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+    trace(ERROR, "(yearday) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
+  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+    return tm.tm_yday;
+  }else{
+    trace(ERROR, "(yearday) '%s' is not a correct date!\n", datesrc.c_str());
+    return -1;
+  }
 }
 
 struct tm convertzone(const struct tm & tm, const string & fromzone, const string & tozone)
@@ -2339,6 +2485,10 @@ short int encodeFunction(string str)
     return DATEFORMAT;
   else if(sUpper.compare("TRUNCDATE")==0)
     return TRUNCDATE;
+  else if(sUpper.compare("TRUNCDATEU")==0)
+    return TRUNCDATEU;
+  else if(sUpper.compare("YEARDAY")==0)
+    return YEARDAY;
   else if(sUpper.compare("NOW")==0)
     return NOW;
   else if(sUpper.compare("DETECTDT")==0)
@@ -2357,6 +2507,122 @@ short int encodeFunction(string str)
     return REGCOUNT;
   else if(sUpper.compare("REGGET")==0)
     return REGGET;
+  else if(sUpper.compare("ISLEAP")==0)
+    return ISLEAP;
+  else if(sUpper.compare("WEEKDAY")==0)
+    return WEEKDAY;
+  else if(sUpper.compare("MONTHFIRSTDAY")==0)
+    return MONTHFIRSTDAY;
+  else if(sUpper.compare("MONTHFIRSTMONDAY")==0)
+    return MONTHFIRSTMONDAY;
+  else if(sUpper.compare("YEARWEEK")==0)
+    return YEARWEEK;
+  else if(sUpper.compare("DATETOLONG")==0)
+    return DATETOLONG;
+  else if(sUpper.compare("LONGTODATE")==0)
+    return LONGTODATE;
+  else if(sUpper.compare("URLENCODE")==0)
+    return URLENCODE;
+  else if(sUpper.compare("URLDECODE")==0)
+    return URLDECODE;
+  else if(sUpper.compare("BASE64ENCODE")==0)
+    return BASE64ENCODE;
+  else if(sUpper.compare("BASE64DECODE")==0)
+    return BASE64DECODE;
+  else if(sUpper.compare("MD5")==0)
+    return MD5;
+  else if(sUpper.compare("HASH")==0)
+    return HASH;
+  else if(sUpper.compare("ISIP")==0)
+    return ISIP;
+  else if(sUpper.compare("ISIPV6")==0)
+    return ISIPV6;
+  else if(sUpper.compare("ISMAC")==0)
+    return ISMAC;
+  else if(sUpper.compare("MYIPS")==0)
+    return MYIPS;
+  else if(sUpper.compare("HOSTNAME")==0)
+    return HOSTNAME;
+  else if(sUpper.compare("RMEMBERS")==0)
+    return RMEMBERS;
+  else if(sUpper.compare("ISFILE")==0)
+    return ISFILE;
+  else if(sUpper.compare("ISFOLDER")==0)
+    return ISFOLDER;
+  else if(sUpper.compare("FILEEXIST")==0)
+    return FILEEXIST;
+  else if(sUpper.compare("ACOS")==0)
+    return ACOS;
+  else if(sUpper.compare("ACOSH")==0)
+    return ACOSH;
+  else if(sUpper.compare("ASIN")==0)
+    return ASIN;
+  else if(sUpper.compare("ASINH")==0)
+    return ASINH;
+  else if(sUpper.compare("ATAN")==0)
+    return ATAN;
+  else if(sUpper.compare("ATAN2")==0)
+    return ATAN2;
+  else if(sUpper.compare("ATANH")==0)
+    return ATANH;
+  else if(sUpper.compare("CBRT")==0)
+    return CBRT;
+  else if(sUpper.compare("COPYSIGN")==0)
+    return COPYSIGN;
+  else if(sUpper.compare("COS")==0)
+    return COS;
+  else if(sUpper.compare("COSH")==0)
+    return COSH;
+  else if(sUpper.compare("ERF")==0)
+    return ERF;
+  else if(sUpper.compare("EXP")==0)
+    return EXP;
+  else if(sUpper.compare("EXP2")==0)
+    return EXP2;
+  else if(sUpper.compare("FMA")==0)
+    return FMA;
+  else if(sUpper.compare("FMOD")==0)
+    return FMOD;
+  else if(sUpper.compare("FPCLASSIFY")==0)
+    return FPCLASSIFY;
+  else if(sUpper.compare("HYPOT")==0)
+    return HYPOT;
+  else if(sUpper.compare("ILOGB")==0)
+    return ILOGB;
+  else if(sUpper.compare("ISFINITE")==0)
+    return ISFINITE;
+  else if(sUpper.compare("ISINF")==0)
+    return ISINF;
+  else if(sUpper.compare("ISNORMAL")==0)
+    return ISNORMAL;
+  else if(sUpper.compare("LGAMMA")==0)
+    return LGAMMA;
+  else if(sUpper.compare("LOG10")==0)
+    return LOG10;
+  else if(sUpper.compare("LOG2")==0)
+    return LOG2;
+  else if(sUpper.compare("POW")==0)
+    return POW;
+  else if(sUpper.compare("REMAINDER")==0)
+    return REMAINDER;
+  else if(sUpper.compare("SCALBLN")==0)
+    return SCALBLN;
+  else if(sUpper.compare("SCALBN")==0)
+    return SCALBN;
+  else if(sUpper.compare("SIN")==0)
+    return SIN;
+  else if(sUpper.compare("SINH")==0)
+    return SINH;
+  else if(sUpper.compare("SQRT")==0)
+    return SQRT;
+  else if(sUpper.compare("TAN")==0)
+    return TAN;
+  else if(sUpper.compare("TANH")==0)
+    return TANH;
+  else if(sUpper.compare("TGAMMA")==0)
+    return TGAMMA;
+  else if(sUpper.compare("PI")==0)
+    return PI;
   else if(sUpper.compare("SUM")==0)
     return SUM;
   else if(sUpper.compare("COUNT")==0)

@@ -327,6 +327,11 @@ bool FunctionC::analyzeExpStr()
     case ISSTRING:
     case COUNTPART:
     case REGCOUNT:
+    case ISLEAP:
+    case WEEKDAY:
+    case YEARWEEK:
+    case YEARDAY:
+    case DATETOLONG:
       m_datatype.datatype = LONG;
       break;
     case ROUND:
@@ -344,9 +349,13 @@ bool FunctionC::analyzeExpStr()
       break;
     case NOW:
     case TRUNCDATE:
+    case TRUNCDATEU:
     case ZONECONVERT:
     case ADDTIME:
     case TODATE:
+    case MONTHFIRSTDAY:
+    case MONTHFIRSTMONDAY:
+    case LONGTODATE:
       m_datatype.datatype = DATE;
       break;
     case MAX:
@@ -405,7 +414,7 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
     m_filters[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
     trace(DEBUG2, "Analyzing filter '%s' in function '%s' (%d)\n", m_filters[i].m_expStr.c_str(), m_expStr.c_str(),m_filters[i].columnsAnalyzed());
   }
-  if (m_funcID == TRUNCDATE || m_funcID==GROUPLIST)
+  if (m_funcID == TRUNCDATE || m_funcID == TRUNCDATEU || m_funcID==GROUPLIST)
     m_datatype = m_params[0].m_datatype;
   return m_datatype;
 }
@@ -1808,7 +1817,7 @@ bool FunctionC::runSnakestr(RuntimeDataStruct & rds, string & sResult, DataTypeS
 bool FunctionC::runTruncdate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 2){
-    trace(ERROR, "truncdate(date, fmt) function accepts only two parameters.\n");
+    trace(ERROR, "truncdate(date,seconds) function accepts only two parameters.\n");
     return false;
   }
   string sTm, sSeconds;
@@ -1818,6 +1827,25 @@ bool FunctionC::runTruncdate(RuntimeDataStruct & rds, string & sResult, DataType
     sResult = truncdate(sTm, dts.extrainfo, iSeconds);
     dts.datatype = DATE;
     //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", iSeconds, sTm.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
+    return !sResult.empty();
+  }else{
+    trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+    return false;
+  }  
+}
+
+bool FunctionC::runTruncdateu(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "truncdateu(date, unit) function accepts only two parameters.\n");
+    return false;
+  }
+  string sTm, sUnit;
+  DataTypeStruct tmpDts;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && m_params[1].evalExpression(rds, sUnit, tmpDts, true) && !sUnit.empty()){
+    sResult = truncdateu(sTm, dts.extrainfo, sUnit[0]);
+    dts.datatype = DATE;
+    //trace(DEBUG, "Truncating from '%s'(%u) get '%s'(%u), format:%s\n", sTm.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
     return !sResult.empty();
   }else{
     trace(ERROR, "Failed to run truncdate(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
@@ -1860,6 +1888,165 @@ bool FunctionC::runNow(RuntimeDataStruct & rds, string & sResult, DataTypeStruct
   }
   struct tm curtime = now();
   sResult = dateToStr(curtime);
+  dts.datatype = DATE;
+  return true;
+}
+
+bool FunctionC::runIsleap(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isleap() function accepts only one parameter.\n");
+    return false;
+  }
+  string sTm;
+  int offSet;
+  DataTypeStruct tmpDts;
+  struct tm tm1;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+    sResult = intToStr(tm1.tm_year%400==0 || (tm1.tm_year%4==0 && tm1.tm_year%100!=0));
+  }else{
+    trace(ERROR, "Failed to run isleap(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
+  dts.datatype = LONG;
+  return true;
+}
+
+bool FunctionC::runWeekday(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "weekday() function accepts only one parameter.\n");
+    return false;
+  }
+  string sTm;
+  int offSet;
+  DataTypeStruct tmpDts;
+  struct tm tm1;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+    sResult = intToStr(tm1.tm_wday==0?7:tm1.tm_wday);
+  }else{
+    trace(ERROR, "Failed to run weekday(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
+  dts.datatype = LONG;
+  return true;
+}
+
+bool FunctionC::runMonthfirstday(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "monthfirstday() function accepts only one parameter.\n");
+    return false;
+  }
+  string sTm;
+  int offSet;
+  DataTypeStruct tmpDts;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo)){
+    sResult = truncdateu(sTm, dts.extrainfo, 'd');
+  }else{
+    trace(ERROR, "Failed to run weekday(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
+  dts.datatype = DATE;
+  return true;
+}
+
+bool FunctionC::runMonthfirstmonday(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "monthfirstmonday() function accepts only one parameter.\n");
+    return false;
+  }
+  string sTm;
+  int offSet;
+  DataTypeStruct tmpDts;
+  struct tm tm1;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+    sResult = monthfirstmonday(sTm, dts.extrainfo);
+  }else{
+    trace(ERROR, "Failed to run monthfirstmonday(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
+  dts.datatype = DATE;
+  return true;
+}
+
+bool FunctionC::runYearweek(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "yearweek() function accepts only one parameter.\n");
+    return false;
+  }
+  string sTm;
+  int offSet;
+  DataTypeStruct tmpDts;
+  struct tm tm1;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+    sResult = intToStr(yearweek(sTm, dts.extrainfo));
+  }else{
+    trace(ERROR, "Failed to run yearweek(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
+  dts.datatype = LONG;
+  return true;
+}
+
+bool FunctionC::runYearday(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "yearday() function accepts only one parameter.\n");
+    return false;
+  }
+  string sTm;
+  int offSet;
+  DataTypeStruct tmpDts;
+  struct tm tm1;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+    sResult = intToStr(yearday(sTm, dts.extrainfo));
+  }else{
+    trace(ERROR, "Failed to run yearday(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
+  dts.datatype = LONG;
+  return true;
+}
+
+bool FunctionC::runDatetolong(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "datetolong() function accepts only one parameter.\n");
+    return false;
+  }
+  string sTm;
+  int offSet;
+  DataTypeStruct tmpDts;
+  struct tm tm1;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+    sResult = intToStr((long)mktime(&tm1) - timezone);
+  }else{
+    trace(ERROR, "Failed to run datetolong(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
+  dts.datatype = LONG;
+  return true;
+}
+
+bool FunctionC::runLongtodate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "longtodate() function accepts only one parameter.\n");
+    return false;
+  }
+  string sLong;
+  struct tm tm1;
+  if (m_params[0].evalExpression(rds, sLong, dts, true) && isLong(sLong)){
+    time_t t1 = (time_t)atol(sLong.c_str());
+    tm1 = *(localtime(&t1));
+    sResult = dateToStr(tm1, 0, DATEFMT);;
+  }else{
+    trace(ERROR, "Failed to run longtodate(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
   dts.datatype = DATE;
   return true;
 }
@@ -2622,8 +2809,35 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
     case TRUNCDATE:
       getResult = runTruncdate(rds, sResult, dts);
       break;
+    case TRUNCDATEU:
+      getResult = runTruncdateu(rds, sResult, dts);
+      break;
+    case YEARDAY:
+      getResult = runYearday(rds, sResult, dts);
+      break;
     case NOW:
       getResult = runNow(rds, sResult, dts);
+      break;
+    case ISLEAP:
+      getResult = runIsleap(rds, sResult, dts);
+      break;
+    case WEEKDAY:
+      getResult = runWeekday(rds, sResult, dts);
+      break;
+    case MONTHFIRSTDAY:
+      getResult = runMonthfirstday(rds, sResult, dts);
+      break;
+    case MONTHFIRSTMONDAY:
+      getResult = runMonthfirstmonday(rds, sResult, dts);
+      break;
+    case YEARWEEK:
+      getResult = runYearweek(rds, sResult, dts);
+      break;
+    case DATETOLONG:
+      getResult = runDatetolong(rds, sResult, dts);
+      break;
+    case LONGTODATE:
+      getResult = runLongtodate(rds, sResult, dts);
       break;
     case EXEC:
       getResult = runExec(rds, sResult, dts);

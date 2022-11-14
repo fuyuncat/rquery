@@ -136,6 +136,7 @@ class FunctionC
     bool runAbs(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runDateformat(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runTruncdate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runTruncdateu(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runNow(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runExec(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runDetectdt(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
@@ -146,6 +147,15 @@ class FunctionC
     bool runCountpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runRegcount(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runRegget(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsleap(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runWeekday(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runMonthfirstday(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runMonthfirstmonday(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runYearweek(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runYearday(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runDatetolong(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runLongtodate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+
     bool runUsermacro(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 
   protected:

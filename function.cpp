@@ -290,6 +290,12 @@ bool FunctionC::analyzeExpStr()
     case EXEC:
     case DETECTDT:
     case REGGET:
+    case URLENCODE:
+    case URLDECODE:
+    case BASE64ENCODE:
+    case BASE64DECODE:
+    case MD5:
+    case HASH:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -1148,6 +1154,108 @@ bool FunctionC::runChar(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
   }
 }
 
+bool FunctionC::runUrlencode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "urlencode() function accepts only one parameter.\n");
+    return false;
+  }
+  string url;
+  if (m_params[0].evalExpression(rds, url, dts, true)){
+    dts.datatype = STRING;
+    sResult = urlencode(url);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run urlencode(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runUrldecode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "urldecode() function accepts only one parameter.\n");
+    return false;
+  }
+  string encoded;
+  if (m_params[0].evalExpression(rds, encoded, dts, true)){
+    dts.datatype = STRING;
+    sResult = urldecode(encoded);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run urldecode(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runBase64encode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "base64encode() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = STRING;
+    sResult = base64encode(str);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run base64encode(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runBase64decode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "base64decode() function accepts only one parameter.\n");
+    return false;
+  }
+  string encoded;
+  if (m_params[0].evalExpression(rds, encoded, dts, true)){
+    dts.datatype = STRING;
+    sResult = base64decode(encoded);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run base64decode(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runMd5(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "md5() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = STRING;
+    sResult = md5(str);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run md5(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runHash(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "hash() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = STRING;
+    sResult = hashstr(str);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run hash(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
 bool FunctionC::runComparenum(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 2){
@@ -1869,6 +1977,7 @@ bool FunctionC::runDateformat(RuntimeDataStruct & rds, string & sResult, DataTyp
   if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, iOffSet, dts.extrainfo)){
     struct tm tm;
     if (strToDate(sTm, tm, iOffSet, dts.extrainfo)){
+      addhours(tm, -timezone/3600);
       sResult = dateToStr(tm, iOffSet, m_params.size()==1?dts.extrainfo:sFmt);
       dts.datatype = STRING;
       return !sResult.empty();
@@ -1889,7 +1998,8 @@ bool FunctionC::runNow(RuntimeDataStruct & rds, string & sResult, DataTypeStruct
     return false;
   }
   struct tm curtime = now();
-  sResult = dateToStr(curtime);
+  sResult = dateToStr(curtime, curtime.tm_gmtoff/36, string(DATEFMT)+" %z");
+  //sResult = dateToStr(curtime);
   dts.datatype = DATE;
   return true;
 }
@@ -2777,6 +2887,24 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case CHAR:
       getResult = runChar(rds, sResult, dts);
+      break;
+    case URLENCODE:
+      getResult = runUrlencode(rds, sResult, dts);
+      break;
+    case URLDECODE:
+      getResult = runUrldecode(rds, sResult, dts);
+      break;
+    case BASE64ENCODE:
+      getResult = runBase64encode(rds, sResult, dts);
+      break;
+    case BASE64DECODE:
+      getResult = runBase64decode(rds, sResult, dts);
+      break;
+    case MD5:
+      getResult = runMd5(rds, sResult, dts);
+      break;
+    case HASH:
+      getResult = runHash(rds, sResult, dts);
       break;
     case MOD:
       getResult = runMod(rds, sResult, dts);

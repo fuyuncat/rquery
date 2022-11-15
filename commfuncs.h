@@ -473,6 +473,14 @@ void replacestr(string & sRaw, const vector<string> & vReplace, const vector<str
 void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, string quoters = "''", char escape = '\\', std::set<char> nestedQuoters={'(',')'});
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew);
 void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr);
+char from_hex(const char & ch);
+char to_hex(const char & code);
+string urlencode(const string & sUrl);
+string urldecode(const string & sEncoded);
+string base64encode(const string & str);
+string base64decode(const string & sEncoded);
+string md5(const string & str);
+string hashstr(const string & str);
 
 bool isNumber(const string& str);
 bool isInt(const string& str);
@@ -482,6 +490,8 @@ bool isDouble(const string& str);
 bool isDate(const string& str, int & iOffSet, string& fmt);
 string intToStr(const int val);
 string longToStr(const long val);
+string longlongToStr(const long long val);
+string longuintToStr(const long unsigned int val);
 string floatToStr(const float val);
 string doubleToStr(const double val);
 string dateToStr(struct tm val, int iOffSet = 888888, string fmt = DATEFMT);

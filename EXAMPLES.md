@@ -219,6 +219,54 @@
    ```
    a
    ```
+- urlencode(url) : Normal function. Encode an URL string.<br />
+   ```
+   rq -q "s urlencode('https://github.com/fuyuncat/rquery/releases/download/v1.11/rquery-v1.11.el7.x86_64.rpm')" " "
+   ```
+   Returns result:<br/>
+   ```
+   https%3a%2f%2fgithub.com%2ffuyuncat%2frquery%2freleases%2fdownload%2fv1.11%2frquery-v1.11.el7.x86_64.rpm
+   ```
+- urldecode(encodedstr) : Normal function. Decode an encoded string to an URL string.<br />
+   ```
+   rq -q "s urldecode('https%3a%2f%2fgithub.com%2ffuyuncat%2frquery%2freleases%2fdownload%2fv1.11%2frquery-v1.11.el7.x86_64.rpm')" " "
+   ```
+   Returns result:<br/>
+   ```
+   https://github.com/fuyuncat/rquery/releases/download/v1.11/rquery-v1.11.el7.x86_64.rpm
+   ```
+- base64encode(str) : Normal function. Encode a string to base64 code.<br />
+   ```
+   rq -q "s base64encode('https://github.com/fuyuncat/rquery/releases/download/v1.11/rquery-v1.11.el7.x86_64.rpm')" " "
+   ```
+   Returns result:<br/>
+   ```
+   aHR0cHM6Ly9naXRodWIuY29tL2Z1eXVuY2F0L3JxdWVyeS9yZWxlYXNlcy9kb3dubG9hZC92MS4xMS9ycXVlcnktdjEuMTEuZWw3Lng4Nl82NC5ycG0=
+   ```
+- base64decode(encodedstr) : Normal function. Decode a base64 code string.<br />
+   ```
+   rq -q "s base64decode('aHR0cHM6Ly9naXRodWIuY29tL2Z1eXVuY2F0L3JxdWVyeS9yZWxlYXNlcy9kb3dubG9hZC92MS4xMS9ycXVlcnktdjEuMTEuZWw3Lng4Nl82NC5ycG0=')" " "
+   ```
+   Returns result:<br/>
+   ```
+   https://github.com/fuyuncat/rquery/releases/download/v1.11/rquery-v1.11.el7.x86_64.rpm
+   ```
+- md5(str) : Normal function. Get the MD5 value of a string.<br />
+   ```
+   rq -q "s md5('https://github.com/fuyuncat/rquery/releases/download/v1.11/rquery-v1.11.el7.x86_64.rpm')" " "
+   ```
+   Returns result:<br/>
+   ```
+   014f8cfb5f5c36ede34a9a5c0593a92f
+   ```
+- hash(str) : Normal function. Get the hash value of a string.<br />
+   ```
+   rq -q "s hash('https://github.com/fuyuncat/rquery/releases/download/v1.11/rquery-v1.11.el7.x86_64.rpm')" " "
+   ```
+   Returns result:<br/>
+   ```
+   14822156803265260030
+   ```
 - mod(num,div) : Normal function. Get the mod of a number.<br />
    ```
    echo " " | rq -q "s mod(255,7)"

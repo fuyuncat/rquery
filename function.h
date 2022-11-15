@@ -157,6 +157,12 @@ class FunctionC
     bool runLongtodate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runLocaltime(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runGmtime(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runUrlencode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runUrldecode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runBase64encode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runBase64decode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runMd5(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runHash(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 
     bool runUsermacro(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 

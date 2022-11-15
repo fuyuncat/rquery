@@ -141,6 +141,12 @@ Functions can be used in the expression. We current provide some essential norma
    - revertstr(str) : Normal function. Convert a string to reverse sequence (e.g. abc -> cba).<br />
    - ascii(char) : Normal function. Get the ascii code of a char.<br />
    - char(int) : Normal function. Get character of an ascii code number.<br />
+   - urlencode(url) : Normal function. Encode an URL string.<br />
+   - urldecode(encodedstr) : Normal function. Decode an encoded string to an URL string.<br />
+   - base64encode(str) : Normal function. Encode a string to base64 code.<br />
+   - base64decode(encodedstr) : Normal function. Decode a base64 code string.<br />
+   - md5(str) : Normal function. Get the MD5 value of a string.<br />
+   - hash(str) : Normal function. Get the hash value of a string.<br />
 
    - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
    - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />

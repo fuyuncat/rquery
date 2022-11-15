@@ -979,6 +979,285 @@ string revertstr(const string & str)
   return reverse;
 }
 
+char from_hex(const char & ch)
+{
+  return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+}
+
+char to_hex(const char & code)
+{
+  static char hex[] = "0123456789abcdef";
+  return hex[code & 15];
+}
+
+string urlencode(const string & sUrl)
+{
+  string ecurl;
+  for(int i=0; i<sUrl.length(); i++){
+    if (isalnum(sUrl[i]) || sUrl[i] == '-' || sUrl[i] == '_' || sUrl[i] == '.' || sUrl[i] == '~') 
+      ecurl.push_back(sUrl[i]);
+    else if (sUrl[i] == ' ') 
+      ecurl.push_back('+');
+    else{ 
+      ecurl.push_back('%');
+      ecurl.push_back(to_hex(sUrl[i] >> 4));
+      ecurl.push_back(to_hex(sUrl[i] & 15));
+    }
+  }
+  return ecurl;
+}
+
+string urldecode(const string & sEncoded)
+{
+  string url;
+  for(int i=0; i<sEncoded.length(); i++){
+    if (sEncoded[i] == '%') {
+      if (sEncoded[i+1] && sEncoded[i+2]) {
+        url.push_back(from_hex(sEncoded[i+1]) << 4 | from_hex(sEncoded[i+2]));
+        i += 2;
+      }
+    } else if (sEncoded[i] == '+') { 
+      url.push_back(' ');
+    } else {
+      url.push_back(sEncoded[i]);
+    }
+  }
+  return url;
+}
+
+static const string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static inline bool is_base64(unsigned char c) 
+{
+  return (isalnum(c) || (c == '+') || (c == '/'));
+}
+
+string base64encode(const string & str)
+{
+  string ret;
+  int i = 0;
+  int j = 0;
+  unsigned int p = 0;
+  unsigned char char_array_3[3];
+  unsigned char char_array_4[4];
+  unsigned int in_len = str.length();
+
+  while (in_len--) {
+    char_array_3[i++] = str[p];
+    p++;
+    if (i == 3) {
+      char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+      char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+      char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+      char_array_4[3] = char_array_3[2] & 0x3f;
+
+      for(i = 0; (i <4) ; i++)
+        ret += base64_chars[char_array_4[i]];
+      i = 0;
+    }
+  }
+
+  if (i)
+  {
+    for(j = i; j < 3; j++)
+      char_array_3[j] = '\0';
+
+    char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+    char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+    char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+    char_array_4[3] = char_array_3[2] & 0x3f;
+
+    for (j = 0; (j < i + 1); j++)
+      ret += base64_chars[char_array_4[j]];
+
+    while((i++ < 3))
+      ret += '=';
+
+  }
+
+  return ret;
+}
+
+string base64decode(const string & sEncoded)
+{
+  int in_len = sEncoded.size();
+  int i = 0;
+  int j = 0;
+  int in_ = 0;
+  unsigned char char_array_4[4], char_array_3[3];
+  string ret;
+
+  while (in_len-- && ( sEncoded[in_] != '=') && is_base64(sEncoded[in_])) {
+    char_array_4[i++] = sEncoded[in_]; in_++;
+    if (i ==4) {
+      for (i = 0; i <4; i++)
+        char_array_4[i] = base64_chars.find(char_array_4[i]);
+
+      char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+      char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+      char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+      for (i = 0; (i < 3); i++)
+        ret += char_array_3[i];
+      i = 0;
+    }
+  }
+
+  if (i) {
+    for (j = i; j <4; j++)
+      char_array_4[j] = 0;
+
+    for (j = 0; j <4; j++)
+      char_array_4[j] = base64_chars.find(char_array_4[j]);
+
+    char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+    char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+    char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+    for (j = 0; (j < i - 1); j++) ret += char_array_3[j];
+  }
+
+  return ret;
+}
+
+typedef union uwb {
+	unsigned w;
+	unsigned char b[4];
+} MD5union;
+
+typedef unsigned DigestArray[4];
+
+static unsigned func0(unsigned abcd[]){
+	return (abcd[1] & abcd[2]) | (~abcd[1] & abcd[3]);
+}
+
+static unsigned func1(unsigned abcd[]){
+	return (abcd[3] & abcd[1]) | (~abcd[3] & abcd[2]);
+}
+
+static unsigned func2(unsigned abcd[]){
+	return  abcd[1] ^ abcd[2] ^ abcd[3];
+}
+
+static unsigned func3(unsigned abcd[]){
+	return abcd[2] ^ (abcd[1] | ~abcd[3]);
+}
+
+typedef unsigned(*DgstFctn)(unsigned a[]);
+
+static unsigned *calctable(unsigned *k)
+{
+	double s, pwr;
+	int i;
+
+	pwr = pow(2.0, 32);
+	for (i = 0; i<64; i++) {
+		s = fabs(sin(1.0 + i));
+		k[i] = (unsigned)(s * pwr);
+	}
+	return k;
+}
+
+static unsigned rol(unsigned r, short N)
+{
+	unsigned  mask1 = (1 << N) - 1;
+	return ((r >> (32 - N)) & mask1) | ((r << N) & ~mask1);
+}
+
+static unsigned* MD5Hash(string msg)
+{
+	int mlen = msg.length();
+	static DigestArray h0 = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476 };
+	static DgstFctn ff[] = { &func0, &func1, &func2, &func3 };
+	static short M[] = { 1, 5, 3, 7 };
+	static short O[] = { 0, 1, 5, 0 };
+	static short rot0[] = { 7, 12, 17, 22 };
+	static short rot1[] = { 5, 9, 14, 20 };
+	static short rot2[] = { 4, 11, 16, 23 };
+	static short rot3[] = { 6, 10, 15, 21 };
+	static short *rots[] = { rot0, rot1, rot2, rot3 };
+	static unsigned kspace[64];
+	static unsigned *k;
+
+	static DigestArray h;
+	DigestArray abcd;
+	DgstFctn fctn;
+	short m, o, g;
+	unsigned f;
+	short *rotn;
+	union {
+		unsigned w[16];
+		char     b[64];
+	}mm;
+	int os = 0;
+	int grp, grps, q, p;
+	unsigned char *msg2;
+
+	if (k == NULL) k = calctable(kspace);
+
+	for (q = 0; q<4; q++) h[q] = h0[q];
+
+	{
+		grps = 1 + (mlen + 8) / 64;
+		msg2 = (unsigned char*)malloc(64 * grps);
+		memcpy(msg2, msg.c_str(), mlen);
+		msg2[mlen] = (unsigned char)0x80;
+		q = mlen + 1;
+		while (q < 64 * grps){ msg2[q] = 0; q++; }
+		{
+			MD5union u;
+			u.w = 8 * mlen;
+			q -= 8;
+			memcpy(msg2 + q, &u.w, 4);
+		}
+	}
+
+	for (grp = 0; grp<grps; grp++)
+	{
+		memcpy(mm.b, msg2 + os, 64);
+		for (q = 0; q<4; q++) abcd[q] = h[q];
+		for (p = 0; p<4; p++) {
+			fctn = ff[p];
+			rotn = rots[p];
+			m = M[p]; o = O[p];
+			for (q = 0; q<16; q++) {
+				g = (m*q + o) % 16;
+				f = abcd[1] + rol(abcd[0] + fctn(abcd) + k[q + 16 * p] + mm.w[g], rotn[q % 4]);
+
+				abcd[0] = abcd[3];
+				abcd[3] = abcd[2];
+				abcd[2] = abcd[1];
+				abcd[1] = f;
+			}
+		}
+		for (p = 0; p<4; p++)
+			h[p] += abcd[p];
+		os += 64;
+	}
+
+	return h;
+}
+
+string md5(const string & str)
+{
+	string md5str;
+	int j, k;
+	unsigned *d = MD5Hash(str);
+	MD5union u;
+	for (j = 0; j<4; j++){
+		u.w = d[j];
+		char s[9];
+		sprintf(s, "%02x%02x%02x%02x", u.b[0], u.b[1], u.b[2], u.b[3]);
+		md5str += s;
+	}
+
+	return md5str;
+}
+
+string hashstr(const string & str)
+{
+  return longuintToStr((long unsigned int)hash<string>{}(str));
+}
+
 int random(int min, int max)
 {
   //srand( (unsigned)time(NULL) );
@@ -1188,6 +1467,36 @@ string intToStr(const int val)
 }
 
 string longToStr(const long val)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+  string str;
+
+  try{
+    str = boost::lexical_cast<string>(val);
+  }catch (bad_lexical_cast &){
+    return "";
+  }
+
+  return str;
+}
+
+string longlongToStr(const long long val)
+{
+  using boost::lexical_cast;
+  using boost::bad_lexical_cast; 
+  string str;
+
+  try{
+    str = boost::lexical_cast<string>(val);
+  }catch (bad_lexical_cast &){
+    return "";
+  }
+
+  return str;
+}
+
+string longuintToStr(const long unsigned int val)
 {
   using boost::lexical_cast;
   using boost::bad_lexical_cast; 
@@ -1977,8 +2286,9 @@ string rqgmtime(const string & datesrc, const string & fmt, const double & gmtof
     int goffset = lrint(gmtoff*100);
     time_t t1 = mktime(&tm)-(curtime.tm_gmtoff+timezone); // adjust timezone, the "timezone" doesnot count the Daylight Saving Time. need to use curtime.tm_gmtoff to adjust
     tm = *(localtime(&t1));
+    sFmt+=" %z";
     sResult = dateToStr(tm, goffset, sFmt);
-    sResult += (gmtoff>=0?" +":" ")+intToStr(gmtoff*100);
+    //sResult += (gmtoff>=0?" +":" ")+intToStr(gmtoff*100);
     trace(DEBUG2, "(rqgmtime)(b)get localtime '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
   }else{
     trace(ERROR, "(rqgmtime) '%s' is not a correct date!\n", datesrc.c_str());

@@ -236,6 +236,8 @@ using namespace std;
 #define PI 136
 #define TRUNCDATEU 137
 #define YEARDAY 138
+#define LOCALTIME 139
+#define GMTIME 140
 #define SUM 201
 #define COUNT 202
 #define UNIQUECOUNT 203
@@ -506,6 +508,8 @@ string truncdateu(const string & datesrc, const string & fmt, const char & unit)
 string monthfirstmonday(const string & datesrc, const string & fmt);
 int yearweek(const string & datesrc, const string & fmt);
 int yearday(const string & datesrc, const string & fmt);
+string rqlocaltime(const string & datesrc, const string & fmt);
+string rqgmtime(const string & datesrc, const string & fmt, const double & gmtoff);
 struct tm convertzone(const struct tm & tm, const string & fromzone, const string & tozone);
 string convertzone(const string & sdate, const string & sFmt, const string & fromzone, const string & tozone);
 

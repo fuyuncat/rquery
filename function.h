@@ -155,6 +155,8 @@ class FunctionC
     bool runYearday(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runDatetolong(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runLongtodate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runLocaltime(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runGmtime(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 
     bool runUsermacro(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 

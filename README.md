@@ -164,6 +164,8 @@ Functions can be used in the expression. We current provide some essential norma
    - yearday(date) : Normal function. Return the day number of the date in the year.<br />
    - datetolong(date) : Normal function. Return the seconds since 1970-01-01 00:00:00.<br />
    - longtodate(seconds) : Normal function. Conver the a number of seconds since 1970-01-01 00:00:00 to a date.<br />
+   - localtime(date) : Normal function. Convert a time in another timezone (e.g. 1988-08-08 18:18:58 +800) to local time.<br />
+   - gmtime(date, gmtoffset) : Normal function. Convert a local time to another timezone time (e.g. 1988-08-08 18:18:58 +800), gmtoffset's range is from -12 to 12.<br />
 
    - fieldname(fieldid) : Normal function. Return the filed name of a field (column).<br />
    - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />

@@ -371,6 +371,22 @@
    ```
    2022-12-08 07:17:38
    ```
+- localtime(date) : Normal function. Convert a time in another timezone (e.g. 1988-08-08 18:18:58 +800) to local time.<br/>
+   ```
+   rq -q "s localtime('2022-11-18 17:11:22 +0800')" " "
+   ```
+   Returns result:<br/>
+   ```
+   2022-11-18 20:11:22
+   ```
+- gmtime(date, gmtoffset) : Normal function. Convert a local time to another timezone time (e.g. 1988-08-08 18:18:58 +800), gmtoffset's range is from -12 to 12.<br/>
+   ```
+   rq -q "s now(), gmtime(now(),+8)" " "
+   ```
+   Returns result:<br/>
+   ```
+   2022-11-15 12:02:03     2022-11-15 09:02:03 +800
+   ```
 - random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br/>
    ```
    rq -q "s random()" " "

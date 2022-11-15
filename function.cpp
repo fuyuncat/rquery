@@ -356,6 +356,8 @@ bool FunctionC::analyzeExpStr()
     case MONTHFIRSTDAY:
     case MONTHFIRSTMONDAY:
     case LONGTODATE:
+    case LOCALTIME:
+    case GMTIME:
       m_datatype.datatype = DATE;
       break;
     case MAX:
@@ -2051,6 +2053,51 @@ bool FunctionC::runLongtodate(RuntimeDataStruct & rds, string & sResult, DataTyp
   return true;
 }
 
+bool FunctionC::runLocaltime(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "localtime() function accepts only one parameter.\n");
+    return false;
+  }
+  string sTm;
+  int offSet;
+  DataTypeStruct tmpDts;
+  struct tm tm1;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo)){
+    sResult = rqlocaltime(sTm, tmpDts.extrainfo);;
+  }else{
+    trace(ERROR, "Failed to run localtime(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
+  dts.datatype = DATE;
+  return true;
+}
+
+bool FunctionC::runGmtime(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "gmtime() function accepts only two parameters.\n");
+    return false;
+  }
+  string sTm, sGmtOff;
+  int offSet;
+  DataTypeStruct tmpDts;
+  struct tm tm1;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && m_params[1].evalExpression(rds, sGmtOff, dts, true) && isDouble(sGmtOff)){
+    double dGmtOff = atof(sGmtOff.c_str());
+    if (dGmtOff>12 || dGmtOff<-12){
+      trace(ERROR, "The valid GMT offset range is from -12 to 12!\n");
+      return false;
+    }
+    sResult = rqgmtime(sTm, tmpDts.extrainfo, dGmtOff);
+  }else{
+    trace(ERROR, "Failed to run gmtime(%s)!\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }  
+  dts.datatype = DATE;
+  return true;
+}
+
 // switch(input,case1,return1[,case2,result2...][,default]): if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided.
 bool FunctionC::runSwitch(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
@@ -2838,6 +2885,12 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case LONGTODATE:
       getResult = runLongtodate(rds, sResult, dts);
+      break;
+    case LOCALTIME:
+      getResult = runLocaltime(rds, sResult, dts);
+      break;
+    case GMTIME:
+      getResult = runGmtime(rds, sResult, dts);
       break;
     case EXEC:
       getResult = runExec(rds, sResult, dts);

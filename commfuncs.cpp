@@ -1414,7 +1414,7 @@ string stripTimeZone(string str, int & iOffSet, string & sTimeZone)
   iOffSet = 0;
   sTimeZone = "";
   int iTZ = 0;
-  while ((sRaw[iTZ]!='+'&&sRaw[iTZ]!='-') && iTZ<sRaw.length()){
+  while (((sRaw[iTZ]!='+'&&sRaw[iTZ]!='-') || (iTZ>0&&sRaw[iTZ-1]!=' ')) && iTZ<sRaw.length()){
     iTZ++;
     if (iTZ>0 && sRaw[iTZ-1]==' ' && (sRaw[iTZ]=='+'||sRaw[iTZ]=='-')){
       int opos = iTZ+1;
@@ -1627,13 +1627,14 @@ bool isDate(const string& str, int & iOffSet, string& fmt)
         }else{ 
           for (std::set<string>::iterator ij = alljunction.begin(); ij != alljunction.end(); ++ij) {
             for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
+              //trace(DEBUG2, "Checking '%s' date format: '%s' and '%s'...\n", str.c_str(), string((*id)+(*ij)+(*it)+(*iz)).c_str(), string((*it)+(*ij)+(*id)+(*iz)).c_str());
               if (strToDate(str, tm, iOffSet, string((*id)+(*ij)+(*it)+(*iz)))){
                 fmt = string((*id)+(*ij)+(*it)+(*iz));
-                // trace(DEBUG2, "(1)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
+                //trace(DEBUG2, "(1)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
                 return true;
               }else if (strToDate(str, tm, iOffSet, string((*it)+(*ij)+(*id)+(*iz)))){
                 fmt = string((*it)+(*ij)+(*id)+(*iz));
-                // trace(DEBUG2, "(2)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
+                //trace(DEBUG2, "(2)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
                 return true;
               }else
                 continue;
@@ -1935,6 +1936,54 @@ int yearday(const string & datesrc, const string & fmt)
     trace(ERROR, "(yearday) '%s' is not a correct date!\n", datesrc.c_str());
     return -1;
   }
+}
+
+string rqlocaltime(const string & datesrc, const string & fmt)
+{
+  struct tm tm;
+  string sResult, sFmt = fmt;
+  int iOffSet;
+  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+    trace(ERROR, "(rqlocaltime) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
+  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+    trace(DEBUG2, "(rqlocaltime)(a)get localtime '%s' (%d) %d %d %d %d %d %d; timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    struct tm curtime = now();
+    //tm.tm_isdst = curtime.tm_isdst;
+    //tm.tm_gmtoff = iOffSet*36;
+    //tm.tm_zone = curtime.tm_zone;
+    time_t t1 = mktime(&tm) - timezone - timezone; // adjust timezone, one for mktime converting, one for the gmtime
+    tm = *(gmtime(&t1));
+    replacestr(sFmt," %z","");
+    replacestr(sFmt," %Z","");
+    // the "timezone" doesnot count the Daylight Saving Time. need to use curtime.tm_gmtoff to adjust
+    sResult = dateToStr(tm, curtime.tm_gmtoff/36, sFmt);
+    trace(DEBUG2, "(rqlocaltime)(b)get localtime '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+  }else{
+    trace(ERROR, "(rqlocaltime) '%s' is not a correct date!\n", datesrc.c_str());
+  }
+  return sResult;
+}
+
+string rqgmtime(const string & datesrc, const string & fmt, const double & gmtoff)
+{
+  struct tm tm;
+  string sResult, sFmt = fmt;
+  int iOffSet;
+  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+    trace(ERROR, "(rqgmtime) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
+  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+    trace(DEBUG2, "(rqgmtime)(a)get localtime '%s' (%d) %d %d %d %d %d %d; timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    struct tm curtime = now();
+    int goffset = lrint(gmtoff*100);
+    time_t t1 = mktime(&tm)-(curtime.tm_gmtoff+timezone); // adjust timezone, the "timezone" doesnot count the Daylight Saving Time. need to use curtime.tm_gmtoff to adjust
+    tm = *(localtime(&t1));
+    sResult = dateToStr(tm, goffset, sFmt);
+    sResult += (gmtoff>=0?" +":" ")+intToStr(gmtoff*100);
+    trace(DEBUG2, "(rqgmtime)(b)get localtime '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+  }else{
+    trace(ERROR, "(rqgmtime) '%s' is not a correct date!\n", datesrc.c_str());
+  }
+  return sResult;
 }
 
 struct tm convertzone(const struct tm & tm, const string & fromzone, const string & tozone)
@@ -2489,6 +2538,10 @@ short int encodeFunction(string str)
     return TRUNCDATEU;
   else if(sUpper.compare("YEARDAY")==0)
     return YEARDAY;
+  else if(sUpper.compare("LOCALTIME")==0)
+    return LOCALTIME;
+  else if(sUpper.compare("GMTIME")==0)
+    return GMTIME;
   else if(sUpper.compare("NOW")==0)
     return NOW;
   else if(sUpper.compare("DETECTDT")==0)

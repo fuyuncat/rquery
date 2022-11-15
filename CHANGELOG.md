@@ -1,5 +1,9 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [1.11] 2022-11-15
+   New feature: New functions: localtime(date), gmtime(date, gmtoffset) <br/>
+   # [1.11] 2022-11-13
+   New feature: New functions: truncdateu(date,unit), isleap(date), weekday(date), monthfirstday(date), monthfirstmonday(date), yearweek(date), yearday(date), datetolong(date), longtodate(seconds)<br/>
    # [1.11] 2022-11-13
    New feature: New runtime option : macrofunc | -u : funcname1:expression1[;funcname1:expression1..] -- Define macro functions for any expression.<br/>
    # [1.1] 2022-11-12

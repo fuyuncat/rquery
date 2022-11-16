@@ -267,6 +267,30 @@
    ```
    14822156803265260030
    ```
+- isip(str) : Normal function. Return 1 if the given str is an IP address, otherwise, return 0.<br />
+   ```
+   rq -q "s isip('192.168.168.255')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- isipv6(str) : Normal function. Return 1 if the given str is an IPv6 address, otherwise, return 0.<br />
+   ```
+   rq -q "s isipv6('fe80::6e:f9ff:ff7a')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- ismac(str) : Normal function. Return 1 if the given str is a MAC address, otherwise, return 0.<br />
+   ```
+   rq -q "s ismac('02:6e:f9:78:e9:cc')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
 - mod(num,div) : Normal function. Get the mod of a number.<br />
    ```
    echo " " | rq -q "s mod(255,7)"
@@ -709,26 +733,6 @@
    ```
    1
    ```
-- appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
-   Split columns of a CSV file to different files:<br/>
-   ```
-   [ rquery]$ cat samples/Master.CSV
-   Datestamp|Date|Code|Status
-   20211212|6/6/20|Active|Off
-   20220926|6/6/20|Active|Off
-   [ rquery]$ ./rq -n -q "P d/\|/ | s foreach(1,%,appendFile($+'\n','/tmp/'+fieldname(#)))" samples/Master.CSV
-   1       1       1       1
-   1       1       1       1
-   [ rquery]$ cat /tmp/Datestamp
-   20211212
-   20220926
-   [ rquery]$ cat /tmp/Date
-   6/6/20
-   6/6/20
-   [ rquery]$ cat /tmp/Code
-   Active
-   Active
-   ```
 - when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else".<br />
    ```
    rq -q "s when(@1>0 and 1=1,@2,@3)" "1 aaa bbb"
@@ -842,6 +846,90 @@
    ```
    1       Fri Nov 11 13:32:49 AEDT 2022
    ```
+- myips([startseq,[,endseq[,delimiter]]]) : Normal function. Return the IPs of the local machine, startseq is the start sequence number of the IPs, endseq is the end sequence number of the IPs. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple IPs, default is '|'.<br/>
+   ```
+   rq -q "s myips()" " "
+   ```
+   Returns result:<br/>
+   ```
+   192.168.168.168
+   ```
+- hostname() : Normal function. Return the hostname of the local machine.<br/>
+   ```
+   rq -q "s hostname()" " "
+   ```
+   Returns result:<br/>
+   ```
+   mylinux.server
+   ```
+- appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
+   Split columns of a CSV file to different files:<br/>
+   ```
+   [ rquery]$ cat samples/Master.CSV
+   Datestamp|Date|Code|Status
+   20211212|6/6/20|Active|Off
+   20220926|6/6/20|Active|Off
+   [ rquery]$ ./rq -n -q "P d/\|/ | s foreach(1,%,appendFile($+'\n','/tmp/'+fieldname(#)))" samples/Master.CSV
+   1       1       1       1
+   1       1       1       1
+   [ rquery]$ cat /tmp/Datestamp
+   20211212
+   20220926
+   [ rquery]$ cat /tmp/Date
+   6/6/20
+   6/6/20
+   [ rquery]$ cat /tmp/Code
+   Active
+   Active
+   ```
+- isfile(filepath) : Normal function. Return 1 if the given path is a file, otherwise, return 0.<br/>
+   ```
+   rq -q "s isfile('samples/dupids.txt')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- isfolder(filepath) : Normal function. Return 1 if the given path is a folder, otherwise, return 0.<br/>
+   ```
+   rq -q "s isfolder('samples/dupids.txt')" " "
+   ```
+   Returns result:<br/>
+   ```
+   0
+   ```
+- fileexist(filepath) : Normal function. Return 1 if the given filepath exists, otherwise, return 0<br/>
+   ```
+   rq -q "s fileexist('samples/dupids.txt')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- filesize(filepath) : Normal function. Return the size of the given file, return -1 if file does not exist.<br/>
+   ```
+   rq -q "s filesize('samples/dupids.txt')" " "
+   ```
+   Returns result:<br/>
+   ```
+   38
+   ```
+- renamefile(filepath) : Normal function. Rename the file if it exists.<br/>
+   ```
+   rq -q "s renamefile('samples/aaaaaa', 'samples/bbbbbb')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- rmfile(filepath) : Normal function. Remove the file if it exists.<br/>
+   ```
+   rq -q "s rmfile('samples/bbbbbb')" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
 - rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
    ```
    rq -v "r:@1" -q "s @raw, rcount(1,1,@raw) " samples/dupids.txt
@@ -875,6 +963,23 @@
    8       121     121
    9       21      21
    10      1232    1232
+   ```
+- rmembers(sideid,fieldid,startseq[,endseq[,delimiter]]) : Normal function. Return the member values of the specified side work, field id and sequence number range. sideid is the id the side work, fieldid is id the field in the side work, startseq is the start sequence number of the members, endseq is the end sequence number of the members. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple members, default is '|'. <br/>
+   ```
+   /rq -v "r:@1" -q "s @raw, rcount(1,1,@raw), rmember(1,1,@line), rmembers(1,1,1,@line)" samples/filelink_dupids.txt
+   ```
+   Returns result:<br/>
+   ```
+   1231    1       1231    1231
+   1231    2       1231    1231|1231
+   11      1       11      1231|1231|11
+   23      1       23      1231|1231|11|23
+   11      2       11      1231|1231|11|23|11
+   255     1       255     1231|1231|11|23|11|255
+   21      1       21      1231|1231|11|23|11|255|21
+   121     1       121     1231|1231|11|23|11|255|21|121
+   21      2       21      1231|1231|11|23|11|255|21|121|21
+   1232    1       1232    1231|1231|11|23|11|255|21|121|21|1232
    ```
 - rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
    ```

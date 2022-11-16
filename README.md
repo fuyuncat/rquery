@@ -147,6 +147,9 @@ Functions can be used in the expression. We current provide some essential norma
    - base64decode(encodedstr) : Normal function. Decode a base64 code string.<br />
    - md5(str) : Normal function. Get the MD5 value of a string.<br />
    - hash(str) : Normal function. Get the hash value of a string.<br />
+   - isip(str) : Normal function. Return 1 if the given str is an IP address, otherwise, return 0.<br />
+   - isipv6(str) : Normal function. Return 1 if the given str is an IPv6 address, otherwise, return 0.<br />
+   - ismac(str) : Normal function. Return 1 if the given str is a MAC address, otherwise, return 0.<br />
 
    - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
    - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
@@ -173,7 +176,6 @@ Functions can be used in the expression. We current provide some essential norma
    - localtime(date) : Normal function. Convert a time in another timezone (e.g. 1988-08-08 18:18:58 +800) to local time.<br />
    - gmtime(date, gmtoffset) : Normal function. Convert a local time to another timezone time (e.g. 1988-08-08 18:18:58 +800), gmtoffset's range is from -12 to 12.<br />
 
-   - fieldname(fieldid) : Normal function. Return the filed name of a field (column).<br />
    - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
    - comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates, return -1 if date1 less than date2, return 0 if date1 equal to date2, return 1 if date1 greater than date2. date1 and date2 should have the same dateformat.<br />
    - datatype(expr) : Normal function. Return the date type of the expression. If the expresion is a field or function, like @1, it will return the data type of the field/function.<br/>
@@ -191,19 +193,32 @@ Functions can be used in the expression. We current provide some essential norma
    - hextodec(str) : Normal function. Conver a hex number to decimal number.<br/>
    - dectobin(num) : Normal function. Conver a decimal number to binary formatted string.<br/>
    - bintodec(str) : Normal function. Conver a binary number to decimal number.<br/>
+   - fieldname(fieldid) : Normal function. Return the filed name of a field (column).<br />
    - switch(input,case1,return1[,case2,return2...][,default]): Normal function. if input equal to case1, then return return1, etc.. If none matched, return default or return input if no default provided. Similar to SWITCH CASE statement.<br />
    - when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else".<br />
    - greatest(expr1[,expr2,...]) : Normal function. Return the largest one of the given expressions. The expression can be a foreach function.<br />
    - least(expr1[,expr2,...]) : Normal function. Return the smallest one of the given expressions. The expression can be a foreach function.<br />
-   - appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
    - eval(expr_str) : Normal function. Eval the input string as an expression.<br />
    - exec(expr_str) : Normal function. Run a system command and return the result.<br />
    - sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
-   - rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
-   - rmember(sideid,fieldid,seqnum) : Normal function. Return the member value of the specified side work, field id and sequence number. sideid is the id the side work, fieldid is id the field in the side work, seqnum is the member sequence number. if seqnum is a negtive number, it will start searching from the end of the array.<br/>
-   - rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
    - concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br/>
    - calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br/>
+
+   - rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
+   - rmember(sideid,fieldid,seqnum) : Normal function. Return the member value of the specified side work, field id and sequence number. sideid is the id the side work, fieldid is id the field in the side work, seqnum is the member sequence number. if seqnum is a negtive number, it will start searching from the end of the array.<br/>
+   - rmembers(sideid,fieldid,startseq[,endseq[,delimiter]]) : Normal function. Return the member values of the specified side work, field id and sequence number range. sideid is the id the side work, fieldid is id the field in the side work, startseq is the start sequence number of the members, endseq is the end sequence number of the members. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple members, default is '|'. <br/>
+   - rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
+
+   - appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
+   - isfile(filepath) : Normal function. Return 1 if the given path is a file, otherwise, return 0.<br />
+   - isfolder(filepath) : Normal function. Return 1 if the given path is a folder, otherwise, return 0.<br />
+   - fileexist(filepath) : Normal function. Return 1 if the given filepath exists, otherwise, return 0.<br />
+   - filesize(filepath) : Normal function. Return the size of the given file, return -1 if file does not exist.<br />
+   - rmfile(filepath) : Normal function. Remove the file if it exists.<br />
+   - renamefile(filepath) : Normal function. Rename the file if it exists.<br />
+
+   - myips([startseq,[,endseq[,delimiter]]]) : Normal function. Return the IPs of the local machine, startseq is the start sequence number of the IPs, endseq is the end sequence number of the IPs. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple IPs, default is '|'. <br/>
+   - hostname() : Normal function. Return the hostname of the local machine.<br />
 
    - Count(expr) : Aggregation function. Count the number of expr.<br />
    - Uniquecount(expr) : Aggregation function. Count the number of distinct expr.<br />

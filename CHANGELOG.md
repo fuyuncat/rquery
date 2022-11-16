@@ -1,5 +1,7 @@
 # Change Log
 All change logs will be documented here.<br/>
+   # [1.11] 2022-11-16
+   New feature: New functions: isip(str), isipv6(str), ismac(str), rmembers(sideid,fieldid,startseq[,endseq[,delimiter]]), myips([startseq,[,endseq[,delimiter]]]), hostname(), isfile(filepath), isfolder(filepath), fileexist(filepath), filesize(filepath), rmfile(filepath), renamefile(filepath) <br/>
    # [1.11] 2022-11-15
    New feature: New functions: localtime(date), gmtime(date, gmtoffset) <br/>
    New feature: New functions: urlencode(url), urldecode(url), base64encode(str), base64decode(str), md5(str), hash(str) <br/>

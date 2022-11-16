@@ -19,6 +19,14 @@
 #include <sys/time.h>
 #include <math.h> 
 #include <random>
+#include <sys/stat.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 
 #if defined unix || defined __unix || defined __unix__ || defined __APPLE__ || defined __MACH__ || defined __linux__ || defined linux || defined __linux || defined __FreeBSD__ || defined __ANDROID__
 #include <cstdio>
@@ -1395,120 +1403,73 @@ bool isNumber(const string& str)
     return true;
 }
 
-bool isInt(const string& str)
+template< class T > bool isType(const string& str)
 {
   using boost::lexical_cast;
   using boost::bad_lexical_cast; 
 
   try{
-    boost::lexical_cast<int>(str);
+    boost::lexical_cast<T>(str);
   }catch (bad_lexical_cast &){
     return false;
   }
 
   return true;
+}
+
+bool isInt(const string& str)
+{
+  return isType<int>(str);
 }
 
 bool isLong(const string& str)
 {
-  using boost::lexical_cast;
-  using boost::bad_lexical_cast; 
-
-  try{
-    boost::lexical_cast<long>(str);
-  }catch (bad_lexical_cast &){
-    return false;
-  }
-
-  return true;
+  return isType<long>(str);
 }
 
 bool isFloat(const string& str)
 {
-  using boost::lexical_cast;
-  using boost::bad_lexical_cast; 
-
-  try{
-    boost::lexical_cast<float>(str);
-  }catch (bad_lexical_cast &){
-    return false;
-  }
-
-  return true;
+  return isType<float>(str);
 }
 
 bool isDouble(const string& str)
 {
+  return isType<double>(str);
+}
+
+template< class T > string toStr( const T& pVal )
+{
   using boost::lexical_cast;
   using boost::bad_lexical_cast; 
+  string str;
 
   try{
-    boost::lexical_cast<double>(str);
+    str = boost::lexical_cast<string>(pVal);
   }catch (bad_lexical_cast &){
-    return false;
+    return "";
   }
 
-  return true;
+  return str;
 }
 
 string intToStr(const int val)
 {
-  using boost::lexical_cast;
-  using boost::bad_lexical_cast; 
-  string str;
-
-  try{
-    str = boost::lexical_cast<string>(val);
-  }catch (bad_lexical_cast &){
-    return "";
-  }
-
-  return str;
+  return toStr(val);
 }
 
 string longToStr(const long val)
 {
-  using boost::lexical_cast;
-  using boost::bad_lexical_cast; 
-  string str;
-
-  try{
-    str = boost::lexical_cast<string>(val);
-  }catch (bad_lexical_cast &){
-    return "";
-  }
-
-  return str;
+  return toStr(val);
 }
 
 string longlongToStr(const long long val)
 {
-  using boost::lexical_cast;
-  using boost::bad_lexical_cast; 
-  string str;
-
-  try{
-    str = boost::lexical_cast<string>(val);
-  }catch (bad_lexical_cast &){
-    return "";
-  }
-
-  return str;
+  return toStr(val);
 }
 
 string longuintToStr(const long unsigned int val)
 {
-  using boost::lexical_cast;
-  using boost::bad_lexical_cast; 
-  string str;
-
-  try{
-    str = boost::lexical_cast<string>(val);
-  }catch (bad_lexical_cast &){
-    return "";
-  }
-
-  return str;
+  return toStr(val);
 }
 
 string floatToStr(const float val)
@@ -2471,6 +2432,75 @@ bool in(string str1, string str2)
   return str2.find(str1)!=string::npos;
 }
 
+string hostname()
+{
+  string hname = "";
+  char szBuffer[1024];
+
+#if defined WIN32 || _WIN32 || WIN64 || _WIN64 || __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
+  WSADATA wsaData;
+  WORD wVersionRequested = MAKEWORD(2, 0);
+  if(::WSAStartup(wVersionRequested, &wsaData) != 0)
+    return hname;
+#endif
+
+
+  if(gethostname(szBuffer, sizeof(szBuffer)) == 0)
+    hname = string(szBuffer);
+#if defined WIN32 || _WIN32 || WIN64 || _WIN64 || __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
+  WSACleanup();
+#endif
+  return hname;
+}
+
+unordered_map< string,string > getmyips()
+{
+    struct ifaddrs *myaddrs, *ifa;
+    void *in_addr;
+    char buf[64];
+    unordered_map< string,string > ips;
+
+    if(getifaddrs(&myaddrs) != 0){
+        trace(ERROR, "getifaddrs\n");
+        return ips;
+    }
+
+    for (ifa = myaddrs; ifa != NULL; ifa = ifa->ifa_next){
+      if (ifa->ifa_addr == NULL)
+        continue;
+      if (!(ifa->ifa_flags & IFF_UP))
+        continue;
+
+      switch (ifa->ifa_addr->sa_family)
+      {
+        case AF_INET:{
+          struct sockaddr_in *s4 = (struct sockaddr_in *)ifa->ifa_addr;
+          in_addr = &s4->sin_addr;
+          break;
+        }
+
+        case AF_INET6:{
+          struct sockaddr_in6 *s6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+          in_addr = &s6->sin6_addr;
+          break;
+        }
+
+        default:
+            continue;
+      }
+
+      if (!inet_ntop(ifa->ifa_addr->sa_family, in_addr, buf, sizeof(buf))){
+        trace(ERROR, "%s: inet_ntop failed!\n", ifa->ifa_name);
+      }else{
+        ips.insert(pair< string,string >(string(ifa->ifa_name),string(buf)));
+      }
+    }
+
+    freeifaddrs(myaddrs);
+    return ips;
+}
+
+
 /*
 char getch() {
   char buf = 0;
@@ -2852,6 +2882,12 @@ short int encodeFunction(string str)
     return LOCALTIME;
   else if(sUpper.compare("GMTIME")==0)
     return GMTIME;
+  else if(sUpper.compare("RMFILE")==0)
+    return RMFILE;
+  else if(sUpper.compare("RENAMEFILE")==0)
+    return RENAMEFILE;
+  else if(sUpper.compare("FILESIZE")==0)
+    return FILESIZE;
   else if(sUpper.compare("NOW")==0)
     return NOW;
   else if(sUpper.compare("DETECTDT")==0)
@@ -3646,9 +3682,9 @@ int matchQuoters(const string & listStr, const size_t & offset, const string & q
 
 //get the first matched regelar token from a string
 string getFirstToken(string str, string token){
-  sregex regexp = sregex::compile(token);
-  smatch matches;
   try{
+    sregex regexp = sregex::compile(token);
+    smatch matches;
     if (regex_search(str, matches, regexp))
       return matches[0];
   }catch (exception& e) {
@@ -3662,10 +3698,10 @@ string getFirstToken(string str, string token){
 vector < vector <string> > getAllTokens(string str, string token)
 {
   vector < vector <string> > findings;
-  sregex regexp = sregex::compile(token);
-  smatch matches;
   string::const_iterator searchStart( str.begin() );
   try{
+    sregex regexp = sregex::compile(token);
+    smatch matches;
     while ( regex_search( searchStart, str.end(), matches, regexp ) ){
       vector<string> vmatches;
       for (int i=0; i<matches.size(); i++)
@@ -3678,6 +3714,43 @@ vector < vector <string> > getAllTokens(string str, string token)
     return findings;
   }
   return findings;
+}
+
+bool fileexist(const string & filepath)
+{
+  struct stat s;
+  short int n = stat(filepath.c_str(),&s);
+  return n == 0;
+}
+
+size_t getFileSize(const string & filepath)
+{
+  struct stat s;
+  if( stat(filepath.c_str(),&s) == 0 && s.st_mode & S_IFREG )
+    return s.st_size;
+  
+  return 0;
+}
+
+short int checkReadMode(const string & sContent)
+{
+  short int readMode = PARAMETER;
+  if (findFirstCharacter(sContent, {'*','?'}, 0, "\"\"", '\\',{})!=string::npos)
+    readMode = WILDCARDFILES;
+  else {
+    struct stat s;
+    if( stat(sContent.c_str(),&s) == 0 ){
+      if( s.st_mode & S_IFDIR )
+        readMode = FOLDER;
+      else if( s.st_mode & S_IFREG )
+        readMode = SINGLEFILE;
+      else
+        readMode = PARAMETER;
+    }else
+      readMode = PARAMETER;
+  }
+  
+  return readMode;
 }
 
 bool appendFile(const string & sContent, const string & sFile)
@@ -3694,6 +3767,16 @@ bool appendFile(const string & sContent, const string & sFile)
     return true;
   }else
     return false;
+}
+
+bool renameFile(const string & oldname, const string & newname)
+{
+  return rename(oldname.c_str(), newname.c_str()) == 0;
+}
+
+bool rmFile(const string & filename)
+{
+  return remove(filename.c_str())==0;
 }
 
 // check if matched regelar token

@@ -296,6 +296,9 @@ bool FunctionC::analyzeExpStr()
     case BASE64DECODE:
     case MD5:
     case HASH:
+    case MYIPS:
+    case HOSTNAME:
+    case RMEMBERS:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -338,6 +341,15 @@ bool FunctionC::analyzeExpStr()
     case YEARWEEK:
     case YEARDAY:
     case DATETOLONG:
+    case ISIP:
+    case ISIPV6:
+    case ISMAC:
+    case ISFILE:
+    case ISFOLDER:
+    case FILEEXIST:
+    case RMFILE:
+    case RENAMEFILE:
+    case FILESIZE:
       m_datatype.datatype = LONG;
       break;
     case ROUND:
@@ -491,6 +503,7 @@ bool FunctionC::runUpper(RuntimeDataStruct & rds, string & sResult, DataTypeStru
   bool gotResult = m_params[0].evalExpression(rds, sResult, dts, true);
   if (gotResult){
     sResult = upper_copy(sResult);
+    dts.datatype = STRING;
     return true;
   }else
     return false;
@@ -505,6 +518,7 @@ bool FunctionC::runLower(RuntimeDataStruct & rds, string & sResult, DataTypeStru
   bool gotResult = m_params[0].evalExpression(rds, sResult, dts, true);
   if (gotResult){
     sResult = lower_copy(sResult);
+    dts.datatype = STRING;
     return true;
   }else{
     trace(ERROR, "Failed to run lower(%s)\n", m_params[0].getEntireExpstr().c_str());
@@ -752,7 +766,7 @@ bool FunctionC::runRegget(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     trace(ERROR, "regget(str, regex_pattern, idxnum[, matchseq]) function accepts only three or four parameters.\n");
     return false;
   }
-  string str, sPattern, sNum, sSeq="1"; 
+  string str, sPattern, sNum, sSeq="0"; 
   if (m_params[0].evalExpression(rds, str, dts, true) && m_params[1].evalExpression(rds, sPattern, dts, true) && m_params[2].evalExpression(rds, sNum, dts, true) && isInt(sNum)){
     if (m_params.size() >= 4){
       if (!m_params[3].evalExpression(rds, sSeq, dts, true) || !isInt(sSeq)){
@@ -760,11 +774,16 @@ bool FunctionC::runRegget(RuntimeDataStruct & rds, string & sResult, DataTypeStr
       }
     }
     vector < vector <string> > results = getAllTokens(str, sPattern);
+    if (results.size()==0){
+      sResult = "";
+      dts.datatype = STRING;
+      return true;
+    }
     int iNum = atoi(sNum.c_str()), iSeq = atoi(sSeq.c_str());
     iNum = iNum>0?iNum-1:iNum+results.size();
     if (iNum>=results.size()){
       trace(WARNING, "%d is out of range of the number of matched string in regget()!\n", iNum);
-      iNum = results.size()-1;
+      return false;
     }
     iSeq = iSeq>=0?iSeq:iSeq+results[iNum].size();
     if (iSeq>=results[iNum].size()){
@@ -798,6 +817,7 @@ bool FunctionC::runCountword(RuntimeDataStruct & rds, string & sResult, DataType
     std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
     vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true,true);
     sResult = intToStr(vWords.size());
+    dts.datatype = LONG;
     return true;
   }else{
     trace(ERROR, "(2)Failed to run countword(%s)!\n", m_params[0].getEntireExpstr().c_str());
@@ -826,9 +846,12 @@ bool FunctionC::runGetword(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     }
     std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
     vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true,false);
+    dts.datatype = STRING;
     if (vWords.size() == 0){
-      trace(ERROR, "No word found in '%s'!\n", m_params[0].getEntireExpstr().c_str());
-      return false;
+      //trace(ERROR, "No word found in '%s'!\n", m_params[0].getEntireExpstr().c_str());
+      //return false;
+      sResult = "";
+      return true;
     }
     if (iPos>0 && iPos<=vWords.size()){
       sResult = vWords[iPos-1];
@@ -862,6 +885,7 @@ bool FunctionC::runGetpart(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     if (m_params.size()>=4)
       m_params[3].evalExpression(rds, sQuoters, dts, true);
     vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false);
+    dts.datatype = STRING;
     if (vWords.size() == 0){
       trace(ERROR, "'%s' cannot be splited by '%s' in getpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
@@ -906,6 +930,7 @@ bool FunctionC::runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
     if (m_params.size()>=5)
       m_params[4].evalExpression(rds, sQuoters, dts, true);
     vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false);
+    dts.datatype = STRING;
     if (vWords.size() == 0){
       trace(ERROR, "'%s' cannot be splited by '%s' in getparts()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
@@ -944,6 +969,7 @@ bool FunctionC::runCountpart(RuntimeDataStruct & rds, string & sResult, DataType
       trace(ERROR, "'%s' cannot be splited by '%s' in countpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
     }
+    dts.datatype = LONG;
     sResult = intToStr(vWords.size());
     return true;
   }else{
@@ -961,6 +987,7 @@ bool FunctionC::runCountstr(RuntimeDataStruct & rds, string & sResult, DataTypeS
   string sRaw, sSub; 
   if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sSub, dts, true)){
     sResult = intToStr(countstr(sRaw,sSub));
+    dts.datatype = LONG;
     return true;
   }else{
     trace(ERROR, "(2)Failed to run countstr(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
@@ -983,6 +1010,7 @@ bool FunctionC::runFieldname(RuntimeDataStruct & rds, string & sResult, DataType
       trace(ERROR, "%s is out of range of the fields!\n", m_params[0].getEntireExpstr().c_str());
       return false;
     }
+    dts.datatype = STRING;
     sResult = (*m_fieldnames)[iFieldid-1];
     return true;
   }else{
@@ -1011,6 +1039,7 @@ bool FunctionC::runConcat(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     }
     sResult+=scomp;
   }
+  dts.datatype = STRING;
   return true;
 }
 
@@ -1036,6 +1065,7 @@ bool FunctionC::runConcatcol(RuntimeDataStruct & rds, string & sResult, DataType
     if (i<vExpandedExpr.size()-1)
       sResult+=sDelm;
   }
+  dts.datatype = STRING;
   return true;
 }
 
@@ -1094,6 +1124,7 @@ bool FunctionC::runCalcol(RuntimeDataStruct & rds, string & sResult, DataTypeStr
       sResult = doubleToStr(dSum);
       break;
   }
+  dts.datatype = DOUBLE;
   return true;
 }
 
@@ -1106,6 +1137,7 @@ bool FunctionC::runAppendfile(RuntimeDataStruct & rds, string & sResult, DataTyp
   string sContent, sFile;
   if (m_params[0].evalExpression(rds, sContent, dts, true) && m_params[1].evalExpression(rds, sFile, dts, true)){
     sResult = intToStr(appendFile(sContent, sFile));
+    dts.datatype = LONG;
     return true;
   }else{
     trace(ERROR, "Failed to run appendfile(%s,%s)\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
@@ -1252,6 +1284,238 @@ bool FunctionC::runHash(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
     return true;
   }else{
     trace(ERROR, "Failed to run hash(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsip(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isip() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = LONG;
+    sResult = intToStr(getFirstToken(str,"^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$").compare(str) == 0);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run isip(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsipv6(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isipv6() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    //string IPV4SEG  = "(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])";
+    //string IPV4ADDR = "("+IPV4SEG+"\\.){3,3}"+IPV4SEG;
+    //string IPV6SEG  = "[0-9a-fA-F]{1,4}";
+    //string IPV6ADDR = "(("+IPV6SEG+":){7,7}"+IPV6SEG+"|("+IPV6SEG+":){1,7}:|("+IPV6SEG+":){1,6}:"+IPV6SEG+"|("+IPV6SEG+":){1,5}(:"+IPV6SEG+"){1,2}|("+IPV6SEG+":){1,4}(:"+IPV6SEG+"){1,3}|("+IPV6SEG+":){1,3}(:"+IPV6SEG+"){1,4}|("+IPV6SEG+":){1,2}(:"+IPV6SEG+"){1,5}|"+IPV6SEG+":((:"+IPV6SEG+"){1,6})|:((:"+IPV6SEG+"){1,7}|:)|fe80:(:"+IPV6SEG+"){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}"+IPV4ADDR+"|("+IPV6SEG+":){1,4}:"+IPV4ADDR+")";
+
+    dts.datatype = LONG;
+    sResult = intToStr(getFirstToken(str,"(?:^|(?<=\\s))(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))(?=\\s|$)").compare(str) == 0);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run isipv6(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsmac(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "ismac() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = LONG;
+    sResult = intToStr(getFirstToken(str,"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$").compare(str) == 0);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run ismac(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runMyips(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  string sStartid="1", sEndid, sDelm="|";
+  if (m_params.size() >= 1 && (!m_params[0].evalExpression(rds, sStartid, dts, true) || !isInt(sStartid))){
+    trace(WARNING, "'%s' is not ab IP id for myips(), set it to 1!\n",m_params[0].getEntireExpstr().c_str());
+    sStartid="1";
+  }
+  sEndid = sStartid;
+  if (m_params.size() >= 2 && (!m_params[1].evalExpression(rds, sEndid, dts, true) || !isInt(sEndid))){
+    trace(WARNING, "'%s' is not ab IP id for myips(), set it to %s!\n",m_params[1].getEntireExpstr().c_str(), sStartid.c_str());
+    sEndid=sStartid;
+  }
+  unordered_map< string,string > IPs = getmyips();
+  if (IPs.size() == 0){
+    trace(ERROR, "Failed to run myips()!\n");
+    return false;
+  }
+  int iStartid = atoi(sStartid.c_str());
+  iStartid = iStartid>0?iStartid-1:iStartid+IPs.size();
+  if (iStartid>=IPs.size()){
+    trace(WARNING, "%d is out of range of part number in myips()!\n", iStartid);
+    iStartid = IPs.size()-1;
+  }
+  int iEndid = atoi(sEndid.c_str());
+  iEndid = iEndid>0?iEndid-1:iEndid+IPs.size();
+  if (iEndid>=IPs.size()){
+    trace(WARNING, "%d is out of range of part number in myips()!\n", iEndid);
+    iEndid = IPs.size()-1;
+  }
+  if (m_params.size() >= 3)
+    m_params[2].evalExpression(rds, sDelm, dts, true);
+  dts.datatype = STRING;  
+  sResult = "";
+  unordered_map< string,string >::iterator it=IPs.begin();
+  for (int i=iStartid; (iStartid<=iEndid?i<=iEndid:i>=iEndid) && it!=IPs.end(); iStartid<=iEndid?i++:i--){
+    sResult+=it->second+(i!=iEndid?sDelm:"");
+    it++;
+  }
+
+  string str;
+  dts.datatype = STRING;
+  return true;
+}
+
+bool FunctionC::runHostname(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 0){
+    trace(ERROR, "hostname() function does not accepts any parameter.\n");
+    return false;
+  }
+  string str;
+  dts.datatype = STRING;
+  sResult = hostname();
+  return true;
+}
+
+bool FunctionC::runIsfile(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isfile() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = LONG;
+    sResult = intToStr(checkReadMode(str) == SINGLEFILE);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run isfile(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsfolder(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isfolder() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = LONG;
+    sResult = intToStr(checkReadMode(str) == FOLDER);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run isfolder(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runFileexist(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "fileexist() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    sResult = intToStr(fileexist(str));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run fileexist(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runRmfile(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "rmfile() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = LONG;
+    short int iMode = checkReadMode(str);
+    if (iMode != SINGLEFILE){
+      trace(WARNING, "Failed to run rmfile(%s), '%s' is not a file or does not exist!\n", m_params[0].getEntireExpstr().c_str(), str.c_str());
+      sResult = "0";
+    }else
+      sResult = intToStr(rmFile(str));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run rmfile(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runRenamefile(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "renamefile() function accepts only two parameters.\n");
+    return false;
+  }
+  string oldfile, newfile;
+  if (m_params[0].evalExpression(rds, oldfile, dts, true) && m_params[1].evalExpression(rds, newfile, dts, true)){
+    dts.datatype = LONG;
+    short int iOldMode = checkReadMode(oldfile);
+    short int iNewMode = checkReadMode(newfile);
+    if (iOldMode != SINGLEFILE && iOldMode != FOLDER){
+      trace(WARNING, "Failed to run renamefile(), '%s' is not a file or does not exist!\n", m_params[0].getEntireExpstr().c_str());
+      sResult = "0";
+    }else if (iNewMode == SINGLEFILE || iNewMode == FOLDER){
+      trace(WARNING, "Failed to run renamefile(), '%s' already exist!\n", m_params[1].getEntireExpstr().c_str());
+      sResult = "0";
+    }else
+      sResult = intToStr(renameFile(oldfile, newfile));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run renamefile(%s, %s)\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runFilesize(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "filesize() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = LONG;
+    short int iMode = checkReadMode(str);
+    if (iMode != SINGLEFILE){
+      trace(WARNING, "Failed to run filesize(%s), '%s' is not a file or does not exist!\n", m_params[0].getEntireExpstr().c_str(), str.c_str());
+      sResult = "-1";
+    }else
+      sResult = intToStr(getFileSize(str));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run filesize(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1521,6 +1785,7 @@ bool FunctionC::runTodate(RuntimeDataStruct & rds, string & sResult, DataTypeStr
   if (m_params.size() != 2 || !m_params[1].evalExpression(rds, dts.extrainfo, dts1, true))
     dts.extrainfo = "";
   if (m_params[0].evalExpression(rds, sResult, dts, true) && isDate(sResult, offSet, dts.extrainfo)){
+    dts.datatype = DATE;
     return true;
   }else{
     trace(ERROR, "Failed to run runTodate(str,[dateformat])\n", m_params[0].getEntireExpstr().c_str());
@@ -1762,6 +2027,7 @@ bool FunctionC::runRandom(RuntimeDataStruct & rds, string & sResult, DataTypeStr
       }
     }
   }
+  dts.datatype = LONG;
   sResult = intToStr(random(atoi(sMin.c_str()),atoi(sMax.c_str())));
   return true;
 }
@@ -1785,6 +2051,7 @@ bool FunctionC::runRandstr(RuntimeDataStruct & rds, string & sResult, DataTypeSt
       }
     }
   }
+  dts.datatype = STRING;
   sResult = randstr(atoi(sLen.c_str()),sFlags);
   return true;
 }
@@ -1820,6 +2087,7 @@ bool FunctionC::runTrimleft(RuntimeDataStruct & rds, string & sResult, DataTypeS
       }
     }
   }
+  dts.datatype = STRING;
   sResult = trim_left(sStr, sChar[0], repeat);
   return true;
 }
@@ -1855,6 +2123,7 @@ bool FunctionC::runTrimright(RuntimeDataStruct & rds, string & sResult, DataType
       }
     }
   }
+  dts.datatype = STRING;
   sResult = trim_right(sStr, sChar[0], repeat);
   return true;
 }
@@ -1890,6 +2159,7 @@ bool FunctionC::runTrim(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
       }
     }
   }
+  dts.datatype = STRING;
   sResult = trim(sStr, sChar[0], repeat);
   return true;
 }
@@ -1905,6 +2175,7 @@ bool FunctionC::runCamelstr(RuntimeDataStruct & rds, string & sResult, DataTypeS
     trace(ERROR, "Failed to run camelstr(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
+  dts.datatype = STRING;
   sResult = camelstr(sStr);
   return true;
 }
@@ -1920,6 +2191,7 @@ bool FunctionC::runSnakestr(RuntimeDataStruct & rds, string & sResult, DataTypeS
     trace(ERROR, "Failed to run snakestr(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
+  dts.datatype = STRING;
   sResult = snakestr(sStr);
   return true;
 }
@@ -2479,6 +2751,7 @@ bool FunctionC::runExec(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
     return false;
   }
   sResult = exec(sCmd);
+  dts.datatype = STRING;
 
   return true;
 }
@@ -2558,6 +2831,7 @@ bool FunctionC::runRcount(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     }
   }
 
+  dts.datatype = LONG;
   return true;
 }
 
@@ -2613,6 +2887,59 @@ bool FunctionC::runRmember(RuntimeDataStruct & rds, string & sResult, DataTypeSt
   }
 }
 
+
+bool FunctionC::runRmembers(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (!rds.sideDatasets){
+    trace(ERROR, "Something wrong with the side word data set, failed to run rmembers().\n");
+    return false;
+  }
+  
+  if (m_params.size() < 3){
+    trace(ERROR, "rmembers() function accepts three or four parameters.\n");
+    return false;
+  }
+  string s1, s2, sStartid, sEndid, sDelm="|";
+  if (!m_params[0].evalExpression(rds, s1, dts, true) || !isInt(s1)){
+    trace(ERROR, "'%s' is not a valid id of side work data set for rmembers()!\n",m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+  if (!m_params[1].evalExpression(rds, s2, dts, true)){
+    trace(ERROR, "'%s' is not a valid id of field for rmembers()!\n",m_params[1].getEntireExpstr().c_str());
+    return false;
+  }
+  if (!m_params[2].evalExpression(rds, sStartid, dts, true) || !isInt(sStartid)){
+    trace(ERROR, "'%s' is not a valid id of member for rmembers()!\n",m_params[2].getEntireExpstr().c_str());
+    return false;
+  }
+  int iS1 = atoi(s1.c_str())-1;
+  if (iS1 < 0 || iS1 >= rds.sideDatasets->size()){
+    trace(ERROR, "%d is out of range of side work data set (%d) for rmembers()!\n",iS1, rds.sideDatasets->size());
+    return false;
+  }
+  sEndid = (m_params.size() <= 3 || !m_params[3].evalExpression(rds, sEndid, dts, true) || !isInt(sEndid))?sStartid:sEndid;
+
+  int iStartid = atoi(sStartid.c_str());
+  iStartid = iStartid>0?iStartid-1:iStartid+(*rds.sideDatasets)[iS1].size();
+  if (iStartid>=(*rds.sideDatasets)[iS1].size()){
+    trace(WARNING, "%d is out of range of part number in rmembers()!\n", iStartid);
+    iStartid = (*rds.sideDatasets)[iS1].size()-1;
+  }
+  int iEndid = atoi(sEndid.c_str());
+  iEndid = iEndid>0?iEndid-1:iEndid+(*rds.sideDatasets)[iS1].size();
+  if (iEndid>=(*rds.sideDatasets)[iS1].size()){
+    trace(WARNING, "%d is out of range of part number in rmembers()!\n", iEndid);
+    iEndid = (*rds.sideDatasets)[iS1].size()-1;
+  }
+  if (m_params.size() >= 5)
+    m_params[4].evalExpression(rds, sDelm, dts, true);
+  dts.datatype = STRING;  
+  sResult = "";
+  for (int i=iStartid; iStartid<=iEndid?i<=iEndid:i>=iEndid; iStartid<=iEndid?i++:i--)
+    sResult+=(*rds.sideDatasets)[iS1][i][s2]+(i!=iEndid?sDelm:"");
+  return true;
+}
+
 bool FunctionC::runRmemberid(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
   if (!rds.sideDatasets){
@@ -2642,6 +2969,7 @@ bool FunctionC::runRmemberid(RuntimeDataStruct & rds, string & sResult, DataType
     trace(ERROR, "%d is out of range of side work data set (%d) for rmemberid()!\n",iS1, rds.sideDatasets->size());
     return false;
   }
+  dts.datatype = LONG;
   for (int i=0; i<(*rds.sideDatasets)[iS1].size(); i++){
     if ((*rds.sideDatasets)[iS1][i].find(s2)!=(*rds.sideDatasets)[iS1][i].end() && (*rds.sideDatasets)[iS1][i][s2].compare(memval)==0){
       sResult = intToStr(i+1);
@@ -2905,6 +3233,42 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case HASH:
       getResult = runHash(rds, sResult, dts);
+      break;
+    case ISIP:
+      getResult = runIsip(rds, sResult, dts);
+      break;
+    case ISIPV6:
+      getResult = runIsipv6(rds, sResult, dts);
+      break;
+    case ISMAC:
+      getResult = runIsmac(rds, sResult, dts);
+      break;
+    case MYIPS:
+      getResult = runMyips(rds, sResult, dts);
+      break;
+    case HOSTNAME:
+      getResult = runHostname(rds, sResult, dts);
+      break;
+    case RMEMBERS:
+      getResult = runRmembers(rds, sResult, dts);
+      break;
+    case ISFILE:
+      getResult = runIsfile(rds, sResult, dts);
+      break;
+    case ISFOLDER:
+      getResult = runIsfolder(rds, sResult, dts);
+      break;
+    case FILEEXIST:
+      getResult = runFileexist(rds, sResult, dts);
+      break;
+    case RMFILE:
+      getResult = runRmfile(rds, sResult, dts);
+      break;
+    case RENAMEFILE:
+      getResult = runRenamefile(rds, sResult, dts);
+      break;
+    case FILESIZE:
+      getResult = runFilesize(rds, sResult, dts);
       break;
     case MOD:
       getResult = runMod(rds, sResult, dts);

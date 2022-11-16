@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v1.12"
+#define VERSION "v1.13"
 
 #define UNKNOWN 0
 
@@ -238,6 +238,9 @@ using namespace std;
 #define YEARDAY 138
 #define LOCALTIME 139
 #define GMTIME 140
+#define RMFILE 141
+#define RENAMEFILE 142
+#define FILESIZE 143
 #define SUM 201
 #define COUNT 202
 #define UNIQUECOUNT 203
@@ -564,7 +567,15 @@ DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const Dat
 //vector<string> split(const string& str, const string& delim); // split str to an array
 vector<int> genlist(const int& start, const int& end, const int& step); // generate a number array
 
+string hostname();
+unordered_map< string,string > getmyips();
+
+short int checkReadMode(const string & sContent);
+size_t getFileSize(const string &  filepath);
+bool fileexist(const string & filepath);
 bool appendFile(const string & sContent, const string & sFile); // append content to a file
+bool renameFile(const string & oldname, const string & newname);
+bool rmFile(const string & filename);
 
 void dumpVector(vector<string> v);
 void dumpMap(map<string, string> m);

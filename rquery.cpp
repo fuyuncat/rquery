@@ -30,7 +30,6 @@
 #include <map>
 #include <iomanip>
 #include <iostream>
-#include <sys/stat.h>
 #include "commfuncs.h"
 //#include "regexc.h"
 #include "parser.h"
@@ -84,36 +83,6 @@ void usage()
   printf("\t-v|--variable \"name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]]..\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files.\n");
   printf("\t-u|--macrofunc \"funcname1:expression1[;funcname1:expression1...]\" -- Define macro functions, ~var[=default]~ represents the pass in parameter .\n");
   printf("More information can be found at https://github.com/fuyuncat/rquery .\n");
-}
-
-short int checkReadMode(string sContent)
-{
-  short int readMode = PARAMETER;
-  if (findFirstCharacter(sContent, {'*','?'}, 0, "\"\"", '\\',{})!=string::npos)
-    readMode = WILDCARDFILES;
-  else {
-    struct stat s;
-    if( stat(sContent.c_str(),&s) == 0 ){
-      if( s.st_mode & S_IFDIR )
-        readMode = FOLDER;
-      else if( s.st_mode & S_IFREG )
-        readMode = SINGLEFILE;
-      else
-        readMode = PARAMETER;
-    }else
-      readMode = PARAMETER;
-  }
-  
-  return readMode;
-}
-
-size_t getFileSize(string filepath)
-{
-  struct stat s;
-  if( stat(filepath.c_str(),&s) == 0 && s.st_mode & S_IFREG )
-    return s.st_size;
-  
-  return 0;
 }
 
 vector<string> listFilesInFolder(string foldername)

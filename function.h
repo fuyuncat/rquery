@@ -163,6 +163,18 @@ class FunctionC
     bool runBase64decode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runMd5(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runHash(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsip(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsipv6(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsmac(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runMyips(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runHostname(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runRmembers(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsfile(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsfolder(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runFileexist(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runRmfile(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runRenamefile(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runFilesize(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 
     bool runUsermacro(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 

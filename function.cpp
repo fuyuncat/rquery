@@ -299,6 +299,7 @@ bool FunctionC::analyzeExpStr()
     case MYIPS:
     case HOSTNAME:
     case RMEMBERS:
+    case FPCLASSIFY:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -350,6 +351,9 @@ bool FunctionC::analyzeExpStr()
     case RMFILE:
     case RENAMEFILE:
     case FILESIZE:
+    case ISFINITE:
+    case ISINF:
+    case ISNORMAL:
       m_datatype.datatype = LONG;
       break;
     case ROUND:
@@ -374,6 +378,27 @@ bool FunctionC::analyzeExpStr()
     case COPYSIGN:
     case COS:
     case COSH:
+    case ERF:
+    case EXP:
+    case EXP2:
+    case FMA:
+    case FMOD:
+    case HYPOT:
+    case ILOGB:
+    case LGAMMA:
+    case LOG10:
+    case LOG2:
+    case POW:
+    case REMAINDER:
+    case SCALBLN:
+    case SCALBN:
+    case SIN:
+    case SINH:
+    case SQRT:
+    case TAN:
+    case TANH:
+    case TGAMMA:
+    case PI:
       m_datatype.datatype = DOUBLE;
       break;
     case NOW:
@@ -1807,6 +1832,466 @@ bool FunctionC::runCosh(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
     trace(ERROR, "Failed to run cosh(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
+}
+
+bool FunctionC::runErf(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "erf() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(erf(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run erf(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runExp(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "exp() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(exp(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run exp(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runExp2(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "exp2() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(exp2(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run exp2(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runFma(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 3){
+    trace(ERROR, "fma() function accepts only three parameters.\n");
+    return false;
+  }
+  string sX,sY,sZ;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX) && m_params[1].evalExpression(rds, sY, dts, true) && isDouble(sY) && m_params[2].evalExpression(rds, sZ, dts, true) && isDouble(sZ)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str()), y = atof(sY.c_str()), z = atof(sZ.c_str());
+    sResult = doubleToStr(fma(x,y,z));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run fma(%s,%s,%s)\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runFmod(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "fmod() function accepts only two parameters.\n");
+    return false;
+  }
+  string sX,sY;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX) && m_params[1].evalExpression(rds, sY, dts, true) && isDouble(sY)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str()), y = atof(sY.c_str());
+    sResult = doubleToStr(fmod(x, y));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run fmod(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runFpclassify(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "fpclassify() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = STRING;
+    double x = atof(sX.c_str());
+    switch(fpclassify(x)){
+    case FP_INFINITE:
+      sResult = "INFINITE";
+      break;
+    case FP_NAN:
+      sResult = "NAN";
+      break;
+    case FP_ZERO:
+      sResult = "ZERO";
+      break;
+    case FP_SUBNORMAL:
+      sResult = "SUBNORMAL";
+      break;
+    case FP_NORMAL:
+    default:
+      sResult = "NORMAL";
+      break;
+    }
+    return true;
+  }else{
+    trace(ERROR, "Failed to run fpclassify(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runHypot(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "hypot() function accepts only two parameters.\n");
+    return false;
+  }
+  string sX,sY;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX) && m_params[1].evalExpression(rds, sY, dts, true) && isDouble(sY)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str()), y = atof(sY.c_str());
+    sResult = doubleToStr(hypot(x, y));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run hypot(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIlogb(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "ilogb() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(ilogb(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run ilogb(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsfinite(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isfinite() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = LONG;
+    double x = atof(sX.c_str());
+    sResult = intToStr(isfinite(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run isfinite(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsinf(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isinf() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = LONG;
+    double x = atof(sX.c_str());
+    sResult = intToStr(isinf(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run isinf(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsnormal(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isnormal() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = LONG;
+    double x = atof(sX.c_str());
+    sResult = intToStr(isnormal(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run isnormal(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runLgamma(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "lgamma() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(lgamma(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run lgamma(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runLog10(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "log10() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(log10(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run log10(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runLog2(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "log2() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(log2(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run log2(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runPow(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "pow() function accepts only two parameter.\n");
+    return false;
+  }
+  string sX,sY;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX) && m_params[1].evalExpression(rds, sY, dts, true) && isDouble(sY)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str()), y = atof(sY.c_str());
+    sResult = doubleToStr(pow(x, y));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run pow(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runRemainder(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "remainder() function accepts only two parameters.\n");
+    return false;
+  }
+  string sX,sY;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX) && m_params[1].evalExpression(rds, sY, dts, true) && isDouble(sY)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str()), y = atof(sY.c_str());
+    sResult = doubleToStr(remainder(x, y));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run remainder(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runScalbln(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "scalbln() function accepts only two parameters.\n");
+    return false;
+  }
+  string sX,sY;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX) && m_params[1].evalExpression(rds, sY, dts, true) && isLong(sY)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str()); long y = atol(sY.c_str());
+    sResult = doubleToStr(scalbln(x, y));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run scalbln(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runScalbn(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "scalbn() function accepts only two parameter.\n");
+    return false;
+  }
+  string sX,sY;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX) && m_params[1].evalExpression(rds, sY, dts, true) && isLong(sY)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str()); long y = atol(sY.c_str());
+    sResult = doubleToStr(scalbn(x, y));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run scalbn(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runSin(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "sin() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(sin(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run sin(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runSinh(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "sinh() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(sinh(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run sinh(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runSqrt(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "sqrt() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(sqrt(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run sqrt(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runTan(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "tan() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(tan(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run tan(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runTanh(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "tanh() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(tanh(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run tanh(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runTgamma(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "tgamma() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(tgamma(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run tgamma(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runPi(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 0){
+    trace(ERROR, "pi() function does not accept any parameter.\n");
+    return false;
+  }
+  dts.datatype = DOUBLE;
+  sResult = doubleToStr(PI_VAL);
+  return true;
 }
 
 bool FunctionC::runDatatype(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
@@ -3517,6 +4002,81 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case COSH:
       getResult = runCosh(rds, sResult, dts);
+      break;
+    case ERF:
+      getResult = runErf(rds, sResult, dts);
+      break;
+    case EXP:
+      getResult = runExp(rds, sResult, dts);
+      break;
+    case EXP2:
+      getResult = runExp2(rds, sResult, dts);
+      break;
+    case FMA:
+      getResult = runFma(rds, sResult, dts);
+      break;
+    case FMOD:
+      getResult = runFmod(rds, sResult, dts);
+      break;
+    case FPCLASSIFY:
+      getResult = runFpclassify(rds, sResult, dts);
+      break;
+    case HYPOT:
+      getResult = runHypot(rds, sResult, dts);
+      break;
+    case ILOGB:
+      getResult = runIlogb(rds, sResult, dts);
+      break;
+    case ISFINITE:
+      getResult = runIsfinite(rds, sResult, dts);
+      break;
+    case ISINF:
+      getResult = runIsinf(rds, sResult, dts);
+      break;
+    case ISNORMAL:
+      getResult = runIsnormal(rds, sResult, dts);
+      break;
+    case LGAMMA:
+      getResult = runLgamma(rds, sResult, dts);
+      break;
+    case LOG10:
+      getResult = runLog10(rds, sResult, dts);
+      break;
+    case LOG2:
+      getResult = runLog2(rds, sResult, dts);
+      break;
+    case POW:
+      getResult = runPow(rds, sResult, dts);
+      break;
+    case REMAINDER:
+      getResult = runRemainder(rds, sResult, dts);
+      break;
+    case SCALBLN:
+      getResult = runScalbln(rds, sResult, dts);
+      break;
+    case SCALBN:
+      getResult = runScalbn(rds, sResult, dts);
+      break;
+    case SIN:
+      getResult = runSin(rds, sResult, dts);
+      break;
+    case SINH:
+      getResult = runSinh(rds, sResult, dts);
+      break;
+    case SQRT:
+      getResult = runSqrt(rds, sResult, dts);
+      break;
+    case TAN:
+      getResult = runTan(rds, sResult, dts);
+      break;
+    case TANH:
+      getResult = runTanh(rds, sResult, dts);
+      break;
+    case TGAMMA:
+      getResult = runTgamma(rds, sResult, dts);
+      break;
+    case PI:
+      getResult = runPi(rds, sResult, dts);
       break;
     case DATATYPE:
       getResult = runDatatype(rds, sResult, dts);

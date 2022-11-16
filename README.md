@@ -168,7 +168,32 @@ Functions can be used in the expression. We current provide some essential norma
    - cbrt(x) : Normal function. Returns the cubic root of x.<br />
    - coypsign(x, y) : Normal function. Returns a value with the magnitude of x and the sign of y.<br />
    - cos(x) : Normal function. Returns the cosine of an angle of x radians.<br />
-   - cosh(x) : Returns the hyperbolic cosine of x.<br />
+   - cosh(x) : Normal function. Returns the hyperbolic cosine of x.<br />
+   - erf(x) : Normal function. Returns the error function value for x.<br />
+   - exp(x) : Normal function. Returns the base-e exponential function of x, which is e raised to the power x: ex.<br />
+   - exp2(x) : Normal function. Returns the base-2 exponential function of x, which is 2 raised to the power x: 2x.<br />
+   - fma(x) : Normal function. Returns x*y+z.<br />
+   - fmod(numer, denom) : Normal function. Returns the floating-point remainder of numer/denom (rounded towards zero), fmod = numer - tquot * denom, Where tquot is the truncated (i.e., rounded towards zero) result of: numer/denom.<br />
+   - fpclassify(x,y,z) : Normal function. Returns a value of type of x. INFINITE: Positive or negative infinity (overflow), NAN: Not-A-Number, ZERO: Value of zero, SUBNORMAL: Sub-normal value (underflow), NORMAL: Normal value (none of the above), <br />
+   - hypot(x, y) : Normal function. Returns the hypotenuse of a right-angled triangle whose legs are x and y.<br />
+   - ilogb(x) : Normal function. Returns the integral part of the logarithm of |x|, using FLT_RADIX as base for the logarithm.<br />
+   - isfinite(x) : Normal function. Returns a non-zero value (true) if x is finite; and zero (false) otherwise.<br />
+   - isinf(x) : Normal function. Returns a non-zero value (true) if x is an infinity; and zero (false) otherwise.<br />
+   - isnormal(x) : Normal function. Returns a non-zero value (true) if x is normal; and zero (false) otherwise.<br />
+   - lgamma(x) : Normal function. Returns the natural logarithm of the absolute value of the gamma function of x.<br />
+   - log10(x) : Normal function. Returns the common (base-10) logarithm of x.<br />
+   - log2(x) : Normal function. Returns the binary (base-2) logarithm of x.<br />
+   - pow(base, exponent) : Normal function. Returns base raised to the power exponent. <br />
+   - remainder(numer, denom) : Normal function. Returns the floating-point remainder of numer/denom (rounded to nearest): remainder = numer - rquot * denom, Where rquot is the result of: numer/denom, rounded toward the nearest integral value (with halfway cases rounded toward the even number).<br />
+   - scalbln(x) : Normal function. Scales x by FLT_RADIX raised to the power of n, returning the result of computing: scalbn(x,n) = x * FLT_RADIX^n<br />
+   - scalbn(x) : Normal function. Scales x by FLT_RADIX raised to the power of n, returning the same as: scalbn(x,n) = x * FLT_RADIX^n<br />
+   - sin(x) : Normal function. Returns the sine of an angle of x radians.<br />
+   - sinh(x) : Normal function. Returns the hyperbolic sine of x.<br />
+   - sqrt(x) : Normal function. Returns the square root of x.<br />
+   - tan(x) : Normal function. Returns the tangent of an angle of x radians.<br />
+   - tanh(x) : Normal function. Returns the hyperbolic tangent of x.<br />
+   - tgamma(x) : Normal function. Returns the gamma function of x.<br />
+   - pi() : Normal function. Returns the value of PI.<br />
 
    - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
    - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />

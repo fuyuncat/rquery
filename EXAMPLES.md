@@ -419,6 +419,206 @@
    ```
    0.69314718055994529     1.25
    ```
+- erf(x) : Normal function. Returns the error function value for x.<br />
+   ```
+   rq -q "s erf(1)" " "
+   ```
+   Returns result:<br/>
+   ```
+   0.84270079294971489
+   ```
+- exp(x) : Normal function. Returns the base-e exponential function of x, which is e raised to the power x: ex.<br />
+   ```
+   rq -q "s exp(5)" " "
+   ```
+   Returns result:<br/>
+   ```
+   148.4131591025766
+   ```
+- exp2(x) : Normal function. Returns the base-2 exponential function of x, which is 2 raised to the power x: 2x.<br />
+   ```
+   rq -q "s exp2(8)" " "
+   ```
+   Returns result:<br/>
+   ```
+   256
+   ```
+- fma(x,y,z) : Normal function. Returns x*y+z.<br />
+   ```
+   rq -q "s fma(10,20,30)" " "
+   ```
+   Returns result:<br/>
+   ```
+   230
+   ```
+- fmod(numer, denom) : Normal function. Returns the floating-point remainder of numer/denom (rounded towards zero), fmod = numer - tquot * denom, Where tquot is the truncated (i.e., rounded towards zero) result of: numer/denom.<br />
+   ```
+   rq -q "s fmod(5.3,2)" " "
+   ```
+   Returns result:<br/>
+   ```
+   1.2999999999999998
+   ```
+- fpclassify(x) : Normal function. Returns a value of type of x. INFINITE: Positive or negative infinity (overflow), NAN: Not-A-Number, ZERO: Value of zero, SUBNORMAL: Sub-normal value (underflow), NORMAL: Normal value (none of the above), <br />
+   ```
+   rq -q "s fpclassify(1/0)" " "
+   ```
+   Returns result:<br/>
+   ```
+   INFINITE
+   ```
+- hypot(x) : Normal function. Returns the hypotenuse of a right-angled triangle whose legs are x and y.<br />
+   ```
+   rq -q "s hypot(3, 4)" " "
+   ```
+   Returns result:<br/>
+   ```
+   5
+   ```
+- ilogb(x) : Normal function. Returns the integral part of the logarithm of |x|, using FLT_RADIX as base for the logarithm.<br />
+   ```
+   rq -q "s ilogb(10)" " "
+   ```
+   Returns result:<br/>
+   ```
+   3
+   ```
+- isfinite(x) : Normal function. Returns a non-zero value (true) if x is finite; and zero (false) otherwise.<br />
+   ```
+   rq -q "s isfinite(1.0/0.0)" " "
+   ```
+   Returns result:<br/>
+   ```
+   0
+   ```
+- isinf(x) : Normal function. Returns a non-zero value (true) if x is an infinity; and zero (false) otherwise.<br />
+   ```
+   rq -q "s isinf(1.0/0.0)" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- isnormal(x) : Normal function. Returns a non-zero value (true) if x is normal; and zero (false) otherwise.<br />
+   ```
+   rq -q "s isnormal(1)" " "
+   ```
+   Returns result:<br/>
+   ```
+   1
+   ```
+- lgamma(x) : Normal function. Returns the natural logarithm of the absolute value of the gamma function of x.<br />
+   ```
+   rq -q "s lgamma(0.5)" " "
+   ```
+   Returns result:<br/>
+   ```
+   0.57236494292470008
+   ```
+- log10(x) : Normal function. Returns the common (base-10) logarithm of x.<br />
+   ```
+   rq -q "s log10(1000)" " "
+   ```
+   Returns result:<br/>
+   ```
+   3
+   ```
+- log2(x) : Normal function. Returns the binary (base-2) logarithm of x.<br />
+   ```
+   rq -q "s log2(1024)" " "
+   ```
+   Returns result:<br/>
+   ```
+   10
+   ```
+- pow(base, exponent) : Normal function. Returns base raised to the power exponent. <br />
+   ```
+   rq -q "s pow(32.01, 1.54)" " "
+   ```
+   Returns result:<br/>
+   ```
+   208.03669140538651
+   ```
+- remainder(numer, denom) : Normal function. Returns the floating-point remainder of numer/denom (rounded to nearest): remainder = numer - rquot * denom, Where rquot is the result of: numer/denom, rounded toward the nearest integral value (with halfway cases rounded toward the even number).<br />
+   ```
+   rq -q "s remainder(5.3, 2)" " "
+   ```
+   Returns result:<br/>
+   ```
+   -0.70000000000000018
+   ```
+- scalbln(x) : Normal function. Scales x by FLT_RADIX raised to the power of n, returning the result of computing: scalbn(x,n) = x * FLT_RADIX^n<br />
+   ```
+   rq -q "s scalbln(1.5,4)" " "
+   ```
+   Returns result:<br/>
+   ```
+   24
+   ```
+- scalbn(x) : Normal function. Scales x by FLT_RADIX raised to the power of n, returning the same as: scalbn(x,n) = x * FLT_RADIX^n<br />
+   ```
+   rq -q "s scalbn(1.5,4)" " "
+   ```
+   Returns result:<br/>
+   ```
+   24
+   ```
+- sin(x) : Normal function. Returns the sine of an angle of x radians.<br />
+   ```
+   rq -q "s sin(30*PI()/180)" " "
+   ```
+   Returns result:<br/>
+   ```
+   0.49999999999999994
+   ```
+- sinh(x) : Normal function. Returns the hyperbolic sine of x.<br />
+   ```
+   rq -q "s sinh(0.693147)" " "
+   ```
+   Returns result:<br/>
+   ```
+   0.74999977430008058
+   ```
+- sqrt(x) : Normal function. Returns the square root of x.<br />
+   ```
+   rq -q "s sqrt(1024)" " "
+   ```
+   Returns result:<br/>
+   ```
+   32
+   ```
+- tan(x) : Normal function. Returns the tangent of an angle of x radians.<br />
+   ```
+   rq -q "s tan(45 * pi() / 180.0)" " "
+   ```
+   Returns result:<br/>
+   ```
+   0.99999999999999989
+   ```
+- tanh(x) : Normal function. Returns the hyperbolic tangent of x.<br />
+   ```
+   rq -q "s tanh(0.693147)" " "
+   ```
+   Returns result:<br/>
+   ```
+   0.59999988444162233
+   ```
+- tgamma(x) : Normal function. Returns the gamma function of x.<br />
+   ```
+   rq -q "s tgamma(0.5)" " "
+   ```
+   Returns result:<br/>
+   ```
+   1.7724538509055161
+   ```
+- pi() : Normal function. Returns the value of PI.<br />
+   ```
+   rq -q "s pi()" " "
+   ```
+   Returns result:<br/>
+   ```
+   3.1415926535897931
+   ```
 - timediff(datetime1,datetime2) : Normal function. Get the difference (in seconds) of two date<br/>
    ```
    echo "2022-07-29:18:00:00 2022-07-28:08:18:00"|rq -q "p /([^ ]*) ([^\n]*)/ | s @1,@2,timediff(@1,@2)"

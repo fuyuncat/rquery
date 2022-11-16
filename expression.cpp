@@ -560,7 +560,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
         int iOffSet;
         size_t iPos = 0;
         node->m_expStr = readQuotedStr(expStr, iPos, "''", "", '\\', {});
-        replacestr(node->m_expStr,{"\\'","\\t","\\v","\\n","\\r"},{"'","\t","\v","\n","\r"});
+        replacestr(node->m_expStr,{"\\\\","\\'","\\t","\\v","\\n","\\r"},{"\\","'","\t","\v","\n","\r"});
         trace(DEBUG, "Read STRING \"%s\" . \n", node->m_expStr.c_str());
         if (isDate(node->m_expStr, iOffSet, node->m_datatype.extrainfo))
           node->m_datatype.datatype = DATE;

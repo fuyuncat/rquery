@@ -1,6 +1,8 @@
 # Change Log
 All change logs will be documented here.<br/>
    # [1.2] 2022-11-16
+   New feature: New functions: erf(x), exp(x), exp2(x), fma(x), fmod(numer, denom), fpclassify(x,y,z), hypot(x, y), ilogb(x), isfinite(x), isinf(x), isnormal(x), lgamma(x), log10(x), log2(x), pow(base, exponent), remainder(numer, denom), scalbln(x), scalbn(x), sin(x), sinh(x), sqrt(x), tan(x), tanh(x), tgamma(x), pi()<br/>
+   # [1.2] 2022-11-16
    New feature: New functions: acos(x), acosh(x), atan(x), atan2(x,y), atanh(x), cbrt(x), copysign(x,y), cos(x), cosh(x) <br/>
    # [1.13] 2022-11-16
    New feature: New functions: isip(str), isipv6(str), ismac(str), rmembers(sideid,fieldid,startseq[,endseq[,delimiter]]), myips([startseq,[,endseq[,delimiter]]]), hostname(), isfile(filepath), isfolder(filepath), fileexist(filepath), filesize(filepath), rmfile(filepath), renamefile(filepath) <br/>

@@ -269,6 +269,8 @@ using namespace std;
 #define PARENT 603
 #define USERMACROFUNC 888
 
+#define PI_VAL 3.14159265358979323846
+
 #define TEXT 1
 #define JSON 2
 

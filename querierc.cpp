@@ -149,7 +149,7 @@ void QuerierC::setregexp(string regexstr)
       return;
     }
     m_regexstr = vSearchPattern[0];
-    replacestr(m_regexstr,{"\\t","\\/","\\v","\\|"},{"\t","/","\v","|"});
+    replacestr(m_regexstr,{"\\\\","\\t","\\/","\\v","\\|"},{"\\","\t","/","\v","|"});
     if (vSearchPattern.size()>1){
       if (vSearchPattern[1].length()%2 != 0)
         trace(FATAL, "(1)Quoters must be paired. '%s' will be ignored.\n", vSearchPattern[1].c_str());
@@ -181,7 +181,7 @@ void QuerierC::setregexp(string regexstr)
       return;
     }
     m_regexstr = vSearchPattern[0];
-    replacestr(m_regexstr,{"\\t","\\/","\\v","\\|"},{"\t","/","\v","|"});
+    replacestr(m_regexstr,{"\\\\","\\t","\\/","\\v","\\|"},{"\\","\t","/","\v","|"});
     if (m_regexstr.compare(" ")!=0)
       m_delmkeepspace = true;
     if (vSearchPattern.size()>1){
@@ -916,7 +916,7 @@ void QuerierC::setOutputFormat(short int format)
 void QuerierC::setFieldDelim(string delimstr)
 {
   m_fielddelim = delimstr;
-  replacestr(m_fielddelim,{"\\t","\\v","\\n","\\r"},{"\t","\v","\n","\r"});
+  replacestr(m_fielddelim,{"\\\\","\\t","\\v","\\n","\\r"},{"\\","\t","\v","\n","\r"});
 }
 
 void QuerierC::setOutputFiles(string outputfilestr, short int outputmode)
@@ -1882,6 +1882,7 @@ int QuerierC::searchNextDelm()
       sLine = m_rawstr;
       m_rawstr = "";
     }
+    string untrimmedLine = sLine; // untrimmed line is the real "raw" line
     if (!m_delmkeepspace && !trim_copy(sLine).empty())
       sLine = trim_copy(sLine);
 #ifdef __DEBUG__
@@ -1916,7 +1917,7 @@ int QuerierC::searchNextDelm()
       m_fileline--;
       continue;
     }
-    matcheddata.insert(matcheddata.begin(),sLine); // whole matched line for @raw
+    matcheddata.insert(matcheddata.begin(),untrimmedLine); // whole matched line for @raw
     //trace(DEBUG, "Matched %d\n", matcheddata.size());
     //for (int i=0; i<matcheddata.size(); i++)
     //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());

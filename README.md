@@ -158,6 +158,17 @@ Functions can be used in the expression. We current provide some essential norma
    - mod(num,div) : Normal function. Get the mod of a number.<br />
    - abs(num) : Normal function. Get the abs value of a given float number.<br />
    - random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br />
+   - acos(x) : Normal function. Returns the principal value of the arc cosine of x, expressed in radians.<br />
+   - acosh(x) : Normal function. Returns the nonnegative area hyperbolic cosine of x.<br />
+   - asin(x) : Normal function. Returns the principal value of the arc sine of x, expressed in radians.<br />
+   - asinh(x) : Normal function. Returns the area hyperbolic sine of x.<br />
+   - atan(x) : Normal function. Returns the principal value of the arc tangent of x, expressed in radians.<br />
+   - atan2(x, y) : Normal function. Returns the principal value of the arc tangent of y/x, expressed in radians.<br />
+   - atanh(x) : Normal function. Returns the area hyperbolic tangent of x.<br />
+   - cbrt(x) : Normal function. Returns the cubic root of x.<br />
+   - coypsign(x, y) : Normal function. Returns a value with the magnitude of x and the sign of y.<br />
+   - cos(x) : Normal function. Returns the cosine of an angle of x radians.<br />
+   - cosh(x) : Returns the hyperbolic cosine of x.<br />
 
    - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
    - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />

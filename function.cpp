@@ -363,6 +363,17 @@ bool FunctionC::analyzeExpStr()
     case TOFLOAT:
     case CALCOL:
     case SUMALL:
+    case ACOS:
+    case ACOSH:
+    case ASIN:
+    case ASINH:
+    case ATAN:
+    case ATAN2:
+    case ATANH:
+    case CBRT:
+    case COPYSIGN:
+    case COS:
+    case COSH:
       m_datatype.datatype = DOUBLE;
       break;
     case NOW:
@@ -1600,6 +1611,204 @@ bool FunctionC::runAbs(RuntimeDataStruct & rds, string & sResult, DataTypeStruct
   }
 }
 
+bool FunctionC::runAcos(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "acos() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(acos(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run acos(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runAcosh(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "acosh() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(acosh(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run acosh(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runAsin(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "asin() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(asin(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run asin(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runAsinh(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "asinh() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(asinh(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run asinh(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runAtan(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "atan() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(atan(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run atan(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runAtan2(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "atan2() function accepts only two parameters.\n");
+    return false;
+  }
+  string sX, sY;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX) && m_params[1].evalExpression(rds, sY, dts, true) && isDouble(sY)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str()), y = atof(sY.c_str());
+    sResult = doubleToStr(atan2(x,y));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run atan2(%s)\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runAtanh(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "atanh() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(atanh(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run atanh(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runCbrt(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "cbrt() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(cbrt(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run cbrt(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runCopysign(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 2){
+    trace(ERROR, "copysign() function accepts only two parameters.\n");
+    return false;
+  }
+  string sX, sY;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX) && m_params[1].evalExpression(rds, sY, dts, true) && isDouble(sY)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str()), y = atof(sY.c_str());
+    sResult = doubleToStr(copysign(x,y));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run copysign(%s)\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runCos(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "cos() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(cos(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run cos(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runCosh(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "cosh() function accepts only one parameter.\n");
+    return false;
+  }
+  string sX;
+  if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
+    dts.datatype = DOUBLE;
+    double x = atof(sX.c_str());
+    sResult = doubleToStr(cosh(x));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run cosh(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
 bool FunctionC::runDatatype(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() != 1){
@@ -1998,7 +2207,7 @@ bool FunctionC::runLog(RuntimeDataStruct & rds, string & sResult, DataTypeStruct
   }
   string sNum; 
   if (m_params[0].evalExpression(rds, sNum, dts, true) && isDouble(sNum)){
-    sResult = doubleToStr(log10(atof(sNum.c_str())));
+    sResult = doubleToStr(log(atof(sNum.c_str())));
     dts.datatype = DOUBLE;
     return true;
   }else{
@@ -3275,6 +3484,39 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case ABS:
       getResult = runAbs(rds, sResult, dts);
+      break;
+    case ACOS:
+      getResult = runAcos(rds, sResult, dts);
+      break;
+    case ACOSH:
+      getResult = runAcosh(rds, sResult, dts);
+      break;
+    case ASIN:
+      getResult = runAsin(rds, sResult, dts);
+      break;
+    case ASINH:
+      getResult = runAsinh(rds, sResult, dts);
+      break;
+    case ATAN:
+      getResult = runAtan(rds, sResult, dts);
+      break;
+    case ATAN2:
+      getResult = runAtan2(rds, sResult, dts);
+      break;
+    case ATANH:
+      getResult = runAtanh(rds, sResult, dts);
+      break;
+    case CBRT:
+      getResult = runCbrt(rds, sResult, dts);
+      break;
+    case COPYSIGN:
+      getResult = runCopysign(rds, sResult, dts);
+      break;
+    case COS:
+      getResult = runCos(rds, sResult, dts);
+      break;
+    case COSH:
+      getResult = runCosh(rds, sResult, dts);
       break;
     case DATATYPE:
       getResult = runDatatype(rds, sResult, dts);

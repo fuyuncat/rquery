@@ -325,11 +325,99 @@
    ```
 - log(num) : Normal function. Get the log result of a given float number<br/>
    ```
-   echo "1000"|rq -q "s log(@raw)"
+   echo "2"|rq -q "s log(@raw)"
    ```
    Returns result:<br/>
    ```
-   3
+   0.69314718055994529
+   ```
+- acos(x) : Normal function. Returns the principal value of the arc cosine of x, expressed in radians.<br/>
+   ```
+   echo "2"|rq -q "s log(@raw)"
+   ```
+   Returns result:<br/>
+   ```
+   0.69314718055994529
+   ```
+- acosh(x) : Normal function. Returns the nonnegative area hyperbolic cosine of x.<br/>
+   ```
+   echo "2"|rq -q "s log(@raw)"
+   ```
+   Returns result:<br/>
+   ```
+   0.69314718055994529
+   ```
+- asin(x) : Normal function. Returns the principal value of the arc sine of x, expressed in radians.<br/>
+   ```
+   rq -q "s asin(0.5)*180/3.1415926" " "
+   ```
+   Returns result:<br/>
+   ```
+   30.00000051174484
+   ```
+- asinh(x) : Normal function. Returns the area hyperbolic sine of x.<br/>
+   ```
+   rq -q "s asinh(3.626860)" " "
+   ```
+   Returns result:<br/>
+   ```
+   1.9999998915933479
+   ```
+- atan(x) : Normal function. Returns the principal value of the arc tangent of x, expressed in radians.<br/>
+   ```
+   rq -q "s atan(1)*180/3.1415926" " "
+   ```
+   Returns result:<br/>
+   ```
+   45.000000767617259
+   ```
+- atan2(x, y) : Normal function. Returns the principal value of the arc tangent of y/x, expressed in radians.<br/>
+   ```
+   rq -q "s atan2(10,-10)*180/3.1415926" " "
+   ```
+   Returns result:<br/>
+   ```
+   135.00000230285175
+   ```
+- atanh(x) : Normal function. Returns the area hyperbolic tangent of x.<br/>
+   ```
+   rq -q "s atanh(0.761594)" " "
+   ```
+   Returns result:<br/>
+   ```
+   0.99999962865416925
+   ```
+- cbrt(x) : Normal function. Returns the cubic root of x.<br/>
+   ```
+   rq -q "s cbrt(27)" " "
+   ```
+   Returns result:<br/>
+   ```
+   3.0000000000000004
+   ```
+- coypsign(x, y) : Normal function. Returns a value with the magnitude of x and the sign of y.<br/>
+   ```
+   rq -q "s copysign ( 10.0,-1.0)" " "
+   ```
+   Returns result:<br/>
+   ```
+   -10
+   ```
+- cos(x) : Normal function. Returns the cosine of an angle of x radians.<br/>
+   ```
+   rq -q "s cos(60*3.1415926/180)" " "
+   ```
+   Returns result:<br/>
+   ```
+   0.5000000154700408
+   ```
+- cosh(x) : Returns the hyperbolic cosine of x.<br/>
+   ```
+   rq -q "s log(2), cosh(log(2))" " "
+   ```
+   Returns result:<br/>
+   ```
+   0.69314718055994529     1.25
    ```
 - timediff(datetime1,datetime2) : Normal function. Get the difference (in seconds) of two date<br/>
    ```

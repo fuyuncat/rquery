@@ -1,7 +1,7 @@
 # rquery
 &nbsp;&nbsp;&nbsp;RQuery is a tool to search text content/file/folder using regular/delimiter/wildcard expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. <br />
 &nbsp;&nbsp;&nbsp;Contact Email: fuyuncat@gmail.com <br/>
-&nbsp;&nbsp;&nbsp;Visit our wiki page to get the help document: https://github.com/fuyuncat/rquery/wiki <br/>
+&nbsp;&nbsp;&nbsp;Visit our wiki page to get the help document: https://github.com/fuyuncat/rquery/wiki  <br/>
 <br />
 # Install
 The latest version can be downloaded here: https://github.com/fuyuncat/rquery/releases <br />

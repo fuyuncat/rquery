@@ -70,10 +70,11 @@ using namespace std;
 #define ANY 99
 
 #define FATAL 1
-#define ERROR 2
-#define WARNING 3
-#define INFO 4
-#define DUMP 5
+#define PERFM 6
+#define ERROR 12
+#define WARNING 13
+#define INFO 14
+#define DUMP 15
 #define DEBUG2 98
 #define DEBUG1 99
 #define DEBUG 100
@@ -345,6 +346,7 @@ public:
   short int g_tracelevel;
   bool g_printheader;
   bool g_showprogress;
+  bool g_fileheaderonly;
   short int g_ouputformat;
   ofstream* g_logfile;
   

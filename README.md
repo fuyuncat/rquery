@@ -59,10 +59,11 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - run [query] : Run the preprocessed query of a provided query (refering to below part)<br />
 - options
    - --help|-h<br />
-   - --fieldheader | -f on|off : Wheather print fields header or not(default).<br />
-   - --progress | -p <on|off> -- Wheather show the processing progress or not(default).<br />
-   - --outputformat | -o <text|json> -- Provide output format, default is text.<br />
+   - --fieldheader | -f on|off : Whether print fields header or not(default).<br />
+   - --progress | -p <on|off> : Whether show the processing progress or not(default).<br />
+   - --outputformat | -o <text|json> : Provide output format, default is text.<br />
    - --readmode | -r buffer|line : File read mode, buffer(default) or line.<br />
+   - --fileheader | -e <yes|no> : Wheather read the file header only (default NO).<br />
    - --buffsize | -b size : The buffer size when read mode is buffer, default is 16384.<br />
    - --skip | -s number : How many lines or bytes to be skipped before start to parse the text content, default is 0.<br />
    - --variable | -v : "name1:value1[;name2:value2..]|name1:initvalue1:expression1[;name2:initvalue2:expression2...]|r:expression1[:filter][;r:expression2...]" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable.<br />
@@ -71,8 +72,8 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
    - --delimiter | -i <string> : Specify the delimiter of the fields, TAB will be adapted if this option is not provided <br/>
    - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
    - --nameline | -n Yes/no : Specify the first line should be used for filed names (useful for csv files). Default is no.<br />
-   - --recursive | -c <yes|no> -- Wheather recursively read subfolder of a folder (default NO).<br />
-   - --textonly | -t <yes|no> -- Wheather treat all field as string (default NO).<br />
+   - --recursive | -c <yes|no> : Whether recursively read subfolder of a folder (default NO).<br />
+   - --textonly | -t <yes|no> : Whether treat all fields as string (default NO).<br />
    - --query | -q <qeury string> : The query string to be used to parse and query the text content.<br />
 - Syntax of query string:
    - parse /parsing string/|set field datatype [date format],...|filter <ilter conditions|select field or expression,...|group field or expression,...|sort field or expression [asc|desc],...|limt n | bottomN,topN<br />

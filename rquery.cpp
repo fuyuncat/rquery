@@ -76,7 +76,8 @@ void usage()
   printf("\t-n|--nameline yes/no : Specify the first matched line should be used for filed names (useful for csv files). Default is no.\n");
   printf("\t-l|--logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n");
   printf("\t-p|--progress <on|off> -- Wheather show the processing progress or not(default).\n");
-  printf("\t-c|--recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n");
+  printf("\t-e|--recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n");
+  printf("\t-r|--fileheader <yes|no> -- Wheather read the file header only (default NO).\n");
   printf("\t-t|--textonly <yes|no> -- Wheather treat all field as string (default NO).\n");
   printf("\t-o|--outputformat <text|json> -- Provide output format, default is text.\n");
   printf("\t-d|--detecttyperows <N> : How many matched rows will be used for detecting data types, default is 1.\n");
@@ -125,80 +126,88 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
     trace(ERROR, "Failed to open file '%s'.\n", filename.c_str());
     return;
   }
-  // size_t filesize = ifile.tellg();
-  size_t filesize = getFileSize(filename);
-  // trace(DEBUG2, "File size '%d'.\n", filesize);
-  total = 0;
+  
+  if (gv.g_fileheaderonly){
+    rq.setReadmode(READLINE);
+    rq.setrawstr(" ");
+    rq.searchAll();
+    rq.outputAndClean();
+  }else{
+    // size_t filesize = ifile.tellg();
+    size_t filesize = getFileSize(filename);
+    // trace(DEBUG2, "File size '%d'.\n", filesize);
+    total = 0;
 
-  switch (fileMode){
-    case READLINE:{
-      string strline;
-      int readLines = 0;
-      rq.setReadmode(READLINE);
-      while (std::getline(ifile, strline)){
-        total += (strline.length()+1);
-        if (readLines<iSkip){
+    switch (fileMode){
+      case READLINE:{
+        string strline;
+        int readLines = 0;
+        rq.setReadmode(READLINE);
+        while (std::getline(ifile, strline)){
+          total += (strline.length()+1);
+          if (readLines<iSkip){
+            readLines++;
+            continue;
+          }
+          if (rq.searchStopped())
+            break;
+          rq.appendrawstr(strline);
+          rq.searchAll();
+          if (gv.g_printheader && gv.g_ouputformat==TEXT)
+            rq.printFieldNames();
+          if (!rq.toGroupOrSort())
+            rq.outputAndClean();
+          rq.setrawstr("");
           readLines++;
-          continue;
+          thisTime = curtime();
+          if (gv.g_showprogress)
+            printf("\r'%s': %d lines(%.2f%%) read in %f seconds.", filename.c_str(), readLines, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
         }
-        if (rq.searchStopped())
-          break;
-        rq.appendrawstr(strline);
-        rq.searchAll();
-        if (gv.g_printheader && gv.g_ouputformat==TEXT)
-          rq.printFieldNames();
-        if (!rq.toGroupOrSort())
-          rq.outputAndClean();
-        rq.setrawstr("");
-        readLines++;
-        thisTime = curtime();
         if (gv.g_showprogress)
-          printf("\r'%s': %d lines(%.2f%%) read in %f seconds.", filename.c_str(), readLines, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
-      }
-      if (gv.g_showprogress)
-        printf("\n");
-      total = readLines;
-      thisTime = curtime();
-      trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
-      lastTime = thisTime;
-      break;
-    }case READBUFF:
-    default:{
-      ifile.seekg(iSkip, ios::beg);
-      total = iSkip;
+          printf("\n");
+        total = readLines;
+        thisTime = curtime();
+        trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+        break;
+      }case READBUFF:
+      default:{
+        ifile.seekg(iSkip, ios::beg);
+        total = iSkip;
 
-      const size_t cache_length = gv.g_inputbuffer;
-      //char cachebuffer[cache_length];
-      char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
-      rq.setReadmode(READBUFF);
+        const size_t cache_length = gv.g_inputbuffer;
+        //char cachebuffer[cache_length];
+        char* cachebuffer = (char*)malloc(cache_length*sizeof(char));
+        rq.setReadmode(READBUFF);
 
-      memset( cachebuffer, '\0', sizeof(char)*cache_length );
-      while(!ifile.eof()) {
-        if (rq.searchStopped())
-          break;
-        ifile.read(cachebuffer, cache_length-1);
-        //ifile.seekg(pos, ios::beg);
-        if (ifile.eof())
-          rq.setEof(true);
-        rq.appendrawstr(string(cachebuffer));
-        rq.searchAll();
-        if (gv.g_printheader && gv.g_ouputformat==TEXT)
-          rq.printFieldNames();
-        if (!rq.toGroupOrSort())
-          rq.outputAndClean();
-        total += ifile.gcount();
         memset( cachebuffer, '\0', sizeof(char)*cache_length );
-        thisTime = curtime();
+        while(!ifile.eof()) {
+          if (rq.searchStopped())
+            break;
+          ifile.read(cachebuffer, cache_length-1);
+          //ifile.seekg(pos, ios::beg);
+          if (ifile.eof())
+            rq.setEof(true);
+          rq.appendrawstr(string(cachebuffer));
+          rq.searchAll();
+          if (gv.g_printheader && gv.g_ouputformat==TEXT)
+            rq.printFieldNames();
+          if (!rq.toGroupOrSort())
+            rq.outputAndClean();
+          total += ifile.gcount();
+          memset( cachebuffer, '\0', sizeof(char)*cache_length );
+          thisTime = curtime();
+          if (gv.g_showprogress)
+            printf("\r'%s': %ld bytes(%.2f%%) read in %f seconds.", filename.c_str(), total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+        }
         if (gv.g_showprogress)
-          printf("\r'%s': %ld bytes(%.2f%%) read in %f seconds.", filename.c_str(), total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+          printf("\n");
+        free(cachebuffer);
+        thisTime = curtime();
+        trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
+        lastTime = thisTime;
+        break;
       }
-      if (gv.g_showprogress)
-        printf("\n");
-      free(cachebuffer);
-      thisTime = curtime();
-      trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
-      lastTime = thisTime;
-      break;
     }
   }
 }
@@ -574,6 +583,15 @@ int main(int argc, char *argv[])
         gv.g_recursiveread = (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
         i++;
       }
+    }else if (lower_copy(string(argv[i])).compare("-e")==0 || lower_copy(string(argv[i])).compare("--fileheader")==0){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
+        //trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        //exitProgram(1);
+        gv.g_fileheaderonly = true;
+      }else{
+        gv.g_fileheaderonly = (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
+        i++;
+      }
     }else if (lower_copy(string(argv[i])).compare("-t")==0 || lower_copy(string(argv[i])).compare("--textonly")==0){
       if (i>=argc-1 || argv[i+1][0] == '-'){
         //trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
@@ -728,6 +746,7 @@ int main(int argc, char *argv[])
         cout << "logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n";
         cout << "progress <on|off> -- Wheather show the processing progress or not(default).\n";
         cout << "recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n";
+        cout << "fileheader <yes|no> -- Wheather read the file header only (default NO).\n";
         cout << "textonly <yes|no> -- Wheather treat all field as string (default NO).\n";
         cout << "format <text|json> -- Provide output format, default is text.\n";
         cout << "delimiter <string> -- Specify the delimiter of the fields, TAB will be adapted if this option is not provided.\n";
@@ -901,6 +920,11 @@ int main(int argc, char *argv[])
         string strParam = trim_copy(lineInput).substr(string("recursive ").length());
         gv.g_recursiveread = (lower_copy(strParam).compare("yes")==0||(lower_copy(strParam).compare("y")==0));
         cout << "Set recursively read folder.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).compare("fileheader ")==0){
+        string strParam = trim_copy(lineInput).substr(string("fileheader ").length());
+        gv.g_fileheaderonly = (lower_copy(strParam).compare("yes")==0||(lower_copy(strParam).compare("y")==0));
+        cout << "Set read the file header only.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).compare("textonly ")==0){
         string strParam = trim_copy(lineInput).substr(string("textonly ").length());

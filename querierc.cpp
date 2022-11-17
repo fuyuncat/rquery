@@ -3456,39 +3456,39 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
   }
 #ifdef __DEBUG__
   m_totaltime = curtime() - m_querystartat;
-  trace(DEBUG2, "Total time: %d. Break down:\n", m_totaltime);
-  trace(DEBUG2, ", Trial Analyze Columns time: %d\n", m_trialanalyzetime);
-  trace(DEBUG2, ", Searching (matched rows %d) time: %d. Break down:\n", m_line, m_searchtime);
-  trace(DEBUG2, ",   Analyze raw content time: %d\n", m_rawanalyzetime);
-  trace(DEBUG2, ",   Read raw content time: %d\n", m_rawreadtime);
-  trace(DEBUG2, ",   Split raw content time: %d\n", m_rawsplittime);
+  trace(PERFM, "Total time: %d. Break down:\n", m_totaltime);
+  trace(PERFM, ", Trial Analyze Columns time (detected rows: %d): %d\n", m_detectedTypeRows, m_trialanalyzetime);
+  trace(PERFM, ", Searching (matched rows %d) time: %d. Break down:\n", m_line, m_searchtime);
+  trace(PERFM, ",   Analyze raw content time: %d\n", m_rawanalyzetime);
+  trace(PERFM, ",   Read raw content time: %d\n", m_rawreadtime);
+  trace(PERFM, ",   Split raw content time: %d\n", m_rawsplittime);
 
-  trace(DEBUG2, ",   eval expression and filtering time: %d. Break down:\n", m_filtertime);
-  trace(DEBUG2, ",     Dynamic user variable calculation time: %d\n", m_uservarcaltime);
-  trace(DEBUG2, ",     filter compare time: %d\n", m_filtercomptime);
-  trace(DEBUG2, ",     Sidework processing time: %d\n", m_sideworktime);
-  trace(DEBUG2, ",     Get sidework row time: %d\n", m_getsidedatarowtime);
-  trace(DEBUG2, ",     Save tree data time: %d\n", m_savetreedatatime);
-  trace(DEBUG2, ",     eval selection time: %d\n", m_evalSeltime);
-  trace(DEBUG2, ",     eval sort time: %d\n", m_evalSorttime);
-  trace(DEBUG2, ",     eval group key time: %d\n", m_evalGroupKeytime);
-  trace(DEBUG2, ",     update restult time: %d\n", m_updateResulttime);
-  trace(DEBUG2, ",     append non-selection result time: %d\n", m_appendnonselresulttime);
-  trace(DEBUG2, ",     eval analytic expression time: %d\n", m_evalanaexprtime);
-  trace(DEBUG2, ",     add analytic data time: %d\n", m_addanafuncdatatime);
+  trace(PERFM, ",   eval expression and filtering time: %d. Break down:\n", m_filtertime);
+  trace(PERFM, ",     Dynamic user variable calculation time: %d\n", m_uservarcaltime);
+  trace(PERFM, ",     filter compare time: %d\n", m_filtercomptime);
+  trace(PERFM, ",     Sidework processing time: %d\n", m_sideworktime);
+  trace(PERFM, ",     Get sidework row time: %d\n", m_getsidedatarowtime);
+  trace(PERFM, ",     Save tree data time: %d\n", m_savetreedatatime);
+  trace(PERFM, ",     eval selection time: %d\n", m_evalSeltime);
+  trace(PERFM, ",     eval sort time: %d\n", m_evalSorttime);
+  trace(PERFM, ",     eval group key time: %d\n", m_evalGroupKeytime);
+  trace(PERFM, ",     update restult time: %d\n", m_updateResulttime);
+  trace(PERFM, ",     append non-selection result time: %d\n", m_appendnonselresulttime);
+  trace(PERFM, ",     eval analytic expression time: %d\n", m_evalanaexprtime);
+  trace(PERFM, ",     add analytic data time: %d\n", m_addanafuncdatatime);
 
-  trace(DEBUG2, ", extra filtering time: %d\n", m_extrafiltertime);
-  trace(DEBUG2, ", sorting time: %d\n", m_sorttime);
-  trace(DEBUG2, ", constructing tree time: %d\n", m_treetime);
-  trace(DEBUG2, ", unique time: %d\n",  m_uniquetime);
-  trace(DEBUG2, ", aggregation time: %d\n", m_grouptime);
-  trace(DEBUG2, ", analytic time: %d\n", m_analytictime);
-  trace(DEBUG2, ", extra filter compare time: %d\n", m_extrafiltercomptime);
-  trace(DEBUG2, ", prepare Agg GP time: %d\n", m_prepAggGPtime);
-  trace(DEBUG2, ", eval agg expression time: %d\n", m_evalAggExptime);
-  trace(DEBUG2, ", Output time: %d\n", m_outputtime);
-  trace(DEBUG2, ", matched lines: %d\n", m_line);
-  //trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, Trial Analyze Columns time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_line,m_rawanalyzetime, m_trialanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
+  trace(PERFM, ", extra filtering time: %d\n", m_extrafiltertime);
+  trace(PERFM, ", sorting time: %d\n", m_sorttime);
+  trace(PERFM, ", constructing tree time: %d\n", m_treetime);
+  trace(PERFM, ", unique time: %d\n",  m_uniquetime);
+  trace(PERFM, ", aggregation time: %d\n", m_grouptime);
+  trace(PERFM, ", analytic time: %d\n", m_analytictime);
+  trace(PERFM, ", extra filter compare time: %d\n", m_extrafiltercomptime);
+  trace(PERFM, ", prepare Agg GP time: %d\n", m_prepAggGPtime);
+  trace(PERFM, ", eval agg expression time: %d\n", m_evalAggExptime);
+  trace(PERFM, ", Output time: %d\n", m_outputtime);
+  trace(PERFM, ", matched lines: %d\n", m_line);
+  //trace(PERFM, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, Trial Analyze Columns time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_line,m_rawanalyzetime, m_trialanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
 #endif // __DEBUG__
 }
 

@@ -72,6 +72,7 @@ void GlobalVars::initVars()
   g_showprogress = false;
   g_ouputformat = TEXT;
   g_logfile = NULL;
+  g_fileheaderonly = false;
   
   g_consolemode = false;
   g_recursiveread = false;
@@ -231,6 +232,8 @@ short int encodeTracelevel(string str)
   string sUpper = upper_copy(str);
   if (sUpper.compare("FATAL") == 0)
     return FATAL;
+  else if (sUpper.compare("PERFM") == 0)
+    return PERFM;
   else if (sUpper.compare("ERROR") == 0)
     return ERROR;
   else if (sUpper.compare("WARNING") == 0)
@@ -252,6 +255,8 @@ string decodeTracelevel(int level)
   switch (level){
   case FATAL:
     return "FATAL";
+  case PERFM:
+    return "PERFM";
   case ERROR:
     return "ERROR";
   case WARNING:
@@ -284,7 +289,7 @@ void trace(short level, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  if (gv.g_tracelevel>=level){
+  if ((gv.g_tracelevel>=level && level!=PERFM) || (level==PERFM && gv.g_tracelevel==PERFM)){
     if (gv.g_logfile){
       char buf[1024];
       int bsize = 0;

@@ -101,6 +101,7 @@ void QuerierC::init()
   m_bToAnalyzeSelectMacro = false;
   m_bSortContainMacro = false;
   m_bToAnalyzeSortMacro = false;
+  m_bTextOnly = false;
   m_selstr = "";
   m_sortstr = "";
   m_treestr = "";
@@ -112,9 +113,17 @@ void QuerierC::init()
   m_querystartat = curtime();
   m_totaltime = 0;
   m_searchtime = 0;
+  m_uservarcaltime = 0;
+  m_sideworktime = 0;
+  m_getsidedatarowtime = 0;
+  m_savetreedatatime = 0;
   m_rawreadtime = 0;
   m_rawsplittime = 0;
   m_rawanalyzetime = 0;
+  m_appendnonselresulttime = 0;
+  m_addanafuncdatatime = 0;
+  m_evalanaexprtime = 0;
+  m_trialanalyzetime = 0;
   m_filtertime = 0;
   m_extrafiltertime = 0;
   m_sorttime = 0;
@@ -141,6 +150,8 @@ void QuerierC::setregexp(string regexstr)
     m_delmrepeatable = false;
     m_delmkeepspace = false;
     m_regexstr = trim_copy(regexstr);
+  }else if ((regexstr[0] == 'l' || regexstr[0] == 'L') && regexstr.length()==1){
+    m_searchMode = LINESEARCH;
   }else if ((regexstr[0] == 'w' || regexstr[0] == 'W')&& regexstr[1] == '/' && regexstr[regexstr.length()-1] == '/'){
     m_searchMode = WILDSEARCH;
     vector<string> vSearchPattern = split(regexstr.substr(2,regexstr.length()-3),'/',"",'\\',{'(',')'},false,true);
@@ -919,6 +930,11 @@ void QuerierC::setFieldDelim(string delimstr)
   replacestr(m_fielddelim,{"\\\\","\\t","\\v","\\n","\\r"},{"\\","\t","\v","\n","\r"});
 }
 
+void QuerierC::setTextonly(bool bTextonly)
+{
+  m_bTextOnly = bTextonly;
+}
+
 void QuerierC::setOutputFiles(string outputfilestr, short int outputmode)
 {
   if (m_outputfileexp)
@@ -974,15 +990,19 @@ void QuerierC::analyzeFiledTypes(vector<string> matches)
   m_detectedTypeRows++;
   //m_fieldtypes.clear();
   DataTypeStruct dts;
-  dts.datatype = detectDataType(matches[0], dts.extrainfo);
-  dts.datatype = dts.datatype==UNKNOWN?STRING:dts.datatype;
-  if (m_rawDatatype.datatype == UNKNOWN)
-    m_rawDatatype = dts;
-  else
-    m_rawDatatype = getCompatibleDataType(m_rawDatatype, dts);
-  trace(DEBUG,"Detected @RAW '%s', data type '%s' extrainfo '%s'.\n",string(matches[0]).c_str(),decodeDatatype(m_rawDatatype.datatype).c_str(),m_rawDatatype.extrainfo.c_str());
-  if (m_rawDatatype.datatype == UNKNOWN)
+  if (m_bTextOnly){
     m_rawDatatype.datatype = STRING;
+  }else{
+    dts.datatype = detectDataType(matches[0], dts.extrainfo);
+    dts.datatype = dts.datatype==UNKNOWN?STRING:dts.datatype;
+    if (m_rawDatatype.datatype == UNKNOWN)
+      m_rawDatatype = dts;
+    else
+      m_rawDatatype = getCompatibleDataType(m_rawDatatype, dts);
+    trace(DEBUG,"Detected @RAW '%s', data type '%s' extrainfo '%s'.\n",string(matches[0]).c_str(),decodeDatatype(m_rawDatatype.datatype).c_str(),m_rawDatatype.extrainfo.c_str());
+    if (m_rawDatatype.datatype == UNKNOWN)
+      m_rawDatatype.datatype = STRING;
+  }
   for (int i=1; i<matches.size(); i++){
     dts = DataTypeStruct();
     if (m_detectedTypeRows>m_detectTypeMaxRowNum && m_fieldnames.size()>i-1 && m_fieldntypes.find(m_fieldnames[i-1]) != m_fieldntypes.end()){
@@ -996,18 +1016,29 @@ void QuerierC::analyzeFiledTypes(vector<string> matches)
       else
         m_fieldtypes.push_back(m_fieldntypes["@FIELD"+intToStr(i)]);
     }else{
-      dts.datatype = detectDataType(matches[i], dts.extrainfo);
-      dts.datatype = dts.datatype==UNKNOWN?STRING:dts.datatype;
-      // trace(DEBUG2, "Detected column '%s' from '%s', data type '%s' extrainfo '%s'\n", m_fieldnames[i-1].c_str(), string(matches[i]).c_str(), decodeDatatype(dts.datatype).c_str(), dts.extrainfo.c_str());
-      // if the date type was detected previous, get the compitable data type.
-      if (m_fieldtypes.size()>i-1)
-        m_fieldtypes[i-1] = getCompatibleDataType(m_fieldtypes[i-1], dts);
-      else
-        m_fieldtypes.push_back(dts); 
-      if (m_fieldtypes[i-1].datatype==UNKNOWN)
-        m_fieldtypes[i-1].datatype = STRING; // set UNKNOWN (real) data as STRING
-      if (m_fieldnames.size()>i-1 && m_detectedTypeRows>=m_detectTypeMaxRowNum)
-        m_fieldntypes.insert( pair<string, DataTypeStruct>(m_fieldnames[i-1],dts) );
+      if (m_bTextOnly){
+        if (m_fieldtypes.size()>i-1)
+          m_fieldtypes[i-1].datatype = STRING;
+        else{
+          dts.datatype = STRING;
+          m_fieldtypes.push_back(dts);
+        }
+        if (m_fieldnames.size()>i-1 && m_detectedTypeRows>=m_detectTypeMaxRowNum)
+          m_fieldntypes.insert( pair<string, DataTypeStruct>(m_fieldnames[i-1],m_fieldtypes[i-1]) );
+      }else{
+        dts.datatype = detectDataType(matches[i], dts.extrainfo);
+        dts.datatype = dts.datatype==UNKNOWN?STRING:dts.datatype;
+        // trace(DEBUG2, "Detected column '%s' from '%s', data type '%s' extrainfo '%s'\n", m_fieldnames[i-1].c_str(), string(matches[i]).c_str(), decodeDatatype(dts.datatype).c_str(), dts.extrainfo.c_str());
+        // if the date type was detected previous, get the compitable data type.
+        if (m_fieldtypes.size()>i-1)
+          m_fieldtypes[i-1] = getCompatibleDataType(m_fieldtypes[i-1], dts);
+        else
+          m_fieldtypes.push_back(dts); 
+        if (m_fieldtypes[i-1].datatype==UNKNOWN)
+          m_fieldtypes[i-1].datatype = STRING; // set UNKNOWN (real) data as STRING
+        if (m_fieldnames.size()>i-1 && m_detectedTypeRows>=m_detectTypeMaxRowNum)
+          m_fieldntypes.insert( pair<string, DataTypeStruct>(m_fieldnames[i-1],m_fieldtypes[i-1]) );
+      }
     }
     trace(DEBUG, "Detected column '%s' data type '%s' extrainfo '%s'\n", m_fieldnames[i-1].c_str(), decodeDatatype(m_fieldtypes[m_fieldtypes.size()-1].datatype).c_str(),m_fieldtypes[m_fieldtypes.size()-1].extrainfo.c_str());
   }
@@ -1336,6 +1367,9 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > anaFuncData
 
 void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData)
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   int nRealSWStart = m_fakeRExprs.size()>0?1:0; // if user defined R involved, the real side work data set start from 1, otherwise from 0.
   if (m_sideSelections.size()>nRealSWStart && m_sideSelections.size()==m_sideAlias.size() && m_sideSelections.size()==m_sideFilters.size()){
     unordered_map< int,int > sideMatchedRowIDs;
@@ -1369,6 +1403,9 @@ void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * 
       }
     }
   }
+#ifdef __DEBUG__
+  m_sideworktime += (curtime()-thistime);
+#endif // __DEBUG__
 }
 
 // filt a row data by filter. no predication mean true. comparasion failed means alway false
@@ -1444,20 +1481,31 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
       m_sideDatasets[0].push_back(fakeResult);
     }
   }
+#ifdef __DEBUG__
+  m_uservarcaltime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
 
   //trace(DEBUG, "Filtering '%s' ", rowValue[0].c_str());
   //dumpMap(varValues);
   bool matched = (!m_filter || m_filter->compareExpression(rds, sideMatchedRowIDs));
 
+#ifdef __DEBUG__
+  m_filtercomptime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
   // doing side work
   doSideWorks(&fieldValues, &varValues, &aggGroupProp, &anaFuncData);
 #ifdef __DEBUG__
-  m_filtercomptime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
   //trace(DEBUG, " selected:%d (%d)! \n", matched, m_selections.size());
   if (matched){
     getSideDatarow(sideMatchedRowIDs, matchedSideDatarow);
+#ifdef __DEBUG__
+  m_getsidedatarowtime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     vector<ExpressionC> anaEvaledExp;
     if (m_selections.size()>0){
       // initialize an empty anaFuncData
@@ -1492,17 +1540,24 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
             vResults.push_back(sResult);
           }
           m_treeParentKeys.push_back(vResults);
+#ifdef __DEBUG__
+  m_savetreedatatime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
           return true;
         }else{
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
           size_t beforeSize = m_results.size(); // to check if the result row filtered by extra filter.
           if (!addResultToSet(&fieldValues, &varValues, rowValue, m_selections, &aggGroupProp, &anaFuncData, &anaEvaledExp, matchedSideDatarow, m_results))
             return false;
-          // add sort keys. result set size increased means the current row is not filtered by extra filter.
-          if (beforeSize<m_results.size()){
 #ifdef __DEBUG__
   m_evalSeltime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
+          // add sort keys. result set size increased means the current row is not filtered by extra filter.
+          if (beforeSize<m_results.size()){
             vResults.clear();
             for (int i=0; i<m_sorts.size(); i++){
               if (!m_sorts[i].sortKey.containGroupFunc()){
@@ -1595,6 +1650,9 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
 #endif // __DEBUG__
       }
     }else{
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
       appendResultSet(rowValue, varValues, true);
       addResultOutputFileMap(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, &matchedSideDatarow);
       vector<ExpressionC> vKeys;
@@ -1602,12 +1660,27 @@ bool QuerierC::matchFilter(const vector<string> & rowValue)
         vKeys.push_back(m_sorts[i].sortKey);
       if (!addResultToSet(&fieldValues, &varValues, rowValue, vKeys, &aggGroupProp, &anaFuncData, &anaEvaledExp, matchedSideDatarow, m_sortKeys))
         return false;
+#ifdef __DEBUG__
+  m_appendnonselresulttime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     }
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
     // eval filter expressions to get anaFuncData
     if (m_filter && m_filter->containAnaFunc())
       m_filter->evalAnaExprs(rds, &anaEvaledExp, sResult, dts, true);
+#ifdef __DEBUG__
+  m_evalanaexprtime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     m_anaEvaledExp.push_back(anaEvaledExp);
     addAnaFuncData(anaFuncData);
+#ifdef __DEBUG__
+  m_addanafuncdatatime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
   }
 #ifdef __DEBUG__
   m_filtertime += (curtime()-filterbegintime);
@@ -1626,6 +1699,9 @@ bool QuerierC::searchStopped()
 
 void QuerierC::trialAnalyze(vector<string> matcheddata)
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   trace(DEBUG, "Detecting data types from the matched line '%s'\n", matcheddata[0].c_str());
   analyzeFiledTypes(matcheddata);
   trace(DEBUG,"Detected field type %d/%d\n", m_fieldtypes.size(), matcheddata.size());
@@ -1707,6 +1783,10 @@ void QuerierC::trialAnalyze(vector<string> matcheddata)
         m_trimedSelctions[j].analyzeColumns(&m_selnames, &m_trimmedFieldtypes, &m_rawDatatype, &m_sideDatatypes);
     }
   }
+#ifdef __DEBUG__
+  m_trialanalyzetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
 }
 
 int QuerierC::searchNextReg()
@@ -1746,6 +1826,10 @@ int QuerierC::searchNextReg()
         }
         trialAnalyze(matcheddata);
       }
+#ifdef __DEBUG__
+  m_rawanalyzetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
       // append variables
       //matcheddata.push_back(m_filename);
       matcheddata.push_back(intToStr(m_line));
@@ -1797,7 +1881,7 @@ int QuerierC::searchNextWild()
   trace(DEBUG, "Wild searching '%s'\n", m_regexstr.c_str());
   int found = 0;
   size_t pos = 0, opos;
-  bool bEnded = false;
+  bool bEnded = false; // whether reach the end of current rawstr
   while (!bEnded && !m_rawstr.empty() && pos<m_rawstr.length()){
     // Unlike regular matching, wildcard and delimiter only match lines.
     opos = pos;
@@ -1846,6 +1930,10 @@ int QuerierC::searchNextWild()
       }
       trialAnalyze(matcheddata);
     }
+#ifdef __DEBUG__
+  m_rawanalyzetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     // append variables
     matcheddata.push_back(intToStr(m_line));
     matcheddata.push_back(intToStr(m_matchcount+1));
@@ -1957,6 +2045,88 @@ int QuerierC::searchNextDelm()
   return found;
 }
 
+int QuerierC::searchNextLine()
+{
+#ifdef __DEBUG__
+  long int searchstarttime = curtime();
+  long int thistime = curtime();
+#endif // __DEBUG__
+  trace(DEBUG, "Line searching '%s'\n", m_regexstr.c_str());
+  int found = 0;
+  size_t pos = 0, opos;
+  bool bEnded = false;
+  string sLine;
+  while (!bEnded && !m_rawstr.empty() && pos<m_rawstr.length()){
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
+    // Unlike regular matching, wildcard and delimiter only match lines.
+    opos = pos;
+    sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
+    bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
+    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
+    if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
+      sLine = m_rawstr;
+      m_rawstr = "";
+    }
+    vector<string>  matcheddata;
+    matcheddata.push_back(sLine);
+    pos = 0;
+    //dumpVector(matcheddata);
+    if (sLine.empty() && bEnded)
+      continue;
+    m_line++;
+    m_fileline++;
+    if (m_nameline && m_line==1){ // use the first line as field names
+      for (int i=0; i<matcheddata.size(); i++){
+        m_fieldnames.push_back(matcheddata[i]);
+        m_fieldInitNames.push_back(matcheddata[i]);
+      }
+      m_nameline = false;
+      m_line--;
+      m_fileline--;
+      continue;
+    }
+    matcheddata.insert(matcheddata.begin(),sLine); // whole matched line for @raw
+    //trace(DEBUG, "Matched %d\n", matcheddata.size());
+    //for (int i=0; i<matcheddata.size(); i++)
+    //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
+    // detect fileds data type
+    if (m_detectedTypeRows < m_detectTypeMaxRowNum || matcheddata.size()!=m_fieldnames.size()+1){
+      if (matcheddata.size()!=m_fieldnames.size()+1 && m_fieldnames.size()>0){
+        m_fieldnames.clear();
+        m_selections.clear();
+        m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
+        m_bToAnalyzeSortMacro = m_bSortContainMacro;
+      }
+      if (m_fieldnames.size() == 0){
+        int initSize=min(m_fieldInitNames.size(),matcheddata.size());
+        for (int i=0; i<initSize; i++)
+          m_fieldnames.push_back(m_fieldInitNames[i]);
+        for (int i=initSize+1;i<matcheddata.size();i++)
+          m_fieldnames.push_back("@FIELD"+intToStr(i));
+      }
+      trialAnalyze(matcheddata);
+    }
+#ifdef __DEBUG__
+  m_rawanalyzetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
+    // append variables
+    matcheddata.push_back(intToStr(m_line));
+    matcheddata.push_back(intToStr(m_matchcount+1));
+    matcheddata.push_back(intToStr(m_fileline));
+    if (matchFilter(matcheddata))
+      m_matchcount++;
+    found++;
+  }
+  //trace(DEBUG, "(3)Found: %d in this searching\n", m_matchcount);
+#ifdef __DEBUG__
+  m_searchtime += (curtime()-searchstarttime);
+#endif // __DEBUG__
+  return found;
+}
+
 int QuerierC::searchNext()
 {
   if (searchStopped()){
@@ -1970,6 +2140,8 @@ int QuerierC::searchNext()
       return searchNextWild();
     case DELMSEARCH:
       return searchNextDelm();
+    case LINESEARCH:
+      return searchNextLine();
     default:
       return 0;
   }
@@ -3284,7 +3456,39 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
   }
 #ifdef __DEBUG__
   m_totaltime = curtime() - m_querystartat;
-  trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_rawanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_detectedTypeRows, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
+  trace(DEBUG2, "Total time: %d. Break down:\n", m_totaltime);
+  trace(DEBUG2, ", Trial Analyze Columns time: %d\n", m_trialanalyzetime);
+  trace(DEBUG2, ", Searching (matched rows %d) time: %d. Break down:\n", m_line, m_searchtime);
+  trace(DEBUG2, ",   Analyze raw content time: %d\n", m_rawanalyzetime);
+  trace(DEBUG2, ",   Read raw content time: %d\n", m_rawreadtime);
+  trace(DEBUG2, ",   Split raw content time: %d\n", m_rawsplittime);
+
+  trace(DEBUG2, ",   eval expression and filtering time: %d. Break down:\n", m_filtertime);
+  trace(DEBUG2, ",     Dynamic user variable calculation time: %d\n", m_uservarcaltime);
+  trace(DEBUG2, ",     filter compare time: %d\n", m_filtercomptime);
+  trace(DEBUG2, ",     Sidework processing time: %d\n", m_sideworktime);
+  trace(DEBUG2, ",     Get sidework row time: %d\n", m_getsidedatarowtime);
+  trace(DEBUG2, ",     Save tree data time: %d\n", m_savetreedatatime);
+  trace(DEBUG2, ",     eval selection time: %d\n", m_evalSeltime);
+  trace(DEBUG2, ",     eval sort time: %d\n", m_evalSorttime);
+  trace(DEBUG2, ",     eval group key time: %d\n", m_evalGroupKeytime);
+  trace(DEBUG2, ",     update restult time: %d\n", m_updateResulttime);
+  trace(DEBUG2, ",     append non-selection result time: %d\n", m_appendnonselresulttime);
+  trace(DEBUG2, ",     eval analytic expression time: %d\n", m_evalanaexprtime);
+  trace(DEBUG2, ",     add analytic data time: %d\n", m_addanafuncdatatime);
+
+  trace(DEBUG2, ", extra filtering time: %d\n", m_extrafiltertime);
+  trace(DEBUG2, ", sorting time: %d\n", m_sorttime);
+  trace(DEBUG2, ", constructing tree time: %d\n", m_treetime);
+  trace(DEBUG2, ", unique time: %d\n",  m_uniquetime);
+  trace(DEBUG2, ", aggregation time: %d\n", m_grouptime);
+  trace(DEBUG2, ", analytic time: %d\n", m_analytictime);
+  trace(DEBUG2, ", extra filter compare time: %d\n", m_extrafiltercomptime);
+  trace(DEBUG2, ", prepare Agg GP time: %d\n", m_prepAggGPtime);
+  trace(DEBUG2, ", eval agg expression time: %d\n", m_evalAggExptime);
+  trace(DEBUG2, ", Output time: %d\n", m_outputtime);
+  trace(DEBUG2, ", matched lines: %d\n", m_line);
+  //trace(DEBUG2, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, Trial Analyze Columns time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_line,m_rawanalyzetime, m_trialanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
 #endif // __DEBUG__
 }
 
@@ -3410,6 +3614,7 @@ void QuerierC::clear()
   m_bToAnalyzeSelectMacro = false;
   m_bSortContainMacro = false;
   m_bToAnalyzeSortMacro = false;
+  m_bTextOnly = false;
   m_selstr = "";
   m_sortstr = "";
   m_detectTypeMaxRowNum = 1;

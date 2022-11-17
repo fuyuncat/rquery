@@ -1,5 +1,8 @@
-# Change Log
+# Change Logn
 All change logs will be documented here.<br/>
+   # [1.21] 2022-11-16
+   New feature: New option: --textonly | -t <yes|no> -- Wheather treat all field as string (default NO). <br/>
+   New feature: New parsing option: l to parse the whole line as a single field. <br/>
    # [1.2] 2022-11-16
    New feature: New functions: erf(x), exp(x), exp2(x), fma(x), fmod(numer, denom), fpclassify(x,y,z), hypot(x, y), ilogb(x), isfinite(x), isinf(x), isnormal(x), lgamma(x), log10(x), log2(x), pow(base, exponent), remainder(numer, denom), scalbln(x), scalbn(x), sin(x), sinh(x), sqrt(x), tan(x), tanh(x), tgamma(x), pi()<br/>
    # [1.2] 2022-11-16

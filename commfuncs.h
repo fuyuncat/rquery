@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v1.2"
+#define VERSION "v1.21"
 
 #define UNKNOWN 0
 
@@ -277,6 +277,7 @@ using namespace std;
 #define REGSEARCH 1
 #define WILDSEARCH 2
 #define DELMSEARCH 3
+#define LINESEARCH 4
 
 #define STANDARD 1
 #define OVERWRITE 2

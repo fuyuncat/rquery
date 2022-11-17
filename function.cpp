@@ -464,11 +464,11 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
   m_rawDatatype = rawDatatype;
   for (int i=0; i<m_params.size(); i++){
     m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
-    trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
+    //trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
   }
   for (int i=0; i<m_filters.size(); i++){
     m_filters[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
-    trace(DEBUG2, "Analyzing filter '%s' in function '%s' (%d)\n", m_filters[i].m_expStr.c_str(), m_expStr.c_str(),m_filters[i].columnsAnalyzed());
+    //trace(DEBUG2, "Analyzing filter '%s' in function '%s' (%d)\n", m_filters[i].m_expStr.c_str(), m_expStr.c_str(),m_filters[i].columnsAnalyzed());
   }
   if (m_funcID == TRUNCDATE || m_funcID == TRUNCDATEU || m_funcID==GROUPLIST)
     m_datatype = m_params[0].m_datatype;

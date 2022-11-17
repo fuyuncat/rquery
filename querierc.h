@@ -100,6 +100,7 @@ class QuerierC
     void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
     void setOutputFormat(short int format=TEXT);
     void setFieldDelim(string delimstr);
+    void setTextonly(bool bTextonly);
     int searchNext();
     int searchAll();
     bool toGroupOrSort();
@@ -161,6 +162,7 @@ class QuerierC
     bool m_bToAnalyzeSelectMacro; // whether need to analyze marco in selections
     bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
     bool m_bToAnalyzeSortMacro; // whether need to analyze marco in sort
+    bool m_bTextOnly; // treat all fileds as string, unless there is user defined data type
     
     vector<vector<int>> m_colToRows; // the selection list of each COLTOROW marco function
     vector<string> m_colToRowNames; // field names of COLTOROW marco function
@@ -253,6 +255,7 @@ class QuerierC
     int searchNextReg();
     int searchNextWild();
     int searchNextDelm();
+    int searchNextLine();
     void genReport(vector<string> datas);
     void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid, unordered_map< string,vector<ExpressionC> > & treeFuncs);
     void releaseTree(TreeNode* tNode);
@@ -267,9 +270,17 @@ class QuerierC
     long int m_querystartat;
     long int m_totaltime;
     long int m_searchtime;
+    long int m_uservarcaltime;
+    long int m_sideworktime;
+    long int m_getsidedatarowtime;
+    long int m_savetreedatatime;
+    long int m_appendnonselresulttime;
+    long int m_addanafuncdatatime;
+    long int m_evalanaexprtime;
     long int m_rawreadtime;
     long int m_rawsplittime;
     long int m_rawanalyzetime;
+    long int m_trialanalyzetime;
     long int m_filtertime;
     long int m_extrafiltertime;
     long int m_sorttime;

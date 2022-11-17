@@ -1,5 +1,5 @@
 # rquery
-&nbsp;&nbsp;&nbsp;RQuery is a tool to search text content/file/folder using regular/delimiter/wildcard expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. <br />
+&nbsp;&nbsp;&nbsp;RQuery is a tool to search text content/file/folder using regular/delimiter/wildcard/line expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. <br />
 &nbsp;&nbsp;&nbsp;Contact Email: fuyuncat@gmail.com <br/>
 &nbsp;&nbsp;&nbsp;Visit our wiki page to get the help document: https://github.com/fuyuncat/rquery/wiki  <br/>
 <br />
@@ -42,6 +42,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
             - // quotes a regular expression pattern string to parse the content; <br />
             - w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/. substrings between two \* are the spliters, spliter between quoters will be skipped; <br />
             - d/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /""/ <br />
+            - l: to parse the whole line as a single field. <br />
          - set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
          - filter <filter conditions> : Filter the parsed records<br />
          - extrafilter <extra filter conditions> : Provide filter conditions to filt the resultset. @N refer to Nth selection of the result set.<br />
@@ -71,6 +72,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
    - --msglevel | -m level : The output message level, could be INFO, WARNING, ERROR, FATAL, default is FATAL.<br />
    - --nameline | -n Yes/no : Specify the first line should be used for filed names (useful for csv files). Default is no.<br />
    - --recursive | -c <yes|no> -- Wheather recursively read subfolder of a folder (default NO).<br />
+   - --textonly | -t <yes|no> -- Wheather treat all field as string (default NO).<br />
    - --query | -q <qeury string> : The query string to be used to parse and query the text content.<br />
 - Syntax of query string:
    - parse /parsing string/|set field datatype [date format],...|filter <ilter conditions|select field or expression,...|group field or expression,...|sort field or expression [asc|desc],...|limt n | bottomN,topN<br />

@@ -52,11 +52,11 @@ void usage()
 {
   printf("\nProgram Name: RQuery AKA RQ Version %s\n", VERSION);
   printf("Contact Email: fuyuncat@gmail.com\n");
-  printf("Search text content/file/folder using regular/delimiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. \n\n");
+  printf("Search text content/file/folder using regular/delimiter/wildcard/line expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more. \n\n");
   printf("Visit our wiki page to get more information: https://github.com/fuyuncat/rquery/wiki/How-to-use%3F\n");
   printf("Usage: rquery [OPTION]... [FILE|FOLDER|VARIABLE]...  -q[uery] \"p[arse] [w|d]/<regular expression>/[<quoters>/][r] | m[eanwhile] <expr> .. [where filter] | s[elect] <expr>... | [se]t field datatype,... | f[ilter] <filters> | group <expr>,... | [s]o[rt] <expr>,... | l[imit] n[,topN] | u[nique] \" \"file, folder or string to be queried\"\n\n");
   printf("\t-q|--query <query string> -- The query string indicates how to query the content, valid query commands include parse,select,set,filter,group,sort,limit. One or more commands can be provide in the query, multiple commands are separated by |. They can be in any order. \n");
-  printf("\t\tparse|p /<searching expression string>/ -- Choose one of three mode to match the content.\n\t\t\t// quotes a regular expression pattern string to parse the content; \n\t\t\t w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '*' stands for a field, e.g. w/*abc*,*/. substrings between two * are the spliters, spliter between quoters will be skipped;\n\t\t\td/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /\"\"/\n");
+  printf("\t\tparse|p /<searching expression string>/ -- Choose one of three mode to match the content.\n\t\t\t// quotes a regular expression pattern string to parse the content; \n\t\t\t w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '*' stands for a field, e.g. w/*abc*,*/. substrings between two * are the spliters, spliter between quoters will be skipped;\n\t\t\td/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /\"\"/;\n\t\t\t l to parse the whole line as a single field.\n");
   printf("\t\tset|t <field datatype [date format],...> -- Set the date type of the fields.\n");
   printf("\t\tfilter|f <filter conditions> -- Provide filter conditions to filt the content.\n");
   printf("\t\textrafilter|e <extra filter conditions> [ trim <selections ...>] -- Provide filter conditions to filt the resultset. @N refer to Nth selection of the result set. the trim clause specifys the selections after trimmed the result set.\n");
@@ -77,6 +77,7 @@ void usage()
   printf("\t-l|--logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n");
   printf("\t-p|--progress <on|off> -- Wheather show the processing progress or not(default).\n");
   printf("\t-c|--recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n");
+  printf("\t-t|--textonly <yes|no> -- Wheather treat all field as string (default NO).\n");
   printf("\t-o|--outputformat <text|json> -- Provide output format, default is text.\n");
   printf("\t-d|--detecttyperows <N> : How many matched rows will be used for detecting data types, default is 1.\n");
   printf("\t-i|--delimiter <string> : Specify the delimiter of the fields, TAB will be adapted if this option is not provided\n");
@@ -573,6 +574,15 @@ int main(int argc, char *argv[])
         gv.g_recursiveread = (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
         i++;
       }
+    }else if (lower_copy(string(argv[i])).compare("-t")==0 || lower_copy(string(argv[i])).compare("--textonly")==0){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
+        //trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        //exitProgram(1);
+        rq.setTextonly(true);
+      }else{
+        rq.setTextonly(lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
+        i++;
+      }
     }else if (lower_copy(string(argv[i])).compare("-r")==0 || lower_copy(string(argv[i])).compare("--readmode")==0){
       if (i>=argc-1 || argv[i+1][0] == '-'){
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
@@ -694,7 +704,7 @@ int main(int argc, char *argv[])
         break;
       }else if (lower_copy(trim_copy(lineInput)).find("h ")==0 || lower_copy(trim_copy(lineInput)).find("help")==0){
         cout << "load <file/folder> -- Provide a file or folder to be queried.\n";
-        cout << "parse /<regular expression string>/ -- Choose one of three mode to match the content. \n\t// quotes a regular expression pattern string to parse the content; \n \tw/<WildCardExpr>/ quotes wildcard expression to parse the content, wildcard '*' stands for a field, e.g. w/*abc*,*/. substrings between two * are the spliters, spliter between quoters will be skipped\n\td/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /\"\"/\n";
+        cout << "parse /<regular expression string>/ -- Choose one of three mode to match the content. \n\t// quotes a regular expression pattern string to parse the content; \n \tw/<WildCardExpr>/ quotes wildcard expression to parse the content, wildcard '*' stands for a field, e.g. w/*abc*,*/. substrings between two * are the spliters, spliter between quoters will be skipped\n\td/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /\"\"/. \n\t l to parse the whole line as a single field.\n";
         cout << "set <field datatype [date format],...> -- Set the date type of the fields.\n";
         cout << "detecttyperows <N> : Set how many matched rows will be used for detecting data types, default is 1.\n";
         cout << "filter <filter conditions> -- Provide filter conditions to filt the content.\n";
@@ -718,6 +728,7 @@ int main(int argc, char *argv[])
         cout << "logfile <filename> -- Provide log file, if none(default) provided, the logs will be print in screen.\n";
         cout << "progress <on|off> -- Wheather show the processing progress or not(default).\n";
         cout << "recursive <yes|no> -- Wheather recursively read subfolder of a folder (default NO).\n";
+        cout << "textonly <yes|no> -- Wheather treat all field as string (default NO).\n";
         cout << "format <text|json> -- Provide output format, default is text.\n";
         cout << "delimiter <string> -- Specify the delimiter of the fields, TAB will be adapted if this option is not provided.\n";
         cout << "var \"name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]]..\" -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files.\n\n";
@@ -890,6 +901,11 @@ int main(int argc, char *argv[])
         string strParam = trim_copy(lineInput).substr(string("recursive ").length());
         gv.g_recursiveread = (lower_copy(strParam).compare("yes")==0||(lower_copy(strParam).compare("y")==0));
         cout << "Set recursively read folder.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).compare("textonly ")==0){
+        string strParam = trim_copy(lineInput).substr(string("textonly ").length());
+        rq.setTextonly(lower_copy(strParam).compare("yes")==0||(lower_copy(strParam).compare("y")==0));
+        cout << "Set treat all fields as string.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("limit ")==0){
         string strParam = trim_copy(lineInput).substr(string("limit ").length());

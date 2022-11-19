@@ -91,16 +91,17 @@ class QuerierC
     bool assignTreeStr(string treestr);
     bool assignReportStr(string reportstr);
     bool setFieldTypeFromStr(string setstr);
-    void setFileName(string filename);
+    void setFileName(string filename, bool bfileheaderonly=false);
     void setNameline(bool nameline);
     void setUserVars(string variables);
     void setUserMaroFuncs(string macrostr);
     void setUniqueResult(bool bUnique);
     void setOutputFiles(string outputfilestr, short int outputmode=OVERWRITE);
     void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
+    void setDetectAllOnChange(bool bDetectAllOnChange);
+    void setTextonly(bool bTextonly);
     void setOutputFormat(short int format=TEXT);
     void setFieldDelim(string delimstr);
-    void setTextonly(bool bTextonly);
     int searchNext();
     int searchAll();
     bool toGroupOrSort();
@@ -125,6 +126,7 @@ class QuerierC
 
   private:
     string m_regexstr;
+    std::set <char> m_delimSet; // when treat each character in the searching pattern string as a delimeter.
     sregex m_regexp;
     string m_rawstr;
     string m_quoters;
@@ -135,6 +137,8 @@ class QuerierC
     bool m_bEof;
     bool m_delmrepeatable;
     bool m_delmkeepspace; // whether to trim the space for delimeter search
+    bool m_delmMulitChar; // whether to treat each character instead of a whole string as delimiters.
+    bool m_eliminateDupField; // whether to eliminate the duplicated fields
     string m_fielddelim;
     
     short int m_outputformat; // TEXT or JSON
@@ -162,6 +166,7 @@ class QuerierC
     bool m_bToAnalyzeSelectMacro; // whether need to analyze marco in selections
     bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
     bool m_bToAnalyzeSortMacro; // whether need to analyze marco in sort
+    bool m_bDetectAllOnChange; // whether re-detect all fields when the number of field changes.
     bool m_bTextOnly; // treat all fileds as string, unless there is user defined data type
     
     vector<vector<int>> m_colToRows; // the selection list of each COLTOROW marco function
@@ -183,8 +188,6 @@ class QuerierC
     vector<DataTypeStruct> m_trimmedFieldtypes; // field type of the trimmed selections.
     vector<string> m_fieldInitNames;    // field names, in case field size changes, we need to keep the initial field names.
     vector<string> m_fieldnames;    // field names
-    //vector<int> m_fieldtypes;       // field datatype in sequence
-    //map<string, int> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     vector<DataTypeStruct> m_fieldtypes;       // field datatype in sequence
     DataTypeStruct m_rawDatatype;  // @raw data type for special cases, e.g. each line contains only one data
     map<string, DataTypeStruct> m_fieldntypes; // field datatype by names, set by setFieldDatatype
@@ -239,7 +242,7 @@ class QuerierC
     void addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow);
     void doSideWorks(vector<string> * pfieldValues, map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData); // do side queries
     void getSideDatarow(unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);
-    bool matchFilter(const vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
+    bool matchFilter(vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);  // eval expression in aggregation paramter and store in a data set
     void appendResultSet(vector<string> vResult, const map<string, string> & varValues, bool bApplyExtraFilter); // add a row to result set, doing columns to rows if coltorow involved
     bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow, vector< vector<string> > & resultSet); // add a data row to a result set
@@ -303,7 +306,7 @@ class QuerierC
     void init();
     //void formatoutput(namesaving_smatch matches);
     void outputstream(int resultid, const char *fmt, ...);
-    void formatoutput(vector<string> datas, int resultid);
+    void formatoutput(vector<string> & datas, int resultid);
     void pairFiledNames(namesaving_smatch matches);
     void analyzeFiledTypes(vector<string> matches);
     void trialAnalyze(vector<string> matcheddata);

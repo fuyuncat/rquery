@@ -217,6 +217,10 @@ class FunctionC
     bool runRmfile(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runRenamefile(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runFilesize(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runFileattrs(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIsexecutable(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runIssymblink(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runGetsymblink(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 
     bool runUsermacro(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 

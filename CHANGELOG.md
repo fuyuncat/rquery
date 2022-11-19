@@ -1,5 +1,8 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.21] 2022-11-18
+   New feature: New functions: fileattrs(filepath) isexecutable(filepath) issymblink(filepath) getsymblink(filepath). <br/>
+   New feature: New flag C for delimiter parsing: whether to treat each character instead of a whole string as delimiters. <br/>
    # [1.21] 2022-11-16
    New feature: New option: --textonly | -t <yes|no> -- Wheather treat all field as string (default NO). <br/>
    New feature: New parsing option: l to parse the whole line as a single field. <br/>

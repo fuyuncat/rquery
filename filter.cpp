@@ -891,6 +891,8 @@ bool FilterC::joinMatch(RuntimeDataStruct & rds, unordered_map< int,int > & side
 
 bool FilterC::compareTwoSideExp(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs)
 {
+  bool bResult = false;
+  unordered_map< string, unordered_map<string,string> > * oldsideDatarow = rds.sideDatarow;
   if (m_leftExpression && m_rightExpression){
     string leftRst = "", rightRst = "";
     DataTypeStruct dts1, dts2;
@@ -902,22 +904,23 @@ bool FilterC::compareTwoSideExp(RuntimeDataStruct & rds, unordered_map< int,int 
           sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i), (*rds.sideDatasets)[i][sideMatchedRowIDs[i]]));
         }
         if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
-          return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
+          bResult = anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
         }else
-          return false;
+          bResult = false;
       }else{ // nested loop join side work datasets
-        unordered_map< string, unordered_map<string,string> > sideDatarow;
-        return joinMatch(rds, sideMatchedRowIDs, sideDatarow, 0);
+        bResult = joinMatch(rds, sideMatchedRowIDs, sideDatarow, 0);
       }
-      return false;
     }else{
       if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
-        return anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
+        bResult = anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
       }else
-        return false;
+        bResult = false;
     }
-  }else
-    return false;
+  }else{
+    bResult = false;
+  }
+  rds.sideDatarow = oldsideDatarow;
+  return bResult;
 }
 
 // calculate an expression prediction. no predication or comparasion failed means alway false

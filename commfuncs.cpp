@@ -1400,6 +1400,14 @@ string concatArray(const vector<string> & array, const string & delim)
   return sResult;
 }
 
+// eliminate duplicated elements
+void eliminateDups(vector<string> & array)
+{
+  std::set<string> uniArray(array.begin(), array.end());
+  array.clear();
+  array.assign(uniArray.begin(), uniArray.end());
+}
+
 bool isNumber(const string& str)
 {
     for (int i=0; i<str.length(); i++) {
@@ -1683,7 +1691,7 @@ string dateToStr(struct tm val, int iOffSet, string fmt)
 
 // strip timezone from the datetime string. 
 // function returns the stripped datetime string; iOffSet returns the digital timezone offset; sTimeZone return timezone
-string stripTimeZone(string str, int & iOffSet, string & sTimeZone)
+string stripTimeZone(const string & str, int & iOffSet, string & sTimeZone)
 {
   string sRaw = str;
   iOffSet = 0;
@@ -1712,7 +1720,7 @@ string stripTimeZone(string str, int & iOffSet, string & sTimeZone)
 // get expected data format minimum length
 // %Y 4;%y 2;%m 2;%b(abb month) 3;%d 2;%H 2;%M 2;%S 2;
 // %a(abb week) 3; %A(Full week) 6+; %B(Full month) 3+; %c (Thu Aug 23 14:55:02 2001) 24; %C (year%100) 2; %D(MM/DD/YY) 8; %e (day of month) 1+; %F(YYYY-MM-DD) 10;%g	(week based year) 2; %G (week based year) 4; %h	(abb month) 3; %I(12hours) 2; %j(day of year) 3; %n	(new line) 1;%p	(AM/PM) 2; %r(12 hour clock 02:55:02 pm) 11; %R(%H:%M) 5; %t(tab) 1; %T	(HH:MM:SS) 8; %u (week day in start 1) 1; %U (week number of year start 0) 2; %V (week number of year start 1) 2; %w (week day in start 0) 1; %W (week number of year, monday is first day) 2; %x(08/23/01) 8; %X(14:55:02) 8; %z(timezone +100) 4+;%Z(timezone UTC) 3+;%% (%sign) 1;
-int dateFormatLen(string fmt)
+int dateFormatLen(const string & fmt)
 {
   int len = 0, i=0;
   while(i<fmt.length()){
@@ -1796,7 +1804,7 @@ int localOffset()
 // note: tm returns GMT time, iOffSet is the timezone
 // strptime doesnot consider the whole datetime string. For example, strptime("20/Jul/2022:01:00:00", "%Y/%b/%d", tm) will return true.
 // The return value of the strptime is a pointer to the first character not processed in this function call. In case the whole input string is consumed, the return value points to the null byte at the end of the string.
-bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt)
+bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string & fmt)
 {
   // accept %z at then of the time string only
   //trace(DEBUG2, "Trying date format: '%s' (expected len:%d) for '%s'\n", fmt.c_str(), dateFormatLen(fmt), str.c_str());
@@ -2392,7 +2400,8 @@ int detectDataType(string str, string & extrainfo)
   return datatype;
 }
 
-bool wildmatch(const char *candidate, const char *pattern, int p, int c, char multiwild='*', char singlewild='?', char escape='\\') {
+bool wildmatch(const char *candidate, const char *pattern, int p, int c, char multiwild='*', char singlewild='?', char escape='\\')
+{
   //trace(DEBUG2, "Like matching '%s'(%d) => '%s'(%d)\n", string(pattern+p).c_str(),p, string(candidate+c).c_str(),c);
   if (pattern[p] == '\0') {
     return candidate[c] == '\0';
@@ -2411,14 +2420,14 @@ bool wildmatch(const char *candidate, const char *pattern, int p, int c, char mu
   }
 }
 
-bool like(string str1, string str2)
+bool like(const string & str1, const string & str2)
 {
   bool matched = wildmatch(str1.c_str(), str2.c_str(), 0, 0);
   //trace(DEBUG2, "'%s' matching '%s': %d\n",str1.c_str(), str2.c_str(), matched);
   return matched;
 }
 
-bool reglike(string str, string regstr)
+bool reglike(const string & str, const string & regstr)
 {
   sregex regexp = sregex::compile(regstr);
   smatch matches;
@@ -2431,7 +2440,7 @@ bool reglike(string str, string regstr)
   }
 }
 
-bool in(string str1, string str2)
+bool in(const string & str1, const string & str2)
 {
   //return upper_copy(str2).find(upper_copy(str1))!=string::npos;
   return str2.find(str1)!=string::npos;
@@ -2891,8 +2900,16 @@ short int encodeFunction(string str)
     return RMFILE;
   else if(sUpper.compare("RENAMEFILE")==0)
     return RENAMEFILE;
+  else if(sUpper.compare("FILEATTRS")==0)
+    return FILEATTRS;
   else if(sUpper.compare("FILESIZE")==0)
     return FILESIZE;
+  else if(sUpper.compare("ISEXECUTABLE")==0)
+    return ISEXECUTABLE;
+  else if(sUpper.compare("ISSYMBLINK")==0)
+    return ISSYMBLINK;
+  else if(sUpper.compare("GETSYMBLINK")==0)
+    return GETSYMBLINK;
   else if(sUpper.compare("NOW")==0)
     return NOW;
   else if(sUpper.compare("DETECTDT")==0)
@@ -3721,6 +3738,61 @@ vector < vector <string> > getAllTokens(string str, string token)
   return findings;
 }
 
+string getFileError(const int & err)
+{
+  string errinfo="";
+  if (err & EACCES)
+    errinfo+="EACCES;";
+  if (err & EBADF)
+    errinfo+="EBADF;";
+  if (err & EFAULT)
+    errinfo+="EFAULT;";
+  if (err & ELOOP)
+    errinfo+="ELOOP;";
+  if (err & ENAMETOOLONG)
+    errinfo+="ENAMETOOLONG;";
+  if (err & ENOENT)
+    errinfo+="ENOENT;";
+  if (err & ENOMEM)
+    errinfo+="ENOMEM;";
+  if (err & ENOTDIR)
+    errinfo+="ENOTDIR;";
+  return errinfo;
+}
+
+// a block device has S_IFBLK S_IFCHR S_IFDIR S_IFLNK
+bool isBlkDev(const struct stat & s)
+{
+  return (s.st_mode&S_IFBLK && s.st_mode&S_IFCHR && s.st_mode&S_IFDIR && s.st_mode&S_IFLNK && !(s.st_mode&S_IFREG));
+}
+
+// a character device has S_IFBLK S_IFCHR S_IFLNK
+bool isChrDev(const struct stat & s)
+{
+  return (s.st_mode&S_IFBLK && s.st_mode&S_IFCHR && s.st_mode&S_IFLNK && !(s.st_mode&S_IFREG) && !(s.st_mode&S_IFDIR));
+}
+
+// a real symbolic link has S_IFBLK S_IFCHR S_IFREG S_IFLNK;
+// IFMT;IFBLK;IFCHR;IFREG;IFLNK
+bool isSymbLink(const struct stat & s)
+{
+  return (s.st_mode&S_IFBLK && s.st_mode&S_IFCHR && s.st_mode&S_IFLNK && s.st_mode&S_IFREG && !(s.st_mode&S_IFDIR));
+}
+
+// a regular file has S_IFREG S_IFLNK
+bool isRegFile(const struct stat & s)
+{
+  //return (s.st_mode&S_IFLNK && s.st_mode&S_IFREG && !(s.st_mode&S_IFBLK) && !(s.st_mode&S_IFCHR) && !(s.st_mode&S_IFDIR));
+  return (s.st_mode&S_IFREG && !(s.st_mode&S_IFBLK) && !(s.st_mode&S_IFCHR) && !(s.st_mode&S_IFDIR));
+}
+
+// a folder has S_IFBLK S_IFDIR
+bool isFolder(const struct stat & s)
+{
+  //return (s.st_mode&S_IFBLK && s.st_mode&S_IFDIR && !(s.st_mode&S_IFLNK) && !(s.st_mode&S_IFREG) && !(s.st_mode&S_IFCHR));
+  return (s.st_mode&S_IFDIR && !(s.st_mode&S_IFLNK) && !(s.st_mode&S_IFREG) && !(s.st_mode&S_IFCHR));
+}
+
 bool fileexist(const string & filepath)
 {
   struct stat s;
@@ -3737,23 +3809,159 @@ size_t getFileSize(const string & filepath)
   return 0;
 }
 
+string getFileModeStr(const string & filepath)
+{
+  string mode="";
+  struct stat s;
+  if( lstat(filepath.c_str(),&s) == 0 ){
+    if (s.st_mode & S_IFMT)
+      mode+="IFMT;";
+    if (s.st_mode & S_IFBLK)
+      mode+="IFBLK;";
+    if (s.st_mode & S_IFCHR)
+      mode+="IFCHR;";
+    if (s.st_mode & S_IFIFO)
+      mode+="IFIFO;";
+    if (s.st_mode & S_IFREG)
+      mode+="IFREG;";
+    if (s.st_mode & S_IFDIR)
+      mode+="IFDIR;";
+    if (s.st_mode & S_IFLNK)
+      mode+="IFLNK;";
+    if (s.st_mode & S_IRWXU)
+      mode+="IRWXU;";
+    if (s.st_mode & S_IRUSR)
+      mode+="IRUSR;";
+    if (s.st_mode & S_IWUSR)
+      mode+="IWUSR;";
+    if (s.st_mode & S_IXUSR)
+      mode+="IXUSR;";
+    if (s.st_mode & S_IRWXG)
+      mode+="IRWXG;";
+    if (s.st_mode & S_IRGRP)
+      mode+="IRGRP;";
+    if (s.st_mode & S_IWGRP)
+      mode+="IWGRP;";
+    if (s.st_mode & S_IXGRP)
+      mode+="IXGRP;";
+    if (s.st_mode & S_IRWXO)
+      mode+="IRWXO;";
+    if (s.st_mode & S_IROTH)
+      mode+="IROTH;";
+    if (s.st_mode & S_IWOTH)
+      mode+="IWOTH;";
+    if (s.st_mode & S_IXOTH)
+      mode+="IXOTH;";
+    if (s.st_mode & S_ISUID)
+      mode+="ISUID;";
+    if (s.st_mode & S_ISGID)
+      mode+="ISGID;";
+    if (s.st_mode & S_ISVTX)
+      mode+="ISVTX;";
+  }
+  return mode;
+}
+
+// check if a symbolic link loop
+bool issymlkloop(const string & filepath)
+{
+  errno = 0;
+  struct stat s;
+  if (lstat(filepath.c_str(),&s) == 0 && s.st_mode & S_IFLNK) 
+    return errno == ELOOP;
+  return false;
+}
+
+bool issymblink(const string & filepath)
+{
+  struct stat s;
+  return ( lstat(filepath.c_str(),&s) == 0 && s.st_mode & S_IFLNK );
+}
+
+string getsymblink(const string & filepath)
+{
+  struct stat s;
+  char buf[PATH_MAX];
+  if ( lstat(filepath.c_str(),&s) == 0 && s.st_mode & S_IFLNK && realpath(filepath.c_str(), buf))
+    return string(buf);
+  else
+    return "";
+}
+
+bool isexecutable(const string & filepath)
+{
+  struct stat s;
+  return ( stat(filepath.c_str(),&s) == 0 && (s.st_mode & S_IXUSR || s.st_mode & S_IXGRP) );
+}
+
+short int getReadMode(const string & filepath)
+{
+  errno = 0;
+  short int readMode;
+  struct stat s;
+  // ======== The commented part: We dont process any symbolic link as there is no good way to deal with the loop links. E.g. /proc/<pid>/root ========
+  if( lstat(filepath.c_str(),&s) == 0 ){
+    ////while (loop<10 && errno == 0 && s.st_mode & S_IFLNK && readlink(buf1, buf2, sizeof(buf2)) >= 0 && lstat(buf2,&s) == 0){
+    //while (errno == 0 && s.st_mode & S_IFLNK && realpath(buf1, buf2) >= 0 && lstat(buf2,&s) == 0){
+    //  memcpy(buf1, buf2, PATH_MAX);
+    //  //realfile = string(buf);
+    //  memset(buf2,'\0',PATH_MAX);
+    //  if (!(s.st_mode & S_IFREG) && !(s.st_mode & S_IFDIR)) // skip devices
+    //    break;
+    //  //char *symlinkpath = "/tmp/symlink/file";
+    //  //char actualpath [PATH_MAX+1];
+    //  //char *ptr;
+    //  //ptr = realpath(symlinkpath, actualpath);
+    //}
+    //if (errno != 0)
+    //  readMode = PARAMETER;
+  
+    // a block device has S_IFBLK S_IFCHR S_IFDIR S_IFLNK
+    // a character device has S_IFBLK S_IFCHR S_IFLNK
+    // a real symbolic link has S_IFREG S_IFLNK S_IFBLK S_IFCHR;
+    // a regular file has S_IFREG S_IFLNK
+    // a folder has S_IFBLK S_IFDIR
+    //if ( s.st_mode & S_IFLNK && s.st_mode & S_IFBLK && s.st_mode & S_IFCHR){
+    if (isSymbLink(s)){
+      char buf1[PATH_MAX], buf2[PATH_MAX];
+      memset(buf1,'\0',sizeof(char)*PATH_MAX);
+      memcpy(buf1, filepath.c_str(), filepath.size());
+      memset(buf2,'\0',sizeof(char)*PATH_MAX);
+      if (realpath(buf1, buf2) < 0 || lstat(buf2,&s) != 0 || errno != 0 || isFolder(s)) // also skip if link to a folder.
+        return PARAMETER;
+      // break loop
+      //while (s.st_mode & S_IFBLK && s.st_mode & S_IFCHR && s.st_mode & S_IFLNK ){
+      while ( isSymbLink(s) ){
+        int i=0;
+        while (buf1[i]==buf2[i])
+          i++;
+        if (buf1[i] == '\0' || buf2[i] == '\0')
+          return PARAMETER;
+        memcpy(buf1,buf2,PATH_MAX);
+        if (realpath(buf1, buf2) < 0 || lstat(buf2,&s) != 0 || errno != 0 || isFolder(s)) // also skip if link to a folder.
+          return PARAMETER;
+      }
+    }
+    //if( s.st_mode & S_IFREG )
+    if( isRegFile(s) )
+      readMode = SINGLEFILE;
+    //else if( (s.st_mode & S_IFDIR) && !(s.st_mode & S_IFCHR) )
+    else if( isFolder(s) )
+      readMode = FOLDER;
+    else
+      readMode = PARAMETER;
+  }else
+    readMode = PARAMETER;
+  return readMode;
+}
+
 short int checkReadMode(const string & sContent)
 {
   short int readMode = PARAMETER;
   if (findFirstCharacter(sContent, {'*','?'}, 0, "\"\"", '\\',{})!=string::npos)
     readMode = WILDCARDFILES;
-  else {
-    struct stat s;
-    if( stat(sContent.c_str(),&s) == 0 ){
-      if( s.st_mode & S_IFDIR )
-        readMode = FOLDER;
-      else if( s.st_mode & S_IFREG )
-        readMode = SINGLEFILE;
-      else
-        readMode = PARAMETER;
-    }else
-      readMode = PARAMETER;
-  }
+  else
+    readMode = getReadMode(sContent);
   
   return readMode;
 }

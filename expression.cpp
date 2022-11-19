@@ -827,7 +827,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
       //trace(DEBUG, "Getting compatible type %s\n", decodeDatatype(m_datatype.datatype).c_str());
       m_metaDataAnzlyzed = m_datatype.datatype!=UNKNOWN;
     }else{
-      if (fieldnames->size() != fieldtypes->size()){
+      if (fieldnames->size() < fieldtypes->size()){
         trace(ERROR,"Field name number %d does not match field type number %d.\n", fieldnames->size(), fieldtypes->size());
         m_metaDataAnzlyzed = false;
         dts.datatype = UNKNOWN;
@@ -1320,7 +1320,7 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
         for (i=0; i<m_fieldnames->size(); i++)
           if ((*m_fieldnames)[i].compare(m_expStr) == 0)
             break;
-        if (i<m_fieldnames->size()){
+        if (i<rds.fieldvalues->size() && i<m_fieldtypes->size()){
           sResult = (*rds.fieldvalues)[i];
           dts = (*m_fieldtypes)[i];
           m_datatype = dts;
@@ -1330,7 +1330,7 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
           }
           return true;
         }else{
-          trace(ERROR, "Cannot find COLUMN '%s'\n",m_expStr.c_str());
+          trace(WARNING, "Cannot find COLUMN '%s'\n",m_expStr.c_str()); // change ERROR to WARNING as when field size changes, the parsed field names/types still exist.
           return false;
         }
       }

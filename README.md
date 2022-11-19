@@ -41,7 +41,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - parse /parsing string/ : Choose one of three mode to match the content.<br />
             - // quotes a regular expression pattern string to parse the content; <br />
             - w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/. substrings between two \* are the spliters, spliter between quoters will be skipped; <br />
-            - d/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /""/ <br />
+            - d/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /""/; flag C means whether to treat each character instead of a whole string as delimiters. <br />
             - l: to parse the whole line as a single field. <br />
          - set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
          - filter <filter conditions> : Filter the parsed records<br />
@@ -255,6 +255,10 @@ Functions can be used in the expression. We current provide some essential norma
    - filesize(filepath) : Normal function. Return the size of the given file, return -1 if file does not exist.<br />
    - rmfile(filepath) : Normal function. Remove the file if it exists.<br />
    - renamefile(filepath) : Normal function. Rename the file if it exists.<br />
+   - fileattrs(filepath) : Normal function. Get file attributes if it exists.<br />
+   - isexecutable(filepath) : Normal function. Return 1 if the file is executable, otherwise return 0.<br />
+   - issymblink(filepath) : Normal function. Return 1 if the file is an symbolic link, otherwise return 0.<br />
+   - getsymblink(filepath) : Normal function. Get the real file that the symbolic link pointing to.<br />
 
    - myips([startseq,[,endseq[,delimiter]]]) : Normal function. Return the IPs of the local machine, startseq is the start sequence number of the IPs, endseq is the end sequence number of the IPs. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple IPs, default is '|'. <br/>
    - hostname() : Normal function. Return the hostname of the local machine.<br />

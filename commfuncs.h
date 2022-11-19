@@ -242,6 +242,10 @@ using namespace std;
 #define RMFILE 141
 #define RENAMEFILE 142
 #define FILESIZE 143
+#define FILEATTRS 144
+#define ISEXECUTABLE 145
+#define ISSYMBLINK 146
+#define GETSYMBLINK 147
 #define SUM 201
 #define COUNT 202
 #define UNIQUECOUNT 203
@@ -454,6 +458,7 @@ string readLine(string str, size_t & pos); // read a line
 vector<string> matchWildcard(const string & str, const string & wildStr, string quoters = "\"\"", char escape = '\\', std::set<char> nestedQuoters={'(',')'}); // match wildcard to transfer a string to a vector
 string readWordTillStop(const string & str, size_t & pos, char stopper='*', char escape = '\\'); // read the first word until reaches stopper
 string concatArray(const vector<string> & array, const string & delim = ""); // concatenate an array to string
+void eliminateDups(vector<string> & array); // eliminate duplicates
 
 int startsWithWords(string str, vector<string> words, int offset); // detect if string start with special words
 int startsWithWords(string str, vector<string> words); // detect if string start with special words
@@ -509,12 +514,12 @@ string dectobin(const int & val);
 int bintodec(const string& str);
 
 void cleanuptm(struct tm & tm); // clean up the messy date in tm, e.g. 2022 10 18 839979404 32764 839979424 => 2022 10 18 0 0 0
-bool strToDate(string str, struct tm & tm, int & iOffSet, string fmt=DATEFMT);
+bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string & fmt=DATEFMT);
 int localOffset();
 struct tm zonetime(time_t t1, string zone);
 struct tm zonetime(time_t t1, int iOffSet);
-int dateFormatLen(string fmt);
-string stripTimeZone(string str, int & iOffSet, string & sTimeZone);
+int dateFormatLen(const string & fmt);
+string stripTimeZone(const string & str, int & iOffSet, string & sTimeZone);
 struct tm now();
 long int curtime();
 double timediff(struct tm & tm1, struct tm & tm2);
@@ -534,9 +539,9 @@ string convertzone(const string & sdate, const string & sFmt, const string & fro
 int random(int min=1, int max=100);
 string randstr(int len=8, const string & flags="uld");
 
-bool like(string str1, string str2); // str1 like str2 (containing wildcard)
-bool reglike(string str, string regstr); 
-bool in(string str1, string str2); 
+bool like(const string & str1, const string & str2); // str1 like str2 (containing wildcard)
+bool reglike(const string & str, const string & regstr); 
+bool in(const string & str1, const string & str2); 
 //char getch();
 //size_t getstr(char * buffer, const size_t len);
 
@@ -576,11 +581,17 @@ string hostname();
 unordered_map< string,string > getmyips();
 
 short int checkReadMode(const string & sContent);
+short int getReadMode(const string & filepath);
+string getFileModeStr(const string & filepath);
 size_t getFileSize(const string &  filepath);
 bool fileexist(const string & filepath);
 bool appendFile(const string & sContent, const string & sFile); // append content to a file
 bool renameFile(const string & oldname, const string & newname);
 bool rmFile(const string & filename);
+bool issymblink(const string & filepath);
+string getsymblink(const string & filepath);
+bool issymlkloop(const string & filepath);
+bool isexecutable(const string & filepath);
 
 void dumpVector(vector<string> v);
 void dumpMap(map<string, string> m);

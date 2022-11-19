@@ -300,6 +300,8 @@ bool FunctionC::analyzeExpStr()
     case HOSTNAME:
     case RMEMBERS:
     case FPCLASSIFY:
+    case FILEATTRS:
+    case GETSYMBLINK:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -354,6 +356,8 @@ bool FunctionC::analyzeExpStr()
     case ISFINITE:
     case ISINF:
     case ISNORMAL:
+    case ISSYMBLINK:
+    case ISEXECUTABLE:
       m_datatype.datatype = LONG;
       break;
     case ROUND:
@@ -1445,7 +1449,7 @@ bool FunctionC::runIsfile(RuntimeDataStruct & rds, string & sResult, DataTypeStr
   string str;
   if (m_params[0].evalExpression(rds, str, dts, true)){
     dts.datatype = LONG;
-    sResult = intToStr(checkReadMode(str) == SINGLEFILE);
+    sResult = intToStr(getReadMode(str) == SINGLEFILE);
     return true;
   }else{
     trace(ERROR, "Failed to run isfile(%s)\n", m_params[0].getEntireExpstr().c_str());
@@ -1462,7 +1466,7 @@ bool FunctionC::runIsfolder(RuntimeDataStruct & rds, string & sResult, DataTypeS
   string str;
   if (m_params[0].evalExpression(rds, str, dts, true)){
     dts.datatype = LONG;
-    sResult = intToStr(checkReadMode(str) == FOLDER);
+    sResult = intToStr(getReadMode(str) == FOLDER);
     return true;
   }else{
     trace(ERROR, "Failed to run isfolder(%s)\n", m_params[0].getEntireExpstr().c_str());
@@ -1495,7 +1499,7 @@ bool FunctionC::runRmfile(RuntimeDataStruct & rds, string & sResult, DataTypeStr
   string str;
   if (m_params[0].evalExpression(rds, str, dts, true)){
     dts.datatype = LONG;
-    short int iMode = checkReadMode(str);
+    short int iMode = getReadMode(str);
     if (iMode != SINGLEFILE){
       trace(WARNING, "Failed to run rmfile(%s), '%s' is not a file or does not exist!\n", m_params[0].getEntireExpstr().c_str(), str.c_str());
       sResult = "0";
@@ -1517,8 +1521,8 @@ bool FunctionC::runRenamefile(RuntimeDataStruct & rds, string & sResult, DataTyp
   string oldfile, newfile;
   if (m_params[0].evalExpression(rds, oldfile, dts, true) && m_params[1].evalExpression(rds, newfile, dts, true)){
     dts.datatype = LONG;
-    short int iOldMode = checkReadMode(oldfile);
-    short int iNewMode = checkReadMode(newfile);
+    short int iOldMode = getReadMode(oldfile);
+    short int iNewMode = getReadMode(newfile);
     if (iOldMode != SINGLEFILE && iOldMode != FOLDER){
       trace(WARNING, "Failed to run renamefile(), '%s' is not a file or does not exist!\n", m_params[0].getEntireExpstr().c_str());
       sResult = "0";
@@ -1543,7 +1547,7 @@ bool FunctionC::runFilesize(RuntimeDataStruct & rds, string & sResult, DataTypeS
   string str;
   if (m_params[0].evalExpression(rds, str, dts, true)){
     dts.datatype = LONG;
-    short int iMode = checkReadMode(str);
+    short int iMode = getReadMode(str);
     if (iMode != SINGLEFILE){
       trace(WARNING, "Failed to run filesize(%s), '%s' is not a file or does not exist!\n", m_params[0].getEntireExpstr().c_str(), str.c_str());
       sResult = "-1";
@@ -1552,6 +1556,74 @@ bool FunctionC::runFilesize(RuntimeDataStruct & rds, string & sResult, DataTypeS
     return true;
   }else{
     trace(ERROR, "Failed to run filesize(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runFileattrs(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "fileattrs() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = STRING;
+    sResult = getFileModeStr(str);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run fileattrs(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIsexecutable(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "isexecutable() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = LONG;
+    sResult = intToStr(isexecutable(str));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run isexecutable(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runIssymblink(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "issymblink() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = LONG;
+    sResult = intToStr(issymblink(str));
+    return true;
+  }else{
+    trace(ERROR, "Failed to run issymblink(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runGetsymblink(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() != 1){
+    trace(ERROR, "getsymblink() function accepts only one parameter.\n");
+    return false;
+  }
+  string str;
+  if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = STRING;
+    sResult = getsymblink(str);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run getsymblink(%s)\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -3963,6 +4035,18 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case FILESIZE:
       getResult = runFilesize(rds, sResult, dts);
+      break;
+    case FILEATTRS:
+      getResult = runFileattrs(rds, sResult, dts);
+      break;
+    case ISEXECUTABLE:
+      getResult = runIsexecutable(rds, sResult, dts);
+      break;
+    case ISSYMBLINK:
+      getResult = runIssymblink(rds, sResult, dts);
+      break;
+    case GETSYMBLINK:
+      getResult = runGetsymblink(rds, sResult, dts);
       break;
     case MOD:
       getResult = runMod(rds, sResult, dts);

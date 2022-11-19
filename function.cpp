@@ -988,6 +988,7 @@ bool FunctionC::runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
     sResult = "";
     for (int i=iStart; iStart<=iEnd?i<=iEnd:i>=iEnd; iStart<=iEnd?i++:i--)
       sResult+=vWords[i]+(i!=iEnd?sDelm:"");
+    return true;
   }else{
     trace(ERROR, "(2)Failed to run getparts(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
     return false;
@@ -2698,7 +2699,7 @@ bool FunctionC::runAddtime(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     char unit = 'S';
     if (m_params.size() == 3 && m_params[2].evalExpression(rds, sUnit, dts2, true)){
       sUnit = upper_copy(sUnit);
-      if (sUnit.length() == 1 & (sUnit[0]=='S' || sUnit[0]=='M' || sUnit[0]=='H' || sUnit[0]=='D' || sUnit[0]=='N' || sUnit[0]=='Y'))
+      if (sUnit.length() == 1 && (sUnit[0]=='S' || sUnit[0]=='M' || sUnit[0]=='H' || sUnit[0]=='D' || sUnit[0]=='N' || sUnit[0]=='Y'))
         unit = sUnit[0];
       else{
         trace(ERROR, "'%s' is not a valid unit!\n", m_params[2].getEntireExpstr().c_str());

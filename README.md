@@ -90,7 +90,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
       - group|g field or expression,... : Fields or expressions to be groupd for aggregation selections<br />
       - sort|o field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
       - limtl n | bottomN,topN : Limited number records to be printed<br />
-      - unique|u [(r)ecord][(f)ield]. (r)ecord indicates to make the records unique, (f)ield indicates to make the selection fields unique, they can be combined to gether. If no option provide, record is the default value. <br />
+      - unique|u [(r)ecord][(f)ield]. (r)ecord indicates to make the records unique, (f)ield indicates to make the selection fields unique, they can be combined to gother. If no option provide, record is the default value. <br />
       - tree|h k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree; @ISLEAF indicate if the node is a leaf. <br />
       - report|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br />
       - \>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file. <br />

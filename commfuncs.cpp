@@ -1596,15 +1596,15 @@ void cleanuptm(struct tm & tm)
 {
   if (abs(tm.tm_gmtoff) > 43200)
     tm.tm_gmtoff = 0;
-  if (abs(tm.tm_sec > 60))
+  if (abs(tm.tm_sec) > 60)
     tm.tm_sec = 0;
-  if (abs(tm.tm_min > 60))
+  if (abs(tm.tm_min) > 60)
     tm.tm_min = 0;
-  if (abs(tm.tm_hour > 60))
+  if (abs(tm.tm_hour) > 60)
     tm.tm_hour = 0;
-  if (abs(tm.tm_mday > 32))
+  if (abs(tm.tm_mday) > 32)
     tm.tm_mday = 1;
-  if (abs(tm.tm_mon > 12))
+  if (abs(tm.tm_mon) > 12)
     tm.tm_mday = 0;
 }
 
@@ -2194,9 +2194,10 @@ int yearweek(const string & datesrc, const string & fmt)
   struct tm tm;
   string sResult, sFmt = fmt;
   int iOffSet;
-  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt)){
     trace(ERROR, "(yearweek) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
-  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+    return -1;
+  }else if (strToDate(datesrc, tm, iOffSet, sFmt)){
     // get the day in the first week
     int sday = tm.tm_yday%7;
     return (tm.tm_yday-sday)/7+(sday>=tm.tm_wday?1:0);
@@ -2211,9 +2212,10 @@ int yearday(const string & datesrc, const string & fmt)
   struct tm tm;
   string sResult, sFmt = fmt;
   int iOffSet;
-  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt)){
     trace(ERROR, "(yearday) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
-  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+    return -1;
+  }else if (strToDate(datesrc, tm, iOffSet, sFmt)){
     return tm.tm_yday;
   }else{
     trace(ERROR, "(yearday) '%s' is not a correct date!\n", datesrc.c_str());
@@ -3927,7 +3929,7 @@ short int getReadMode(const string & filepath)
       memset(buf1,'\0',sizeof(char)*PATH_MAX);
       memcpy(buf1, filepath.c_str(), filepath.size());
       memset(buf2,'\0',sizeof(char)*PATH_MAX);
-      if (realpath(buf1, buf2) < 0 || lstat(buf2,&s) != 0 || errno != 0 || isFolder(s)) // also skip if link to a folder.
+      if (!realpath(buf1, buf2) || lstat(buf2,&s) != 0 || errno != 0 || isFolder(s)) // also skip if link to a folder.
         return PARAMETER;
       // break loop
       //while (s.st_mode & S_IFBLK && s.st_mode & S_IFCHR && s.st_mode & S_IFLNK ){
@@ -3938,7 +3940,7 @@ short int getReadMode(const string & filepath)
         if (buf1[i] == '\0' || buf2[i] == '\0')
           return PARAMETER;
         memcpy(buf1,buf2,PATH_MAX);
-        if (realpath(buf1, buf2) < 0 || lstat(buf2,&s) != 0 || errno != 0 || isFolder(s)) // also skip if link to a folder.
+        if (!realpath(buf1, buf2) < 0 || lstat(buf2,&s) != 0 || errno != 0 || isFolder(s)) // also skip if link to a folder.
           return PARAMETER;
       }
     }

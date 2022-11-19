@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.211] 2022-11-18
+   Fixed bug: compile error in MacOS. <br/>
    # [1.21] 2022-11-18
    New feature: New functions: fileattrs(filepath) isexecutable(filepath) issymblink(filepath) getsymblink(filepath). <br/>
    New feature: New flag C for delimiter parsing: whether to treat each character instead of a whole string as delimiters. <br/>

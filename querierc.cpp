@@ -152,7 +152,6 @@ void QuerierC::setregexp(string regexstr)
   string flags = nPos == string::npos?"":upper_copy(regexstr.substr(nPos+1)), patternStr = nPos == string::npos?regexstr:regexstr.substr(0,nPos+1);
   m_delmrepeatable = flags.find("R")!=string::npos;
   m_delmkeepspace = flags.find("S")!=string::npos;
-  m_eliminateDupField = flags.find("U")!=string::npos;
   m_delmMulitChar = flags.find("C")!=string::npos;
   if (trim_copy(patternStr).empty()){
     m_searchMode = DELMSEARCH;
@@ -303,9 +302,19 @@ bool QuerierC::assignGroupStr(string groupstr)
   return true;
 }
 
-void QuerierC::setUniqueResult(bool bUnique)
+void QuerierC::setUniqueResult(string unistr)
 {
-  m_bUniqueResult = bUnique;
+  if (trim_copy(unistr).empty())
+    m_bUniqueResult = true;
+  else{
+    vector<string> vUni = split(upper_copy(trim_copy(unistr)),' ',"",'\0',{},true,true);
+    for (int i=0; i<vUni.size(); i++){
+      if (trim_copy(vUni[i])[0]=='R')
+        m_bUniqueResult=true;
+      if (trim_copy(vUni[i])[0]=='F')
+        m_eliminateDupField = true;
+    }
+  }
 }
 
 void QuerierC::setDetectTypeMaxRowNum(int detectTypeMaxRowNum)
@@ -1840,8 +1849,6 @@ int QuerierC::searchNextReg()
       }else
         for (int i=0; i<m_matches.size(); i++)
           matcheddata.push_back(m_matches[i]);
-      //if (m_eliminateDupField)
-      //  eliminateDups(matcheddata);
       //trace(DEBUG2,"Detected rows %d/%d\n", m_detectedRawDatatype.size(), m_detectTypeMaxRowNum);
       // detect fileds data type. When m_bDetectAllOnChange is false, only matcheddata.size()>m_fieldnames.size()+1 triggers redetect
       if (m_detectedTypeRows < m_detectTypeMaxRowNum || (!m_bDetectAllOnChange && matcheddata.size()>m_fieldnames.size()+1) || (m_bDetectAllOnChange && matcheddata.size()!=m_fieldnames.size()+1)){
@@ -1932,8 +1939,6 @@ int QuerierC::searchNextWild()
     vector<string>  matcheddata = matchWildcard(sLine,m_regexstr,m_quoters,'\\',{});
     if (matcheddata.size()==0 && bEnded)
       continue;
-    //if (m_eliminateDupField)
-    //  eliminateDups(matcheddata);
     m_line++;
     m_fileline++;
     if (m_nameline && m_line==1){ // use the first line as field names
@@ -2020,8 +2025,6 @@ int QuerierC::searchNextDelm()
       else
         matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
     }
-    //if (m_eliminateDupField)
-    //  eliminateDups(matcheddata);
 #ifdef __DEBUG__
   m_rawsplittime += (curtime()-thistime);
   thistime = curtime();
@@ -2780,6 +2783,8 @@ void QuerierC::unique()
   int iSize=0, iDups=0;
   for (int i=0;i<m_results.size();i++){
     iSize = uresults.size();
+    if (m_eliminateDupField)
+      eliminateDups(m_results[i]);
     uresults.insert(m_results[i]);
     if (iSize == uresults.size()) { // duplicated row
       if (m_sortKeys.size()>i-iDups){

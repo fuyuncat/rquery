@@ -95,7 +95,7 @@ class QuerierC
     void setNameline(bool nameline);
     void setUserVars(string variables);
     void setUserMaroFuncs(string macrostr);
-    void setUniqueResult(bool bUnique);
+    void setUniqueResult(string unistr);
     void setOutputFiles(string outputfilestr, short int outputmode=OVERWRITE);
     void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
     void setDetectAllOnChange(bool bDetectAllOnChange);

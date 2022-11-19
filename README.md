@@ -41,7 +41,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - parse /parsing string/ : Choose one of three mode to match the content.<br />
             - // quotes a regular expression pattern string to parse the content; <br />
             - w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/. substrings between two \* are the spliters, spliter between quoters will be skipped; <br />
-            - d/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /""/; flag C means whether to treat each character instead of a whole string as delimiters. <br />
+            - d/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /""/; flag C means whether to treat each character instead of a whole string as delimiter. <br />
             - l: to parse the whole line as a single field. <br />
          - set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
          - filter <filter conditions> : Filter the parsed records<br />
@@ -51,7 +51,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - group <field or expression,...> : Fields or expressions to be groupd for aggregation selections<br />
          - sort <field or expression [asc|desc],...> : Sorting keys to decide order of the output records<br />
          - limt <n | bottomN,topN> : Limited number records to be printed<br />
-         - unique : Make the returned resutl unique.<br />
+         - unique [(r)ecord][(f)ield]: (r)ecord indicates to make the records unique, (f)ield indicates to make the selection fields unique, they can be combined to gether. If no option provide, record is the default value<br />
          - tree k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree. <br />
          - report SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br />
          - variable name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]..] -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. Dynamic variable is not supported in the aggregation & analytic functions in current version. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files<br />
@@ -90,7 +90,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
       - group|g field or expression,... : Fields or expressions to be groupd for aggregation selections<br />
       - sort|o field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
       - limtl n | bottomN,topN : Limited number records to be printed<br />
-      - unique|u : Make the returned resutl unique. <br />
+      - unique|u [(r)ecord][(f)ield]. (r)ecord indicates to make the records unique, (f)ield indicates to make the selection fields unique, they can be combined to gether. If no option provide, record is the default value. <br />
       - tree|h k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree; @ISLEAF indicate if the node is a leaf. <br />
       - report|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br />
       - \>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file. <br />

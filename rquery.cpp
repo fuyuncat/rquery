@@ -386,9 +386,9 @@ void processQuery(string sQuery, QuerierC & rq)
     rq.assignSortStr(query["o"]);
   }
   if (query.find("unique") != query.end()){
-    rq.setUniqueResult(true);
+    rq.setUniqueResult(query["unique"]);
   }else if (query.find("u") != query.end()){
-    rq.setUniqueResult(true);
+    rq.setUniqueResult(query["u"]);
   }
   if (query.find("tree") != query.end()){
     //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
@@ -920,7 +920,8 @@ int main(int argc, char *argv[])
         cout << "Fields delimiter is set.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).compare("unique")==0){
-        rq.setUniqueResult(true);
+        string strParam = trim_copy(lineInput).substr(string("tree ").length());
+        rq.setUniqueResult(strParam);
         cout << "Set returned result unique.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("tree ")==0){

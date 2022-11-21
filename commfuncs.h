@@ -246,6 +246,7 @@ using namespace std;
 #define ISEXECUTABLE 145
 #define ISSYMBLINK 146
 #define GETSYMBLINK 147
+#define DUPLICATE 148
 #define SUM 201
 #define COUNT 202
 #define UNIQUECOUNT 203

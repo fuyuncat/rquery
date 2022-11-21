@@ -155,6 +155,7 @@ Functions can be used in the expression. We current provide some essential norma
    - isip(str) : Normal function. Return 1 if the given str is an IP address, otherwise, return 0.<br />
    - isipv6(str) : Normal function. Return 1 if the given str is an IPv6 address, otherwise, return 0.<br />
    - ismac(str) : Normal function. Return 1 if the given str is a MAC address, otherwise, return 0.<br />
+   - duplicate(expr, dupNum[, delmiter]) : Normal function. Generate a string of specific number of the expression result.<br />
 
    - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
    - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />

@@ -2912,6 +2912,8 @@ short int encodeFunction(string str)
     return ISSYMBLINK;
   else if(sUpper.compare("GETSYMBLINK")==0)
     return GETSYMBLINK;
+  else if(sUpper.compare("DUPLICATE")==0)
+    return DUPLICATE;
   else if(sUpper.compare("NOW")==0)
     return NOW;
   else if(sUpper.compare("DETECTDT")==0)

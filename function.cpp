@@ -302,6 +302,7 @@ bool FunctionC::analyzeExpStr()
     case FPCLASSIFY:
     case FILEATTRS:
     case GETSYMBLINK:
+    case DUPLICATE:
       m_datatype.datatype = STRING;
       break;
     case FLOOR:
@@ -1288,6 +1289,31 @@ bool FunctionC::runBase64decode(RuntimeDataStruct & rds, string & sResult, DataT
   if (m_params[0].evalExpression(rds, encoded, dts, true)){
     dts.datatype = STRING;
     sResult = base64decode(encoded);
+    return true;
+  }else{
+    trace(ERROR, "Failed to run base64decode(%s)\n", m_params[0].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runDuplicate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 2){
+    trace(ERROR, "base64decode() function accepts only two or three parameters.\n");
+    return false;
+  }
+  string str, num, delim=",";
+  if (m_params[0].evalExpression(rds, str, dts, true) && m_params[1].evalExpression(rds, num, dts, true) && isInt(num)){
+    int iDup = max(1,atoi(num.c_str()));
+    dts.datatype = STRING;
+    if (m_params.size() >= 3)
+      m_params[2].evalExpression(rds, delim, dts, true);
+    sResult ="";
+    for (int i=0; i<iDup; i++){
+      sResult += str;
+      if (i<iDup-1)
+        sResult += delim;
+    }
     return true;
   }else{
     trace(ERROR, "Failed to run base64decode(%s)\n", m_params[0].getEntireExpstr().c_str());
@@ -3994,6 +4020,9 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case BASE64DECODE:
       getResult = runBase64decode(rds, sResult, dts);
+      break;
+    case DUPLICATE:
+      getResult = runDuplicate(rds, sResult, dts);
       break;
     case MD5:
       getResult = runMd5(rds, sResult, dts);

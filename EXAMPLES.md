@@ -291,6 +291,14 @@
    ```
    1
    ```
+- duplicate(expr, dupNum[, delmiter]) : Normal function. Generate a string of specific number of the expression result.<br />
+   ```
+   rq -q "s duplicate(@raw, 3, '-')" name
+   ```
+   Returns result:<br/>
+   ```
+   name-name-name
+   ```
 - mod(num,div) : Normal function. Get the mod of a number.<br />
    ```
    echo " " | rq -q "s mod(255,7)"

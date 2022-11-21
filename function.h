@@ -115,6 +115,7 @@ class FunctionC
     bool runUrldecode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runBase64encode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runBase64decode(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runDuplicate(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
 
     bool runFloor(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runCeil(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);

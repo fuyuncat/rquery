@@ -63,6 +63,7 @@ void usage()
   printf("\t\textrafilter|e <extra filter conditions> [ trim <selections ...>] -- Provide filter conditions to filt the resultset. @N refer to Nth selection of the result set. the trim clause specifys the selections after trimmed the result set.\n");
   printf("\t\tmeanwhile|m <actions when searching data> -- Provide actions to be done while doing searching. The result set can be used for two or more files JOIN or IN query.\n");
   printf("\t\tselect|s <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected. If no filed name captured, @N or @fieldN can be used for field N.\n");
+  printf("\t\tduplicate|d <num_expr>[ where filter_condition] -- Duplicate the fetched records.\n");
   printf("\t\tgroup|g <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n");
   printf("\t\tsort|o <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n");
   printf("\t\tlimt|l <n | bottomN,topN> -- Provide output limit range.\n");
@@ -403,6 +404,13 @@ void processQuery(string sQuery, QuerierC & rq)
   }else if (query.find("r") != query.end()){
     //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
     rq.assignReportStr(query["r"]);
+  }
+  if (query.find("duplicate") != query.end()){
+    //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
+    rq.assignDupStr(query["duplicate"]);
+  }else if (query.find("d") != query.end()){
+    //trace(DEBUG,"Assigning sorting keys: %s \n", query["sort"].c_str());
+    rq.assignDupStr(query["d"]);
   }
   if (query.find("limit") != query.end()){
     //trace(DEBUG,"Assigning limit numbers: %s \n", query["limit"].c_str());
@@ -753,13 +761,14 @@ int main(int argc, char *argv[])
         cout << "extrafilter <extra filter conditions> [trim <selections ...>] -- Provide filter conditions to filt the resultset. @N refer to Nth selection of the result set. the trim clause specifys the selections after trimmed the result set.\n";
         cout << "meanwhile <actions when searching data> -- Provide actions to be done while doing searching. The result set can be used for two or more files JOIN or IN query.\n";
         cout << "select <field or expression [as alias],...> -- Provide a field name/variables/expressions to be selected. If no filed name captured, @N or @fieldN can be used for field N.\n";
+        cout << "duplicate <num_expr>[ where filter_condition] -- Duplicate the fetched records.\n";
         cout << "group <field or expression,...> -- Provide a field name/variables/expressions to be grouped.\n";
         cout << "sort <field or expression [asc|desc],...> -- Provide a field name/variables/expressions to be sorted.\n";
         cout << "limt <n | bottomN,topN> -- Provide output limit range.\n";
         cout << "unique -- Make the returned resutl unique.\n";
         cout << "tree k:expr1[,expr2...];p:expr1[,expr2...] -- Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree.\n";
         cout << "output|append -- Set output files, if not set, output to standard terminal (screen). 'output' will overwrite existing files, 'append' will append to existing file.\n";
-        cout << "report|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. \n";
+        cout << "report -- SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. \n";
         cout << "clear -- Clear all query inputs.\n";
         cout << "filemode <buffer|line> -- Provide file read mode, default is buffer.\n";
         cout << "skip <N> -- How many bytes or lines (depends on the filemode) to be skipped.\n";
@@ -928,6 +937,16 @@ int main(int argc, char *argv[])
         string strParam = trim_copy(lineInput).substr(string("tree ").length());
         rq.assignTreeStr(strParam);
         cout << "Tree keys are provided.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("report ")==0){
+        string strParam = trim_copy(lineInput).substr(string("report ").length());
+        rq.assignReportStr(strParam);
+        cout << "Summary report is set.\n";
+        cout << "rquery >";
+      }else if (lower_copy(trim_copy(lineInput)).find("duplicate ")==0){
+        string strParam = trim_copy(lineInput).substr(string("duplicate ").length());
+        rq.assignDupStr(strParam);
+        cout << "Duplicate record number is set.\n";
         cout << "rquery >";
       }else if (lower_copy(trim_copy(lineInput)).compare("output")==0){
         string strParam = trim_copy(lineInput).substr(string("output ").length());

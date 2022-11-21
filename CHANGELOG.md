@@ -1,5 +1,8 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.212] 2022-11-21
+   Enhancement: Optimized the code of eval selection/sort expression and adding to result set (in matchFilter, group, setTree...). <br/>
+   New feature: new query command: duplicate <num_expr>[ where filter_condition] -- Duplicate the fetched records. <br/>
    # [1.211] 2022-11-18
    Fixed bug: compile error in MacOS. <br/>
    # [1.21] 2022-11-18

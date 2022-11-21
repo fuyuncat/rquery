@@ -53,7 +53,7 @@ private:
 struct SortProp{
   ExpressionC sortKey;
   short int direction; //1 ASC; 2 DESC
-  int iSel=-1; //1 ASC; 2 DESC
+  int iSel=-1; //
 
   SortProp& operator=(SortProp other)
   {
@@ -90,6 +90,7 @@ class QuerierC
     bool assignMeanwhileString(string mwstr);
     bool assignTreeStr(string treestr);
     bool assignReportStr(string reportstr);
+    bool assignDupStr(string dupstr);
     bool setFieldTypeFromStr(string setstr);
     void setFileName(string filename, bool bfileheaderonly=false);
     void setNameline(bool nameline);
@@ -112,7 +113,7 @@ class QuerierC
     void unique();
     bool searchStopped();
     void applyExtraFilter();
-    void applyExtraFilter(vector<string> aRow, const map<string, string> & varValues);
+    bool applyExtraFilter(const vector<string> & aRow, const map<string, string> & varValues);
     void output();
     void clear();
     void outputExtraInfo(size_t total, bool bPrintHeader);
@@ -162,6 +163,7 @@ class QuerierC
     string m_sortstr; // sort raw string
     string m_treestr; // tree raw string
     string m_reportstr; // report raw string
+    string m_dupstr; // duplicate raw string
     bool m_bSelectContainMacro; // flag indicating if macro function exists in select expressions
     bool m_bToAnalyzeSelectMacro; // whether need to analyze marco in selections
     bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
@@ -169,6 +171,9 @@ class QuerierC
     bool m_bDetectAllOnChange; // whether re-detect all fields when the number of field changes.
     bool m_bTextOnly; // treat all fileds as string, unless there is user defined data type
     
+    ExpressionC* m_dupnumexp; // expression of duplicate number
+    FilterC* m_dupfilter; // filter of duplicate command
+
     vector<vector<int>> m_colToRows; // the selection list of each COLTOROW marco function
     vector<string> m_colToRowNames; // field names of COLTOROW marco function
 
@@ -237,6 +242,7 @@ class QuerierC
     bool analyzeSortStr();
     bool analyzeTreeStr();
     bool analyzeReportStr();
+    bool analyzeDupStr();
     bool checkSelGroupConflict(const ExpressionC & eSel);
     bool checkSortGroupConflict(const ExpressionC & eSort);
     void addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow);
@@ -244,12 +250,14 @@ class QuerierC
     void getSideDatarow(unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);
     bool matchFilter(vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);  // eval expression in aggregation paramter and store in a data set
-    void appendResultSet(vector<string> vResult, const map<string, string> & varValues, bool bApplyExtraFilter); // add a row to result set, doing columns to rows if coltorow involved
-    bool addResultToSet(vector<string>* fieldvalues, map<string,string>* varvalues, vector<string> rowValue, vector<ExpressionC> expressions, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, vector<ExpressionC>* anaEvaledExp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow, vector< vector<string> > & resultSet); // add a data row to a result set
+    void evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, bool bCheckGroupFunc);
+    bool evalAddExprArray(const vector<ExpressionC> & expressions, const string & rawval, RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, vector<string> & vResults, bool bCheckGroupFunc);
+    void evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, bool bApplyExtraFilter, bool bCheckGroupFunc);
+    bool appendResultSet(vector<string> vResult, const map<string, string> & varValues, bool bApplyExtraFilter); // add a row to result set, doing columns to rows if coltorow involved
     //void mergeSort(int iLeft, int iMid, int iRight);
     void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);
     void mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, int iLeftB, int iLeftT, int iRightB, int iRightT);
-    void addAnaFuncData(unordered_map< string,vector<string> > anaFuncData);
+    void addAnaFuncData(unordered_map< string,vector<string> > & anaFuncData);
     bool sortAnaData(vector<SortProp> & sortProps, const short int & iFuncID, const string & sFuncExpStr, vector< vector<string> > & vFuncData);
     bool processAnalytic(const string & sFuncExpStr, vector< vector<string> > & vFuncData);
     bool processAnalyticA(const short int & iFuncID, const string & sFuncExpStr, vector< vector<string> > & vFuncData);
@@ -268,6 +276,7 @@ class QuerierC
     void clearAnalytic();
     void clearReport();
     void clearFilter();
+    void clearDuplicate();
 
 #ifdef __DEBUG__
     long int m_querystartat;

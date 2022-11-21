@@ -1978,6 +1978,23 @@
    ```
 - Skip first 1000 lines when processing a file<br/>
    ```
+   rq -q "s 10-@dupid | d 10" " "
+   ```
+   Result output<br/>
+   ```
+   9
+   8
+   7
+   6
+   5
+   4
+   3
+   2
+   1
+   0
+   ```
+- Generate a serial of sequence numbers.<br/>
+   ```
    rq -r line -s 1000 -q "s @raw | filter @raw like '*192.168.1.1*'" access.log
    ```
    Rquery will start from line 1001 to process the file<br/>

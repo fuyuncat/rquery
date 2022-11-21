@@ -52,6 +52,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - sort <field or expression [asc|desc],...> : Sorting keys to decide order of the output records<br />
          - limt <n | bottomN,topN> : Limited number records to be printed<br />
          - unique [(r)ecord][(f)ield]: (r)ecord indicates to make the records unique, (f)ield indicates to make the selection fields unique, they can be combined to gether. If no option provide, record is the default value<br />
+         - duplicate <num_expr>[ where filter_condition] : Duplicate the fetched records. analytic function cannot be used in the filter_condition. <br/>
          - tree k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree. <br />
          - report SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br />
          - variable name1:value1[:expression1[:g]][;name2:value2[:expression2[:g]]..] -- Pass variable to rquery, variable name can be any valid word except the reserved words, RAW,FILE,ROW,LINE,FILELINE,FILEID. Using @name to refer to the variable. variable can be a dynamic variable if an expression passed, e.g. v1:1:@v1+1, @v1 has an initial value 0, it will be plused one for each matched row. Dynamic variable is not supported in the aggregation & analytic functions in current version. 'g' flag of a dynamic variable indecate it is a global variable when processing multiple files<br />
@@ -91,6 +92,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
       - sort|o field or expression [asc|desc],... : Sorting keys to decide order of the output records<br />
       - limtl n | bottomN,topN : Limited number records to be printed<br />
       - unique|u [(r)ecord][(f)ield]. (r)ecord indicates to make the records unique, (f)ield indicates to make the selection fields unique, they can be combined to gother. If no option provide, record is the default value. <br />
+      - duplicate|d <num_expr>[ where filter_condition] -- Duplicate the fetched records. analytic function cannot be used in the filter_condition. <br/>
       - tree|h k:expr1[,expr2...];p:expr1[,expr2...] : Provide keys and parent keys to construct tree stucture. tree cannot work with group/sort/unique. variable @level stands for the level of the node in the tree; @nodeid for an unique sequence id of the node of the tree; @ISLEAF indicate if the node is a leaf. <br />
       - report|r SelectionIndex1:AggregationOp1[,SelectionIndex2:AggregationOp2] -- Generate a summary of specified selections. <br />
       - \>|>> -- Set output files, if not set, output to standard terminal (screen). > will overwrite existing files, >> will append to existing file. <br />

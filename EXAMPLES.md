@@ -659,7 +659,7 @@
    ```
    2022-07-29:18:56:36     2022-07-29:18:00:00
    ```
-- now() : Normal function. Get current date time<br/>
+- now([anything]) : Normal function. Get current date time<br/>
    ```
    echo ""|rq -q "s now()"
    ```
@@ -779,7 +779,7 @@
    ```
    6
    ```
-- randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br/>
+- randstr(len[,flags]) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br/>
    ```
    rq -q "s randstr(16,'Udx')" " "
    ```
@@ -1986,26 +1986,26 @@
    ```
 - Skip first 1000 lines when processing a file<br/>
    ```
-   rq -q "s 10-@dupid | d 10" " "
-   ```
-   Result output<br/>
-   ```
-   9
-   8
-   7
-   6
-   5
-   4
-   3
-   2
-   1
-   0
-   ```
-- Generate a serial of sequence numbers.<br/>
-   ```
    rq -r line -s 1000 -q "s @raw | filter @raw like '*192.168.1.1*'" access.log
    ```
    Rquery will start from line 1001 to process the file<br/>
+- Generate 10 usernames and passwords.<br/>
+   ```
+   rq -q "s @dupid, randstr(2,'ul')+randstr(8,'uld'), randstr(8,'uldnxb')+tostr(random()) | d 10" name
+   ```
+   Result output<br/>
+   ```
+   1       toJhx526Bp9t    r8`1Q~{2340
+   2       irETD2x1aG2Q    _g)2g#"}826
+   3       jxEFRX1XDAvH    '_8I0>IHW98
+   4       wWC0ygV65hmi    _:5R_!_Rl92
+   5       QzjIap7WFcAl    5K03$[v5H75
+   6       ouYiegc3oxQk    IPd_!r>~:22
+   7       LGS5mjL6ov2L    0>u[[iba?39
+   8       vkSUqasxYmmT    7'2f52I`f96
+   9       HskOuBzH6y1O    5cDu_]_M_81
+   10      RHFuq4eo4ks2    e_k"/53_$39
+   ```
 - Detect more rows to get the accurate data types<br/>
    By default, only the first row is chosen to be used to detect the data types. Therefore, below query will treat all rows as LONG.<br/>
    ```

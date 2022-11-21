@@ -1302,8 +1302,8 @@ string randstr(int len, const string & flags)
   // generate compulsory characters first
   for (int i=0;i<flags.length();i++){
     if (validflags.find(flags[i])==validflags.end()){
-      trace(ERROR,"'%s' is a invlid flag of randstr!\n",flags.substr(i,1).c_str());
-      return genstr;
+      trace(WARNING,"'%s' is a invlid flag of randstr!\n",flags.substr(i,1).c_str());
+      continue;
     }
     switch(flags[i]){
     case 'U':

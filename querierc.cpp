@@ -1968,11 +1968,11 @@ int QuerierC::searchNextReg()
           m_fieldInitNames.clear();
           pairFiledNames(m_matches);
         }else{
-          int initSize=min(m_fieldInitNames.size(),matcheddata.size());
+          int initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
           for (int i=m_fieldnames.size(); i<initSize; i++)
             m_fieldnames.push_back(m_fieldInitNames[i]);
-          for (int i=m_fieldnames.size();i<matcheddata.size();i++)
-            m_fieldnames.push_back("@FIELD"+intToStr(i));
+          for (int i=m_fieldnames.size();i<matcheddata.size()-1;i++)  // matcheddata[0] needs to be skipped
+            m_fieldnames.push_back("@FIELD"+intToStr(i+1));
         }
         trialAnalyze(matcheddata);
       }
@@ -2069,11 +2069,11 @@ int QuerierC::searchNextWild()
         m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
         m_bToAnalyzeSortMacro = m_bSortContainMacro;
       }
-      int initSize=min(m_fieldInitNames.size(),matcheddata.size());
+      int initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
       for (int i=m_fieldnames.size(); i<initSize; i++)
         m_fieldnames.push_back(m_fieldInitNames[i]);
-      for (int i=m_fieldnames.size();i<matcheddata.size();i++)
-        m_fieldnames.push_back("@FIELD"+intToStr(i));
+      for (int i=m_fieldnames.size();i<matcheddata.size()-1;i++) // matcheddata[0] needs to be skipped
+        m_fieldnames.push_back("@FIELD"+intToStr(i+1));
       trialAnalyze(matcheddata);
     }
 #ifdef __DEBUG__
@@ -2165,11 +2165,11 @@ int QuerierC::searchNextDelm()
         m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
         m_bToAnalyzeSortMacro = m_bSortContainMacro;
       }
-      int initSize=min(m_fieldInitNames.size(),matcheddata.size());
+      int initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
       for (int i=m_fieldnames.size(); i<initSize; i++)
         m_fieldnames.push_back(m_fieldInitNames[i]);
-      for (int i=m_fieldnames.size();i<matcheddata.size();i++)
-        m_fieldnames.push_back("@FIELD"+intToStr(i));
+      for (int i=m_fieldnames.size();i<matcheddata.size()-1;i++) // matcheddata[0] needs to be skipped
+        m_fieldnames.push_back("@FIELD"+intToStr(i+1));
       trialAnalyze(matcheddata);
     }
 #ifdef __DEBUG__
@@ -2243,11 +2243,11 @@ int QuerierC::searchNextLine()
         m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
         m_bToAnalyzeSortMacro = m_bSortContainMacro;
       }
-      int initSize=min(m_fieldInitNames.size(),matcheddata.size());
+      int initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
       for (int i=m_fieldnames.size(); i<initSize; i++)
         m_fieldnames.push_back(m_fieldInitNames[i]);
-      for (int i=m_fieldnames.size();i<matcheddata.size();i++)
-        m_fieldnames.push_back("@FIELD"+intToStr(i));
+      for (int i=m_fieldnames.size();i<matcheddata.size()-1;i++) // matcheddata[0] needs to be skipped
+        m_fieldnames.push_back("@FIELD"+intToStr(i+1));
       trialAnalyze(matcheddata);
     }
 #ifdef __DEBUG__

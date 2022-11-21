@@ -139,7 +139,7 @@ Functions can be used in the expression. We current provide some essential norma
    - trim(str[,char][,repeat(1|0]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    - concat(str1,str2,[...]) : Normal function. Concatenate multiple strings. <br/>
    - pad(seed,len) : Normal function. Construct a new string from seed multiple len times.<br />
-   - randstr(len,flags) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br />
+   - randstr(len[,flags]) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br />
    - camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
    - snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
    - findnth(str,sub[,Nth]) : Normal function. Find the position of Nth sub in str, if Nth is positive number, search from head, if Nth is negative, search from tail.<br />
@@ -204,7 +204,7 @@ Functions can be used in the expression. We current provide some essential norma
    - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
    - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />
    - addtime(date, number, unit) : Normal function. Increase a datetime, unit can be s-second(default),m-minute,h-hour,d-day,n-month,y-year, number can be positive or negative interger.<br />
-   - now() : Normal function. Get current date time.<br />
+   - now([anything]) : Normal function. Get current date time. If no parameter govien, it will only generate one value for whole result set.<br />
    - truncdate(date,seconds) : Normal function. Truncate a date a number is multiple of the given second number.<br />
    - truncdateu(date,unit) : Normal function. Truncate a date to a specific unit. s:second, m:minute, h:hour, d:day, b:month.<br />
    - isleap(date) : Normal function. If the year of the date is a leap year, return 1, otherwise, return 0.<br />

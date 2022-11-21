@@ -116,7 +116,7 @@ void FunctionC::setExpStr(string expStr)
 
 bool FunctionC::isConst() const
 {
-  if (isAggFunc() || m_funcID==RCOUNT) // RCOUNT accept 0 parameter, unlike NOW(), it cannot be counted as a const function
+  if (isAggFunc() || m_funcID==RCOUNT || m_funcID==RANDOM || m_funcID==RANDSTR || (m_funcID==NOW && m_params.size()>0)) // RCOUNT/RANDOM accept 0 parameter, RANDSTR accept const parameter, unlike NOW(), it cannot be counted as a const function
     return false;
   if (m_expstrAnalyzed){
     for (int i=0; i<m_params.size(); i++){
@@ -3058,8 +3058,8 @@ bool FunctionC::runDateformat(RuntimeDataStruct & rds, string & sResult, DataTyp
 
 bool FunctionC::runNow(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() != 0){
-    trace(ERROR, "now() function does not accept any parameter.\n");
+  if (m_params.size() < 1){
+    trace(ERROR, "now() function accepts 0 or one parameter.\n");
     return false;
   }
   struct tm curtime = now();
@@ -3658,7 +3658,7 @@ bool FunctionC::runRmember(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     return false;
   }
   int nid = atoi(mid.c_str());
-  if (nid > 0 || nid <= (*rds.sideDatasets)[iS1].size()){
+  if (nid > 0 && nid <= (*rds.sideDatasets)[iS1].size()){
     if ((*rds.sideDatasets)[iS1][nid-1].find(s2)!=(*rds.sideDatasets)[iS1][nid-1].end()){
       sResult = (*rds.sideDatasets)[iS1][nid-1][s2];
       return true;
@@ -3666,7 +3666,7 @@ bool FunctionC::runRmember(RuntimeDataStruct & rds, string & sResult, DataTypeSt
       sResult = ""; // return empty if not found.
       return true;
     }
-  }else if (nid < 0 || abs(nid) <= (*rds.sideDatasets)[iS1].size()){
+  }else if (nid < 0 && abs(nid) <= (*rds.sideDatasets)[iS1].size()){
     if ((*rds.sideDatasets)[iS1][nid+(*rds.sideDatasets)[iS1].size()].find(s2)!=(*rds.sideDatasets)[iS1][nid+(*rds.sideDatasets)[iS1].size()].end()){
       sResult = (*rds.sideDatasets)[iS1][nid+(*rds.sideDatasets)[iS1].size()][s2];
       return true;

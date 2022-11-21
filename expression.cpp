@@ -937,6 +937,11 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
           // check if it is a column
           for (int i=0; i<fieldnames->size(); i++){
             if (upper_copy(m_expStr).compare(upper_copy((*fieldnames)[i])) == 0){
+              if (i>=fieldtypes->size()){
+                trace(ERROR, "Field id %d is out range of filed data types numbers %d\n", i, fieldtypes->size());
+                dts.datatype = UNKNOWN;
+                return dts;
+              }
               m_expStr = trim_copy(upper_copy(m_expStr));
               m_expType = COLUMN;
               m_colId = i;

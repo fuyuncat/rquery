@@ -78,7 +78,7 @@ class FilterC
     bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
     bool getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string, vector<int> > & anaGroupNums); // get the full list of analytic functions in the expression.
 
-    bool compareExpression(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs); // calculate an expression prediction. no predication or comparasion failed means alway false
+    bool compareExpression(RuntimeDataStruct & rds, vector< unordered_map< int,int > > & sideMatchedRowIDs); // calculate an expression prediction. no predication or comparasion failed means alway false
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.
@@ -93,9 +93,9 @@ class FilterC
     void dump(int deep);
     void buildLeafNodeFromStr(FilterC* node, string str); // build a leaf node
     bool buildFilter(string splitor, string quoters); // build current filter class from the expression string
-    bool compareTwoSideExp(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs); 
-    bool joinMatch(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & sideDatarow, const short int & sidWorkID);
-    bool compareExpressionI(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs); // calculate an expression prediction. no predication or comparasion failed means alway false
+    bool compareTwoSideExp(RuntimeDataStruct & rds, vector< unordered_map< int,int > > & sideMatchedRowIDs); 
+    bool joinMatch(RuntimeDataStruct & rds, vector< unordered_map< int,int > > & sideMatchedRowIDs);
+    bool compareExpressionI(RuntimeDataStruct & rds, vector< unordered_map< int,int > > & sideMatchedRowIDs); // calculate an expression prediction. no predication or comparasion failed means alway false
     bool compareIn(RuntimeDataStruct & rds);
 
   protected:

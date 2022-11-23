@@ -815,7 +815,7 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
     }
     int iType = encodeDatatype(vField[1]);
     fieldname = vField[0];
-    if (vField[0][0]='@' && vField[0].length()>1 && isInt(vField[0].substr(1))) // convert filed abbrevasion
+    if (vField[0][0]=='@' && vField[0].length()>1 && isInt(vField[0].substr(1))) // convert filed abbrevasion
       fieldname = "@FIELD"+vField[0].substr(1);
     if (iType == UNKNOWN){
       trace(FATAL, "Unknown data type %s!\n", vField[1].c_str());
@@ -1106,20 +1106,24 @@ void QuerierC::analyzeFiledTypes(vector<string> matches)
     m_fieldtypes.erase(m_fieldtypes.begin()+matches.size()-1, m_fieldtypes.end());
 }
 
-void QuerierC::getSideDatarow(unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow)
+void QuerierC::getSideDatarow(vector< unordered_map< int,int > > & sideMatchedRowIDs, vector< unordered_map< string, unordered_map<string,string> > > & matchedSideDatarows)
 {
-  matchedSideDatarow.clear();
+  matchedSideDatarows.clear();
   if (sideMatchedRowIDs.size() == 0){
     //trace(ERROR, "Side dataset vector size %d doesnot match side matched rowID vector size %d!\n", m_sideDatasets.size(), sideMatchedRowIDs.size());
     return;
   }
-  for (int i=0; i<m_sideDatasets.size(); i++){
-    //if (sideMatchedRowIDs.find(i) == sideMatchedRowIDs.end())
-    //  continue;
-    if (sideMatchedRowIDs[i] >= m_sideDatasets[i].size()){
-      trace(ERROR, "%d is an invalid matched ID, side work(%d) data size is %d!\n", sideMatchedRowIDs[i], i, m_sideDatasets[i].size());
+  for (int k=0; k<sideMatchedRowIDs.size(); k++){
+    unordered_map< string, unordered_map<string,string> > matchedRow;
+    for (int i=0; i<m_sideDatasets.size(); i++){
+      //if (sideMatchedRowIDs[k].find(i) == sideMatchedRowIDs[k].end())
+      //  continue;
+      if (sideMatchedRowIDs[k][i] >= m_sideDatasets[i].size()){
+        trace(ERROR, "%d is an invalid matched ID, side work(%d) data size is %d!\n", sideMatchedRowIDs[k][i], i, m_sideDatasets[i].size());
+      }
+      matchedRow.insert(pair<string, unordered_map<string,string> >(intToStr(i+1), m_sideDatasets[i][sideMatchedRowIDs[k][i]]));
     }
-    matchedSideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i+1), m_sideDatasets[i][sideMatchedRowIDs[i]]));
+    matchedSideDatarows.push_back(matchedRow);
   }
 }
 
@@ -1393,7 +1397,7 @@ void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* ana
 #endif // __DEBUG__
 }
 
-void QuerierC::evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, bool bApplyExtraFilter, bool bCheckGroupFunc)
+void QuerierC::evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, bool bApplyExtraFilter, bool bCheckGroupFunc, int nDupNum)
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
@@ -1401,41 +1405,11 @@ void QuerierC::evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & 
   string sResult;
   DataTypeStruct dts;
   vector<string> vResults;
-  vector<ExpressionC> anaEvaledExp;
-  unordered_map< int,int > sideMatchedRowIDs;
-  if (m_dupnumexp && m_dupnumexp->evalExpression(rds, sResult, dts, true) && isInt(sResult) && (!m_dupfilter || m_dupfilter->compareExpression(rds, sideMatchedRowIDs))){
-    // make duplicate records
-    for (int i=0; i<atoi(sResult.c_str()); i++){
-      anaEvaledExp.clear();
-      (*rds.varvalues)["@DUPID"]=intToStr(i+1);
-      rds.anaFuncs->clear();
-      vector<string> vEvaledParams;
-      for (unordered_map< string,vector<ExpressionC> >::iterator it=m_initAnaArray.begin(); it!=m_initAnaArray.end(); ++it){
-        vEvaledParams.clear();
-        rds.anaFuncs->insert(pair< string,vector<string> >(it->first,vEvaledParams));
-      }
-      evalAddExprArray(m_selections, rawval, rds, &anaEvaledExp, vResults, bCheckGroupFunc);
-      if (appendResultSet(vResults, (*rds.varvalues), bApplyExtraFilter)){ // appendResultSet return false mean filtered by extra filter
-        evalAddSortkeys(rds, &anaEvaledExp, bCheckGroupFunc);
-        // add output file mapping with result.
-        if (m_outputmode != STANDARD && m_outputfileexp)
-          addResultOutputFileMap(groupedfieldvalues, rds.varvalues, calculatedAggFuncs, rds.anaFuncs, rds.sideDatarow);
-        // eval filter expressions to get anaFuncData
-        if (m_filter && m_filter->containAnaFunc())
-          m_filter->evalAnaExprs(rds, &anaEvaledExp, sResult, dts, true);
-#ifdef __DEBUG__
-  m_evalanaexprtime += (curtime()-thistime);
-  thistime = curtime();
-#endif // __DEBUG__
-        m_anaEvaledExp.push_back(anaEvaledExp);
-        addAnaFuncData(*rds.anaFuncs);
-#ifdef __DEBUG__
-  m_addanafuncdatatime += (curtime()-thistime);
-  thistime = curtime();
-#endif // __DEBUG__
-      }
-    }
-  }else{ // non duplicate records
+  // make duplicate records
+  for (int i=0; i<nDupNum; i++){
+    vector<ExpressionC> anaEvaledExp;
+    (*rds.varvalues)["@DUPID"]=intToStr(i+1);
+    rds.anaFuncs->clear();
     vector<string> vEvaledParams;
     for (unordered_map< string,vector<ExpressionC> >::iterator it=m_initAnaArray.begin(); it!=m_initAnaArray.end(); ++it){
       vEvaledParams.clear();
@@ -1451,17 +1425,36 @@ void QuerierC::evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & 
       if (m_filter && m_filter->containAnaFunc())
         m_filter->evalAnaExprs(rds, &anaEvaledExp, sResult, dts, true);
 #ifdef __DEBUG__
-  m_evalanaexprtime += (curtime()-thistime);
-  thistime = curtime();
+      m_evalanaexprtime += (curtime()-thistime);
+      thistime = curtime();
 #endif // __DEBUG__
       m_anaEvaledExp.push_back(anaEvaledExp);
       addAnaFuncData(*rds.anaFuncs);
 #ifdef __DEBUG__
-  m_addanafuncdatatime += (curtime()-thistime);
-  thistime = curtime();
+      m_addanafuncdatatime += (curtime()-thistime);
+      thistime = curtime();
 #endif // __DEBUG__
     }
   }
+}
+
+void QuerierC::evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, bool bApplyExtraFilter, bool bCheckGroupFunc)
+{
+  string sResult;
+  DataTypeStruct dts;
+  vector< unordered_map< int,int > > sideMatchedRowIDs;
+  int nDupNum = 1;
+  if (m_dupnumexp && m_dupnumexp->evalExpression(rds, sResult, dts, true) && isInt(sResult) && (!m_dupfilter || m_dupfilter->compareExpression(rds, sideMatchedRowIDs)))
+    nDupNum = atoi(sResult.c_str()); 
+  if (matchedSideDatarows && matchedSideDatarows->size()>0){
+    unordered_map< string, unordered_map<string,string> >* oldsideDatarow = rds.sideDatarow;
+    for (int i=0; i<matchedSideDatarows->size(); i++){
+      rds.sideDatarow = &((*matchedSideDatarows)[i]);
+      evalDupSelAndSortkeys(rawval, rds, groupedfieldvalues, calculatedAggFuncs, matchedSideDatarows, bApplyExtraFilter, bCheckGroupFunc, nDupNum);
+    }
+    rds.sideDatarow = oldsideDatarow;
+  }else
+    evalDupSelAndSortkeys(rawval, rds, groupedfieldvalues, calculatedAggFuncs, matchedSideDatarows, bApplyExtraFilter, bCheckGroupFunc, nDupNum);
 }
 
 // add evaled analytic function processing data to m_anaSortProps&m_anaSortData&m_anaFuncResult
@@ -1560,7 +1553,8 @@ void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * 
 #endif // __DEBUG__
   int nRealSWStart = m_fakeRExprs.size()>0?1:0; // if user defined R involved, the real side work data set start from 1, otherwise from 0.
   if (m_sideSelections.size()>nRealSWStart && m_sideSelections.size()==m_sideAlias.size() && m_sideSelections.size()==m_sideFilters.size()){
-    unordered_map< int,int > sideMatchedRowIDs;
+    vector< unordered_map< int,int > > sideMatchedRowIDs;
+    vector< unordered_map< string, unordered_map<string,string> > > matchedSideDatarows;
     unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
     RuntimeDataStruct rds;
     rds.fieldvalues = pfieldValues;
@@ -1575,7 +1569,7 @@ void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * 
       vector< unordered_map<string,string> > resultSet;
       sideMatchedRowIDs.clear();
       if (m_sideFilters[i].compareExpression(rds, sideMatchedRowIDs)){
-        getSideDatarow(sideMatchedRowIDs, matchedSideDatarow);
+        getSideDatarow(sideMatchedRowIDs, matchedSideDatarows);
         unordered_map<string,string> thisResult;
         for (int j=0; j<m_sideSelections[i].size(); j++){
           string sResult;
@@ -1633,7 +1627,8 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
-  unordered_map< int,int > sideMatchedRowIDs;
+  vector< unordered_map< int,int > > sideMatchedRowIDs;
+  vector< unordered_map< string, unordered_map<string,string> > > matchedSideDatarows;
   unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
   RuntimeDataStruct rds;
   rds.fieldvalues = &fieldValues;
@@ -1694,10 +1689,10 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
 #endif // __DEBUG__
   //trace(DEBUG, " selected:%d (%d)! \n", matched, m_selections.size());
   if (matched){
-    getSideDatarow(sideMatchedRowIDs, matchedSideDatarow);
+    getSideDatarow(sideMatchedRowIDs, matchedSideDatarows);
 #ifdef __DEBUG__
-  m_getsidedatarowtime += (curtime()-thistime);
-  thistime = curtime();
+    m_getsidedatarowtime += (curtime()-thistime);
+    thistime = curtime();
 #endif // __DEBUG__
     vector<string> vResults;
     if (m_selections.size()>0){
@@ -1735,7 +1730,7 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
 #ifdef __DEBUG__
   thistime = curtime();
 #endif // __DEBUG__
-          evalAddSelAndSortkeys("", rds, rds.fieldvalues, &aggGroupProp, m_initAnaArray.size()==0, true);
+          evalAddSelAndSortkeys("", rds, rds.fieldvalues, &aggGroupProp, &matchedSideDatarows, m_initAnaArray.size()==0, true);
 #ifdef __DEBUG__
   m_evalSeltime += (curtime()-thistime);
   thistime = curtime();
@@ -1995,6 +1990,9 @@ int QuerierC::searchNextReg()
       }
       //trace(DEBUG, "Matched '%s', new m_expStr: '%s'\n", matcheddata[0].c_str(), m_rawstr.c_str());
       found++;
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
     }
     if (found == 0){
       // if didnt match any one, discard all until the last newline
@@ -2084,6 +2082,9 @@ int QuerierC::searchNextWild()
     if (matchFilter(matcheddata))
       m_matchcount++;
     found++;
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
   }
   //trace(DEBUG, "(2)Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
@@ -2180,6 +2181,9 @@ int QuerierC::searchNextDelm()
     if (matchFilter(matcheddata))
       m_matchcount++;
     found++;
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
   }
   //trace(DEBUG, "(3)Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
@@ -2258,6 +2262,9 @@ int QuerierC::searchNextLine()
     if (matchFilter(matcheddata))
       m_matchcount++;
     found++;
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
   }
   //trace(DEBUG, "(3)Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
@@ -2321,7 +2328,8 @@ bool QuerierC::group()
   string sResult;
   DataTypeStruct dts;
   ExpressionC tmpExp;
-  unordered_map< int,int > sideMatchedRowIDs;
+  vector< unordered_map< int,int > > sideMatchedRowIDs;
+  vector< unordered_map< string, unordered_map<string,string> > > matchedSideDatarows;
   unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
   int iRow = 0;
   m_anaFuncResult.clear();
@@ -2354,7 +2362,7 @@ bool QuerierC::group()
     anaFuncData.clear();
     if (m_filter && !m_filter->compareExpression(rds, sideMatchedRowIDs))
       continue;
-    getSideDatarow(sideMatchedRowIDs, matchedSideDatarow);
+    getSideDatarow(sideMatchedRowIDs, matchedSideDatarows);
     iRow++;
     vector<string> vEvaledParams;
     for (unordered_map< string,vector<ExpressionC> >::iterator it=m_initAnaArray.begin(); it!=m_initAnaArray.end(); ++it){
@@ -2362,7 +2370,7 @@ bool QuerierC::group()
       anaFuncData.insert(pair< string,vector<string> >(it->first,vEvaledParams));
     }
 
-    evalAddSelAndSortkeys(m_aggRowValues[*it][0], rds, &m_aggRowValues[*it], &m_aggGroupProp[*it], true, false);
+    evalAddSelAndSortkeys(m_aggRowValues[*it][0], rds, &m_aggRowValues[*it], &m_aggGroupProp[*it], &matchedSideDatarows, true, false);
 
     //m_aggGroupDataidMap.insert(pair< vector<string>,int >(*it,m_anaEvaledExp.size()-1));
     m_aggGroupDataidMap.insert(pair< int, vector<string> >(m_anaEvaledExp.size()-1, *it));
@@ -2762,7 +2770,8 @@ bool QuerierC::analytic()
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
   int iRow = 0;
   trace(DEBUG, "m_anaEvaledExp size is %d, dimension is %d . \n", m_anaEvaledExp.size(),m_anaEvaledExp[0].size());
-  unordered_map< int,int > sideMatchedRowIDs;
+  vector<unordered_map< int,int > > sideMatchedRowIDs;
+  vector< unordered_map< string, unordered_map<string,string> > > matchedSideDatarows;
   unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
   vector<string> vfieldvalues;
   unordered_map< string,GroupProp > dummyAggGroupProp;
@@ -2796,7 +2805,7 @@ bool QuerierC::analytic()
     rds.aggFuncs = ((m_aggGroupProp.size()>0 && m_aggGroupDataidMap.size()==tmpResults.size())?(&m_aggGroupProp[m_aggGroupDataidMap[i]]):&dummyAggGroupProp);
     if (m_filter && !m_filter->compareExpression(rds, sideMatchedRowIDs))
       continue;
-    getSideDatarow(sideMatchedRowIDs, matchedSideDatarow);
+    getSideDatarow(sideMatchedRowIDs, matchedSideDatarows);
     iRow++;
     int anaExpID = 0;
 
@@ -3079,7 +3088,8 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   varValues.insert( pair<string,string>("@ISLEAF",intToStr(tNode->firstChild?0:1)));
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
-  unordered_map< int,int > sideMatchedRowIDs;
+  vector< unordered_map< int,int > > sideMatchedRowIDs;
+  vector< unordered_map< string, unordered_map<string,string> > > matchedSideDatarows;
   unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
   RuntimeDataStruct rds;
   rds.fieldvalues = &fieldValues;
@@ -3128,7 +3138,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
     }
   }
 
-  evalAddSelAndSortkeys("", rds, rds.fieldvalues, rds.aggFuncs, true, true);
+  evalAddSelAndSortkeys("", rds, rds.fieldvalues, rds.aggFuncs, &matchedSideDatarows, true, true);
 
   if (tNode->firstChild)
     SetTree(tmpResults, tNode->firstChild, level+1, nodeid, treeFuncs);
@@ -3327,10 +3337,10 @@ bool QuerierC::applyExtraFilter(const vector<string> & aRow, const map<string, s
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
   vector< vector< unordered_map<string,string> > > sideDatasets;
-  unordered_map< string, unordered_map<string,string> > sideDatarow;
+  vector< unordered_map< string, unordered_map<string,string> > > matchedSideDatarows;
   unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
   unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
-  unordered_map< int,int > sideMatchedRowIDs;
+  vector< unordered_map< int,int > > sideMatchedRowIDs;
   map<string, string> newVarVals = varValues;
   RuntimeDataStruct rds;
   rds.fieldvalues = &fieldValues;
@@ -3540,12 +3550,12 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
   trace(PERFM, ",     Get sidework row time: %d\n", m_getsidedatarowtime);
   trace(PERFM, ",     Save tree data time: %d\n", m_savetreedatatime);
   trace(PERFM, ",     eval selection time: %d\n", m_evalSeltime);
+  trace(PERFM, ",       eval analytic expression time: %d\n", m_evalanaexprtime);
+  trace(PERFM, ",       add analytic data time: %d\n", m_addanafuncdatatime);
   trace(PERFM, ",     eval sort time: %d\n", m_evalSorttime);
   trace(PERFM, ",     eval group key time: %d\n", m_evalGroupKeytime);
   trace(PERFM, ",     update restult time: %d\n", m_updateResulttime);
   trace(PERFM, ",     append non-selection result time: %d\n", m_appendnonselresulttime);
-  trace(PERFM, ",     eval analytic expression time: %d\n", m_evalanaexprtime);
-  trace(PERFM, ",     add analytic data time: %d\n", m_addanafuncdatatime);
 
   trace(PERFM, ", extra filtering time: %d\n", m_extrafiltertime);
   trace(PERFM, ", sorting time: %d\n", m_sorttime);

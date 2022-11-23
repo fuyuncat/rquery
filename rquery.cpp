@@ -169,9 +169,6 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
         if (gv.g_showprogress)
           printf("\n");
         total = readLines;
-        thisTime = curtime();
-        trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
         break;
       }case READBUFF:
       default:{
@@ -208,13 +205,13 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
         if (gv.g_showprogress)
           printf("\n");
         free(cachebuffer);
-        thisTime = curtime();
-        trace(DEBUG2, "Reading and searching time: %u\n", thisTime-lastTime);
-        lastTime = thisTime;
         break;
       }
     }
   }
+  thisTime = curtime();
+  trace(PERFM, "Reading and searching time: %u\n", thisTime-lastTime);
+  lastTime = thisTime;
 }
 
 void processFolder(string foldername, QuerierC & rq, size_t& total, short int fileMode=READBUFF, int iSkip=0)

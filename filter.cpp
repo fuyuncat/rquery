@@ -818,19 +818,24 @@ bool FilterC::compareIn(RuntimeDataStruct & rds)
       //trace(ERROR, "%d is an invalide side work ID!\n", sidWorkID);
       return false;
     }
+    bool bResult = false;
+    unordered_map< string, unordered_map<string,string> >* oldSideDatarow = rds.sideDatarow;
     rds.sideDatarow = &sideDatarow;
     for (int i=0;i<(*rds.sideDatasets)[sidWorkID].size();i++){
       sideDatarow.clear();
       sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*rds.sideDatasets)[sidWorkID][i]));
       if (!m_rightExpression->evalExpression(rds, sResult, dts2, true)){
         trace(ERROR, "Failed to get result of IN element %s!\n", m_rightExpression->getEntireExpstr().c_str());
-        return false;
+        bResult = false;
+        break;
       }
       if (anyDataCompare(leftRst, EQ, sResult, m_datatype) == 1){
-        return true;
+        bResult = true;
+        break;
       }
     }
-    return false;
+    rds.sideDatarow = oldSideDatarow;
+    return bResult;
   }else{
     if (m_inExpressions.size() == 0){
       trace(ERROR, "Failed to get the IN elements!\n");
@@ -852,44 +857,51 @@ bool FilterC::compareIn(RuntimeDataStruct & rds)
   return false;
 }
 
-bool FilterC::compareExpression(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs){
+bool FilterC::compareExpression(RuntimeDataStruct & rds, vector< unordered_map< int,int > > & sideMatchedRowIDs){
   sideMatchedRowIDs.clear();
   return compareExpressionI(rds, sideMatchedRowIDs);
 }
 
 // join match, sideMatchedRowIDs returns the matched IDs
-bool FilterC::joinMatch(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs, unordered_map< string, unordered_map<string,string> > & sideDatarow, const short int & sidWorkID)
+bool FilterC::joinMatch(RuntimeDataStruct & rds, vector< unordered_map< int,int > > & sideMatchedRowIDs)
 {
-  if (sidWorkID<rds.sideDatasets->size()){
-    for (int i=0;i<(*rds.sideDatasets)[sidWorkID].size();i++){
-      // construct current side work
-      if (i==0)
-        sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*rds.sideDatasets)[sidWorkID][i]));
-      else
-        sideDatarow[intToStr(sidWorkID+1)] = (*rds.sideDatasets)[sidWorkID][i];
-      if (sidWorkID<rds.sideDatasets->size()-1){ // construct other side work 
-        if (joinMatch(rds, sideMatchedRowIDs, sideDatarow, sidWorkID+1))
-          return true;
-      }else{
-        string leftRst = "", rightRst = "";
-        DataTypeStruct dts1, dts2;
-        unordered_map< string, unordered_map<string,string> >* oldSideDatarow = rds.sideDatarow;
-        rds.sideDatarow = &sideDatarow;
-        bool evaled = m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true);
-        rds.sideDatarow = oldSideDatarow;
-        if (evaled){
-          if (anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1){
-            sideMatchedRowIDs.insert(pair< int,int >(sidWorkID,i));
-            return true;
-          }
-        }
+  string sSideWorkID = "";
+  if (m_leftExpression->getEntireExpstr().find("@R[")==0)
+    sSideWorkID=m_leftExpression->getEntireExpstr().substr(3,m_leftExpression->getEntireExpstr().find("]")-3);
+  else if (m_rightExpression->getEntireExpstr().find("@R[")==0)
+    sSideWorkID=m_rightExpression->getEntireExpstr().substr(3,m_rightExpression->getEntireExpstr().find("]")-3);
+  int sidWorkID=-1;
+  if (sSideWorkID.empty() || !isInt(sSideWorkID))
+    return false;
+  else
+    sidWorkID=atoi(sSideWorkID.c_str())-1;
+  if (sidWorkID<0 || sidWorkID>=rds.sideDatasets->size())
+    return false;
+    
+  //for (int sidWorkID=0; sidWorkID<rds.sideDatasets->size(); sidWorkID++){
+  for (int i=0;i<(*rds.sideDatasets)[sidWorkID].size();i++){
+    unordered_map< int,int > sideMatchedRowID;
+    unordered_map< string, unordered_map<string,string> > sideDatarow;
+    // construct current side work
+    sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*rds.sideDatasets)[sidWorkID][i]));
+    string leftRst = "", rightRst = "";
+    DataTypeStruct dts1, dts2;
+    unordered_map< string, unordered_map<string,string> >* oldSideDatarow = rds.sideDatarow;
+    rds.sideDatarow = &sideDatarow;
+    bool evaled = m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true);
+    rds.sideDatarow = oldSideDatarow;
+    if (evaled){
+      if (anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1){
+        sideMatchedRowID.insert(pair< int,int >(sidWorkID,i));
+        sideMatchedRowIDs.push_back(sideMatchedRowID);
       }
     }
   }
-  return false;
+  //}
+  return sideMatchedRowIDs.size()>0;
 }
 
-bool FilterC::compareTwoSideExp(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs)
+bool FilterC::compareTwoSideExp(RuntimeDataStruct & rds, vector< unordered_map< int,int > > & sideMatchedRowIDs)
 {
   bool bResult = false;
   unordered_map< string, unordered_map<string,string> > * oldsideDatarow = rds.sideDatarow;
@@ -899,17 +911,17 @@ bool FilterC::compareTwoSideExp(RuntimeDataStruct & rds, unordered_map< int,int 
     unordered_map< string, unordered_map<string,string> > sideDatarow;
     rds.sideDatarow = &sideDatarow;
     if (m_leftExpression->containRefVar() || m_rightExpression->containRefVar()){ // do join checking
-      if (sideMatchedRowIDs.size() == rds.sideDatasets->size()) { // already matched by other filter
-        for (int i=0; i<rds.sideDatasets->size(); i++){
-          sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i), (*rds.sideDatasets)[i][sideMatchedRowIDs[i]]));
-        }
-        if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
-          bResult = anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
-        }else
-          bResult = false;
-      }else{ // nested loop join side work datasets
-        bResult = joinMatch(rds, sideMatchedRowIDs, sideDatarow, 0);
-      }
+      //if (sideMatchedRowIDs.size() == rds.sideDatasets->size()) { // already matched by other filter
+      //  for (int i=0; i<rds.sideDatasets->size(); i++){
+      //    sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i), (*rds.sideDatasets)[i][sideMatchedRowIDs[i]]));
+      //  }
+      //  if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
+      //    bResult = anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
+      //  }else
+      //    bResult = false;
+      //}else{ // nested loop join side work datasets
+      bResult = joinMatch(rds, sideMatchedRowIDs);
+      //}
     }else{
       if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
         bResult = anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
@@ -924,15 +936,75 @@ bool FilterC::compareTwoSideExp(RuntimeDataStruct & rds, unordered_map< int,int 
 }
 
 // calculate an expression prediction. no predication or comparasion failed means alway false
-bool FilterC::compareExpressionI(RuntimeDataStruct & rds, unordered_map< int,int > & sideMatchedRowIDs){
+bool FilterC::compareExpressionI(RuntimeDataStruct & rds, vector< unordered_map< int,int > > & sideMatchedRowIDs){
   bool result=false;
   if (m_type == BRANCH){
     if (!m_leftNode || !m_rightNode)
       return false;
-    if (m_junction == AND)
-      return m_leftNode->compareExpressionI(rds, sideMatchedRowIDs) && m_rightNode->compareExpressionI(rds, sideMatchedRowIDs);
-    else
-      return m_leftNode->compareExpressionI(rds, sideMatchedRowIDs) || m_rightNode->compareExpressionI(rds, sideMatchedRowIDs);
+    vector< unordered_map< int,int > > leftMatchedIDs, rightMatchedIDs;
+    if (m_junction == AND){
+      result = m_leftNode->compareExpressionI(rds, leftMatchedIDs) && m_rightNode->compareExpressionI(rds, rightMatchedIDs);
+      if (leftMatchedIDs.size()>0 && rightMatchedIDs.size()>0){
+        // merge the matched row IDs joined by different keys
+        bool bIntersection = false; // if both join resut matched the same sidework data, need to get the intersection data set, otherswise merge two data set
+        for (unordered_map< int,int >::iterator it=leftMatchedIDs[0].begin(); it!=leftMatchedIDs[0].end(); it++)
+          if (rightMatchedIDs[0].find(it->first)!=rightMatchedIDs[0].end()){
+            bIntersection = true;
+            break;
+          }
+        unordered_map< int,int > mergedIDs;
+        if (bIntersection){ // doing intersection
+          for (int i=0; i<leftMatchedIDs.size(); i++){
+            mergedIDs.clear();
+            for (int j=0; j<rightMatchedIDs.size(); j++){
+              bool bMatched = true;
+              // check each key from left join result, if the key exists in right join result, then need to check their value to see if matched. If multiple keys exist in both sides, need to check all of them.
+              for (unordered_map< int,int >::iterator it=leftMatchedIDs[i].begin(); it!=leftMatchedIDs[i].end(); it++){
+                if (rightMatchedIDs[j].find(it->first)!=rightMatchedIDs[j].end() && it->second != rightMatchedIDs[j][it->first]){ // check the matched row id of the same sidework data set from both joined results.
+                  bMatched = false;
+                  break;
+                }
+              }
+              if (bMatched){
+                mergedIDs.insert(leftMatchedIDs[i].begin(),leftMatchedIDs[i].end());
+                mergedIDs.insert(rightMatchedIDs[j].begin(),rightMatchedIDs[j].end());
+                sideMatchedRowIDs.push_back(mergedIDs);
+              }
+            }
+          }
+        }else{ // doing merge
+          // simply merge each rows.
+          for (int i=0; i<leftMatchedIDs.size(); i++){
+            for (int j=0; j<rightMatchedIDs.size(); j++){
+              mergedIDs.clear();
+              mergedIDs.insert(leftMatchedIDs[i].begin(),leftMatchedIDs[i].end());
+              mergedIDs.insert(rightMatchedIDs[j].begin(),rightMatchedIDs[j].end());
+              sideMatchedRowIDs.push_back(mergedIDs);
+            }
+          }
+        }
+      }else if (leftMatchedIDs.size()>0)
+        sideMatchedRowIDs = leftMatchedIDs;
+      else if (rightMatchedIDs.size()>0)
+        sideMatchedRowIDs = rightMatchedIDs;
+    }else{
+      result = m_leftNode->compareExpressionI(rds, leftMatchedIDs) || m_rightNode->compareExpressionI(rds, rightMatchedIDs);
+      //result = m_leftNode->compareExpressionI(rds, leftMatchedIDs);
+      //result = m_rightNode->compareExpressionI(rds, rightMatchedIDs) || result;
+      sideMatchedRowIDs.insert(sideMatchedRowIDs.begin(),leftMatchedIDs.begin(),leftMatchedIDs.end());
+      sideMatchedRowIDs.insert(sideMatchedRowIDs.begin(),rightMatchedIDs.begin(),rightMatchedIDs.end());
+      // simply merge each rows.
+      //unordered_map< int,int > mergedIDs;
+      //for (int i=0; i<leftMatchedIDs.size(); i++){
+      //  for (int j=0; j<rightMatchedIDs.size(); j++){
+      //    mergedIDs.clear();
+      //    mergedIDs.insert(leftMatchedIDs[i].begin(),leftMatchedIDs[i].end());
+      //    mergedIDs.insert(rightMatchedIDs[j].begin(),rightMatchedIDs[j].end());
+      //    sideMatchedRowIDs.push_back(mergedIDs);
+      //  }
+      //}
+    }
+    return result;
   }else if(m_type == LEAF){
     if (m_leftExpression && m_leftExpression->m_type == LEAF && m_leftExpression->m_expType == FUNCTION && m_leftExpression->m_Function && (m_leftExpression->m_Function->m_funcID==ANYCOL || m_leftExpression->m_Function->m_funcID==ALLCOL)) { // left anycol/allcol
       if (m_rightExpression && m_rightExpression->m_type == LEAF && m_rightExpression->m_expType == FUNCTION && m_rightExpression->m_Function && (m_rightExpression->m_Function->m_funcID==ANYCOL || m_rightExpression->m_Function->m_funcID==ALLCOL)) {

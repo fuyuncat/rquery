@@ -3329,7 +3329,7 @@ bool FunctionC::runWhen(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
     trace(ERROR, "Return expression number (%d) does not match condtion number (%d) in when() function!\n", m_params.size(), m_filters.size());
     return false;
   }
-  unordered_map< int,int > sideMatchedRowIDs;
+  vector< unordered_map< int,int > > sideMatchedRowIDs;
   for (int i=0; i<m_filters.size(); i++){
     if (m_filters[i].compareExpression(rds, sideMatchedRowIDs) && m_params[i].evalExpression(rds, sResult, dts, true))
       return true;

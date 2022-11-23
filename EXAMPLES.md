@@ -2133,13 +2133,25 @@
    Returns result:<br/>
    ```
    timezone.log    3       7       1       192.168.1.2     "GET textb_222.pdf"
-   timezone.log    3       8       2       192.168.1.1     "GET texta_222.pdf"
-   timezone.log    3       10      4       192.168.1.1     "GET texta_222.pdf"
-   timezone.log    3       11      5       192.168.1.1     "GET texta_222.pdf"
-   timezone.log    3       12      6       192.168.1.1     "GET texta_222.pdf"
-   timezone.log    3       14      8       192.168.1.1     "GET texta_222.pdf"
+   timezone.log    3       7       1       192.168.1.2     "GET textc_222.pdf"
+   timezone.log    3       8       2       192.168.1.1     "GET texta_111.pdf"
+   timezone.log    3       10      4       192.168.1.1     "GET texta_111.pdf"
+   timezone.log    3       11      5       192.168.1.1     "GET texta_111.pdf"
+   timezone.log    3       12      6       192.168.1.1     "GET texta_111.pdf"
+   timezone.log    3       14      8       192.168.1.1     "GET texta_111.pdf"
    timezone.log    3       15      9       192.168.1.2     "GET textb_222.pdf"
+   timezone.log    3       15      9       192.168.1.2     "GET textc_222.pdf"
    timezone.log    3       16      10      192.168.1.2     "GET textb_222.pdf"
+   timezone.log    3       16      10      192.168.1.2     "GET textc_222.pdf"
+   ```
+- Join query data on multiple keys <br/>
+   ```
+   rq -q "m @1, @2, @3 where @fileid=1 | s @1, @2, @r[1][3] | f @fileid=2 and @1=@r[1][1] and @2=@r[1][2]" samples/mkeys1.txt samples/mkmain.txt
+   ```
+   Returns result:<br/>
+   ```
+   tom     cat     ttt_ccc
+   jerry   mouse   jjj_mmm
    ```
 - Using the other two files JOIN query result to join query the main file. <br/>
    ```

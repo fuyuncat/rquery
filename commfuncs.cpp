@@ -1308,57 +1308,39 @@ string randstr(int len, const string & flags)
     switch(flags[i]){
     case 'U':
       genstr.push_back(upper[random(0,upper.length()-1)]);
-      if (genstr.length()>=len)
-        return genstr;
       break;
     case 'L':
       genstr.push_back(lower[random(0,lower.length()-1)]);
-      if (genstr.length()>=len)
-        return genstr;
       break;
     case 'D':
       genstr.push_back(digit[random(0,digit.length()-1)]);
-      if (genstr.length()>=len)
-        return genstr;
       break;
     case 'M':
       genstr.push_back('-');
-      if (genstr.length()>=len)
-        return genstr;
       break;
     case 'N':
       genstr.push_back('_');
-      if (genstr.length()>=len)
-        return genstr;
       break;
     case 'S':
       genstr.push_back(' ');
-      if (genstr.length()>=len)
-        return genstr;
       break;
     case 'X':
       genstr.push_back(special[random(0,special.length()-1)]);
-      if (genstr.length()>=len)
-        return genstr;
       break;
     case 'B':
       genstr.push_back(bracket[random(0,bracket.length()-1)]);
-      if (genstr.length()>=len)
-        return genstr;
       break;
     }
+    if (genstr.length()>=len)
+      return genstr;
   }
   char flag;
-  for (int i=genstr.length()-1;i<len;i++){
+  for (int i=genstr.length();i<len;i++){
     flag = flags[random(0,flags.length()-1)];
     switch(flag){
     case 'U':
     case 'u':
       genstr.push_back(upper[random(0,upper.length()-1)]);
-      break;
-    case 'L':
-    case 'l':
-      genstr.push_back(lower[random(0,lower.length()-1)]);
       break;
     case 'D':
     case 'd':
@@ -1384,8 +1366,14 @@ string randstr(int len, const string & flags)
     case 'b':
       genstr.push_back(bracket[random(0,bracket.length()-1)]);
       break;
+    case 'L':
+    case 'l':
+    default:
+      genstr.push_back(lower[random(0,lower.length()-1)]);
+      break;
     }
   }
+  return genstr;
 }
 
 // concatenate an array to string
@@ -3942,7 +3930,7 @@ short int getReadMode(const string & filepath)
         if (buf1[i] == '\0' || buf2[i] == '\0')
           return PARAMETER;
         memcpy(buf1,buf2,PATH_MAX);
-        if (!realpath(buf1, buf2) < 0 || lstat(buf2,&s) != 0 || errno != 0 || isFolder(s)) // also skip if link to a folder.
+        if (!realpath(buf1, buf2) || lstat(buf2,&s) != 0 || errno != 0 || isFolder(s)) // also skip if link to a folder.
           return PARAMETER;
       }
     }

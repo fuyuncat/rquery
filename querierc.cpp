@@ -112,6 +112,7 @@ void QuerierC::init()
   m_treestr = "";
   m_reportstr = "";
   m_dupstr = "";
+  m_extfilstr = "";
   m_fielddelim = "\t";
   m_detectTypeMaxRowNum = 1;
   m_detectedTypeRows = 0;
@@ -227,18 +228,15 @@ void QuerierC::assignFilter(FilterC* filter)
   //m_filter->dump();
 }
 
-void QuerierC::assignExtraFilter(string sFilterStr)
+bool QuerierC::analyzeExtraFilterStr()
 {
-  if (sFilterStr.empty())
-    return;
   FilterC* filter;
-  size_t pos = findFirstSub(sFilterStr, " TRIM ", 0,"''()",'\\',{'(',')'},false );
-  vector<string> vAlias;
+  size_t pos = findFirstSub(m_extfilstr, " TRIM ", 0,"''()",'\\',{'(',')'},false );
   if (pos != string::npos){
-    filter = new FilterC(trim_copy(sFilterStr.substr(0,pos)));
-    m_trimedInitSels = genSelExpression(trim_copy(sFilterStr.substr(pos+string(" TRIM ").length())), vAlias);
+    filter = new FilterC(trim_copy(m_extfilstr.substr(0,pos)));
+    m_trimedInitSels = genSelExpression(trim_copy(m_extfilstr.substr(pos+string(" TRIM ").length())), m_trimmedAlias);
   }else{
-    filter = new FilterC(trim_copy(sFilterStr));
+    filter = new FilterC(trim_copy(m_extfilstr));
   }
 
   if (m_extrafilter){
@@ -250,16 +248,25 @@ void QuerierC::assignExtraFilter(string sFilterStr)
   m_extrafilter->getAggFuncs(initAggProps);
   if (initAggProps.size()>0){
     trace(FATAL, "Extra filter cannot have any aggregation function!\n");
-    return;
+    return false;
   }
   unordered_map< string,vector<ExpressionC> > initAnaArray;
   unordered_map< string,vector<int> > anaFuncParaNums;
   m_extrafilter->getAnaFuncs(initAnaArray, anaFuncParaNums);
   if (initAnaArray.size()>0){
     trace(FATAL, "Extra filter cannot have any analytic function!\n");
-    return;
+    return false;
   }
   //m_extrafilter->dump();
+  return true;
+}
+
+void QuerierC::assignExtraFilter(string sFilterStr)
+{
+  if (trim_copy(sFilterStr).empty())
+    return;
+  m_extfilstr = trim_copy(sFilterStr);
+  analyzeExtraFilterStr();
 }
 
 void QuerierC::appendrawstr(string rawstr)
@@ -3298,6 +3305,16 @@ void QuerierC::printFieldNames()
     return;
   if (m_bNamePrinted)
     return;
+  // re-analyze extra filter string to get the trimmed selection alias
+  if (m_trimmedAlias.size()>0){
+    m_selnames.clear();
+    for (int i=0; i<m_trimedInitSels.size(); i++)
+      if (i<m_trimmedAlias.size()&& !m_trimmedAlias[i].empty())
+        m_selnames.push_back(m_trimmedAlias[i]);
+      else
+        m_selnames.push_back(m_trimedInitSels[i].getEntireExpstr());
+  }
+
   if (m_colToRows.size() != m_colToRowNames.size()){
     trace(ERROR,"COLTOROW marco function size %d doesnot match filed names of COLTOROW marco function %d",m_colToRows.size(),m_colToRowNames.size());
   }else{
@@ -3680,6 +3697,7 @@ void QuerierC::clear()
   m_sideDatatypes.clear();
   m_trimedSelctions.clear();
   m_trimedInitSels.clear();
+  m_trimmedAlias.clear();
   for (unordered_map< string, ofstream* >::iterator it=m_outputfiles.begin();it!=m_outputfiles.end();it++){
     if (it->second && it->second->is_open()){
       it->second->close();

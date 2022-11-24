@@ -164,6 +164,7 @@ class QuerierC
     string m_treestr; // tree raw string
     string m_reportstr; // report raw string
     string m_dupstr; // duplicate raw string
+    string m_extfilstr; // extra filter string
     bool m_bSelectContainMacro; // flag indicating if macro function exists in select expressions
     bool m_bToAnalyzeSelectMacro; // whether need to analyze marco in selections
     bool m_bSortContainMacro; // flag indicating if macro function exists in sort expressions
@@ -191,6 +192,7 @@ class QuerierC
     vector<ExpressionC> m_trimedInitSels; // Initial trimmed selections in the extra filter, in case FOREACH involved, and the field size variable.
     vector<ExpressionC> m_trimedSelctions; // trimmed selections in the extra filter.
     vector<DataTypeStruct> m_trimmedFieldtypes; // field type of the trimmed selections.
+    vector<string>  m_trimmedAlias; // alias of the trimmed selections
     vector<string> m_fieldInitNames;    // field names, in case field size changes, we need to keep the initial field names.
     vector<string> m_fieldnames;    // field names
     vector<DataTypeStruct> m_fieldtypes;       // field datatype in sequence
@@ -243,6 +245,7 @@ class QuerierC
     bool analyzeTreeStr();
     bool analyzeReportStr();
     bool analyzeDupStr();
+    bool analyzeExtraFilterStr();
     bool checkSelGroupConflict(const ExpressionC & eSel);
     bool checkSortGroupConflict(const ExpressionC & eSort);
     void addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow);

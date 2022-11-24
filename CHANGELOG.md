@@ -1,7 +1,8 @@
 # Change Logn
 All change logs will be documented here.<br/>
    # [1.213] 2022-11-23
-   Enhancement: Join (sidework dataset matching) can correctly do multiple data sets, multiple join key now. <br/>
+   Enhancement: Join (sidework dataset matching) can correctly do multiple data sets, multiple join key and 1:N, M:N join now. <br/>
+   Enhancement: The trimmed selections in extrafilter can have alias. <br/>
    # [1.212] 2022-11-22
    Fix bug: Field data type assigned incorrectly; warning in rmember/randstr. <br/>
    # [1.212] 2022-11-21

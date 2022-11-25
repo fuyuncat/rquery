@@ -121,7 +121,7 @@ vector<string> listFilesInFolder(string foldername)
 void processFile(string filename, QuerierC & rq, size_t& total, short int fileMode=READBUFF, int iSkip=0)
 {
   trace(DEBUG,"Processing file: %s \n", filename.c_str());
-  long int thisTime,lastTime = curtime();
+  long int thisTime,lastTime = curtime(), readStartTime, readfiletime=0;
 
   rq.setFileName(filename, gv.g_fileheaderonly);
   ifstream ifile(filename.c_str());
@@ -146,6 +146,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
         string strline;
         int readLines = 0;
         rq.setReadmode(READLINE);
+        readStartTime=curtime();
         while (std::getline(ifile, strline)){
           total += (strline.length()+1);
           if (readLines<iSkip){
@@ -155,6 +156,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
           if (rq.searchStopped())
             break;
           rq.appendrawstr(strline);
+          readfiletime += (curtime()-readStartTime);
           rq.searchAll();
           if (gv.g_printheader && gv.g_ouputformat==TEXT)
             rq.printFieldNames();
@@ -165,6 +167,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
           thisTime = curtime();
           if (gv.g_showprogress)
             printf("\r'%s': %d lines(%.2f%%) read in %f seconds.", filename.c_str(), readLines, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+          readStartTime=curtime();
         }
         if (gv.g_showprogress)
           printf("\n");
@@ -184,11 +187,13 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
         while(!ifile.eof()) {
           if (rq.searchStopped())
             break;
+          readStartTime=curtime();
           ifile.read(cachebuffer, cache_length-1);
           //ifile.seekg(pos, ios::beg);
           if (ifile.eof() || ifile.gcount()==0)
             rq.setEof(true);
           rq.appendrawstr(string(cachebuffer));
+          readfiletime += (curtime()-readStartTime);
           rq.searchAll();
           if (gv.g_printheader && gv.g_ouputformat==TEXT)
             rq.printFieldNames();
@@ -211,6 +216,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
   }
   thisTime = curtime();
   trace(PERFM, "Reading and searching time: %u\n", thisTime-lastTime);
+  trace(PERFM, "  Reading file time: %d\n", readfiletime);
   lastTime = thisTime;
 }
 

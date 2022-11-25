@@ -27,10 +27,10 @@ class ParserC
     ParserC();
     ~ParserC();
 
-    bool isJunctionWord(string word);
+    bool isJunctionWord(const string & word);
     //FilterC* buildFilter(string initialString);
 
-    map<string,string> parseparam(string parameterstr);
+    map<string,string> parseparam(const string & parameterstr);
     void dumpQueryparts();
 
   private:

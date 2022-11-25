@@ -54,12 +54,14 @@ vector<string>::const_iterator namesaving_smatch::names_end() const
     return m_names.end();
 }
 
+long int g_strtodatetime;
+
 QuerierC::QuerierC()
 {
   init();
 }
 
-QuerierC::QuerierC(string regexstr)
+QuerierC::QuerierC(const string & regexstr)
 {
   init();
   setregexp(regexstr);
@@ -125,12 +127,12 @@ void QuerierC::init()
   m_getsidedatarowtime = 0;
   m_savetreedatatime = 0;
   m_rawreadtime = 0;
-  m_rawsplittime = 0;
   m_rawanalyzetime = 0;
   m_appendnonselresulttime = 0;
   m_addanafuncdatatime = 0;
   m_evalanaexprtime = 0;
   m_trialanalyzetime = 0;
+  m_parsepatterntime = 0;
   m_filtertime = 0;
   m_extrafiltertime = 0;
   m_sorttime = 0;
@@ -147,10 +149,12 @@ void QuerierC::init()
   m_evalSorttime = 0;
   m_updateResulttime = 0;
   m_outputtime = 0;
+  
+  g_strtodatetime = 0;
 #endif // __DEBUG__
 }
 
-void QuerierC::setregexp(string regexstr)
+void QuerierC::setregexp(const string & regexstr)
 {
   size_t nPos = regexstr.find_last_of('/');
   string flags = nPos == string::npos?"":upper_copy(regexstr.substr(nPos+1)), patternStr = nPos == string::npos?regexstr:regexstr.substr(0,nPos+1);
@@ -261,7 +265,7 @@ bool QuerierC::analyzeExtraFilterStr()
   return true;
 }
 
-void QuerierC::assignExtraFilter(string sFilterStr)
+void QuerierC::assignExtraFilter(const string & sFilterStr)
 {
   if (trim_copy(sFilterStr).empty())
     return;
@@ -269,27 +273,27 @@ void QuerierC::assignExtraFilter(string sFilterStr)
   analyzeExtraFilterStr();
 }
 
-void QuerierC::appendrawstr(string rawstr)
+void QuerierC::appendrawstr(const string & rawstr)
 {
   m_rawstr.append(rawstr);
 }
 
-void QuerierC::setrawstr(string rawstr)
+void QuerierC::setrawstr(const string & rawstr)
 {
   m_rawstr = rawstr;
 }
 
-void QuerierC::setReadmode(short int readmode)
+void QuerierC::setReadmode(const short int & readmode)
 {
   m_readmode = readmode;
 }
 
-void QuerierC::setEof(bool bEof)
+void QuerierC::setEof(const bool & bEof)
 {
   m_bEof = bEof;
 }
 
-bool QuerierC::assignGroupStr(string groupstr)
+bool QuerierC::assignGroupStr(const string & groupstr)
 {
   if (groupstr.empty())
     return true;
@@ -312,7 +316,7 @@ bool QuerierC::assignGroupStr(string groupstr)
   return true;
 }
 
-void QuerierC::setUniqueResult(string unistr)
+void QuerierC::setUniqueResult(const string & unistr)
 {
   if (trim_copy(unistr).empty())
     m_bUniqueResult = true;
@@ -327,17 +331,17 @@ void QuerierC::setUniqueResult(string unistr)
   }
 }
 
-void QuerierC::setDetectTypeMaxRowNum(int detectTypeMaxRowNum)
+void QuerierC::setDetectTypeMaxRowNum(const int & detectTypeMaxRowNum)
 {
   m_detectTypeMaxRowNum = max(1,detectTypeMaxRowNum);
 }
 
-void QuerierC::setNameline(bool nameline)
+void QuerierC::setNameline(const bool & nameline)
 {
   m_nameline = nameline;
 }
 
-bool QuerierC::assignLimitStr(string limitstr)
+bool QuerierC::assignLimitStr(const string & limitstr)
 {
   if (limitstr.empty())
     return true;
@@ -367,7 +371,7 @@ bool QuerierC::assignLimitStr(string limitstr)
 }
 
 // m_groups should always be analyzed before m_selections
-bool QuerierC::assignSelString(string selstr)
+bool QuerierC::assignSelString(const string & selstr)
 {
   m_selstr = selstr;
   return analyzeSelString();
@@ -385,12 +389,12 @@ bool QuerierC::checkSelGroupConflict(const ExpressionC & eSel)
   return true;
 }
 
-vector<ExpressionC> QuerierC::genSelExpression(string sSel, vector<string> & vAlias)
+vector<ExpressionC> QuerierC::genSelExpression(const string & sSel, vector<string> & vAlias)
 {
   vector<ExpressionC> vSelections;
   trace(DEBUG, "Analyzing selections from '%s'!\n", sSel.c_str());
   vector<string> vSelStrs = split(sSel,',',"''()",'\\',{'(',')'},false,true);
-  string sAlias;
+  string sAlias, sAs=" as ";
   ExpressionC eSel;
   for (int i=0; i<vSelStrs.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelStrs[i].c_str());
@@ -399,7 +403,7 @@ vector<ExpressionC> QuerierC::genSelExpression(string sSel, vector<string> & vAl
       trace(FATAL, "Empty selection string!\n");
       continue;
     }
-    vector<string> vSelAlias = split(sSel," as ","''()",'\\',{'(',')'},false,true);
+    vector<string> vSelAlias = split(sSel,sAs,"''()",'\\',{'(',')'},false,true,false);
     sAlias = "";
     if (vSelAlias.size()>1)
       sAlias = upper_copy(trim_copy(vSelAlias[1]));
@@ -548,7 +552,7 @@ bool QuerierC::analyzeSelString(){
 }
 
 // m_groups, m_selections should always be analyzed before m_sorts
-bool QuerierC::assignSortStr(string sortstr)
+bool QuerierC::assignSortStr(const string & sortstr)
 {
   if (sortstr.empty())
     return true;
@@ -604,7 +608,7 @@ bool QuerierC::analyzeTreeStr()
 }
 
 // m_groups, m_selections should always be analyzed before m_sorts
-bool QuerierC::assignTreeStr(string treestr)
+bool QuerierC::assignTreeStr(const string & treestr)
 {
   if (treestr.empty())
     return true;
@@ -653,7 +657,7 @@ bool QuerierC::analyzeReportStr()
   return true;
 }
 
-bool QuerierC::assignReportStr(string reportstr)
+bool QuerierC::assignReportStr(const string & reportstr)
 {
   if (reportstr.empty())
     return true;
@@ -676,7 +680,7 @@ bool QuerierC::analyzeDupStr()
   return true;
 }
 
-bool QuerierC::assignDupStr(string dupstr)
+bool QuerierC::assignDupStr(const string & dupstr)
 {
   if (dupstr.empty())
     return true;
@@ -781,7 +785,7 @@ bool QuerierC::analyzeSortStr(){
   return true;
 }
 
-bool QuerierC::assignMeanwhileString(string mwstr)
+bool QuerierC::assignMeanwhileString(const string & mwstr)
 {
   vector<string> vSideWorks = split(mwstr,';',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vSideWorks.size(); i++){
@@ -803,7 +807,7 @@ bool QuerierC::assignMeanwhileString(string mwstr)
   return true;
 }
 
-bool QuerierC::setFieldTypeFromStr(string setstr)
+bool QuerierC::setFieldTypeFromStr(const string & setstr)
 {
   if (setstr.empty())
     return true;
@@ -838,7 +842,7 @@ bool QuerierC::setFieldTypeFromStr(string setstr)
   return true;
 }
 
-void QuerierC::setUserVars(string variables)
+void QuerierC::setUserVars(const string & variables)
 {
   if (variables.empty())
     return;
@@ -921,7 +925,7 @@ void QuerierC::setUserVars(string variables)
 
 std::set<string> g_userMacroFuncNames; // the global array is used for identify the user defined macro functions
 
-void QuerierC::setUserMaroFuncs(string macrostr)
+void QuerierC::setUserMaroFuncs(const string & macrostr)
 {
   if (macrostr.empty())
     return;
@@ -968,7 +972,7 @@ void QuerierC::setUserMaroFuncs(string macrostr)
   }
 }
 
-void QuerierC::setFileName(string filename, bool bfileheaderonly)
+void QuerierC::setFileName(const string & filename, const bool & bfileheaderonly)
 {
   m_filename = filename;
   m_fileid++;
@@ -981,28 +985,28 @@ void QuerierC::setFileName(string filename, bool bfileheaderonly)
   setUserVars(m_uservarstr); // reset user defined variables for each file.
 }
 
-void QuerierC::setOutputFormat(short int format)
+void QuerierC::setOutputFormat(const short int & format)
 {
   m_outputformat = format;
 }
 
-void QuerierC::setFieldDelim(string delimstr)
+void QuerierC::setFieldDelim(const string & delimstr)
 {
   m_fielddelim = delimstr;
   replacestr(m_fielddelim,{"\\\\","\\t","\\v","\\n","\\r"},{"\\","\t","\v","\n","\r"});
 }
 
-void QuerierC::setDetectAllOnChange(bool bDetectAllOnChange)
+void QuerierC::setDetectAllOnChange(const bool & bDetectAllOnChange)
 {
   m_bDetectAllOnChange = bDetectAllOnChange;
 }
 
-void QuerierC::setTextonly(bool bTextonly)
+void QuerierC::setTextonly(const bool & bTextonly)
 {
   m_bTextOnly = bTextonly;
 }
 
-void QuerierC::setOutputFiles(string outputfilestr, short int outputmode)
+void QuerierC::setOutputFiles(const string & outputfilestr, const short int & outputmode)
 {
   if (m_outputfileexp)
     SafeDelete(m_outputfileexp);
@@ -1016,7 +1020,7 @@ bool QuerierC::toGroupOrSort()
   return (m_groups.size()>0 || m_sorts.size()>0 || m_initAnaArray.size()>0 || m_aggrOnly || m_bUniqueResult || (m_treeProps.size()>0 && m_treeProps.size()==m_treeParentProps.size()));
 }
 
-void QuerierC::pairFiledNames(namesaving_smatch matches)
+void QuerierC::pairFiledNames(const namesaving_smatch & matches)
 {
   using boost::lexical_cast;
   using boost::bad_lexical_cast; 
@@ -1036,7 +1040,7 @@ void QuerierC::pairFiledNames(namesaving_smatch matches)
   }
 }
 
-void QuerierC::setFieldDatatype(string field, int datetype, string extrainfo)
+void QuerierC::setFieldDatatype(const string & field, const int & datetype, const string & extrainfo)
 {
   string fname = upper_copy(field);
   DataTypeStruct dts;
@@ -1052,7 +1056,7 @@ void QuerierC::setFieldDatatype(string field, int datetype, string extrainfo)
   }
 }
 
-void QuerierC::analyzeFiledTypes(vector<string> matches)
+void QuerierC::analyzeFiledTypes(const vector<string> & matches)
 {
   m_detectedTypeRows++;
   //m_fieldtypes.clear();
@@ -1214,12 +1218,12 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
           break;
         case MAX:
           //trace(DEBUG2,"Comparing '%s' : '%s' ... ",sResult.c_str(),it->second.max.c_str());
-          if (anyDataCompare(sResult,it->second.max,dts)>0)
+          if (anyDataCompare(sResult,it->second.max,dts,dts)>0)
             it->second.max = sResult;
           //trace(DEBUG2," get '%s'\n",it->second.max.c_str());
           break;
         case MIN:
-          if (anyDataCompare(sResult,it->second.min,dts)<0)
+          if (anyDataCompare(sResult,it->second.min,dts,dts)<0)
             it->second.min = sResult;
           break;
         }
@@ -1258,7 +1262,7 @@ void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,st
   }
 }
 
-bool QuerierC::appendResultSet(vector<string> vResult, const map<string, string> & varValues, bool bApplyExtraFilter)
+bool QuerierC::appendResultSet(const vector<string> & vResult, const map<string, string> & varValues, const bool & bApplyExtraFilter)
 {
   int iRowNumFromCols = 0;
   for (int i=0; i<m_colToRows.size(); i++)
@@ -1306,7 +1310,7 @@ bool QuerierC::appendResultSet(vector<string> vResult, const map<string, string>
   return false;
 }
 
-bool QuerierC::evalAddExprArray(const vector<ExpressionC> & expressions, const string & rawval, RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, vector<string> & vResults, bool bCheckGroupFunc)
+bool QuerierC::evalAddExprArray(const vector<ExpressionC> & expressions, const string & rawval, RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, vector<string> & vResults, const bool & bCheckGroupFunc)
 {
   if (!anaEvaledExp)
     return false;
@@ -1343,7 +1347,7 @@ bool QuerierC::evalAddExprArray(const vector<ExpressionC> & expressions, const s
 }
 
 // add sort keys. result set size increased means the current row is not filtered by extra filter.
-void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, bool bCheckGroupFunc)
+void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, const bool & bCheckGroupFunc)
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
@@ -1404,7 +1408,7 @@ void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* ana
 #endif // __DEBUG__
 }
 
-void QuerierC::evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, bool bApplyExtraFilter, bool bCheckGroupFunc, int nDupNum)
+void QuerierC::evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, const bool & bApplyExtraFilter, const bool & bCheckGroupFunc, const int & nDupNum)
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
@@ -1445,7 +1449,7 @@ void QuerierC::evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & 
   }
 }
 
-void QuerierC::evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, bool bApplyExtraFilter, bool bCheckGroupFunc)
+void QuerierC::evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, const bool & bApplyExtraFilter, const bool & bCheckGroupFunc)
 {
   string sResult;
   DataTypeStruct dts;
@@ -1838,7 +1842,7 @@ bool QuerierC::searchStopped()
     return false;
 }
 
-void QuerierC::trialAnalyze(vector<string> matcheddata)
+void QuerierC::trialAnalyze(const vector<string> & matcheddata)
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
@@ -1943,6 +1947,10 @@ int QuerierC::searchNextReg()
   try {
     //namesaving_smatch matches(m_regexstr);
     while(!m_rawstr.empty() && regex_search(m_rawstr, m_matches, m_regexp)){
+#ifdef __DEBUG__
+  m_parsepatterntime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
       m_line++;
       m_fileline++;
       vector<string> matcheddata;
@@ -2046,7 +2054,13 @@ int QuerierC::searchNextWild()
       m_rawstr = "";
     }
     //trace(DEBUG, "Read '%s'\n", sLine.c_str());
-    vector<string>  matcheddata = matchWildcard(sLine,m_regexstr,m_quoters,'\\',{});
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
+    vector<string> matcheddata = matchWildcard(sLine,m_regexstr,m_quoters,'\\',{});
+#ifdef __DEBUG__
+  m_parsepatterntime += (curtime()-thistime);
+#endif // __DEBUG__
     if (matcheddata.size()==0 && bEnded)
       continue;
     m_line++;
@@ -2128,7 +2142,7 @@ int QuerierC::searchNextDelm()
   m_rawreadtime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
-    vector<string>  matcheddata;
+    vector<string> matcheddata;
     if ((!m_delmMulitChar && m_regexstr.empty()) || (m_delmMulitChar && m_delimSet.size()==0)){
       if (!(sLine.empty()&&bEnded))
         matcheddata.push_back(sLine);
@@ -2136,10 +2150,10 @@ int QuerierC::searchNextDelm()
       if (m_delmMulitChar)
         matcheddata = split(sLine,m_delimSet,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
       else
-        matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
+        matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded, true);
     }
 #ifdef __DEBUG__
-  m_rawsplittime += (curtime()-thistime);
+  m_parsepatterntime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
     trace(DEBUG, "searchNextDelm Read '%s'(flag:%d; len:%d) vector size: %d \n", sLine.c_str(), sLine.empty()&&bEnded, sLine.length(), matcheddata.size());
@@ -2223,7 +2237,7 @@ int QuerierC::searchNextLine()
       sLine = m_rawstr;
       m_rawstr = "";
     }
-    vector<string>  matcheddata;
+    vector<string> matcheddata;
     matcheddata.push_back(sLine);
     pos = 0;
     //dumpVector(matcheddata);
@@ -2463,14 +2477,14 @@ bool QuerierC::processAnalyticA(const short int & iFuncID, const string & sFuncE
       break;
     case MAXA:
       if (tmpVal.find(vGroups)!=tmpVal.end()){
-        if (anyDataCompare(tmpVal[vGroups], vFuncData[i][iAnaGroupNum], m_anaSortProps[sFuncExpStr][0].sortKey.m_datatype) < 0)
+        if (anyDataCompare(tmpVal[vGroups], vFuncData[i][iAnaGroupNum], m_anaSortProps[sFuncExpStr][0].sortKey.m_datatype, m_anaSortProps[sFuncExpStr][0].sortKey.m_datatype) < 0)
           tmpVal[vGroups] = vFuncData[i][iAnaGroupNum];
       }else
         tmpVal.insert(pair< vector<string>, string >(vGroups, vFuncData[i][iAnaGroupNum]));
       break;
     case MINA:
       if (tmpVal.find(vGroups)!=tmpVal.end()){
-        if (anyDataCompare(tmpVal[vGroups], vFuncData[i][iAnaGroupNum], m_anaSortProps[sFuncExpStr][0].sortKey.m_datatype) > 0)
+        if (anyDataCompare(tmpVal[vGroups], vFuncData[i][iAnaGroupNum], m_anaSortProps[sFuncExpStr][0].sortKey.m_datatype, m_anaSortProps[sFuncExpStr][0].sortKey.m_datatype) > 0)
           tmpVal[vGroups] = vFuncData[i][iAnaGroupNum];
       }else
         tmpVal.insert(pair< vector<string>, string >(vGroups, vFuncData[i][iAnaGroupNum]));
@@ -2516,7 +2530,7 @@ bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const short int & iFunc
     if (v1.size()!=sortProps.size()+1 || v2.size()!=sortProps.size()+1 || v2.size()!=v1.size())
       return false;
     for (int i=0;i<sortProps.size();i++){
-      int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype);
+      int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype,sortProps[i].sortKey.m_datatype);
       if (iCompareRslt == 0) // Compare next key only when current keys equal
         continue;
       return (sortProps[i].direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
@@ -2529,7 +2543,7 @@ bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const short int & iFunc
     if (v1.size()<2 || v2.size()<2 || v1.size()!=sortProps.size()+4 || v2.size()!=sortProps.size()+4 || v2.size()!=v1.size())
       return false;
     for (int i=0;i<sortProps.size();i++){
-      int iCompareRslt = anyDataCompare(v1[i+1],v2[i+1],sortProps[i].sortKey.m_datatype);
+      int iCompareRslt = anyDataCompare(v1[i+1],v2[i+1],sortProps[i].sortKey.m_datatype,sortProps[i].sortKey.m_datatype);
       if (iCompareRslt == 0) // Compare next key only when current keys equal
         continue;
       return (sortProps[i].direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
@@ -2882,7 +2896,7 @@ void QuerierC::unique()
 }
 
 // doing merging sort exchanging
-void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
+void QuerierC::mergeSort(const int & iLeftB, const int & iLeftT, const int & iRightB, const int & iRightT)
 {
   //trace(DEBUG2, "Mergeing %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
   if (iLeftT >= iRightB || iLeftB > iLeftT || iRightB > iRightT)
@@ -2905,7 +2919,7 @@ void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
   //trace(DEBUG2, "Checking %s(L) %s(R) (%d %d %d) (%s) (%d)\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str(),iLPos,iCheckPos,iRPos,decodeDatatype(m_sorts[i].sortKey.m_datatype.datatype).c_str(), m_sorts[i].direction);
 //#endif // __DEBUG__
         //if (bToBeSwapped){
-        int iCompareRslt = anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype);
+        int iCompareRslt = anyDataCompare((*(m_sortKeys.begin()+iLPos))[i],(*(m_sortKeys.begin()+iRPos))[i],m_sorts[i].sortKey.m_datatype,m_sorts[i].sortKey.m_datatype);
         if ((m_sorts[i].direction==ASC ? iCompareRslt>0 : iCompareRslt<0)){
 //#ifdef __DEBUG__
   //trace(DEBUG2, "moving %s(R) before %s(L) (%d %d %d)\n", (*(m_sortKeys.begin()+iRPos))[i].c_str(), (*(m_sortKeys.begin()+iLPos))[i].c_str(),iLPos,iCheckPos,iRPos);
@@ -2941,7 +2955,7 @@ void QuerierC::mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT)
 }
 
 // doing merging sort exchanging
-void QuerierC::mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, int iLeftB, int iLeftT, int iRightB, int iRightT)
+void QuerierC::mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, const int & iLeftB, const int & iLeftT, const int & iRightB, const int & iRightT)
 {
   //trace(DEBUG2, "Mergeing %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
   if (iLeftT >= iRightB || iLeftB > iLeftT || iRightB > iRightT)
@@ -2964,7 +2978,7 @@ void QuerierC::mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* so
   //trace(DEBUG2, "Checking %s(L) %s(R) (%d %d %d) (%s) (%d)\n", (*(sortKeys->begin()+iLPos))[i].c_str(), (*(sortKeys->begin()+iRPos))[i].c_str(),iLPos,iCheckPos,iRPos,decodeDatatype((*sortProps)[i].sortKey.m_datatype.datatype).c_str(), (*sortProps)[i].direction);
 //#endif // __DEBUG__
         //if (bToBeSwapped){
-        int iCompareRslt = anyDataCompare((*(sortKeys->begin()+iLPos))[i],(*(sortKeys->begin()+iRPos))[i],(*sortProps)[i].sortKey.m_datatype);
+        int iCompareRslt = anyDataCompare((*(sortKeys->begin()+iLPos))[i],(*(sortKeys->begin()+iRPos))[i],(*sortProps)[i].sortKey.m_datatype,(*sortProps)[i].sortKey.m_datatype);
         if (((*sortProps)[i].direction==ASC ? iCompareRslt>0 : iCompareRslt<0)){
 //#ifdef __DEBUG__
   //trace(DEBUG2, "moving %s(R) before %s(L) (%d %d %d)\n", (*(sortKeys->begin()+iRPos))[i].c_str(), (*(sortKeys->begin()+iLPos))[i].c_str(),iLPos,iCheckPos,iRPos);
@@ -3036,7 +3050,7 @@ bool QuerierC::sort()
     if (v1.size()!=sortProps.size()+1 || v2.size()!=sortProps.size()+1 || v2.size()!=v1.size())
       return false;
     for (int i=0;i<sortProps.size();i++){
-      int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype);
+      int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype,sortProps[i].sortKey.m_datatype);
       if (iCompareRslt == 0) // Compare next key only when current keys equal
         continue;
       return (sortProps[i].direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
@@ -3071,7 +3085,7 @@ void QuerierC::releaseTree(TreeNode* tNode)
   SafeDelete(tNode);
 }
 
-void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid, unordered_map< string,vector<ExpressionC> > & treeFuncs)
+void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, const short int & level, int & nodeid, unordered_map< string,vector<ExpressionC> > & treeFuncs)
 {
   if (tNode->rowid>=tmpResults.size()){
     trace(ERROR, "Node rowid %d is out of result set range (%d)!\n", tNode->rowid, tmpResults.size());
@@ -3232,7 +3246,7 @@ bool QuerierC::tree()
 //  printf("\n");
 //}
 
-void QuerierC::outputstream(int resultid, const char *fmt, ...)
+void QuerierC::outputstream(const int & resultid, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
@@ -3250,7 +3264,7 @@ void QuerierC::outputstream(int resultid, const char *fmt, ...)
   va_end(args);
 }
 
-void QuerierC::formatoutput(vector<string> & datas, int resultid)
+void QuerierC::formatoutput(vector<string> & datas, const int & resultid)
 {
   if (m_eliminateDupField)
     eliminateDups(datas);
@@ -3423,7 +3437,7 @@ void QuerierC::applyExtraFilter()
     applyExtraFilter(tmpResults[i], varValues);
 }
 
-void QuerierC::genReport(vector<string> datas)
+void QuerierC::genReport(const vector<string> & datas)
 {
   if (m_outputrow<m_limitbottom-1 || (m_limittop>=0 && m_outputrow+1>m_limittop)){
     return;
@@ -3499,7 +3513,7 @@ void QuerierC::outputAndClean()
   m_resultfiles.clear();
 }
 
-void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
+void QuerierC::outputExtraInfo(const size_t & total, const bool & bPrintHeader)
 {
   if (m_outputformat == JSON){
     if (m_outputrow>0)
@@ -3558,7 +3572,7 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
   trace(PERFM, ", Searching (matched rows %d) time: %d. Break down:\n", m_line, m_searchtime);
   trace(PERFM, ",   Analyze raw content time: %d\n", m_rawanalyzetime);
   trace(PERFM, ",   Read raw content time: %d\n", m_rawreadtime);
-  trace(PERFM, ",   Split raw content time: %d\n", m_rawsplittime);
+  trace(PERFM, ",   Raw content pattern parsing time: %d\n", m_parsepatterntime);
 
   trace(PERFM, ",   eval expression and filtering time: %d. Break down:\n", m_filtertime);
   trace(PERFM, ",     Dynamic user variable calculation time: %d\n", m_uservarcaltime);
@@ -3584,8 +3598,9 @@ void QuerierC::outputExtraInfo(size_t total, bool bPrintHeader)
   trace(PERFM, ", prepare Agg GP time: %d\n", m_prepAggGPtime);
   trace(PERFM, ", eval agg expression time: %d\n", m_evalAggExptime);
   trace(PERFM, ", Output time: %d\n", m_outputtime);
+  trace(PERFM, ", Convert string to date time: %d\n", g_strtodatetime);
   trace(PERFM, ", matched lines: %d\n", m_line);
-  //trace(PERFM, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, Trial Analyze Columns time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_rawsplittime, m_line,m_rawanalyzetime, m_trialanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
+  //trace(PERFM, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, Trial Analyze Columns time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_parsepatterntime, m_line,m_rawanalyzetime, m_trialanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
 #endif // __DEBUG__
 }
 

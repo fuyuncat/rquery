@@ -50,7 +50,7 @@ FunctionC::FunctionC(const FunctionC& other)
   }
 }
 
-FunctionC::FunctionC(string expStr)
+FunctionC::FunctionC(const string & expStr)
 {
   init();
   setExpStr(expStr);
@@ -102,7 +102,7 @@ void FunctionC::clear(){
   init();
 }
 
-void FunctionC::setExpStr(string expStr)
+void FunctionC::setExpStr(const string & expStr)
 {
   clear();
   m_expStr = expStr;
@@ -925,7 +925,7 @@ bool FunctionC::runGetpart(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     }
     if (m_params.size()>=4)
       m_params[3].evalExpression(rds, sQuoters, dts, true);
-    vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false);
+    vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false,false);
     dts.datatype = STRING;
     if (vWords.size() == 0){
       trace(ERROR, "'%s' cannot be splited by '%s' in getpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
@@ -970,7 +970,7 @@ bool FunctionC::runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
     }
     if (m_params.size()>=5)
       m_params[4].evalExpression(rds, sQuoters, dts, true);
-    vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false);
+    vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false,false);
     dts.datatype = STRING;
     if (vWords.size() == 0){
       trace(ERROR, "'%s' cannot be splited by '%s' in getparts()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
@@ -1006,7 +1006,7 @@ bool FunctionC::runCountpart(RuntimeDataStruct & rds, string & sResult, DataType
   if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sDelm, dts, true)){
     if (m_params.size()>=3)
       m_params[2].evalExpression(rds, sQuoters, dts, true);
-    vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false);
+    vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false,false);
     if (vWords.size() == 0){
       trace(ERROR, "'%s' cannot be splited by '%s' in countpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
@@ -1509,6 +1509,7 @@ bool FunctionC::runFileexist(RuntimeDataStruct & rds, string & sResult, DataType
   }
   string str;
   if (m_params[0].evalExpression(rds, str, dts, true)){
+    dts.datatype = LONG;
     sResult = intToStr(fileexist(str));
     return true;
   }else{
@@ -1691,8 +1692,7 @@ bool FunctionC::runComparedate(RuntimeDataStruct & rds, string & sResult, DataTy
       trace(ERROR, "Date format %s of %s doesnot match date format %s of %s!\n", dts1.extrainfo.c_str(), m_params[0].getEntireExpstr().c_str(), dts2.extrainfo.c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
     }
-    dts1.datatype = DATE;
-    sResult = intToStr(anyDataCompare(date1, date2, dts1));
+    sResult = intToStr(anyDataCompare(date1, date2, dts1, dts2));
     dts.datatype = LONG;
     return true;
   }else{
@@ -2579,6 +2579,7 @@ bool FunctionC::runTodate(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     dts.extrainfo = "";
   if (m_params[0].evalExpression(rds, sResult, dts, true) && isDate(sResult, offSet, dts.extrainfo)){
     dts.datatype = DATE;
+    m_datatype = dts;
     return true;
   }else{
     trace(ERROR, "Failed to run runTodate(str,[dateformat])\n", m_params[0].getEntireExpstr().c_str());
@@ -2742,6 +2743,8 @@ bool FunctionC::runAddtime(RuntimeDataStruct & rds, string & sResult, DataTypeSt
         sResult=string(buffer);
       //sResult = dateToStr(tm, offSet, dts1.extrainfo);
       dts.datatype = DATE;
+      dts.extrainfo = dts1.extrainfo;
+      m_datatype = dts;
       return true;
     }else{
       trace(ERROR, "Failed to run addtime(%s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
@@ -3001,6 +3004,7 @@ bool FunctionC::runTruncdate(RuntimeDataStruct & rds, string & sResult, DataType
     int iSeconds = atoi(sSeconds.c_str());
     sResult = truncdate(sTm, dts.extrainfo, iSeconds);
     dts.datatype = DATE;
+    m_datatype = dts;
     //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", iSeconds, sTm.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
     return !sResult.empty();
   }else{
@@ -3020,6 +3024,7 @@ bool FunctionC::runTruncdateu(RuntimeDataStruct & rds, string & sResult, DataTyp
   if (m_params[0].evalExpression(rds, sTm, dts, true) && m_params[1].evalExpression(rds, sUnit, tmpDts, true) && !sUnit.empty()){
     sResult = truncdateu(sTm, dts.extrainfo, sUnit[0]);
     dts.datatype = DATE;
+    m_datatype = dts;
     //trace(DEBUG, "Truncating from '%s'(%u) get '%s'(%u), format:%s\n", sTm.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
     return !sResult.empty();
   }else{
@@ -3063,9 +3068,11 @@ bool FunctionC::runNow(RuntimeDataStruct & rds, string & sResult, DataTypeStruct
     return false;
   }
   struct tm curtime = now();
-  sResult = dateToStr(curtime, curtime.tm_gmtoff/36, string(DATEFMT)+" %z");
+  dts.extrainfo = string(DATEFMT)+" %z";
+  sResult = dateToStr(curtime, curtime.tm_gmtoff/36, dts.extrainfo);
   //sResult = dateToStr(curtime);
   dts.datatype = DATE;
+  m_datatype = dts;
   return true;
 }
 
@@ -3117,14 +3124,14 @@ bool FunctionC::runMonthfirstday(RuntimeDataStruct & rds, string & sResult, Data
   }
   string sTm;
   int offSet;
-  DataTypeStruct tmpDts;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, dts.extrainfo)){
     sResult = truncdateu(sTm, dts.extrainfo, 'd');
   }else{
     trace(ERROR, "Failed to run weekday(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }  
   dts.datatype = DATE;
+  m_datatype = dts;
   return true;
 }
 
@@ -3136,15 +3143,15 @@ bool FunctionC::runMonthfirstmonday(RuntimeDataStruct & rds, string & sResult, D
   }
   string sTm;
   int offSet;
-  DataTypeStruct tmpDts;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, dts.extrainfo) && strToDate(sTm, tm1, offSet, dts.extrainfo)){
     sResult = monthfirstmonday(sTm, dts.extrainfo);
   }else{
     trace(ERROR, "Failed to run monthfirstmonday(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }  
   dts.datatype = DATE;
+  m_datatype = dts;
   return true;
 }
 
@@ -3223,8 +3230,10 @@ bool FunctionC::runLongtodate(RuntimeDataStruct & rds, string & sResult, DataTyp
   }else{
     trace(ERROR, "Failed to run longtodate(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
-  }  
+  }
+  dts.extrainfo = DATEFMT;
   dts.datatype = DATE;
+  m_datatype = dts;
   return true;
 }
 
@@ -3236,15 +3245,15 @@ bool FunctionC::runLocaltime(RuntimeDataStruct & rds, string & sResult, DataType
   }
   string sTm;
   int offSet;
-  DataTypeStruct tmpDts;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo)){
-    sResult = rqlocaltime(sTm, tmpDts.extrainfo);;
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, dts.extrainfo)){
+    sResult = rqlocaltime(sTm, dts.extrainfo);;
   }else{
     trace(ERROR, "Failed to run localtime(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }  
   dts.datatype = DATE;
+  m_datatype = dts;
   return true;
 }
 
@@ -3256,20 +3265,20 @@ bool FunctionC::runGmtime(RuntimeDataStruct & rds, string & sResult, DataTypeStr
   }
   string sTm, sGmtOff;
   int offSet;
-  DataTypeStruct tmpDts;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && m_params[1].evalExpression(rds, sGmtOff, dts, true) && isDouble(sGmtOff)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, dts.extrainfo) && m_params[1].evalExpression(rds, sGmtOff, dts, true) && isDouble(sGmtOff)){
     double dGmtOff = atof(sGmtOff.c_str());
     if (dGmtOff>12 || dGmtOff<-12){
       trace(ERROR, "The valid GMT offset range is from -12 to 12!\n");
       return false;
     }
-    sResult = rqgmtime(sTm, tmpDts.extrainfo, dGmtOff);
+    sResult = rqgmtime(sTm, dts.extrainfo, dGmtOff);
   }else{
     trace(ERROR, "Failed to run gmtime(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }  
   dts.datatype = DATE;
+  m_datatype = dts;
   return true;
 }
 
@@ -3280,7 +3289,7 @@ bool FunctionC::runSwitch(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     trace(ERROR, "switch() function accepts at least three parameters.\n");
     return false;
   }
-  DataTypeStruct dts1, dts2, dts3;
+  DataTypeStruct dts1, dts2;
   if (!m_params[0].evalExpression(rds, sResult, dts1, true)){
     trace(ERROR, "(0)Eval expression '%s' failed.\n",m_params[0].getEntireExpstr().c_str());
     return false;
@@ -3307,9 +3316,13 @@ bool FunctionC::runSwitch(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     dts = getCompatibleDataType(dts1, dts2);
     if (dts.datatype == ANY)
       dts.datatype = STRING;
-    if (anyDataCompare(sResult,scase,dts) == 0){
+    if (dts1.datatype != dts2.datatype || dts1.datatype != dts.datatype){
+      dts1 = dts;
+      dts2 = dts;
+    }
+    if (anyDataCompare(sResult,scase,dts1,dts2) == 0){
       sResult = sreturn;
-      dts = dts3;
+      m_datatype = dts;
       return true;
     }
   }
@@ -3331,8 +3344,10 @@ bool FunctionC::runWhen(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
   }
   vector< unordered_map< int,int > > sideMatchedRowIDs;
   for (int i=0; i<m_filters.size(); i++){
-    if (m_filters[i].compareExpression(rds, sideMatchedRowIDs) && m_params[i].evalExpression(rds, sResult, dts, true))
+    if (m_filters[i].compareExpression(rds, sideMatchedRowIDs) && m_params[i].evalExpression(rds, sResult, dts, true)){
+      m_datatype = dts;
       return true;
+    }
   }
   if (m_params[m_params.size()-1].evalExpression(rds, sResult, dts, true))
     return true;
@@ -3385,9 +3400,13 @@ bool FunctionC::runGreatest(RuntimeDataStruct & rds, string & sResult, DataTypeS
           dts = getCompatibleDataType(dts1, dts2);
           if (dts.datatype == ANY || dts.datatype == UNKNOWN)
             dts.datatype = STRING;
+          if (dts1.datatype != dts2.datatype || dts1.datatype != dts.datatype){
+            dts1 = dts;
+            dts2 = dts;
+          }
           
-          //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
-          if (anyDataCompare(scomp,sResult,dts)>0)
+          //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts1,dts2));
+          if (anyDataCompare(scomp,sResult,dts1,dts2)>0)
             sResult = scomp;
         }
       }
@@ -3403,9 +3422,13 @@ bool FunctionC::runGreatest(RuntimeDataStruct & rds, string & sResult, DataTypeS
         dts = getCompatibleDataType(dts1, dts2);
         if (dts.datatype == ANY || dts.datatype == UNKNOWN)
           dts.datatype = STRING;
-        
-        //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
-        if (anyDataCompare(scomp,sResult,dts)>0)
+        if (dts1.datatype != dts2.datatype || dts1.datatype != dts.datatype){
+          dts1 = dts;
+          dts2 = dts;
+        }
+
+        //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts,dts));
+        if (anyDataCompare(scomp,sResult,dts1,dts2)>0)
           sResult = scomp;
       }
     }
@@ -3439,9 +3462,12 @@ bool FunctionC::runLeast(RuntimeDataStruct & rds, string & sResult, DataTypeStru
           dts = getCompatibleDataType(dts1, dts2);
           if (dts.datatype == ANY || dts.datatype == UNKNOWN)
             dts.datatype = STRING;
-          
-          //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
-          if (anyDataCompare(scomp,sResult,dts)<0)
+          if (dts1.datatype != dts2.datatype || dts1.datatype != dts.datatype){
+            dts1 = dts;
+            dts2 = dts;
+          }
+          //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts1,dts2));
+          if (anyDataCompare(scomp,sResult,dts1,dts2)<0)
             sResult = scomp;
         }
       }
@@ -3457,9 +3483,13 @@ bool FunctionC::runLeast(RuntimeDataStruct & rds, string & sResult, DataTypeStru
         dts = getCompatibleDataType(dts1, dts2);
         if (dts.datatype == ANY || dts.datatype == UNKNOWN)
           dts.datatype = STRING;
+        if (dts1.datatype != dts2.datatype || dts1.datatype != dts.datatype){
+          dts1 = dts;
+          dts2 = dts;
+        }
         
-        //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts));
-        if (anyDataCompare(scomp,sResult,dts)<0)
+        //trace(DEBUG2,"Comparing '%s'(%d) '%s'(%d) => %d \n",scomp.c_str(),dts2.datatype,sResult.c_str(),dts1.datatype,anyDataCompare(scomp,sResult,dts1, dts2));
+        if (anyDataCompare(scomp,sResult,dts1, dts2)<0)
           sResult = scomp;
       }
     }
@@ -3529,6 +3559,7 @@ bool FunctionC::runEval(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
     return false;
   }
 
+  m_datatype = dts;
   return true;
 }
 
@@ -3573,6 +3604,7 @@ bool FunctionC::runUsermacro(RuntimeDataStruct & rds, string & sResult, DataType
     return false;
   }
 
+  m_datatype = dts;
   return true;
 }
 
@@ -3669,6 +3701,7 @@ bool FunctionC::runRmember(RuntimeDataStruct & rds, string & sResult, DataTypeSt
   }else if (nid < 0 && abs(nid) <= (*rds.sideDatasets)[iS1].size()){
     if ((*rds.sideDatasets)[iS1][nid+(*rds.sideDatasets)[iS1].size()].find(s2)!=(*rds.sideDatasets)[iS1][nid+(*rds.sideDatasets)[iS1].size()].end()){
       sResult = (*rds.sideDatasets)[iS1][nid+(*rds.sideDatasets)[iS1].size()][s2];
+      m_datatype = dts;
       return true;
     }else{
       sResult = ""; // return empty if not found.
@@ -3775,7 +3808,7 @@ bool FunctionC::runRmemberid(RuntimeDataStruct & rds, string & sResult, DataType
 
 // expand foreach to a vector of expression
 // foreach(beginid,endid,macro_expr[,step]). $ stands for field, # stands for field sequence, % stands for the largest field sequence ID.
-vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
+vector<ExpressionC> FunctionC::expandForeach(const int & maxFieldNum)
 {
   vector<ExpressionC> vExpr;
   trace(DEBUG,"(1)Expanding foreach expression '%s'\n",m_expStr.c_str());
@@ -3835,7 +3868,7 @@ vector<ExpressionC> FunctionC::expandForeach(int maxFieldNum)
   return vExpr;
 }
 
-vector<ExpressionC> FunctionC::expandForeach(vector<ExpressionC> vExps)
+vector<ExpressionC> FunctionC::expandForeach(const vector<ExpressionC> & vExps)
 {
   vector<ExpressionC> vExpr;
   trace(DEBUG,"(2)Expanding foreach expression '%s'\n",m_expStr.c_str());

@@ -130,7 +130,7 @@ void FilterC::copyTo(FilterC* node) const
   }
 }
 
-FilterC::FilterC(string expStr)
+FilterC::FilterC(const string & expStr)
 {
   init();
   setExpstr(expStr);
@@ -162,7 +162,7 @@ FilterC::FilterC(int comparator, int colId, string data)
   m_rightExpStr = data;
 }
 
-void FilterC::setExpstr(string expStr)
+void FilterC::setExpstr(const string & expStr)
 {
   m_expStr = expStr;
   buildFilter();
@@ -381,7 +381,7 @@ int FilterC::getRightHeight(){
 }
 
 // add a NEW filter into tree
-void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
+void FilterC::add(FilterC* node, const int & junction, const bool & leafGrowth, const bool & addOnTop){
   // not add any null or UNKNOWN node
   if (node || node->m_type ==  UNKNOWN) 
       return;
@@ -447,7 +447,7 @@ void FilterC::add(FilterC* node, int junction, bool leafGrowth, bool addOnTop){
   }
 }
 
-void FilterC::dump(int deep){
+void FilterC::dump(const int & deep){
   if (m_type == BRANCH){
     trace(DUMP,"(%d)%s\n",deep,decodeJunction(m_junction).c_str());
     trace(DUMP,"L-");
@@ -465,7 +465,7 @@ void FilterC::dump(){
 }
 
 // detect if predication contains special colId    
-bool FilterC::containsColId(int colId){
+bool FilterC::containsColId(const int & colId){
   bool contain = false;
   if (m_type == BRANCH){
     contain = contain || m_leftNode->containsColId(colId);
@@ -477,7 +477,7 @@ bool FilterC::containsColId(int colId){
 }
 
 // detect if predication contains special colId    
-FilterC* FilterC::getFirstPredByColId(int colId, bool leftFirst){
+FilterC* FilterC::getFirstPredByColId(const int & colId, const bool & leftFirst){
   FilterC* node;
   if (m_type == BRANCH){
     if (leftFirst){
@@ -624,7 +624,7 @@ FilterC* FilterC::cloneMe(){
 }
 
 // get all involved colIDs in this prediction
-std::set<int> FilterC::getAllColIDs(int side){
+std::set<int> FilterC::getAllColIDs(const int & side){
   std::set<int> colIDs;
   if (m_type == BRANCH){
     if (m_leftNode){
@@ -739,7 +739,7 @@ bool FilterC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs
   }
 }
 // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
-void FilterC::fillDataForColumns(map <string, string> & dataList, vector <string> columns){
+void FilterC::fillDataForColumns(map <string, string> & dataList, const vector <string> & columns){
   if (columns.size() == 0)
     return;
   if (m_type == BRANCH){
@@ -776,7 +776,7 @@ bool FilterC::isConst() const
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
-bool FilterC::evalAnaExprs(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, string & sResult, DataTypeStruct & dts, bool getresultonly)
+bool FilterC::evalAnaExprs(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, string & sResult, DataTypeStruct & dts, const bool & getresultonly)
 {
   if (m_type == LEAF){
     if (m_leftExpression && m_leftExpression->containAnaFunc()){
@@ -829,7 +829,7 @@ bool FilterC::compareIn(RuntimeDataStruct & rds)
         bResult = false;
         break;
       }
-      if (anyDataCompare(leftRst, EQ, sResult, m_datatype) == 1){
+      if (anyDataCompare(leftRst, EQ, sResult, dts1, dts2) == 1){
         bResult = true;
         break;
       }
@@ -849,7 +849,7 @@ bool FilterC::compareIn(RuntimeDataStruct & rds)
         trace(ERROR, "Failed to get result of IN element %s!\n", m_inExpressions[i].getEntireExpstr().c_str());
         return false;
       }
-      if (anyDataCompare(leftRst, EQ, sResult, m_datatype) == 1){
+      if (anyDataCompare(leftRst, EQ, sResult, dts1, dts2) == 1){
         return true;
       }
     }
@@ -891,7 +891,7 @@ bool FilterC::joinMatch(RuntimeDataStruct & rds, vector< unordered_map< int,int 
     bool evaled = m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true);
     rds.sideDatarow = oldSideDatarow;
     if (evaled){
-      if (anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1){
+      if (anyDataCompare(leftRst, m_comparator, rightRst, dts1, dts2) == 1){
         sideMatchedRowID.insert(pair< int,int >(sidWorkID,i));
         sideMatchedRowIDs.push_back(sideMatchedRowID);
       }
@@ -916,7 +916,7 @@ bool FilterC::compareTwoSideExp(RuntimeDataStruct & rds, vector< unordered_map< 
       //    sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(i), (*rds.sideDatasets)[i][sideMatchedRowIDs[i]]));
       //  }
       //  if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
-      //    bResult = anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
+      //    bResult = anyDataCompare(leftRst, m_comparator, rightRst, dts1, dts2) == 1;
       //  }else
       //    bResult = false;
       //}else{ // nested loop join side work datasets
@@ -924,7 +924,7 @@ bool FilterC::compareTwoSideExp(RuntimeDataStruct & rds, vector< unordered_map< 
       //}
     }else{
       if (m_leftExpression->evalExpression(rds, leftRst, dts1, true) && m_rightExpression->evalExpression(rds, rightRst, dts2, true)){
-        bResult = anyDataCompare(leftRst, m_comparator, rightRst, m_datatype) == 1;
+        bResult = anyDataCompare(leftRst, m_comparator, rightRst, dts1, dts2) == 1;
       }else
         bResult = false;
     }

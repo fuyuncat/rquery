@@ -26,7 +26,7 @@ class FilterC
   public:
 
     FilterC();
-    FilterC(string expStr);
+    FilterC(const string & expStr);
     FilterC(FilterC* node);
     FilterC(int junction, FilterC* leftNode, FilterC* rightNode); // construct a branch
     FilterC(int comparator, int colId, string data); // construct a leaf
@@ -53,27 +53,27 @@ class FilterC
     FilterC* m_rightNode;     // if type is BRANCH, it links to right child node. Otherwise, it's meaningless
     FilterC* m_parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
 
-    void setExpstr(string expStr);
+    void setExpstr(const string & expStr);
     void buildFilter();  // build Filter from expression string
     int getLeftHeight(); // get left tree Height
     int getRightHeight(); // get left tree Height
-    void add(FilterC* node, int junction, bool leafGrowth, bool addOnTop); // add a NEW preiction into tree
+    void add(FilterC* node, const int & junction, const bool & leafGrowth, const bool & addOnTop); // add a NEW preiction into tree
     void dump();
-    bool containsColId(int colId); // detect if predication contains special colId
-    FilterC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
+    bool containsColId(const int & colId); // detect if predication contains special colId
+    FilterC* getFirstPredByColId(const int & colId, const bool & leftFirst); // detect if predication contains special colId
     bool analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes); // analyze column ID & name from metadata
     bool columnsAnalyzed();
     bool expstrAnalyzed();
     bool containAnaFunc() const; // check if the expression contains analytic function
     bool isConst() const;
-    bool evalAnaExprs(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, string & sResult, DataTypeStruct & dts, bool getresultonly); // eval expressions in the filter, to get anaFuncs
+    bool evalAnaExprs(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, string & sResult, DataTypeStruct & dts, const bool & getresultonly); // eval expressions in the filter, to get anaFuncs
     FilterC* cloneMe();
-    std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
+    std::set<int>  getAllColIDs(const int & side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin
     bool remove(FilterC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
-    void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
+    void fillDataForColumns(map <string, string> & dataList, const vector <string> & columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     void mergeExprConstNodes();  // merge const in the expressions
     bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
     bool getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string, vector<int> > & anaGroupNums); // get the full list of analytic functions in the expression.
@@ -90,7 +90,7 @@ class FilterC
     DataTypeStruct* m_rawDatatype; 
     unordered_map< string, unordered_map<string,DataTypeStruct> >* m_sideDatatypes;
 
-    void dump(int deep);
+    void dump(const int & deep);
     void buildLeafNodeFromStr(FilterC* node, string str); // build a leaf node
     bool buildFilter(string splitor, string quoters); // build current filter class from the expression string
     bool compareTwoSideExp(RuntimeDataStruct & rds, vector< unordered_map< int,int > > & sideMatchedRowIDs); 

@@ -28,10 +28,10 @@ class ExpressionC
   public:
 
     ExpressionC();
-    ExpressionC(string expString);
+    ExpressionC(const string & expString);
     ExpressionC(ExpressionC* node);
     ExpressionC(ExpressionC* leftNode, ExpressionC* rightNode); // construct a branch
-    ExpressionC(int operate, int colId, string data); // construct a leaf
+    ExpressionC(const int & operate, const int & colId, const string & data); // construct a leaf
     ExpressionC(const ExpressionC& other);
 
     ~ExpressionC();
@@ -51,14 +51,14 @@ class ExpressionC
     ExpressionC* m_parentNode;    // for all types except the root, it links to parent node. Otherwise, it's meaningless
     FunctionC* m_Function;  // if m_expType is FUNCTION, it points to a function class, otherwise, it's NULL
 
-    void setExpstr(string expString); // set expression string and analyze the string
+    void setExpstr(const string & expString); // set expression string and analyze the string
     int getLeftHeight(); // get left tree Height
     int getRightHeight(); // get left tree Height
     void add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop); // add a NEW expression into tree
     void dump();
     string getEntireExpstr() const;
-    bool containsColId(int colId); // detect if predication contains special colId
-    ExpressionC* getFirstPredByColId(int colId, bool leftFirst); // detect if predication contains special colId
+    bool containsColId(const int & colId); // detect if predication contains special colId
+    ExpressionC* getFirstPredByColId(const int & colId, const bool & leftFirst); // detect if predication contains special colId
     DataTypeStruct analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes); // analyze column ID & name from metadata, return data type of current node
     bool columnsAnalyzed();
     bool expstrAnalyzed();
@@ -68,22 +68,22 @@ class ExpressionC
     bool containRefVar() const; // check if the expression contains reference variable @R[][]
     int getSideWorkID() const; // if the expression contains reference variable @R[][], return the first found side work ID (the first subscribe)
     void getAllColumnNames(vector<string> & fieldnames);  // get all potential column/variable (upper case)
-    bool inColNamesRange(vector<string> fieldnames) const; // check if all column/variable in a given list of names (upper case).
+    bool inColNamesRange(const vector<string> & fieldnames) const; // check if all column/variable in a given list of names (upper case).
     ExpressionC* cloneMe();
-    std::set<int>  getAllColIDs(int side); // get all involved colIDs in this prediction
+    std::set<int>  getAllColIDs(const int & side); // get all involved colIDs in this prediction
     map<int,string>  buildMap(); // build the prediction as a HashMap
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin
     bool remove(ExpressionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
-    void fillDataForColumns(map <string, string> & dataList, vector <string> columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
+    void fillDataForColumns(map <string, string> & dataList, const vector <string> & columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     bool evalAnalyticFunc(unordered_map< string,string > * anaResult, string & sResult); // get expression result from pre evaled analytic function results
-    bool evalExpression(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts, bool getresultonly); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
+    bool evalExpression(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts, const bool & getresultonly); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
     bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.
     bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
     bool getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string, vector<int> > & anaGroupNums); // get the full list of analytic functions in the expression.
     bool getTreeFuncs(unordered_map< string,vector<ExpressionC> > & treeFuncs); // get the full list of hierarchy (tree) functions in the expression.
     void setTreeFuncs(unordered_map< string,string > & treeFuncVals); // set result for the tree functions
-    FunctionC* getAnaFunc(string funcExpStr); // search analytic function in this expression using the function expression string.
+    FunctionC* getAnaFunc(const string & funcExpStr); // search analytic function in this expression using the function expression string.
     bool calAggFunc(const GroupProp & aggGroupProp, FunctionC* function, string & sResult); // calculate final aggregation function result
 
   private:
@@ -98,7 +98,7 @@ class ExpressionC
     //unordered_map< string,string > m_macroParaDefault; // the initial value of the user defined macro function parameters.
     ExpressionC* m_macroParaDefExpr; // if m_expType is MACROPARA, the default expression of the parameter.
 
-    void dump(int deep);
+    void dump(const int & deep);
     bool buildExpression();  // build expression class from the expression string
     void alignChildrenDataType(); // align children datatype with current datatype
     bool existLeafNode(ExpressionC* node); // check if exist leaf node

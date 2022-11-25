@@ -52,7 +52,7 @@ ExpressionC::ExpressionC()
   init();
 }
 
-ExpressionC::ExpressionC(string expString)
+ExpressionC::ExpressionC(const string & expString)
 {
   init();
   setExpstr(expString);
@@ -224,7 +224,7 @@ ExpressionC::ExpressionC(ExpressionC* m_leftNode, ExpressionC* m_rightNode)
   //m_rightNode = m_rightNode==NULL?NULL:new Prediction(m_rightNode);;
 }
 
-ExpressionC::ExpressionC(int operate, int colId, string data)
+ExpressionC::ExpressionC(const int & operate, const int & colId, const string & data)
 {
   clear();
   m_type = LEAF;
@@ -233,7 +233,7 @@ ExpressionC::ExpressionC(int operate, int colId, string data)
   m_expStr = data;
 }
 
-void ExpressionC::setExpstr(string expString)
+void ExpressionC::setExpstr(const string & expString)
 {
   m_expStr = expString;
   buildExpression();
@@ -372,11 +372,11 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
     trace(ERROR, "Error: node is not allocated!\n");
     return NULL;
   }
-  if (m_expStr.empty()){
+  if (expStr.empty()){
     trace(ERROR, "Error: No statement found!\n");
     return NULL;
   }else
-    m_expStr = trim_copy(m_expStr);
+    expStr = trim_copy(expStr);
   trace(DEBUG, "Building BTREE from '%s'\n", expStr.c_str());
   int nextPos=0,strStart=0;
   try{
@@ -495,7 +495,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
   if (!node)
     return false;
   trace(DEBUG, "Building Leaf Node from '%s'\n", expStr.c_str());
-  if (m_expStr.empty()){
+  if (expStr.empty()){
     trace(ERROR, "Error: No statement found!\n");
     return false;
   }else
@@ -736,7 +736,7 @@ void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop)
   }
 }
 
-void ExpressionC::dump(int deep)
+void ExpressionC::dump(const int & deep)
 {
   if (m_type == BRANCH){
     trace(DUMP,"%s(%d-%s)\n",decodeOperator(m_operate).c_str(),deep,decodeDatatype(m_datatype.datatype).c_str());
@@ -767,7 +767,7 @@ string ExpressionC::getEntireExpstr() const
 }
 
 // detect if predication contains special colId    
-bool ExpressionC::containsColId(int colId){
+bool ExpressionC::containsColId(const int & colId){
   bool contain = false;
   if (m_type == BRANCH){
     contain = contain || m_leftNode->containsColId(colId);
@@ -779,7 +779,7 @@ bool ExpressionC::containsColId(int colId){
 }
 
 // detect if predication contains special colId    
-ExpressionC* ExpressionC::getFirstPredByColId(int colId, bool leftFirst){
+ExpressionC* ExpressionC::getFirstPredByColId(const int & colId, const bool & leftFirst){
   ExpressionC* node;
   if (m_type == BRANCH){
     if (leftFirst){
@@ -994,7 +994,7 @@ bool ExpressionC::columnsAnalyzed(){
 }
 
 // get all involved colIDs in this expression
-std::set<int> ExpressionC::getAllColIDs(int side){
+std::set<int> ExpressionC::getAllColIDs(const int & side){
   std::set<int> colIDs;
   if (m_type == BRANCH){
     if (m_leftNode){
@@ -1095,7 +1095,7 @@ bool ExpressionC::remove(ExpressionC* node){
 }
 
 // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
-void ExpressionC::fillDataForColumns(map <string, string> & dataList, vector <string> columns){
+void ExpressionC::fillDataForColumns(map <string, string> & dataList, const vector <string> & columns){
   if (columns.size() == 0)
     return;
   if (m_type == BRANCH){
@@ -1123,7 +1123,7 @@ void ExpressionC::alignChildrenDataType()
   }
 }
 
-FunctionC* ExpressionC::getAnaFunc(string funcExpStr)
+FunctionC* ExpressionC::getAnaFunc(const string & funcExpStr)
 {
   if (m_type == LEAF && m_expType == FUNCTION && m_Function->isAnalytic() && m_Function && m_Function->m_expStr.compare(funcExpStr)==0)
     return m_Function;
@@ -1219,7 +1219,7 @@ bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function
         sortKey.direction = upper_copy(trim_copy(function->m_params[2].m_expStr)).compare("DESC")==0?DESC:ASC;
         auto sortVectorLambda = [sortKey] (string const& v1, string const& v2) -> bool
         {
-          int iCompareRslt = anyDataCompare(v1,v2,sortKey.dts);
+          int iCompareRslt = anyDataCompare(v1,v2,sortKey.dts,sortKey.dts);
           return (sortKey.direction==ASC ? iCompareRslt<0 : iCompareRslt>0);
         };
         std::sort(aggGroupProp.varray->begin(), aggGroupProp.varray->end(), sortVectorLambda);
@@ -1238,7 +1238,7 @@ bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function
 }
 
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
-bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts, bool getresultonly)
+bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts, const bool & getresultonly)
 {
   if (!rds.fieldvalues || !rds.fieldvalues || !rds.aggFuncs || !rds.anaFuncs){
     trace(ERROR, "Insufficient metadata!\n");
@@ -1735,7 +1735,7 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
   }
 }
 
-bool ExpressionC::inColNamesRange(vector<string> fieldnames)  const
+bool ExpressionC::inColNamesRange(const vector<string> & fieldnames)  const
 {
   if (m_type == LEAF){
     if (m_expType == CONST){

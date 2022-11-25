@@ -1,5 +1,8 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.213] 2022-11-25
+   Enhancement: Improved performance of date comparing. <br/>
+   Enhancement: Updated the function parameter to use referrance as possible to reduce memory usage and improve performance. <br/>
    # [1.213] 2022-11-23
    Enhancement: Join (sidework dataset matching) can correctly do multiple data sets, multiple join key and 1:N, M:N join now. <br/>
    Enhancement: The trimmed selections in extrafilter can have alias. <br/>

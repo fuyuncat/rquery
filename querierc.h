@@ -73,36 +73,36 @@ class QuerierC
   public:
 
     QuerierC();
-    QuerierC(string regexstr);
+    QuerierC(const string & regexstr);
     ~QuerierC();
 
-    void setregexp(string regexstr);
-    void setrawstr(string rawstr);
-    void appendrawstr(string rawstr);
-    void setReadmode(short int readmode);
-    void setEof(bool bEof);
+    void setregexp(const string & regexstr);
+    void setrawstr(const string & rawstr);
+    void appendrawstr(const string & rawstr);
+    void setReadmode(const short int & readmode);
+    void setEof(const bool & bEof);
     void assignFilter(FilterC* filter);
-    void assignExtraFilter(string sFilterStr);
-    bool assignGroupStr(string groupstr);
-    bool assignSelString(string selstr);
-    bool assignSortStr(string sortstr);
-    bool assignLimitStr(string limitstr);
-    bool assignMeanwhileString(string mwstr);
-    bool assignTreeStr(string treestr);
-    bool assignReportStr(string reportstr);
-    bool assignDupStr(string dupstr);
-    bool setFieldTypeFromStr(string setstr);
-    void setFileName(string filename, bool bfileheaderonly=false);
-    void setNameline(bool nameline);
-    void setUserVars(string variables);
-    void setUserMaroFuncs(string macrostr);
-    void setUniqueResult(string unistr);
-    void setOutputFiles(string outputfilestr, short int outputmode=OVERWRITE);
-    void setDetectTypeMaxRowNum(int detectTypeMaxRowNum);
-    void setDetectAllOnChange(bool bDetectAllOnChange);
-    void setTextonly(bool bTextonly);
-    void setOutputFormat(short int format=TEXT);
-    void setFieldDelim(string delimstr);
+    void assignExtraFilter(const string & sFilterStr);
+    bool assignGroupStr(const string & groupstr);
+    bool assignSelString(const string & selstr);
+    bool assignSortStr(const string & sortstr);
+    bool assignLimitStr(const string & limitstr);
+    bool assignMeanwhileString(const string & mwstr);
+    bool assignTreeStr(const string & treestr);
+    bool assignReportStr(const string & reportstr);
+    bool assignDupStr(const string & dupstr);
+    bool setFieldTypeFromStr(const string & setstr);
+    void setFileName(const string & filename, const bool & bfileheaderonly=false);
+    void setNameline(const bool & nameline);
+    void setUserVars(const string & variables);
+    void setUserMaroFuncs(const string & macrostr);
+    void setUniqueResult(const string & unistr);
+    void setOutputFiles(const string & outputfilestr, const short int & outputmode=OVERWRITE);
+    void setDetectTypeMaxRowNum(const int & detectTypeMaxRowNum);
+    void setDetectAllOnChange(const bool & bDetectAllOnChange);
+    void setTextonly(const bool & bTextonly);
+    void setOutputFormat(const short int & format=TEXT);
+    void setFieldDelim(const string & delimstr);
     int searchNext();
     int searchAll();
     bool toGroupOrSort();
@@ -116,10 +116,10 @@ class QuerierC
     bool applyExtraFilter(const vector<string> & aRow, const map<string, string> & varValues);
     void output();
     void clear();
-    void outputExtraInfo(size_t total, bool bPrintHeader);
+    void outputExtraInfo(const size_t & total, const bool & bPrintHeader);
     void outputAndClean();
     void printFieldNames();
-    void setFieldDatatype(string field, int datetype, string extrainfo="");
+    void setFieldDatatype(const string & field, const int & datetype, const string & extrainfo="");
     long getMatchedCount();
     long getOutputCount();
     long getLines();
@@ -240,7 +240,7 @@ class QuerierC
     unordered_map< int,double > m_reportResult; // report aggregation results. mapping <selectionIndex>:<result>
 
     bool analyzeSelString();
-    vector<ExpressionC> genSelExpression(string sSel, vector<string> & vAlias);
+    vector<ExpressionC> genSelExpression(const string & sSel, vector<string> & vAlias);
     bool analyzeSortStr();
     bool analyzeTreeStr();
     bool analyzeReportStr();
@@ -253,14 +253,14 @@ class QuerierC
     void getSideDatarow(vector< unordered_map< int,int > > & sideMatchedRowIDs, vector< unordered_map< string, unordered_map<string,string> > > & matchedSideDatarows);
     bool matchFilter(vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
     void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);  // eval expression in aggregation paramter and store in a data set
-    void evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, bool bCheckGroupFunc);
-    bool evalAddExprArray(const vector<ExpressionC> & expressions, const string & rawval, RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, vector<string> & vResults, bool bCheckGroupFunc);
-    void evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, bool bApplyExtraFilter, bool bCheckGroupFunc, int nDupNum);
-    void evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, bool bApplyExtraFilter, bool bCheckGroupFunc);
-    bool appendResultSet(vector<string> vResult, const map<string, string> & varValues, bool bApplyExtraFilter); // add a row to result set, doing columns to rows if coltorow involved
+    void evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, const bool & bCheckGroupFunc);
+    bool evalAddExprArray(const vector<ExpressionC> & expressions, const string & rawval, RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, vector<string> & vResults, const bool & bCheckGroupFunc);
+    void evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, const bool &  bApplyExtraFilter, const bool &  bCheckGroupFunc, const int & nDupNum);
+    void evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, const bool &  bApplyExtraFilter, const bool &  bCheckGroupFunc);
+    bool appendResultSet(const vector<string> & vResult, const map<string, string> & varValues, const bool & bApplyExtraFilter); // add a row to result set, doing columns to rows if coltorow involved
     //void mergeSort(int iLeft, int iMid, int iRight);
-    void mergeSort(int iLeftB, int iLeftT, int iRightB, int iRightT);
-    void mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, int iLeftB, int iLeftT, int iRightB, int iRightT);
+    void mergeSort(const int & iLeftB, const int & iLeftT, const int & iRightB, const int & iRightT);
+    void mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, const int & iLeftB, const int & iLeftT, const int & iRightB, const int & iRightT);
     void addAnaFuncData(unordered_map< string,vector<string> > & anaFuncData);
     bool sortAnaData(vector<SortProp> & sortProps, const short int & iFuncID, const string & sFuncExpStr, vector< vector<string> > & vFuncData);
     bool processAnalytic(const string & sFuncExpStr, vector< vector<string> > & vFuncData);
@@ -271,8 +271,8 @@ class QuerierC
     int searchNextWild();
     int searchNextDelm();
     int searchNextLine();
-    void genReport(vector<string> datas);
-    void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, short int level, int & nodeid, unordered_map< string,vector<ExpressionC> > & treeFuncs);
+    void genReport(const vector<string> & datas);
+    void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, const short int & level, int & nodeid, unordered_map< string,vector<ExpressionC> > & treeFuncs);
     void releaseTree(TreeNode* tNode);
     void clearGroup();
     void clearSort();
@@ -294,8 +294,8 @@ class QuerierC
     long int m_addanafuncdatatime;
     long int m_evalanaexprtime;
     long int m_rawreadtime;
-    long int m_rawsplittime;
     long int m_rawanalyzetime;
+    long int m_parsepatterntime;
     long int m_trialanalyzetime;
     long int m_filtertime;
     long int m_extrafiltertime;
@@ -318,11 +318,11 @@ class QuerierC
   protected:
     void init();
     //void formatoutput(namesaving_smatch matches);
-    void outputstream(int resultid, const char *fmt, ...);
-    void formatoutput(vector<string> & datas, int resultid);
-    void pairFiledNames(namesaving_smatch matches);
-    void analyzeFiledTypes(vector<string> matches);
-    void trialAnalyze(vector<string> matcheddata);
+    void outputstream(const int & resultid, const char *fmt, ...);
+    void formatoutput(vector<string> & datas, const int & resultid);
+    void pairFiledNames(const namesaving_smatch & matches);
+    void analyzeFiledTypes(const vector<string> & matches);
+    void trialAnalyze(const vector<string> & matcheddata);
 };
 
 #endif // __QUERIERC_H

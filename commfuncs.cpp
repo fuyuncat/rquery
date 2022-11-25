@@ -227,7 +227,7 @@ void clearGroupPropMap(unordered_map< string,GroupProp > & aggProps)
     it->second.clear();
 }
 
-short int encodeTracelevel(string str)
+short int encodeTracelevel(const string & str)
 {
   string sUpper = upper_copy(str);
   if (sUpper.compare("FATAL") == 0)
@@ -250,7 +250,7 @@ short int encodeTracelevel(string str)
     return UNKNOWN;
 }
 
-string decodeTracelevel(int level)
+string decodeTracelevel(const int & level)
 {
   switch (level){
   case FATAL:
@@ -276,7 +276,7 @@ string decodeTracelevel(int level)
   }
 }
 
-void exitProgram(short int code)
+void exitProgram(const short int & code)
 {
   if (gv.g_logfile){
     gv.g_logfile->close();
@@ -285,7 +285,7 @@ void exitProgram(short int code)
   exit(code);
 }
 
-void trace(short level, const char *fmt, ...)
+void trace(const short & level, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
@@ -310,7 +310,7 @@ void trace(short level, const char *fmt, ...)
 }
 
 // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
-string readQuotedStr(const string & str, size_t& pos, const string & targetquoters, const string & quoters, const char & escape, std::set<char> nestedQuoters)
+string readQuotedStr(const string & str, size_t& pos, const string & targetquoters, const string & quoters, const char & escape, const std::set<char> & nestedQuoters)
 {
   string trimmedStr="";
   if (targetquoters.length()<2)
@@ -438,7 +438,7 @@ size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, co
 }
 
 // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-size_t findNthSub(const string & str, const string & lookfor, const size_t & pos, const int & seq, const bool & forward, const string & quoters,  const char & escape, const std::set<char> & nestedQuoters, bool casesensitive)
+size_t findNthSub(const string & str, const string & lookfor, const size_t & pos, const int & seq, const bool & forward, const string & quoters,  const char & escape, const std::set<char> & nestedQuoters, const bool & casesensitive)
 {
   trace(DEBUG, "findNthSub '%s'\n",str.c_str());
   trace(DEBUG, "looking for(%d): '%s', start from %d, quoters '%s' !\n",seq,lookfor.c_str(),pos,quoters.c_str());
@@ -481,7 +481,7 @@ size_t findNthSub(const string & str, const string & lookfor, const size_t & pos
 }
 
 // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-size_t findFirstSub(const string & str, const string & lookfor, const size_t & pos, const string & quoters,  const char & escape, const std::set<char> & nestedQuoters, bool casesensitive)
+size_t findFirstSub(const string & str, const string & lookfor, const size_t & pos, const string & quoters,  const char & escape, const std::set<char> & nestedQuoters, const bool & casesensitive)
 {
   return findNthSub(str, lookfor, pos, 1, true, quoters, escape, nestedQuoters, casesensitive);
   trace(DEBUG, "findFirstSub '%s'\n",str.c_str());
@@ -538,7 +538,7 @@ string readLine(string str, size_t & pos)
   return sReturn;
 }
 
-string readWordTillStop(const string & str, size_t & pos, char stopper, char escape)
+string readWordTillStop(const string & str, size_t & pos, const char & stopper, const char & escape)
 {
   string sub="";
   while(pos<str.length() && str[pos]!=stopper){
@@ -550,7 +550,7 @@ string readWordTillStop(const string & str, size_t & pos, char stopper, char esc
   return sub;
 }
 
-vector<string> matchWildcard(const string & str, const string & wildStr, string quoters, char escape, std::set<char> nestedQuoters)
+vector<string> matchWildcard(const string & str, const string & wildStr, const string & quoters, const char & escape, const std::set<char> & nestedQuoters)
 {
   vector<string> matches;
   size_t iBPos=0, iWPos=0;
@@ -578,7 +578,7 @@ vector<string> matchWildcard(const string & str, const string & wildStr, string 
   return matches;
 }
 
-void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, string quoters, char escape, std::set<char> nestedQuoters)
+void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, const string & quoters, const char & escape, const std::set<char> & nestedQuoters)
 {
   size_t i = 0;
   string sReturn="";
@@ -621,7 +621,7 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
   str = sReturn;
 }
 
-vector<string> split(const string & str, std::set<char> delims, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable, bool skipemptyelement)
+vector<string> split(const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement)
 {
   trace(DEBUG, "Splitting string:'%s', quoters: '%s'\n",str.c_str(), quoters.c_str());
   vector<string> v;
@@ -670,7 +670,7 @@ vector<string> split(const string & str, std::set<char> delims, string quoters, 
 }
 
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-vector<string> split(const string & str, char delim, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable, bool skipemptyelement) 
+vector<string> split(const string & str, const char & delim, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement) 
 {
   vector<string> v;
   size_t i = 0, j = 0, begin = 0;
@@ -718,24 +718,44 @@ vector<string> split(const string & str, char delim, string quoters, char escape
   return v;
 }
 
+int compareStr(const string & str1, const size_t & str1pos, const size_t & str1len, const string & str2, const size_t & str2pos, const size_t & str2len, const bool & casesensive)
+{
+  size_t i1=str1pos, i2=str2pos, len1=min(str1pos+str1len,str1.length()), len2=min(str2pos+str2len,str2.length());
+  while (i1<len1 && i2<len2){
+    if (casesensive?str1[i1]<str2[i2]:upper_char(str1[i1])<upper_char(str2[i2]))
+      return -1;
+    if (casesensive?str1[i1]>str2[i2]:upper_char(str1[i1])>upper_char(str2[i2]))
+      return 1;
+    i1++;
+    i2++;
+  }
+  if (i1==len1 && i2==len2)
+    return 0;
+  else if (i1==len1)
+    return -1;
+  else
+    return 1;
+}
+
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-vector<string> split(const string & str, string delim, string quoters, char escape, std::set<char> nestedQuoters, bool repeatable, bool skipemptyelement) 
+vector<string> split(const string & str, string & delim, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement, const bool & delimcasesensive) 
 {
   if (delim.length()==1)
     return split(str,delim[0],quoters,escape,nestedQuoters,repeatable,skipemptyelement);
   vector<string> v;
-  string upDelim = upper_copy(delim);
+  if (!delimcasesensive)
+    delim = upper_copy(delim);
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.length()) {
-    if (str.length()>=i+upDelim.length() && upper_copy(str.substr(i,upDelim.length())).compare(upDelim)==0 && i>=0 && q.size()==0) {
+    if (str.length()>=i+delim.length() && compareStr(str,i,delim.length(),delim,0,delim.length(),delimcasesensive)==0 && i>=0 && q.size()==0) {
       //trace(DEBUG, "(2)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       if (!skipemptyelement || i>begin)
         v.push_back(str.substr(begin, i-begin));
-      while(repeatable && str.length()>=i+upDelim.length()*2 && upper_copy(str.substr(i+upDelim.length(),upDelim.length())).compare(upDelim)==0) // skip repeated delim
-        i+=upDelim.length();
-      begin = i+upDelim.length();
-      i+=(upDelim.length()-1);
+      while(repeatable && str.length()>=i+delim.length()*2 && compareStr(str,i+delim.length(),delim.length(),delim,0,delim.length(),delimcasesensive)==0) // skip repeated delim
+        i+=delim.length();
+      begin = i+delim.length();
+      i+=(delim.length()-1);
     }else{
       if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
         i++;
@@ -778,7 +798,7 @@ string trim_pair(const string & str, const string & pair)
     return str;
 }
 
-string trim(const string & str, char c, bool repeat)
+string trim(const string & str, const char & c, const bool & repeat)
 {
   //string newstr = trim_one(str, c);
   //while (newstr.length() != str.length())
@@ -787,7 +807,7 @@ string trim(const string & str, char c, bool repeat)
   return trim_left(trim_right(str,c,repeat),c,repeat);
 }
 
-string trim_right(const string & str, char c, bool repeat)
+string trim_right(const string & str, const char & c, const bool & repeat)
 {
   size_t i = str.length()-1;
   while ((str[i] == c || (c==' ' && str[i] == '\t')) && (i == str.length()-1 || repeat))
@@ -795,7 +815,7 @@ string trim_right(const string & str, char c, bool repeat)
   return str.substr(0,i+1);
 }
 
-string trim_left(const string & str, char c, bool repeat)
+string trim_left(const string & str, const char & c, const bool & repeat)
 {
   size_t i = 0;
   while ((str[i] == c || (c==' ' && str[i] == '\t')) && (i == 0 || repeat))
@@ -803,7 +823,7 @@ string trim_left(const string & str, char c, bool repeat)
   return str.substr(i);
 }
 
-string trim_one(const string & str, char c)
+string trim_one(const string & str, const char & c)
 {
   string newstr = str;
   if (newstr[0] == c)
@@ -1271,7 +1291,7 @@ string hashstr(const string & str)
   return longuintToStr((long unsigned int)hash<string>{}(str));
 }
 
-int random(int min, int max)
+int random(const int & min, const int & max)
 {
   //srand( (unsigned)time(NULL) );
   //return rand()%max+min;
@@ -1282,7 +1302,7 @@ int random(int min, int max)
 }
 
 // Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(`~!@#$%^&*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice
-string randstr(int len, const string & flags)
+string randstr(const int & len, const string & flags)
 {
   string genstr = "";
   if (flags.empty()){
@@ -1453,27 +1473,27 @@ template< class T > string toStr( const T& pVal )
   return str;
 }
 
-string intToStr(const int val)
+string intToStr(const int & val)
 {
   return toStr(val);
 }
 
-string longToStr(const long val)
+string longToStr(const long & val)
 {
   return toStr(val);
 }
 
-string longlongToStr(const long long val)
+string longlongToStr(const long long & val)
 {
   return toStr(val);
 }
 
-string longuintToStr(const long unsigned int val)
+string longuintToStr(const long unsigned int & val)
 {
   return toStr(val);
 }
 
-string floatToStr(const float val)
+string floatToStr(const float & val)
 {
   using boost::lexical_cast;
   using boost::bad_lexical_cast; 
@@ -1488,7 +1508,7 @@ string floatToStr(const float val)
   return str;
 }
 
-string doubleToStr(const double val)
+string doubleToStr(const double & val)
 {
   using boost::lexical_cast;
   using boost::bad_lexical_cast; 
@@ -1601,7 +1621,7 @@ extern int putenv(char*);
 #endif
 
 // get the local time in the specific timezone
-struct tm zonetime(time_t t1, string zone)
+struct tm zonetime(const time_t & t1, const string & zone)
 {
   char const* tmp = getenv( "TZ" );
   trace(DEBUG2, "(zonetime) begin TZ: %s, offset: %d \n", tmp, timezone);
@@ -1643,7 +1663,7 @@ struct tm zonetime(time_t t1, string zone)
 }
 
 // get the local time in the specific timezone
-struct tm zonetime(time_t t1, int iOffSet)
+struct tm zonetime(const time_t & t1, const int & iOffSet)
 {
   struct tm tm;
   if (iOffSet>=-1200 && iOffSet<=1200){
@@ -1654,7 +1674,7 @@ struct tm zonetime(time_t t1, int iOffSet)
   return tm;
 }
 
-string dateToStr(struct tm val, int iOffSet, string fmt)
+string dateToStr(struct tm & val, const int & iOffSet, const string & fmt)
 {
   try{
     char buffer [256];
@@ -1794,6 +1814,9 @@ int localOffset()
 // The return value of the strptime is a pointer to the first character not processed in this function call. In case the whole input string is consumed, the return value points to the null byte at the end of the string.
 bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string & fmt)
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   // accept %z at then of the time string only
   //trace(DEBUG2, "Trying date format: '%s' (expected len:%d) for '%s'\n", fmt.c_str(), dateFormatLen(fmt), str.c_str());
   if (fmt.empty() || str.length() < dateFormatLen(fmt)){
@@ -1822,6 +1845,7 @@ bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string &
   char * c = strptime(sRaw.c_str(), sFm.c_str(), &tm);
   // if the date lack of some time info, e.g. 2022-11-18 dont have time info, the time info like tm_sec in tm will be a random number. need to use cleanuptm to do cleanup.
   cleanuptm(tm);
+  bool bResult=false;
   if (c && c == sRaw.c_str()+sRaw.length()){
   //if (c && string(c).empty()){
     //trace(DEBUG2, "(1)Converting '%s' => %d %d %d %d %d %d %d offset %d format '%s' \n",sRaw.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, iOffSet, sFm.c_str());
@@ -1842,11 +1866,16 @@ bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string &
     //tm.tm_isdst = 0;
     //trace(DEBUG2, "(3)Converting '%s'(format '%s') to local time => %d %d %d %d %d %d %d \n",str.c_str(), fmt.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst);
     //trace(DEBUG, "Trying final get format %s : %s\n", str.c_str(), fmt.c_str());
-    return true;
+    bResult = true;
   }else{
     //trace(ERROR, "Trying strptime('%s','%s',tm) failed!\n", sRaw.c_str(), sFm.c_str());
-    return false;
+    bResult = false;
   }
+  
+#ifdef __DEBUG__
+  g_strtodatetime += curtime()-thistime;
+#endif // __DEBUG__
+  return bResult;
 }
 
 struct tm now()
@@ -1925,7 +1954,7 @@ double timediff(struct tm & tm1, struct tm & tm2)
   return difftime(t1, t2);
 }
 
-void addhours(struct tm & tm, int hours)
+void addhours(struct tm & tm, const int & hours)
 {
   tm.tm_hour = tm.tm_hour+hours;
   while (tm.tm_hour<0){
@@ -2010,7 +2039,7 @@ void addhours(struct tm & tm, int hours)
   }
 }
 
-void addseconds(struct tm & tm, int seconds)
+void addseconds(struct tm & tm, const int & seconds)
 {
   tm.tm_sec = tm.tm_sec+seconds;
   while (tm.tm_sec>=60){
@@ -2031,7 +2060,7 @@ void addseconds(struct tm & tm, int seconds)
   }
 }
 
-void addtime(struct tm & tm, int diff, char unit)
+void addtime(struct tm & tm, const int & diff, const char & unit)
 {
   switch (unit){
   case 'y':
@@ -2277,8 +2306,10 @@ string convertzone(const string & sdate, const string & sFmt, const string & fro
   struct tm tm;
   int iOffset=0;
   string ddate;
-  if (strToDate(sdate, tm, iOffset, sFmt))
-    ddate = dateToStr(convertzone(tm, fromzone, tozone),0,sFmt);
+  if (strToDate(sdate, tm, iOffset, sFmt)){
+    struct tm tm1 = convertzone(tm, fromzone, tozone);
+    ddate = dateToStr(tm1,0,sFmt);
+  }
   return ddate;
 }
 
@@ -2366,7 +2397,7 @@ DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const Dat
 // DATE/TIMESTAMP: quoted by {}
 // INTEGER/LONG: all digits
 // Double: digits + .
-int detectDataType(string str, string & extrainfo)
+int detectDataType(const string & str, string & extrainfo)
 {
   string trimmedStr = trim_copy(str);
   short int datatype = UNKNOWN;
@@ -2560,7 +2591,7 @@ size_t getstr(char * buffer, const size_t len)
 }
 */
 
-string decodeJunction(int junction){
+string decodeJunction(const int & junction){
   switch (junction){
   case AND:
     return "AND";
@@ -2571,7 +2602,7 @@ string decodeJunction(int junction){
   }
 }
 
-string decodeComparator(int comparator){
+string decodeComparator(const int & comparator){
   switch (comparator){
   case EQ:
     return "=";
@@ -2602,7 +2633,7 @@ string decodeComparator(int comparator){
   }
 }
 
-string decodeDatatype(int datatype){
+string decodeDatatype(const int & datatype){
   switch (datatype){
   case STRING:
     return "STRING";
@@ -2623,7 +2654,7 @@ string decodeDatatype(int datatype){
   }
 }
 
-string decodeExptype(int exptype)
+string decodeExptype(const int & exptype)
 {
   switch (exptype){
   case CONST:
@@ -2639,7 +2670,7 @@ string decodeExptype(int exptype)
   }
 }
 
-string decodeOperator(int op)
+string decodeOperator(const int & op)
 {
   switch (op){
   case PLUS:
@@ -2657,7 +2688,7 @@ string decodeOperator(int op)
   }
 }
 
-short int encodeComparator(string str)
+short int encodeComparator(const string & str)
 {
   //printf("encode comparator: %s\n",str.c_str());
   string sUpper = upper_copy(str);
@@ -2689,7 +2720,7 @@ short int encodeComparator(string str)
     return UNKNOWN;
 }
 
-short int encodeDatatype(string str)
+short int encodeDatatype(const string & str)
 {
   string sUpper = upper_copy(str);
   if (sUpper.compare("STRING") == 0)
@@ -2710,7 +2741,7 @@ short int encodeDatatype(string str)
     return UNKNOWN;
 }
 
-short int encodeJunction(string str)
+short int encodeJunction(const string & str)
 {
   string sUpper = upper_copy(str);
   if (sUpper.compare("AND") == 0)
@@ -2721,7 +2752,7 @@ short int encodeJunction(string str)
     return UNKNOWN;
 }
 
-short int encodeOperator(string str)
+short int encodeOperator(const string & str)
 {
   if (str.compare("+") == 0)
     return PLUS;
@@ -2737,7 +2768,7 @@ short int encodeOperator(string str)
     return UNKNOWN;
 }
 
-short int encodeFunction(string str)
+short int encodeFunction(const string & str)
 {
   string sUpper = upper_copy(str);
   if(sUpper.compare("UPPER")==0)
@@ -3094,7 +3125,7 @@ short int encodeFunction(string str)
     return UNKNOWN;
 }
 
-short int operatorPriority(int iOperator)
+short int operatorPriority(const int & iOperator)
 {
   switch (iOperator){
   case PLUS:
@@ -3112,7 +3143,7 @@ short int operatorPriority(int iOperator)
   }
 }
 
-int findStrArrayId(const vector<string> array, const string member)
+int findStrArrayId(const vector<string> & array, const string & member)
 {
   for (int i=0; i<array.size(); i++){
     //if (array[i].compare(member) == 0)
@@ -3123,7 +3154,7 @@ int findStrArrayId(const vector<string> array, const string member)
 }
 
 // comoare two vector. return 0 means equal; positive means array1>array2; negative means array1<array2
-int compareVector(vector<string> array1, vector<string> array2)
+int compareVector(const vector<string> & array1, const vector<string> & array2)
 {
   if (array1.size() == array2.size()){
     int c;
@@ -3140,14 +3171,14 @@ int compareVector(vector<string> array1, vector<string> array2)
 // compare data according to data type
 // @return int str1 < str2: -1; str1 == str2:0; str1 > str2: 1
 //             error -101~-110 -101:invalid data according to data type; -102: data type not supported
-int anyDataCompare(string str1, string str2, DataTypeStruct dts){
+int anyDataCompare(const string & str1, const string & str2, const DataTypeStruct & dts1, const DataTypeStruct & dts2){
   if (str1.length() == 0 && str2.length() == 0)
     return 0;
   else if (str1.length() == 0)
     return -1;
   else if (str2.length() == 0)
     return 1;
-  switch(dts.datatype){
+  switch(dts1.datatype){
     case LONG:{
       if (isLong(str1) && isLong(str2)){
         long d1 = atol(str1.c_str());
@@ -3197,8 +3228,8 @@ int anyDataCompare(string str1, string str2, DataTypeStruct dts){
       //  bIsDate1 = isDate(newstr1,offSet1,fmt1);
       //  bIsDate2 = isDate(newstr2,offSet2,fmt2);
       //}else{
-        fmt1 = dts.extrainfo;
-        fmt2 = dts.extrainfo;
+        fmt1 = dts1.extrainfo;
+        fmt2 = dts2.extrainfo;
       //}
       //if (bIsDate1 && bIsDate2){
         struct tm tm1, tm2;
@@ -3247,8 +3278,8 @@ int anyDataCompare(string str1, string str2, DataTypeStruct dts){
 // compare data according to data type
 // @return int 0: false; 1: true  
 //             error -101~-110 -101:invalid data according to data type; -102: data type not supported
-int anyDataCompare(string str1, int comparator, string str2, DataTypeStruct dts){
-  switch (dts.datatype){
+int anyDataCompare(const string & str1, const int & comparator, const string & str2, const DataTypeStruct & dts1, const DataTypeStruct & dts2){
+  switch (dts1.datatype){
     case LONG:{
       if (isLong(str1) && isLong(str2)){
         long d1 = atol(str1.c_str());
@@ -3323,14 +3354,15 @@ int anyDataCompare(string str1, int comparator, string str2, DataTypeStruct dts)
       string fmt1, fmt2;
       bool bIsDate1 = true, bIsDate2 = true;
       int offSet1, offSet2;
-      string newstr1=trim_pair(str1,"{}"),newstr2=trim_pair(str2,"{}");
-      if (dts.extrainfo.empty()){
+      string newstr1,newstr2;
+      if (dts1.extrainfo.empty())
         bIsDate1 = isDate(newstr1,offSet1,fmt1);
+      else
+        fmt1 = dts1.extrainfo;
+      if (dts2.extrainfo.empty())
         bIsDate2 = isDate(newstr2,offSet2,fmt2);
-      }else{
-        fmt1 = dts.extrainfo;
-        fmt2 = dts.extrainfo;
-      }
+      else
+        fmt2 = dts2.extrainfo;
       if (bIsDate1 && bIsDate2){
         struct tm tm1, tm2;
         if (strToDate(newstr1, tm1, offSet1, fmt1) && strToDate(newstr2, tm2, offSet2, fmt2)){
@@ -3424,7 +3456,7 @@ int anyDataCompare(string str1, int comparator, string str2, DataTypeStruct dts)
   return -102;
 }
 
-bool evalString(string str1, int operate, string str2, string& result)
+bool evalString(const string & str1, const int & operate, const string & str2, string& result)
 {
   switch(operate){
   case PLUS:
@@ -3437,7 +3469,7 @@ bool evalString(string str1, int operate, string str2, string& result)
   }
 }
 
-bool evalLong(string str1, int operate, string str2, long& result)
+bool evalLong(const string & str1, const int & operate, const string & str2, long& result)
 {
   if (!isLong(str1) || !isLong(str2)){
     trace(ERROR, "Invalid LONG data detected!\n");
@@ -3465,7 +3497,7 @@ bool evalLong(string str1, int operate, string str2, long& result)
   }
 }
 
-bool evalInteger(string str1, int operate, string str2, int& result)
+bool evalInteger(const string & str1, const int & operate, const string & str2, int& result)
 {
   if (!isInt(str1) || !isInt(str2)){
     trace(ERROR, "Invalid INTEGER data detected!\n");
@@ -3493,7 +3525,7 @@ bool evalInteger(string str1, int operate, string str2, int& result)
   }
 }
 
-bool evalDouble(string str1, int operate, string str2, double& result)
+bool evalDouble(const string & str1, const int & operate, const string & str2, double& result)
 {
   if (!isDouble(str1) || !isDouble(str2)){
     trace(ERROR, "Invalid DOUBLE data detected!\n");
@@ -3522,7 +3554,7 @@ bool evalDouble(string str1, int operate, string str2, double& result)
   }
 }
 
-bool evalDate(string str1, int operate, string str2, string fmt, struct tm& result)
+bool evalDate(const string & str1, const int & operate, const string & str2, const string & fmt, struct tm& result)
 {
   time_t t1;
   int seconds, iOffSet;
@@ -3593,7 +3625,7 @@ bool evalDate(string str1, int operate, string str2, string fmt, struct tm& resu
 }
 
 // return true if operated successfully, result returns result
-bool anyDataOperate(string str1, int operate, string str2, DataTypeStruct dts, string& result)
+bool anyDataOperate(const string & str1, const int & operate, const string & str2, const DataTypeStruct & dts, string& result)
 {
   switch (dts.datatype){
     case LONG:{
@@ -3632,7 +3664,7 @@ bool anyDataOperate(string str1, int operate, string str2, DataTypeStruct dts, s
 }
 
 // detect if string start with special words
-int startsWithWords(string str, vector<string> words, int offset)
+int startsWithWords(const string & str, const vector<string> & words, const int & offset)
 {
   string upperstr = upper_copy(str);
   for (int i=0;i<words.size();i++){
@@ -3643,13 +3675,13 @@ int startsWithWords(string str, vector<string> words, int offset)
 }
 
 // detect if string start with special words
-int startsWithWords(string str, vector<string> words)
+int startsWithWords(const string & str, const vector<string> & words)
 {
   return startsWithWords(str,words,0);
 }
 
 // remove space
-string removeSpace(string originalStr, string keepPattern)
+string removeSpace(const string & originalStr, const string & keepPattern)
 {
   //if (keepPattern == null)
   //    keepPattern =  "(\\s+OR\\s+|\\s+AND\\s+)"; //default pattern
@@ -3695,7 +3727,7 @@ int matchQuoters(const string & listStr, const size_t & offset, const string & q
 }
 
 //get the first matched regelar token from a string
-string getFirstToken(string str, string token){
+string getFirstToken(const string & str, const string & token){
   try{
     sregex regexp = sregex::compile(token);
     smatch matches;
@@ -3709,7 +3741,7 @@ string getFirstToken(string str, string token){
 }
 
 //get all matched regelar token from a string
-vector < vector <string> > getAllTokens(string str, string token)
+vector < vector <string> > getAllTokens(const string & str, const string & token)
 {
   vector < vector <string> > findings;
   string::const_iterator searchStart( str.begin() );
@@ -3985,12 +4017,12 @@ bool rmFile(const string & filename)
 }
 
 // check if matched regelar token
-bool matchToken(string str, string token)
+bool matchToken(const string & str, const string & token)
 {
   return !getFirstToken(str, token).empty();
 }
 
-void dumpVector(vector<string> v)
+void dumpVector(const vector<string> & v)
 {
   trace(DEBUG, "Dumping vector<string>...\n");
   for (int i=0; i<v.size(); i++)
@@ -3998,7 +4030,7 @@ void dumpVector(vector<string> v)
   trace(DUMP, "\n");
 }
 
-void dumpMap(map<string, string> m)
+void dumpMap(map<string, string> & m)
 {
   trace(DEBUG, "Dumping map<string, string>...\n");
   for (map<string,string>::iterator it=m.begin(); it!=m.end(); ++it)

@@ -27,7 +27,7 @@ class FunctionC
   public:
 
     FunctionC();
-    FunctionC(string expStr);
+    FunctionC(const string & expStr);
     FunctionC(const FunctionC& other);
 
     ~FunctionC();
@@ -47,7 +47,7 @@ class FunctionC
 
     bool runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool isConst() const;   // if all parameters are const
-    void setExpStr(string expStr);
+    void setExpStr(const string & expStr);
     DataTypeStruct analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes); 
     bool columnsAnalyzed();
     bool expstrAnalyzed();
@@ -60,8 +60,8 @@ class FunctionC
     FunctionC* cloneMe();
     void clear(); // clear predictin
     bool remove(FunctionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
-    vector<ExpressionC> expandForeach(int maxFieldNum); // expand foreach to a vector of expression
-    vector<ExpressionC> expandForeach(vector<ExpressionC> vExps); // expand foreach to a vector of expression
+    vector<ExpressionC> expandForeach(const int & maxFieldNum); // expand foreach to a vector of expression
+    vector<ExpressionC> expandForeach(const vector<ExpressionC> & vExps); // expand foreach to a vector of expression
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.

@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.22] 2022-11-26
+   Enhancement: Performance improvement: Function const referrance parameters, static variable, reduce unnecessary temp ExpressionC. <br/>
    # [1.213] 2022-11-25
    Enhancement: Improved performance of date comparing. <br/>
    Enhancement: Updated the function parameter to use referrance as possible to reduce memory usage and improve performance. <br/>

@@ -54,7 +54,9 @@ vector<string>::const_iterator namesaving_smatch::names_end() const
     return m_names.end();
 }
 
+#ifdef __DEBUG__
 long int g_strtodatetime;
+#endif // __DEBUG__
 
 QuerierC::QuerierC()
 {
@@ -108,6 +110,7 @@ void QuerierC::init()
   m_bSortContainMacro = false;
   m_bToAnalyzeSortMacro = false;
   m_bTextOnly = false;
+  m_bStatOnly = false;
   m_bDetectAllOnChange = false;
   m_selstr = "";
   m_sortstr = "";
@@ -122,6 +125,7 @@ void QuerierC::init()
   m_querystartat = curtime();
   m_totaltime = 0;
   m_searchtime = 0;
+  m_runtimedatapreparetime = 0;
   m_uservarcaltime = 0;
   m_sideworktime = 0;
   m_getsidedatarowtime = 0;
@@ -131,6 +135,14 @@ void QuerierC::init()
   m_appendnonselresulttime = 0;
   m_addanafuncdatatime = 0;
   m_evalanaexprtime = 0;
+  m_evalSeltime = 0;
+  m_evalSeldeclaretime = 0;
+  m_evalSelAssignExprtime = 0;
+  m_evalSelRealEvaltime = 0;
+  m_evalRawpreptime = 0;
+  m_evalRawdupjointime = 0;
+  m_appendSelToResulttime = 0;
+  m_assignoutputfiletime = 0;
   m_trialanalyzetime = 0;
   m_parsepatterntime = 0;
   m_filtertime = 0;
@@ -145,12 +157,19 @@ void QuerierC::init()
   m_extrafiltercomptime = 0;
   m_prepAggGPtime = 0;
   m_evalAggExptime = 0;
-  m_evalSeltime = 0;
+  m_evalRawdatatime = 0;
   m_evalSorttime = 0;
   m_updateResulttime = 0;
   m_outputtime = 0;
   
   g_strtodatetime = 0;
+  g_evalexprtime = 0;
+  g_evalexprconsttime = 0;
+  g_evalexprfunctime = 0;
+  g_evalexprvartime = 0;
+  g_evalexprcoltime = 0;
+  g_evalexprmacpatime = 0;
+  g_evalexprcaltime = 0;
 #endif // __DEBUG__
 }
 
@@ -1006,6 +1025,11 @@ void QuerierC::setTextonly(const bool & bTextonly)
   m_bTextOnly = bTextonly;
 }
 
+void QuerierC::setStatonly(const bool & bStatonly)
+{
+  m_bStatOnly = bStatonly;
+}
+
 void QuerierC::setOutputFiles(const string & outputfilestr, const short int & outputmode)
 {
   if (m_outputfileexp)
@@ -1138,7 +1162,7 @@ void QuerierC::getSideDatarow(vector< unordered_map< int,int > > & sideMatchedRo
   }
 }
 
-void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow)
+void QuerierC::evalAggExpNode(vector<string>* fieldvalues, unordered_map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow)
 {
   for (unordered_map< string,GroupProp >::iterator it=aggGroupProp.begin(); it!=aggGroupProp.end(); ++it){
     string sResult;
@@ -1235,7 +1259,7 @@ void QuerierC::evalAggExpNode(vector<string>* fieldvalues, map<string,string>* v
   }
 }
 
-void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow)
+void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, unordered_map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow)
 {
   if (m_outputfileexp){
     DataTypeStruct dts;
@@ -1262,7 +1286,7 @@ void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, map<string,st
   }
 }
 
-bool QuerierC::appendResultSet(const vector<string> & vResult, const map<string, string> & varValues, const bool & bApplyExtraFilter)
+bool QuerierC::appendResultSet(const vector<string> & vResult, const unordered_map<string, string> & varValues, const bool & bApplyExtraFilter)
 {
   int iRowNumFromCols = 0;
   for (int i=0; i<m_colToRows.size(); i++)
@@ -1310,33 +1334,52 @@ bool QuerierC::appendResultSet(const vector<string> & vResult, const map<string,
   return false;
 }
 
-bool QuerierC::evalAddExprArray(const vector<ExpressionC> & expressions, const string & rawval, RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, vector<string> & vResults, const bool & bCheckGroupFunc)
+bool QuerierC::evalAddExprArray(vector<ExpressionC> & expressions, const string & rawval, RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, vector<string> & vResults, const bool & bCheckGroupFunc)
 {
   if (!anaEvaledExp)
     return false;
-  ExpressionC tmpExp;
-  DataTypeStruct dts;
-  string sResult;
+#ifdef __DEBUG__
+long int thistime = curtime();
+#endif // __DEBUG__
+  static DataTypeStruct dts;
+  static string sResult;
   vResults.clear();
   vResults.push_back(rawval); 
+#ifdef __DEBUG__
+  m_evalSeldeclaretime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
   for (int i=0; i<expressions.size(); i++){
     dts = DataTypeStruct();
-    tmpExp = ExpressionC();
+    //tmpExp = ExpressionC();
+#ifdef __DEBUG__
+  m_evalSelAssignExprtime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     if (!bCheckGroupFunc || !expressions[i].containGroupFunc()){
-      tmpExp = expressions[i];
+#ifdef __DEBUG__
+  m_evalSelAssignExprtime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
       //expressions[i].copyTo(&tmpExp);
       //trace(DEBUG, "evalAddExprArray: Before eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
       //tmpExp.dump();
       //expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &m_sideDatasets, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
       if (expressions[i].containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
+        ExpressionC tmpExp;
+        tmpExp = expressions[i];
         tmpExp.evalExpression(rds, sResult, dts, false);
         anaEvaledExp->push_back(tmpExp);
         trace(DEBUG, "evalAddExprArray: adding analytic function involved expression '%s':\n",expressions[i].getEntireExpstr().c_str());
       }else
-        tmpExp.evalExpression(rds, sResult, dts, true);
+        expressions[i].evalExpression(rds, sResult, dts, true);
       //trace(DEBUG, "evalAddExprArray: After eval expression '%s':\n",tmpExp.getEntireExpstr().c_str());
       //tmpExp.dump();
       //trace(DEBUG, "eval '%s' => '%s'\n", expressions[i].getEntireExpstr().c_str(), sResult.c_str());
+#ifdef __DEBUG__
+  m_evalSelRealEvaltime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     }else{
       trace(ERROR, "(2)Invalid using aggregation function in '%s', no group involved!\n", expressions[i].getEntireExpstr().c_str());
       return false;
@@ -1355,9 +1398,8 @@ void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* ana
   if (!anaEvaledExp)
     return;
   vector<string> vResults;
-  string sResult;
-  DataTypeStruct dts;
-  ExpressionC tmpExp;
+  static string sResult;
+  static DataTypeStruct dts;
   for (int i=0; i<m_sorts.size(); i++){
     if (!bCheckGroupFunc || !m_sorts[i].sortKey.containGroupFunc()){
       //if it has the exact same expression as any selection, get the result from selection
@@ -1370,6 +1412,7 @@ void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* ana
       if (iSel >= 0){
         sResult = m_results[m_results.size()-1][iSel + 1];
         if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
+          ExpressionC tmpExp;
           tmpExp = m_selections[iSel];
           tmpExp.evalExpression(rds, sResult, dts, false);
           anaEvaledExp->push_back(tmpExp);
@@ -1380,18 +1423,19 @@ void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* ana
         //int iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str())-1;
         sResult = m_results[m_results.size()-1][m_sorts[i].iSel + 1];
         if (m_selections[m_sorts[i].iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
+          ExpressionC tmpExp;
           tmpExp = m_selections[m_sorts[i].iSel];
           tmpExp.evalExpression(rds, sResult, dts, false);
           anaEvaledExp->push_back(tmpExp);
         }
       }else{
-        tmpExp = m_sorts[i].sortKey;
        // m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
         if (m_sorts[i].sortKey.containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
+          ExpressionC tmpExp;
           tmpExp.evalExpression(rds, sResult, dts, false);
           anaEvaledExp->push_back(tmpExp);
         }else
-          tmpExp.evalExpression(rds, sResult, dts, true);
+          m_sorts[i].sortKey.evalExpression(rds, sResult, dts, true);
       }
       //trace(DEBUG, "eval '%s' => '%s'\n", m_sorts[i].sortKey.getEntireExpstr().c_str(), sResult.c_str());
     }else{
@@ -1411,11 +1455,11 @@ void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* ana
 void QuerierC::evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, const bool & bApplyExtraFilter, const bool & bCheckGroupFunc, const int & nDupNum)
 {
 #ifdef __DEBUG__
-  long int thistime = curtime();
+long int thistime = curtime();
 #endif // __DEBUG__
-  string sResult;
-  DataTypeStruct dts;
-  vector<string> vResults;
+  static string sResult;
+  static DataTypeStruct dts;
+  static vector<string> vResults;
   // make duplicate records
   for (int i=0; i<nDupNum; i++){
     vector<ExpressionC> anaEvaledExp;
@@ -1426,24 +1470,43 @@ void QuerierC::evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & 
       vEvaledParams.clear();
       rds.anaFuncs->insert(pair< string,vector<string> >(it->first,vEvaledParams));
     }
+#ifdef __DEBUG__
+m_evalRawpreptime += (curtime()-thistime);
+thistime = curtime();
+#endif // __DEBUG__
     evalAddExprArray(m_selections, rawval, rds, &anaEvaledExp, vResults, bCheckGroupFunc);
+#ifdef __DEBUG__
+m_evalSeltime += (curtime()-thistime);
+thistime = curtime();
+#endif // __DEBUG__
     if (appendResultSet(vResults, (*rds.varvalues), bApplyExtraFilter)){ // appendResultSet return false mean filtered by extra filter
+#ifdef __DEBUG__
+m_appendSelToResulttime += (curtime()-thistime);
+thistime = curtime();
+#endif // __DEBUG__
       evalAddSortkeys(rds, &anaEvaledExp, bCheckGroupFunc);
+#ifdef __DEBUG__
+thistime = curtime();
+#endif // __DEBUG__
       // add output file mapping with result.
       if (m_outputmode != STANDARD && m_outputfileexp)
         addResultOutputFileMap(groupedfieldvalues, rds.varvalues, calculatedAggFuncs, rds.anaFuncs, rds.sideDatarow);
+#ifdef __DEBUG__
+m_assignoutputfiletime += (curtime()-thistime);
+thistime = curtime();
+#endif // __DEBUG__
       // eval filter expressions to get anaFuncData
       if (m_filter && m_filter->containAnaFunc())
         m_filter->evalAnaExprs(rds, &anaEvaledExp, sResult, dts, true);
 #ifdef __DEBUG__
-      m_evalanaexprtime += (curtime()-thistime);
-      thistime = curtime();
+m_evalanaexprtime += (curtime()-thistime);
+thistime = curtime();
 #endif // __DEBUG__
       m_anaEvaledExp.push_back(anaEvaledExp);
       addAnaFuncData(*rds.anaFuncs);
 #ifdef __DEBUG__
-      m_addanafuncdatatime += (curtime()-thistime);
-      thistime = curtime();
+m_addanafuncdatatime += (curtime()-thistime);
+thistime = curtime();
 #endif // __DEBUG__
     }
   }
@@ -1451,21 +1514,36 @@ void QuerierC::evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & 
 
 void QuerierC::evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, const bool & bApplyExtraFilter, const bool & bCheckGroupFunc)
 {
-  string sResult;
-  DataTypeStruct dts;
-  vector< unordered_map< int,int > > sideMatchedRowIDs;
-  int nDupNum = 1;
+#ifdef __DEBUG__
+long int thistime = curtime();
+#endif // __DEBUG__
+  static string sResult;
+  static DataTypeStruct dts;
+  static vector< unordered_map< int,int > > sideMatchedRowIDs;
+  static int nDupNum = 1;
   if (m_dupnumexp && m_dupnumexp->evalExpression(rds, sResult, dts, true) && isInt(sResult) && (!m_dupfilter || m_dupfilter->compareExpression(rds, sideMatchedRowIDs)))
     nDupNum = atoi(sResult.c_str()); 
   if (matchedSideDatarows && matchedSideDatarows->size()>0){
     unordered_map< string, unordered_map<string,string> >* oldsideDatarow = rds.sideDatarow;
     for (int i=0; i<matchedSideDatarows->size(); i++){
       rds.sideDatarow = &((*matchedSideDatarows)[i]);
+#ifdef __DEBUG__
+m_evalRawdupjointime += (curtime()-thistime);
+thistime = curtime();
+#endif // __DEBUG__
       evalDupSelAndSortkeys(rawval, rds, groupedfieldvalues, calculatedAggFuncs, matchedSideDatarows, bApplyExtraFilter, bCheckGroupFunc, nDupNum);
+#ifdef __DEBUG__
+thistime = curtime();
+#endif // __DEBUG__
     }
     rds.sideDatarow = oldsideDatarow;
-  }else
+  }else{
+#ifdef __DEBUG__
+m_evalRawdupjointime += (curtime()-thistime);
+thistime = curtime();
+#endif // __DEBUG__
     evalDupSelAndSortkeys(rawval, rds, groupedfieldvalues, calculatedAggFuncs, matchedSideDatarows, bApplyExtraFilter, bCheckGroupFunc, nDupNum);
+  }
 }
 
 // add evaled analytic function processing data to m_anaSortProps&m_anaSortData&m_anaFuncResult
@@ -1557,7 +1635,7 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > & anaFuncDa
 #endif // __DEBUG__
 }
 
-void QuerierC::doSideWorks(vector<string> * pfieldValues, map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData)
+void QuerierC::doSideWorks(vector<string> * pfieldValues, unordered_map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData)
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
@@ -1623,7 +1701,7 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   rowValue.push_back(intToStr(m_matchcount+1));
   rowValue.push_back(intToStr(m_fileline));
   vector<string> fieldValues;
-  map<string, string> varValues;
+  unordered_map<string, string> varValues;
   for (int i=0; i<rowValue.size()-4; i++)
     fieldValues.push_back(rowValue[i+1]);
     //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
@@ -1636,12 +1714,12 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   varValues.insert( pair<string,string>("@%",intToStr(rowValue.size()-4)));
   varValues.insert( pair<string,string>("@DUPID","1"));
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
-  unordered_map< string,GroupProp > aggGroupProp;
-  unordered_map< string,vector<string> > anaFuncData;
+  static unordered_map< string,GroupProp > aggGroupProp;
+  static unordered_map< string,vector<string> > anaFuncData;
   vector< unordered_map< int,int > > sideMatchedRowIDs;
   vector< unordered_map< string, unordered_map<string,string> > > matchedSideDatarows;
-  unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
-  RuntimeDataStruct rds;
+  static unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
+  static RuntimeDataStruct rds;
   rds.fieldvalues = &fieldValues;
   rds.varvalues = &varValues;
   rds.aggFuncs = &aggGroupProp;
@@ -1651,9 +1729,13 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   rds.sideDatatypes = &m_sideDatatypes;
   rds.macroFuncExprs = &m_userMacroExprs;
 
-  string sResult;
-  DataTypeStruct dts;
+  static string sResult;
+  static DataTypeStruct dts;
 
+#ifdef __DEBUG__
+  m_runtimedatapreparetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
   // calculate user defined variables
   int iR = 0;
   unordered_map<string,string> fakeResult; // faked sidework dataset from variable R
@@ -1707,7 +1789,6 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
 #endif // __DEBUG__
     vector<string> vResults;
     if (m_selections.size()>0){
-      ExpressionC tmpExp;
       if (m_groups.size() == 0 && m_initAggProps.size() == 0 && !m_aggrOnly){
         //trace(DEBUG, " No group! \n");
 
@@ -1743,7 +1824,7 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
 #endif // __DEBUG__
           evalAddSelAndSortkeys("", rds, rds.fieldvalues, &aggGroupProp, &matchedSideDatarows, m_initAnaArray.size()==0, true);
 #ifdef __DEBUG__
-  m_evalSeltime += (curtime()-thistime);
+  m_evalRawdatatime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
         }
@@ -1856,7 +1937,7 @@ void QuerierC::trialAnalyze(const vector<string> & matcheddata)
   }
   if (m_bToAnalyzeSortMacro)
     analyzeSortStr();
-  for(map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it)
+  for(unordered_map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it)
     it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for(int i=0; i<m_fakeRExprs.size(); i++)
     m_fakeRExprs[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
@@ -2344,11 +2425,10 @@ bool QuerierC::group()
     return true;
 
   unordered_map< string,vector<string> > anaFuncData;
-  map<string, string> varValues;
+  unordered_map<string, string> varValues;
   vector<string> vResults;
   string sResult;
   DataTypeStruct dts;
-  ExpressionC tmpExp;
   vector< unordered_map< int,int > > sideMatchedRowIDs;
   vector< unordered_map< string, unordered_map<string,string> > > matchedSideDatarows;
   unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
@@ -2783,7 +2863,7 @@ bool QuerierC::analytic()
   thistime = curtime();
 #endif // __DEBUG__
 
-  map<string, string> varValues;
+  unordered_map<string, string> varValues;
   varValues.insert( pair<string,string>("@FILE",m_filename));
   varValues.insert( pair<string,string>("@FILEID",intToStr(m_fileid)));
   varValues.insert( pair<string,string>("@%",intToStr(m_fieldnames.size())));
@@ -2885,7 +2965,7 @@ void QuerierC::unique()
     }else
       tmpResult.push_back(m_results[i]);
   }
-  map<string, string> varValues;
+  unordered_map<string, string> varValues;
   m_results.clear();
   for (int i=0;i<tmpResult.size();i++)
     appendResultSet(tmpResult[i], varValues, false);
@@ -3093,7 +3173,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   }
   nodeid++;
   vector<string> fieldValues;
-  map<string, string> varValues;
+  unordered_map<string, string> varValues;
   for (int i=0; i<tmpResults[tNode->rowid].size()-6; i++)
     fieldValues.push_back(tmpResults[tNode->rowid][i+1]);
   varValues.insert( pair<string,string>("@RAW",tmpResults[tNode->rowid][0]));
@@ -3124,7 +3204,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
 
   string sResult;
   DataTypeStruct dts;
-  for (map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
+  for (unordered_map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it){
     it->second.evalExpression(rds, sResult, dts, true);
     m_uservariables[it->first] = sResult;
     varValues[it->first] = sResult;
@@ -3268,6 +3348,8 @@ void QuerierC::formatoutput(vector<string> & datas, const int & resultid)
 {
   if (m_eliminateDupField)
     eliminateDups(datas);
+  if (m_bStatOnly)
+    return;
   if (m_outputformat == JSON){
     if (m_outputrow==m_limitbottom-1){
       outputstream(resultid, "{\n");
@@ -3354,7 +3436,7 @@ void QuerierC::printFieldNames()
 }
 
 // return false if filtered by extra filter
-bool QuerierC::applyExtraFilter(const vector<string> & aRow, const map<string, string> & varValues)
+bool QuerierC::applyExtraFilter(const vector<string> & aRow, const unordered_map<string, string> & varValues)
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
@@ -3372,7 +3454,7 @@ bool QuerierC::applyExtraFilter(const vector<string> & aRow, const map<string, s
   unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
   unordered_map< string, unordered_map<string,DataTypeStruct> > sideDatatypes;
   vector< unordered_map< int,int > > sideMatchedRowIDs;
-  map<string, string> newVarVals = varValues;
+  unordered_map<string, string> newVarVals = varValues;
   RuntimeDataStruct rds;
   rds.fieldvalues = &fieldValues;
   rds.varvalues = &newVarVals;
@@ -3419,7 +3501,7 @@ void QuerierC::applyExtraFilter()
   if (!m_extrafilter)
     return;
 
-  map<string, string> varValues;
+  unordered_map<string, string> varValues;
   varValues.insert( pair<string,string>("@RAW",""));
   varValues.insert( pair<string,string>("@LINE","0"));
   varValues.insert( pair<string,string>("@ROW","0"));
@@ -3575,15 +3657,24 @@ void QuerierC::outputExtraInfo(const size_t & total, const bool & bPrintHeader)
   trace(PERFM, ",   Raw content pattern parsing time: %d\n", m_parsepatterntime);
 
   trace(PERFM, ",   eval expression and filtering time: %d. Break down:\n", m_filtertime);
+  trace(PERFM, ",     Run time data for evaling prepare time: %d\n", m_runtimedatapreparetime);
   trace(PERFM, ",     Dynamic user variable calculation time: %d\n", m_uservarcaltime);
   trace(PERFM, ",     filter compare time: %d\n", m_filtercomptime);
   trace(PERFM, ",     Sidework processing time: %d\n", m_sideworktime);
   trace(PERFM, ",     Get sidework row time: %d\n", m_getsidedatarowtime);
   trace(PERFM, ",     Save tree data time: %d\n", m_savetreedatatime);
-  trace(PERFM, ",     eval selection time: %d\n", m_evalSeltime);
+  trace(PERFM, ",     eval matched data to selection/sortkey/analytic data time: %d\n", m_evalRawdatatime);
+  trace(PERFM, ",       eval matched data prepare evaling time: %d\n", m_evalRawpreptime);
+  trace(PERFM, ",       eval matched data duplicates & 1-N join time: %d\n", m_evalRawdupjointime);
+  trace(PERFM, ",       eval selection time: %d\n", m_evalSeltime);
+  trace(PERFM, ",         eval selection declare variable time: %d\n", m_evalSeldeclaretime);
+  trace(PERFM, ",         eval selection assign expression time: %d\n", m_evalSelAssignExprtime);
+  trace(PERFM, ",         eval selection call eval time: %d\n", m_evalSelRealEvaltime);
+  trace(PERFM, ",       append selection to result set time: %d\n", m_appendSelToResulttime);
+  trace(PERFM, ",       assign output file time: %d\n", m_assignoutputfiletime);
+  trace(PERFM, ",       eval sort time: %d\n", m_evalSorttime);
   trace(PERFM, ",       eval analytic expression time: %d\n", m_evalanaexprtime);
   trace(PERFM, ",       add analytic data time: %d\n", m_addanafuncdatatime);
-  trace(PERFM, ",     eval sort time: %d\n", m_evalSorttime);
   trace(PERFM, ",     eval group key time: %d\n", m_evalGroupKeytime);
   trace(PERFM, ",     update restult time: %d\n", m_updateResulttime);
   trace(PERFM, ",     append non-selection result time: %d\n", m_appendnonselresulttime);
@@ -3599,8 +3690,15 @@ void QuerierC::outputExtraInfo(const size_t & total, const bool & bPrintHeader)
   trace(PERFM, ", eval agg expression time: %d\n", m_evalAggExptime);
   trace(PERFM, ", Output time: %d\n", m_outputtime);
   trace(PERFM, ", Convert string to date time: %d\n", g_strtodatetime);
+  trace(PERFM, ", Eval expression time: %d. Break down:\n", g_evalexprtime);
+  trace(PERFM, ",   Eval const expression time: %d\n", g_evalexprconsttime);
+  trace(PERFM, ",   Eval function expression time: %d.\n", g_evalexprfunctime);
+  trace(PERFM, ",   Eval variable expression time: %d\n", g_evalexprvartime);
+  trace(PERFM, ",   Eval column expression time: %d\n", g_evalexprcoltime);
+  trace(PERFM, ",   Eval macro parameter expression time: %d\n", g_evalexprmacpatime);
+  trace(PERFM, ",   Eval expression calculation time: %d\n", g_evalexprcaltime);
   trace(PERFM, ", matched lines: %d\n", m_line);
-  //trace(PERFM, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, Trial Analyze Columns time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_parsepatterntime, m_line,m_rawanalyzetime, m_trialanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalSeltime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
+  //trace(PERFM, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, Trial Analyze Columns time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_parsepatterntime, m_line,m_rawanalyzetime, m_trialanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalRawdatatime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
 #endif // __DEBUG__
 }
 
@@ -3745,6 +3843,7 @@ void QuerierC::clear()
   m_bSortContainMacro = false;
   m_bToAnalyzeSortMacro = false;
   m_bTextOnly = false;
+  m_bStatOnly = false;
   m_bDetectAllOnChange = false;
   m_selstr = "";
   m_sortstr = "";

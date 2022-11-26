@@ -619,6 +619,17 @@ int main(int argc, char *argv[])
         gv.g_fileheaderonly = (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
         i++;
       }
+    }else if (lower_copy(string(argv[i])).compare("--stat")==0){
+      if (i>=argc-1 || argv[i+1][0] == '-'){
+        //trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
+        //exitProgram(1);
+        gv.g_statonly = true;
+        rq.setStatonly(true);
+      }else{
+        gv.g_statonly = (lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
+        rq.setStatonly(lower_copy(string(argv[i+1])).compare("yes")==0||lower_copy(string(argv[i+1])).compare("y")==0);
+        i++;
+      }
     }else if (lower_copy(string(argv[i])).compare("-t")==0 || lower_copy(string(argv[i])).compare("--textonly")==0){
       if (i>=argc-1 || argv[i+1][0] == '-'){
         //trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);

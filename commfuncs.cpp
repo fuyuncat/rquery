@@ -73,6 +73,7 @@ void GlobalVars::initVars()
   g_ouputformat = TEXT;
   g_logfile = NULL;
   g_fileheaderonly = false;
+  g_statonly = false;
   
   g_consolemode = false;
   g_recursiveread = false;
@@ -289,7 +290,7 @@ void trace(const short & level, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  if ((gv.g_tracelevel>=level && level!=PERFM) || (level==PERFM && gv.g_tracelevel==PERFM)){
+  if ((gv.g_tracelevel>=level && level!=PERFM) || (level==PERFM && gv.g_tracelevel==PERFM) || (gv.g_statonly && level==PERFM)){
     if (gv.g_logfile){
       char buf[1024];
       int bsize = 0;

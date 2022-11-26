@@ -1013,15 +1013,15 @@ std::set<int> ExpressionC::getAllColIDs(const int & side){
 }
 
 // build the expression as a HashMap
-map<int,string> ExpressionC::buildMap(){
-  map<int,string> datas;
+unordered_map<int,string> ExpressionC::buildMap(){
+  unordered_map<int,string> datas;
   if (m_type == BRANCH){
     if (m_leftNode){
-      map<int,string> foo = m_leftNode->buildMap();
+      unordered_map<int,string> foo = m_leftNode->buildMap();
       datas.insert(foo.begin(), foo.end());
     }
     if (m_rightNode){
-      map<int,string> foo = m_rightNode->buildMap();
+      unordered_map<int,string> foo = m_rightNode->buildMap();
       datas.insert(foo.begin(), foo.end());
     }
   }else if(m_type == LEAF){
@@ -1095,7 +1095,7 @@ bool ExpressionC::remove(ExpressionC* node){
 }
 
 // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
-void ExpressionC::fillDataForColumns(map <string, string> & dataList, const vector <string> & columns){
+void ExpressionC::fillDataForColumns(unordered_map <string, string> & dataList, const vector <string> & columns){
   if (columns.size() == 0)
     return;
   if (m_type == BRANCH){
@@ -1237,9 +1237,23 @@ bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function
   return true;
 }
 
+#ifdef __DEBUG__
+long int g_evalexprtime;
+long int g_evalexprconsttime;
+long int g_evalexprfunctime;
+long int g_evalexprvartime;
+long int g_evalexprcoltime;
+long int g_evalexprmacpatime;
+long int g_evalexprcaltime;
+#endif // __DEBUG__
+
 // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
 bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts, const bool & getresultonly)
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+  long int evalstarttime = thistime;
+#endif // __DEBUG__
   if (!rds.fieldvalues || !rds.fieldvalues || !rds.aggFuncs || !rds.anaFuncs){
     trace(ERROR, "Insufficient metadata!\n");
     return false;
@@ -1249,11 +1263,16 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
     trace(ERROR, "Expression '%s' is not analyzed! metaData: %d, expstr: %d \n",getEntireExpstr().c_str(),m_metaDataAnzlyzed,m_expstrAnalyzed);
     return false;
   }
+  bool bResult=false;
   if (m_type == LEAF){
     if (m_expType == CONST){
       sResult = m_expStr;
       dts = m_datatype;
-      return true;
+      bResult=true;
+#ifdef __DEBUG__
+  g_evalexprconsttime += curtime()-thistime;
+  thistime = curtime();
+#endif // __DEBUG__
     }else if (m_expType == FUNCTION){
       //trace(DEBUG2, "Expression '%s' is a fucntion.. \n",m_expStr.c_str());
       if (m_Function){
@@ -1270,20 +1289,20 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
               if (calAggFunc(it->second, m_Function, sResult)){
                 //m_expType = CONST;
                 //SafeDelete(m_Function);
-                return true;
+                bResult=true;
               }else
-                return false;
+                bResult=false;
             }else
               trace(ERROR, "Missing paramters for aggregation function '%s'\n",m_Function->m_expStr.c_str());
           }else{
             trace(ERROR, "Failed to find aggregation function '%s' dataset when evaling '%s'!\n", m_Function->m_expStr.c_str(), getTopParent()->getEntireExpstr().c_str());
-            return false;
+            bResult=false;
           }
         }else if (m_Function->isAnalytic()){
           unordered_map< string,vector<string> >::iterator it = rds.anaFuncs->find(m_Function->m_expStr);
           if (it != rds.anaFuncs->end()){
             unordered_map< string,vector<string> > * oldAnaFuncs = rds.anaFuncs;
-            unordered_map< string,vector<string> > dummyAnaFuncs;
+            static unordered_map< string,vector<string> > dummyAnaFuncs;
             rds.anaFuncs = &dummyAnaFuncs;
             string tmpRslt;
             if (it->second.size()==0)// Empty vector means it's still doing raw data matching, only need to eval parameter expressions. Only retrieve once for each analytic function (identified by its expression str)
@@ -1295,10 +1314,10 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
               sResult = it->second[0];
             dts = m_Function->m_datatype;
             rds.anaFuncs = oldAnaFuncs;
-            return true;
+            bResult=true;
           }else{
             trace(ERROR, "Failed to find analytic function '%s' dataset when evaling '%s'!\n", m_Function->m_expStr.c_str(), getTopParent()->getEntireExpstr().c_str());
-            return false;
+            bResult=false;
           }
         }else{
           bool gotResult = m_Function->runFunction(rds, sResult, dts);
@@ -1307,9 +1326,14 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
             m_expType = CONST;
             m_expStr = sResult;
           }
-          return gotResult;
+          bResult=gotResult;
         }
-      }
+      }else
+        bResult=false;
+#ifdef __DEBUG__
+  g_evalexprfunctime += curtime()-thistime;
+  thistime = curtime();
+#endif // __DEBUG__
     }else if (m_expType == COLUMN){
       if (m_colId >= 0 && m_colId<rds.fieldvalues->size()){
         sResult = (*rds.fieldvalues)[m_colId];
@@ -1319,7 +1343,7 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
           m_expType = CONST;
           m_expStr = sResult;
         }
-        return true;
+        bResult=true;
       }else{
         int i=0;
         for (i=0; i<m_fieldnames->size(); i++)
@@ -1333,12 +1357,16 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
             m_expType = CONST;
             m_expStr = sResult;
           }
-          return true;
+          bResult=true;
         }else{
           trace(WARNING, "Cannot find COLUMN '%s'\n",m_expStr.c_str()); // change ERROR to WARNING as when field size changes, the parsed field names/types still exist.
-          return false;
+          bResult=false;
         }
       }
+#ifdef __DEBUG__
+  g_evalexprcoltime += curtime()-thistime;
+  thistime = curtime();
+#endif // __DEBUG__
     }else if (m_expType == VARIABLE){
       //if (skipRow && (m_expStr.compare("@ROW") == 0 || m_expStr.compare("@ROWSORTED") == 0)){
       //  //trace(DEBUG, "Skip @row & @rowsorted ... \n");
@@ -1353,79 +1381,98 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
           m_expType = CONST;
           m_expStr = sResult;
         }
-        return true;
+        bResult=true;
       }else if(m_expStr.length()>=8 && m_expStr[1]=='R'&&m_expStr[2]=='['){
         size_t pos=0;
         string s1 = upper_copy(readQuotedStr(m_expStr, pos, "[]", "''", '\0', {})), s2 = upper_copy(readQuotedStr(m_expStr, pos, "[]", "''", '\0', {}));
         if (s1.empty() || s2.empty()){
           trace(ERROR, "(2)Invalide subscript in reference variable '%s'\n",m_expStr.c_str());
-          return false;
+          bResult=false;
+        }else{
+          sResult = (*rds.sideDatarow)[s1][s2];
+          dts = (*rds.sideDatatypes)[s1][s2];
+          m_datatype = dts;
+          if (!getresultonly){
+            m_expType = CONST;
+            m_expStr = sResult;
+          }
+          bResult=true;
         }
-        sResult = (*rds.sideDatarow)[s1][s2];
-        dts = (*rds.sideDatatypes)[s1][s2];
-        m_datatype = dts;
-        if (!getresultonly){
-          m_expType = CONST;
-          m_expStr = sResult;
-        }
-        return true;
       }else{
         trace(ERROR, "Cannot find VARIABLE '%s'\n",m_expStr.c_str());
-        return false;
+        bResult=false;
       }
+#ifdef __DEBUG__
+  g_evalexprvartime += curtime()-thistime;
+  thistime = curtime();
+#endif // __DEBUG__
     }else if (m_expType == MACROPARA){
       if (rds.macroFuncParas && rds.macroFuncParas->find(m_expStr)!=rds.macroFuncParas->end()){
         sResult = (*rds.macroFuncParas)[m_expStr];
         dts.datatype = ANY;
-        return true;
+        bResult=true;
       }else{
         // use default value
         if (m_macroParaDefExpr){
           if (!m_macroParaDefExpr->evalExpression(rds, sResult, dts, getresultonly)){
             trace(ERROR, "Failed to get the default value from '%s' for \n", m_expStr.c_str());
-            return false;
-          }
-          return true;
+            bResult=false;
+          }else
+            bResult=true;
         }else{
           trace(ERROR, "Please provide the value of macro function parameter '%s'\n",m_expStr.c_str());
-          return false;
+          bResult=false;
         }
       }
+#ifdef __DEBUG__
+  g_evalexprmacpatime += curtime()-thistime;
+  thistime = curtime();
+#endif // __DEBUG__
     }else{
       trace(ERROR, "Unknown expression type of '%s'\n",m_expStr.c_str());
-      return false;
+      bResult=false;
     }
   }else{
     string leftRst = "", rightRst = "";
     DataTypeStruct leftDts, rightDts;
+    bResult = true;
     if (!m_leftNode || !m_leftNode->evalExpression(rds, leftRst, leftDts, getresultonly)){
       trace(ERROR, "Missing leftNode '%s'\n",m_expStr.c_str());
-      return false;
+      bResult=false;
     }
-    if (!m_rightNode || !m_rightNode->evalExpression(rds, rightRst, rightDts, getresultonly)){
+    if (bResult && (!m_rightNode || !m_rightNode->evalExpression(rds, rightRst, rightDts, getresultonly))){
       trace(ERROR, "Missing rightNode '%s'\n",m_expStr.c_str());
-      return false;
+      bResult=false;
     }
+#ifdef __DEBUG__
+  thistime = curtime();
+#endif // __DEBUG__
     //trace(DEBUG2,"calculating(1) (%s) '%s'%s'%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str());
     //if ((m_leftNode->m_type==LEAF && m_leftNode->m_expType==FUNCTION && m_leftNode->m_Function && m_leftNode->m_Function->isAnalytic()) || (m_rightNode->m_type==LEAF && m_rightNode->m_expType==FUNCTION && m_rightNode->m_Function && m_rightNode->m_Function->isAnalytic())) { // if left or right expression is analytic function, we dont do the operation
-    if (m_leftNode->containAnaFunc() || m_rightNode->containAnaFunc()) { // if left or right expression is analytic function, we dont do the operation
-      trace(DEBUG,"Skip to eval analytic function. Left: '%s'; Right: '%s'\n", m_leftNode->getEntireExpstr().c_str(),m_rightNode->getEntireExpstr().c_str());
-      return true;
-    }else if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
-      trace(DEBUG,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
-      dts = m_datatype;
-      if (!getresultonly){
-        //clear();
-        m_type = LEAF;
-        m_expType = CONST;
-        m_expStr = sResult;
-        m_datatype = dts;
-      }
-      return true;
-    }else
-      return false;
+    if (bResult){
+      if (m_leftNode->containAnaFunc() || m_rightNode->containAnaFunc()) { // if left or right expression is analytic function, we dont do the operation
+        trace(DEBUG,"Skip to eval analytic function. Left: '%s'; Right: '%s'\n", m_leftNode->getEntireExpstr().c_str(),m_rightNode->getEntireExpstr().c_str());
+        bResult=true;
+      }else if ( anyDataOperate(leftRst, m_operate, rightRst, m_datatype, sResult)){
+        trace(DEBUG,"calculating(1) (%s) '%s'%s'%s', get '%s'\n", decodeExptype(m_datatype.datatype).c_str(),leftRst.c_str(),decodeOperator(m_operate).c_str(),rightRst.c_str(),sResult.c_str());
+        dts = m_datatype;
+        if (!getresultonly){
+          //clear();
+          m_type = LEAF;
+          m_expType = CONST;
+          m_expStr = sResult;
+          m_datatype = dts;
+        }
+        bResult=true;
+      }else
+        bResult=false;
+    }
+#ifdef __DEBUG__
+  g_evalexprcaltime += curtime()-thistime;
+  g_evalexprtime += curtime()-evalstarttime;
+#endif // __DEBUG__
   }
-  return false;
+  return bResult;
 }
 
 // merge const expression, reduce calculation during matching
@@ -1447,7 +1494,7 @@ bool ExpressionC::mergeConstNodes(string & sResult)
           vector<DataTypeStruct> fieldtypes;
           DataTypeStruct rawDatatype;
           vector<string> vfieldvalues;
-          map<string,string> mvarvalues;
+          unordered_map<string,string> mvarvalues;
           unordered_map< string,GroupProp > aggFuncs;
           unordered_map< string,vector<string> > anaFuncs;
           vector< vector< unordered_map<string,string> > > sideDatasets;

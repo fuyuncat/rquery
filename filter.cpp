@@ -645,15 +645,15 @@ std::set<int> FilterC::getAllColIDs(const int & side){
 }
 
 // build the prediction as a HashMap
-map<int,string> FilterC::buildMap(){
-  map<int,string> datas;
+unordered_map<int,string> FilterC::buildMap(){
+  unordered_map<int,string> datas;
   if (m_type == BRANCH){
     if (m_leftNode){
-      map<int,string> foo = m_leftNode->buildMap();
+      unordered_map<int,string> foo = m_leftNode->buildMap();
       datas.insert(foo.begin(), foo.end());
     }
     if (m_rightNode){
-      map<int,string> foo = m_rightNode->buildMap();
+      unordered_map<int,string> foo = m_rightNode->buildMap();
       datas.insert(foo.begin(), foo.end());
     }
   }else if(m_type == LEAF){
@@ -739,7 +739,7 @@ bool FilterC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs
   }
 }
 // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
-void FilterC::fillDataForColumns(map <string, string> & dataList, const vector <string> & columns){
+void FilterC::fillDataForColumns(unordered_map <string, string> & dataList, const vector <string> & columns){
   if (columns.size() == 0)
     return;
   if (m_type == BRANCH){

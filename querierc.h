@@ -101,6 +101,7 @@ class QuerierC
     void setDetectTypeMaxRowNum(const int & detectTypeMaxRowNum);
     void setDetectAllOnChange(const bool & bDetectAllOnChange);
     void setTextonly(const bool & bTextonly);
+    void setStatonly(const bool & bStatonly);
     void setOutputFormat(const short int & format=TEXT);
     void setFieldDelim(const string & delimstr);
     int searchNext();
@@ -113,7 +114,7 @@ class QuerierC
     void unique();
     bool searchStopped();
     void applyExtraFilter();
-    bool applyExtraFilter(const vector<string> & aRow, const map<string, string> & varValues);
+    bool applyExtraFilter(const vector<string> & aRow, const unordered_map<string, string> & varValues);
     void output();
     void clear();
     void outputExtraInfo(const size_t & total, const bool & bPrintHeader);
@@ -171,6 +172,7 @@ class QuerierC
     bool m_bToAnalyzeSortMacro; // whether need to analyze marco in sort
     bool m_bDetectAllOnChange; // whether re-detect all fields when the number of field changes.
     bool m_bTextOnly; // treat all fileds as string, unless there is user defined data type
+    bool m_bStatOnly; // print statistics data only, no real data output.
     
     ExpressionC* m_dupnumexp; // expression of duplicate number
     FilterC* m_dupfilter; // filter of duplicate command
@@ -197,12 +199,12 @@ class QuerierC
     vector<string> m_fieldnames;    // field names
     vector<DataTypeStruct> m_fieldtypes;       // field datatype in sequence
     DataTypeStruct m_rawDatatype;  // @raw data type for special cases, e.g. each line contains only one data
-    map<string, DataTypeStruct> m_fieldntypes; // field datatype by names, set by setFieldDatatype
+    unordered_map<string, DataTypeStruct> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     string m_uservarstr;
     vector<string> m_uservalnames; // the names of user defined variables, we use this vector to keep the order of calculation.
-    map<string, string> m_uservariables; // User defined variables, map to initial/calculated values
-    map<string, string> m_uservarinitval; // User defined variables initial values
-    map<string, ExpressionC> m_uservarexprs; // User defined dynamic variables expressions; we cannot unordered_map, as we need to calculate the dynamic variables according to their input sequnence!
+    unordered_map<string, string> m_uservariables; // User defined variables, map to initial/calculated values
+    unordered_map<string, string> m_uservarinitval; // User defined variables initial values
+    unordered_map<string, ExpressionC> m_uservarexprs; // User defined dynamic variables expressions; we cannot unordered_map, as we need to calculate the dynamic variables according to their input sequnence!
     vector<ExpressionC> m_fakeRExprs; // expressions of user defined R variable as fake sidework dataset.
     string m_usermacrostr; // user defined macro functions string
     unordered_map< string,MacroFuncStruct > m_userMacroExprs; // the expressions of the user defined macro. mapping: func_name:expression
@@ -248,16 +250,16 @@ class QuerierC
     bool analyzeExtraFilterStr();
     bool checkSelGroupConflict(const ExpressionC & eSel);
     bool checkSortGroupConflict(const ExpressionC & eSort);
-    void addResultOutputFileMap(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow);
-    void doSideWorks(vector<string> * pfieldValues, map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData); // do side queries
+    void addResultOutputFileMap(vector<string>* fieldvalues, unordered_map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow);
+    void doSideWorks(vector<string> * pfieldValues, unordered_map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData); // do side queries
     void getSideDatarow(vector< unordered_map< int,int > > & sideMatchedRowIDs, vector< unordered_map< string, unordered_map<string,string> > > & matchedSideDatarows);
     bool matchFilter(vector<string> & rowValue); // filt a row data by filter. no predication mean true. comparasion failed means alway false
-    void evalAggExpNode(vector<string>* fieldvalues, map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);  // eval expression in aggregation paramter and store in a data set
+    void evalAggExpNode(vector<string>* fieldvalues, unordered_map<string,string>* varvalues, unordered_map< string,GroupProp > & aggGroupProp, unordered_map< string, unordered_map<string,string> > & matchedSideDatarow);  // eval expression in aggregation paramter and store in a data set
     void evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, const bool & bCheckGroupFunc);
-    bool evalAddExprArray(const vector<ExpressionC> & expressions, const string & rawval, RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, vector<string> & vResults, const bool & bCheckGroupFunc);
+    bool evalAddExprArray(vector<ExpressionC> & expressions, const string & rawval, RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, vector<string> & vResults, const bool & bCheckGroupFunc);
     void evalDupSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, const bool &  bApplyExtraFilter, const bool &  bCheckGroupFunc, const int & nDupNum);
     void evalAddSelAndSortkeys(const string & rawval, RuntimeDataStruct & rds, vector<string>* groupedfieldvalues, unordered_map< string,GroupProp >* calculatedAggFuncs, vector< unordered_map< string, unordered_map<string,string> > > * matchedSideDatarows, const bool &  bApplyExtraFilter, const bool &  bCheckGroupFunc);
-    bool appendResultSet(const vector<string> & vResult, const map<string, string> & varValues, const bool & bApplyExtraFilter); // add a row to result set, doing columns to rows if coltorow involved
+    bool appendResultSet(const vector<string> & vResult, const unordered_map<string, string> & varValues, const bool & bApplyExtraFilter); // add a row to result set, doing columns to rows if coltorow involved
     //void mergeSort(int iLeft, int iMid, int iRight);
     void mergeSort(const int & iLeftB, const int & iLeftT, const int & iRightB, const int & iRightT);
     void mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* sortProps, vector< vector<string> >* sortKeys, const int & iLeftB, const int & iLeftT, const int & iRightB, const int & iRightT);
@@ -286,13 +288,13 @@ class QuerierC
     long int m_querystartat;
     long int m_totaltime;
     long int m_searchtime;
+    long int m_runtimedatapreparetime;
     long int m_uservarcaltime;
     long int m_sideworktime;
     long int m_getsidedatarowtime;
     long int m_savetreedatatime;
     long int m_appendnonselresulttime;
     long int m_addanafuncdatatime;
-    long int m_evalanaexprtime;
     long int m_rawreadtime;
     long int m_rawanalyzetime;
     long int m_parsepatterntime;
@@ -309,8 +311,17 @@ class QuerierC
     long int m_evalGroupKeytime;
     long int m_prepAggGPtime;
     long int m_evalAggExptime;
+    long int m_evalRawdatatime;
+    long int m_evalRawpreptime;
+    long int m_evalRawdupjointime;
     long int m_evalSeltime;
+    long int m_evalSeldeclaretime;
+    long int m_evalSelAssignExprtime;
+    long int m_evalSelRealEvaltime;
+    long int m_appendSelToResulttime;
+    long int m_assignoutputfiletime;
     long int m_evalSorttime;
+    long int m_evalanaexprtime;
     long int m_updateResulttime;
     long int m_outputtime;
 #endif // __DEBUG__

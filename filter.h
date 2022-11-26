@@ -69,11 +69,11 @@ class FilterC
     bool evalAnaExprs(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, string & sResult, DataTypeStruct & dts, const bool & getresultonly); // eval expressions in the filter, to get anaFuncs
     FilterC* cloneMe();
     std::set<int>  getAllColIDs(const int & side); // get all involved colIDs in this prediction
-    map<int,string>  buildMap(); // build the prediction as a HashMap
+    unordered_map<int,string>  buildMap(); // build the prediction as a HashMap
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin
     bool remove(FilterC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
-    void fillDataForColumns(map <string, string> & dataList, const vector <string> & columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
+    void fillDataForColumns(unordered_map <string, string> & dataList, const vector <string> & columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     void mergeExprConstNodes();  // merge const in the expressions
     bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
     bool getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string, vector<int> > & anaGroupNums); // get the full list of analytic functions in the expression.

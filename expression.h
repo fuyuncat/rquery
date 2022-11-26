@@ -71,11 +71,11 @@ class ExpressionC
     bool inColNamesRange(const vector<string> & fieldnames) const; // check if all column/variable in a given list of names (upper case).
     ExpressionC* cloneMe();
     std::set<int>  getAllColIDs(const int & side); // get all involved colIDs in this prediction
-    map<int,string>  buildMap(); // build the prediction as a HashMap
+    unordered_map<int,string>  buildMap(); // build the prediction as a HashMap
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin
     bool remove(ExpressionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
-    void fillDataForColumns(map <string, string> & dataList, const vector <string> & columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
+    void fillDataForColumns(unordered_map <string, string> & dataList, const vector <string> & columns); // build a data list for a set of column, keeping same sequence, fill the absent column with NULL
     bool evalAnalyticFunc(unordered_map< string,string > * anaResult, string & sResult); // get expression result from pre evaled analytic function results
     bool evalExpression(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts, const bool & getresultonly); // calculate this expression. fieldnames: column names; fieldvalues: column values; varvalues: variable values; sResult: return result. column names are upper case; skipRow: wheather skip @row or not. extrainfo so far for date format only
     bool mergeConstNodes(string & sResult); // merge const expression, reduce calculation during matching. If merged successfully, return true, sResult returns result.

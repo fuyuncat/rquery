@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v1.213"
+#define VERSION "v1.22"
 
 #define UNKNOWN 0
 
@@ -352,6 +352,7 @@ public:
   bool g_printheader;
   bool g_showprogress;
   bool g_fileheaderonly;
+  bool g_statonly;
   short int g_ouputformat;
   ofstream* g_logfile;
   
@@ -414,7 +415,7 @@ struct MacroFuncStruct{
 // runtime data struct. The memory of the pointers pointing to should never be freed from this struct.
 struct RuntimeDataStruct{
   vector<string>* fieldvalues = NULL;
-  map<string,string>* varvalues = NULL;
+  unordered_map<string,string>* varvalues = NULL;
   unordered_map< string,GroupProp >* aggFuncs = NULL;
   unordered_map< string,vector<string> >* anaFuncs = NULL;
   vector< vector< unordered_map<string,string> > >* sideDatasets = NULL;
@@ -427,7 +428,16 @@ struct RuntimeDataStruct{
 extern GlobalVars gv;
 extern std::set<string> g_userMacroFuncNames; // the global array is used for identify the user defined macro functions
 
+#ifdef __DEBUG__
 extern long int g_strtodatetime;
+extern long int g_evalexprtime;
+extern long int g_evalexprconsttime;
+extern long int g_evalexprfunctime;
+extern long int g_evalexprvartime;
+extern long int g_evalexprcoltime;
+extern long int g_evalexprmacpatime;
+extern long int g_evalexprcaltime;
+#endif // __DEBUG__
 
 class TimeZone{
 public:

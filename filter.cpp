@@ -225,7 +225,8 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
             return;
           }
           string sElements = node->m_rightExpStr.substr(1,node->m_rightExpStr.length()-2);
-          vector<string> vElements = split(sElements,',',"''()",'\\',{'(',')'},false,true);
+          vector<string> vElements;
+          split(vElements,sElements,',',"''()",'\\',{'(',')'},false,true);
           ExpressionC eElement;
           for (int i=0;i<vElements.size();i++){
             string sResult, sElement = trim_copy(vElements[i]);
@@ -751,7 +752,7 @@ void FilterC::fillDataForColumns(unordered_map <string, string> & dataList, cons
     dataList.insert( pair<string,string>(columns[m_leftColId],m_rightExpStr) );
 }
 
-bool FilterC::containAnaFunc() const
+bool FilterC::containAnaFunc()
 {
   if (m_type == LEAF){
     if ((m_leftExpression && m_leftExpression->containAnaFunc()) || (m_rightExpression && m_rightExpression->containAnaFunc()))
@@ -763,7 +764,7 @@ bool FilterC::containAnaFunc() const
   return false;
 }
 
-bool FilterC::isConst() const
+bool FilterC::isConst()
 {
   if (m_type == LEAF){
     if ((m_leftExpression && m_leftExpression->m_expType==CONST) && (m_rightExpression && m_rightExpression->m_expType==CONST))
@@ -1012,7 +1013,8 @@ bool FilterC::compareExpressionI(RuntimeDataStruct & rds, vector< unordered_map<
         return false;
       }
       bool bResult = (m_leftExpression->m_Function->m_funcID==ALLCOL);
-      vector<ExpressionC> vExpandedExpr = m_leftExpression->m_Function->expandForeach(rds.fieldvalues->size());
+      vector<ExpressionC> vExpandedExpr;
+      m_leftExpression->m_Function->expandForeach(vExpandedExpr, rds.fieldvalues->size());
       FilterC tmpFilter;
       copyTo(&tmpFilter);
       // compare each field using a temporary filter
@@ -1030,7 +1032,8 @@ bool FilterC::compareExpressionI(RuntimeDataStruct & rds, vector< unordered_map<
         return false;
       }
       bool bResult = (m_rightExpression->m_Function->m_funcID==ALLCOL);
-      vector<ExpressionC> vExpandedExpr = m_rightExpression->m_Function->expandForeach(rds.fieldvalues->size());
+      vector<ExpressionC> vExpandedExpr;
+      m_rightExpression->m_Function->expandForeach(vExpandedExpr, rds.fieldvalues->size());
       FilterC tmpFilter;
       copyTo(&tmpFilter);
       // compare each field

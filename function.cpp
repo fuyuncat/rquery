@@ -72,7 +72,7 @@ FunctionC& FunctionC::operator=(const FunctionC& other)
   return *this;
 }
 
-void FunctionC::copyTo(FunctionC* node) const 
+void FunctionC::copyTo(FunctionC* node) const
 {
   if (!node || node==this)
     return;
@@ -114,7 +114,7 @@ void FunctionC::setExpStr(const string & expStr)
   }
 }
 
-bool FunctionC::isConst() const
+bool FunctionC::isConst()
 {
   if (isAggFunc() || m_funcID==RCOUNT || m_funcID==RANDOM || m_funcID==RANDSTR || (m_funcID==NOW && m_params.size()>0)) // RCOUNT/RANDOM accept 0 parameter, RANDSTR accept const parameter, unlike NOW(), it cannot be counted as a const function
     return false;
@@ -132,27 +132,27 @@ bool FunctionC::isConst() const
   return false;
 }
 
-bool FunctionC::isAggFunc() const
+bool FunctionC::isAggFunc()
 {
   return (m_funcID==SUM || m_funcID==COUNT || m_funcID==UNIQUECOUNT || m_funcID==MAX || m_funcID==MIN || m_funcID==AVERAGE || m_funcID==GROUPLIST);
 }
 
-bool FunctionC::isMacro() const
+bool FunctionC::isMacro()
 {
   return (m_funcID==FOREACH || m_funcID==ANYCOL || m_funcID==ALLCOL);
 }
 
-bool FunctionC::isAnalytic() const
+bool FunctionC::isAnalytic()
 {
   return (m_funcID==RANK || m_funcID==DENSERANK || m_funcID==PREVIOUS || m_funcID==NEXT || m_funcID==NEARBY || m_funcID==SEQNUM || m_funcID==SUMA || m_funcID==COUNTA || m_funcID==UNIQUECOUNTA || m_funcID==MAXA || m_funcID==MINA || m_funcID==AVERAGEA);
 }
 
-bool FunctionC::isTree() const
+bool FunctionC::isTree()
 {
   return (m_funcID==ROOT || m_funcID==PATH || m_funcID==PARENT);
 }
 
-bool FunctionC::containRefVar() const
+bool FunctionC::containRefVar()
 {
   for (int i=0;i<m_params.size();i++)
     if (m_params[i].containRefVar())
@@ -181,39 +181,36 @@ bool FunctionC::analyzeExpStr()
   m_funcID = encodeFunction(m_funcName);
   m_expStr = m_funcName+"("+strParams+")";
   //strParams = trim_pair(strParams, "()");
-  vector<string> vParams = split(strParams,',',"''()",'\\',{'(',')'},false,true);
+  vector<string> vParams;
   if (isAnalytic()){ // analyze analytic function parameters: (group1[;group2]...[,sort1 [asc|desc][;sort2 [asc|desc]]...]). sParam of analytic function can be empty
-    vParams = split(strParams,';',"''()",'\\',{'(',')'},false,false);
+    split(vParams,strParams,';',"''()",'\\',{'(',')'},false,false);
     if (vParams.size()<2){
       trace(ERROR, "There should be at least two part parameters for an analytic function '%s', sort key is compulsory, for example rank(;sortkey)!\n",m_funcName.c_str());
       m_expstrAnalyzed = false;
       return false;
     }
     for (int i=0; i<vParams.size(); i++){
-      vector<string> vAnaPara = split(trim_copy(vParams[i]),',',"''()",'\\',{'(',')'},false,true);
+      vector<string> vAnaPara;
+      split(vAnaPara,trim_copy(vParams[i]),',',"''()",'\\',{'(',')'},false,true);
       m_anaParaNums.push_back(vAnaPara.size());
-      ExpressionC eParam;
       for (int j=0;j<vAnaPara.size();j++){
         if (i==1){// The second part should always be sort keys for ALL analytic functions.
-          vector<string> vSortPara = split(trim_copy(vAnaPara[j]),' ',"''()",'\\',{'(',')'},true,true);
-          eParam = ExpressionC(trim_copy(vSortPara[0]));
-          m_params.push_back(eParam);
+          vector<string> vSortPara;
+          split(vSortPara,trim_copy(vAnaPara[j]),' ',"''()",'\\',{'(',')'},true,true);
+          m_params.push_back(ExpressionC(trim_copy(vSortPara[0])));
           if (vSortPara.size()>1){ // sort direction; 1:asc;-1:desc
-            eParam = ExpressionC(upper_copy(trim_copy(vSortPara[1])).compare("DESC")==0?"-1":"1");
-            m_params.push_back(eParam);
+            m_params.push_back(ExpressionC(upper_copy(trim_copy(vSortPara[1])).compare("DESC")==0?"-1":"1"));
           }else{
-            eParam = ExpressionC("1"); // default is asc
-            m_params.push_back(eParam);
+            m_params.push_back(ExpressionC("1"));
           }
         }else{
-          ExpressionC eParam = ExpressionC(trim_copy(vAnaPara[j]));
-          m_params.push_back(eParam);
+          m_params.push_back(ExpressionC(trim_copy(vAnaPara[j])));
         }
       }
     }
     trace(DEBUG, "FunctionC: The analytic function '%s' group size is %d, param size %d \n", m_expStr.c_str(), m_anaParaNums[0], m_params.size());
   }else{
-    ExpressionC eParam;
+    split(vParams,strParams,',',"''()",'\\',{'(',')'},false,true);
     for (int i=0; i<vParams.size(); i++){
       trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
       string sParam = trim_copy(vParams[i]);
@@ -228,7 +225,8 @@ bool FunctionC::analyzeExpStr()
       }else{
         if (m_funcID == GROUPLIST){ // GROUPLIST([distinct ]expr[,delimiter][,asc|desc])
           if (i == 0){ // check distinct keyword for GROUPLIST
-            vector<string> vGLExprPara = split(trim_copy(sParam),' ',"''()",'\\',{'(',')'},true,true);
+            vector<string> vGLExprPara;
+            split(vGLExprPara,trim_copy(sParam),' ',"''()",'\\',{'(',')'},true,true);
             if (vGLExprPara.size() == 2){
               if (upper_copy(trim_copy(vGLExprPara[0])).compare("DISTINCT") == 0)
                 m_bDistinct = true;
@@ -236,22 +234,18 @@ bool FunctionC::analyzeExpStr()
                 trace(WARNING, "'%s' is not a correct keywork, do you mean DISTINCT?\n", vGLExprPara[0].c_str());
               sParam = trim_copy(vGLExprPara[1]);
             }
-            eParam = ExpressionC(sParam);
-            m_params.push_back(eParam);
+            m_params.push_back(ExpressionC(sParam));
           }else if(i == 1){ // delimiter for GROUPLIST
-            eParam = ExpressionC(sParam);
-            if (eParam.m_type!=LEAF || eParam.m_expType!=CONST){
+            m_params.push_back(ExpressionC(sParam));
+            if (m_params[m_params.size()-1].m_type!=LEAF || m_params[m_params.size()-1].m_expType!=CONST){
               trace(WARNING, "delimiter for GROUPLIST only accept const, '%s' is not a const. Will use a SPACE as delimiter!\n", sParam.c_str());
-              eParam = ExpressionC(" ");
+              m_params[m_params.size()-1] = ExpressionC(" ");
             }
-            m_params.push_back(eParam);
           }else{
-            eParam = ExpressionC(sParam);
-            m_params.push_back(eParam);
+            m_params.push_back(ExpressionC(sParam));
           }
         }else{
-          eParam = ExpressionC(sParam);
-          m_params.push_back(eParam);
+          m_params.push_back(ExpressionC(sParam));
         }
       }
     }
@@ -791,7 +785,8 @@ bool FunctionC::runRegcount(RuntimeDataStruct & rds, string & sResult, DataTypeS
   }
   string str, sPattern; 
   if (m_params[0].evalExpression(rds, str, dts, true) && m_params[1].evalExpression(rds, sPattern, dts, true)){
-    vector < vector <string> > results = getAllTokens(str, sPattern);
+    vector < vector <string> > results;
+    getAllTokens(results, str, sPattern);
     sResult = intToStr(results.size());
     dts.datatype = LONG;
     return true;
@@ -814,7 +809,8 @@ bool FunctionC::runRegget(RuntimeDataStruct & rds, string & sResult, DataTypeStr
         trace(WARNING, "%s is not a valid match sequence number for regget(str, regex_pattern, idxnum[, matchseq]), will use the defualt value.\n", m_params[3].getEntireExpstr().c_str());
       }
     }
-    vector < vector <string> > results = getAllTokens(str, sPattern);
+    vector < vector <string> > results;
+    getAllTokens(results, str, sPattern);
     if (results.size()==0){
       sResult = "";
       dts.datatype = STRING;
@@ -856,7 +852,8 @@ bool FunctionC::runCountword(RuntimeDataStruct & rds, string & sResult, DataType
       }
     }
     std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
-    vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true,true);
+    vector<string> vWords;
+    split(vWords, sRaw,delims,sQuoters,'\0',{},true,true);
     sResult = intToStr(vWords.size());
     dts.datatype = LONG;
     return true;
@@ -886,7 +883,8 @@ bool FunctionC::runGetword(RuntimeDataStruct & rds, string & sResult, DataTypeSt
       }
     }
     std::set<char> delims = {' ','\t','\n','\r',',','.','!','?',';'};
-    vector<string> vWords = split(sRaw,delims,sQuoters,'\0',{},true,false);
+    vector<string> vWords;
+    split(vWords, sRaw,delims,sQuoters,'\0',{},true,false);
     dts.datatype = STRING;
     if (vWords.size() == 0){
       //trace(ERROR, "No word found in '%s'!\n", m_params[0].getEntireExpstr().c_str());
@@ -925,7 +923,8 @@ bool FunctionC::runGetpart(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     }
     if (m_params.size()>=4)
       m_params[3].evalExpression(rds, sQuoters, dts, true);
-    vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false,false);
+    vector<string> vWords;
+    split(vWords, sRaw,sDelm,sQuoters,'\0',{},true,false,false);
     dts.datatype = STRING;
     if (vWords.size() == 0){
       trace(ERROR, "'%s' cannot be splited by '%s' in getpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
@@ -970,7 +969,8 @@ bool FunctionC::runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
     }
     if (m_params.size()>=5)
       m_params[4].evalExpression(rds, sQuoters, dts, true);
-    vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false,false);
+    vector<string> vWords;
+    split(vWords,sRaw,sDelm,sQuoters,'\0',{},true,false,false);
     dts.datatype = STRING;
     if (vWords.size() == 0){
       trace(ERROR, "'%s' cannot be splited by '%s' in getparts()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
@@ -1006,7 +1006,8 @@ bool FunctionC::runCountpart(RuntimeDataStruct & rds, string & sResult, DataType
   if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sDelm, dts, true)){
     if (m_params.size()>=3)
       m_params[2].evalExpression(rds, sQuoters, dts, true);
-    vector<string> vWords = split(sRaw,sDelm,sQuoters,'\0',{},true,false,false);
+    vector<string> vWords;
+    split(vWords,sRaw,sDelm,sQuoters,'\0',{},true,false,false);
     if (vWords.size() == 0){
       trace(ERROR, "'%s' cannot be splited by '%s' in countpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
@@ -1097,7 +1098,8 @@ bool FunctionC::runConcatcol(RuntimeDataStruct & rds, string & sResult, DataType
     if (!m_params[4].evalExpression(rds, sDelm, dts, true))
       sDelm = "";
   }
-  vector<ExpressionC> vExpandedExpr = expandForeach(rds.fieldvalues->size());
+  vector<ExpressionC> vExpandedExpr;
+  expandForeach(vExpandedExpr, rds.fieldvalues->size());
   for (int i=0; i<vExpandedExpr.size(); i++){
     vExpandedExpr[i].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
     if (!vExpandedExpr[i].evalExpression(rds, sRaw, dts, true)){
@@ -1126,7 +1128,8 @@ bool FunctionC::runCalcol(RuntimeDataStruct & rds, string & sResult, DataTypeStr
   }
   double dSum=0,dVal=0;
   std::set <string> tmpSet;
-  vector<ExpressionC> vExpandedExpr = expandForeach(rds.fieldvalues->size());
+  vector<ExpressionC> vExpandedExpr;
+  expandForeach(vExpandedExpr, rds.fieldvalues->size());
   for (int i=0; i<vExpandedExpr.size(); i++){
     vExpandedExpr[i].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
     if (!vExpandedExpr[i].evalExpression(rds, sRaw, dts, true) || !isDouble(trim_copy(sRaw))){
@@ -3386,7 +3389,8 @@ bool FunctionC::runGreatest(RuntimeDataStruct & rds, string & sResult, DataTypeS
   DataTypeStruct dts1, dts2;
   for (int i=0;i<m_params.size();i++){
     if (m_params[i].m_type == LEAF && m_params[i].m_expType == FUNCTION && m_params[i].m_Function && m_params[i].m_Function->m_funcID==FOREACH){
-      vector<ExpressionC> vExpandedExpr = m_params[i].m_Function->expandForeach(rds.fieldvalues->size());
+      vector<ExpressionC> vExpandedExpr;
+      m_params[i].m_Function->expandForeach(vExpandedExpr, rds.fieldvalues->size());
       for (int j=0; j<vExpandedExpr.size(); j++){
         vExpandedExpr[j].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
         if (!vExpandedExpr[j].evalExpression(rds, scomp, dts2, true)){
@@ -3448,7 +3452,8 @@ bool FunctionC::runLeast(RuntimeDataStruct & rds, string & sResult, DataTypeStru
   DataTypeStruct dts1, dts2;
   for (int i=0;i<m_params.size();i++){
     if (m_params[i].m_type == LEAF && m_params[i].m_expType == FUNCTION && m_params[i].m_Function && m_params[i].m_Function->m_funcID==FOREACH){
-      vector<ExpressionC> vExpandedExpr = m_params[i].m_Function->expandForeach(rds.fieldvalues->size());
+      vector<ExpressionC> vExpandedExpr;
+      m_params[i].m_Function->expandForeach(vExpandedExpr, rds.fieldvalues->size());
       for (int j=0; j<vExpandedExpr.size(); j++){
         vExpandedExpr[j].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
         if (!vExpandedExpr[j].evalExpression(rds, scomp, dts2, true)){
@@ -3510,7 +3515,8 @@ bool FunctionC::runSumall(RuntimeDataStruct & rds, string & sResult, DataTypeStr
   DataTypeStruct dts1, dts2;
   for (int i=0;i<m_params.size();i++){
     if (m_params[i].m_type == LEAF && m_params[i].m_expType == FUNCTION && m_params[i].m_Function && m_params[i].m_Function->m_funcID==FOREACH){
-      vector<ExpressionC> vExpandedExpr = m_params[i].m_Function->expandForeach(rds.fieldvalues->size());
+      vector<ExpressionC> vExpandedExpr;
+      m_params[i].m_Function->expandForeach(vExpandedExpr, rds.fieldvalues->size());
       for (int j=0; j<vExpandedExpr.size(); j++){
         vExpandedExpr[j].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
         if (!vExpandedExpr[j].evalExpression(rds, scomp, dts2, true) || !isDouble(scomp)){
@@ -3808,17 +3814,16 @@ bool FunctionC::runRmemberid(RuntimeDataStruct & rds, string & sResult, DataType
 
 // expand foreach to a vector of expression
 // foreach(beginid,endid,macro_expr[,step]). $ stands for field, # stands for field sequence, % stands for the largest field sequence ID.
-vector<ExpressionC> FunctionC::expandForeach(const int & maxFieldNum)
+void FunctionC::expandForeach(vector<ExpressionC> & vExpr, const int & maxFieldNum)
 {
-  vector<ExpressionC> vExpr;
   trace(DEBUG,"(1)Expanding foreach expression '%s'\n",m_expStr.c_str());
   if (m_funcID!=FOREACH && m_funcID!=ANYCOL && m_funcID!=ALLCOL && m_funcID!=CONCATCOL && m_funcID!=CALCOL){
     trace(ERROR, "(1)'%s' is not foreach macro function!\n", m_funcName.c_str());
-    return vExpr;
+    return;
   }
   if (m_params.size()<3){
     trace(ERROR, "(1)Foreach macro function requires at least 3 parameters!\n", m_funcName.c_str());
-    return vExpr;
+    return;
   }
   int begin = 0, end = 0;
   if (m_params[0].getEntireExpstr().find("%") != string::npos){
@@ -3827,14 +3832,14 @@ vector<ExpressionC> FunctionC::expandForeach(const int & maxFieldNum)
     ExpressionC constExp(expStr);
     if (!isInt(constExp.m_expStr)){
       trace(ERROR, "(1a)'%s' is not a valid number expresion!\n", m_params[0].getEntireExpstr().c_str());
-      return vExpr;
+      return;
     }
     begin = max(1,atoi(constExp.m_expStr.c_str()));
   }else if (isInt(m_params[0].m_expStr))
     begin = max(1,min(maxFieldNum,atoi(m_params[0].m_expStr.c_str())));
   else{
     trace(ERROR, "(1)%s is an invalid begin ID for foreach macro function!\n", m_params[0].getEntireExpstr().c_str());
-    return vExpr;
+    return;
   }
   if (m_params[1].getEntireExpstr().find("%") != string::npos){
     string expStr = m_params[1].getEntireExpstr();
@@ -3842,14 +3847,14 @@ vector<ExpressionC> FunctionC::expandForeach(const int & maxFieldNum)
     ExpressionC constExp(expStr);
     if (!isInt(constExp.m_expStr)){
       trace(ERROR, "(1b)'%s' is not a valid number expresion!\n", m_params[1].getEntireExpstr().c_str());
-      return vExpr;
+      return;
     }
     end = max(1,atoi(constExp.m_expStr.c_str()));
   }else if (isInt(m_params[1].m_expStr))
     end = max(1,min(maxFieldNum,atoi(m_params[1].m_expStr.c_str())));
   else{
     trace(ERROR, "(1)Invalid end ID for foreach macro function!\n", m_params[1].getEntireExpstr().c_str());
-    return vExpr;
+    return;
   }
   int iStep = 1;
   if (m_params.size()>3 && isInt(trim_copy(m_params[3].m_expStr))) // step
@@ -3861,24 +3866,21 @@ vector<ExpressionC> FunctionC::expandForeach(const int & maxFieldNum)
     string sNew = m_params[2].getEntireExpstr();
     replaceunquotedstr(sNew,"$","@field"+intToStr(i),"''",'\\',{'(',')'});
     replaceunquotedstr(sNew,"#",intToStr(i),"''",'\\',{'(',')'});
-    ExpressionC expr(sNew);
-    vExpr.push_back(expr);
-    trace(DEBUG,"(1)Expanded foreach element '%s'\n",expr.getEntireExpstr().c_str());
+    vExpr.push_back(ExpressionC(sNew));
+    trace(DEBUG,"(1)Expanded foreach element '%s'\n",vExpr[vExpr.size()-1].getEntireExpstr().c_str());
   }
-  return vExpr;
 }
 
-vector<ExpressionC> FunctionC::expandForeach(const vector<ExpressionC> & vExps)
+void FunctionC::expandForeach(vector<ExpressionC> & vExpr, const vector<ExpressionC> & vExps)
 {
-  vector<ExpressionC> vExpr;
   trace(DEBUG,"(2)Expanding foreach expression '%s'\n",m_expStr.c_str());
   if (m_funcID!=FOREACH && m_funcID!=ANYCOL && m_funcID!=ALLCOL){
     trace(ERROR, "(2)'%s' is not foreach macro function!\n", m_funcName.c_str());
-    return vExpr;
+    return;
   }
   if (m_params.size()<3){
     trace(ERROR, "(2)Foreach macro function requires 3 parameters!\n", m_funcName.c_str());
-    return vExpr;
+    return;
   }
   int begin = 0, end = 0;
     if (m_params[0].getEntireExpstr().find("%") != string::npos){
@@ -3887,14 +3889,14 @@ vector<ExpressionC> FunctionC::expandForeach(const vector<ExpressionC> & vExps)
     ExpressionC constExp(expStr);
     if (!isInt(constExp.m_expStr)){
       trace(ERROR, "(2a)'%s' is not a valid number expresion!\n", m_params[0].getEntireExpstr().c_str());
-      return vExpr;
+      return;
     }
     begin = max(1,atoi(constExp.m_expStr.c_str()));
   }else if (isInt(m_params[0].m_expStr))
     begin = max(1,min((int)vExps.size(),atoi(m_params[0].m_expStr.c_str())));
   else{
     trace(ERROR, "(2)%s is an invalid begin ID for foreach macro function!\n", m_params[0].getEntireExpstr().c_str());
-    return vExpr;
+    return;
   }
   if (m_params[1].getEntireExpstr().find("%") != string::npos){
     string expStr = m_params[1].getEntireExpstr();
@@ -3902,25 +3904,23 @@ vector<ExpressionC> FunctionC::expandForeach(const vector<ExpressionC> & vExps)
     ExpressionC constExp(expStr);
     if (!isInt(constExp.m_expStr)){
       trace(ERROR, "(2b)'%s' is not a valid number expresion!\n", m_params[1].getEntireExpstr().c_str());
-      return vExpr;
+      return;
     }
     end = atoi(constExp.m_expStr.c_str());;
   }else if (isInt(m_params[1].m_expStr))
     end = max(0,min((int)vExps.size(),atoi(m_params[1].m_expStr.c_str())));
   else{
     trace(ERROR, "(2)Invalid end ID for foreach macro function!\n", m_params[1].getEntireExpstr().c_str());
-    return vExpr;
+    return;
   }
   for (int i=begin; begin<end?i<=end:i>=end; begin<end?i++:i--){
     trace(DEBUG,"(2)Expanding foreach element '%s'\n",m_params[2].getEntireExpstr().c_str());
     string sNew = m_params[2].getEntireExpstr();
     replaceunquotedstr(sNew,"$",vExps[i-1].getEntireExpstr(),"''",'\\',{'(',')'});
     replaceunquotedstr(sNew,"#",intToStr(i),"''",'\\',{'(',')'});
-    ExpressionC expr(sNew);
-    vExpr.push_back(expr);
-    trace(DEBUG,"(2)Expanded foreach element '%s'\n",expr.getEntireExpstr().c_str());
+    vExpr.push_back(ExpressionC(sNew));
+    trace(DEBUG,"(2)Expanded foreach element '%s'\n",vExpr[vExpr.size()-1].getEntireExpstr().c_str());
   }
-  return vExpr;
 }
 
 // run function and get result

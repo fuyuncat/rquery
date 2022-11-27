@@ -1390,7 +1390,7 @@
    ```
 - Rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
    ```
-   rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1) | o @4,@1 " timezone.log
+   rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1;) | o @4,@1 " timezone.log
    ```
    Returns result:<br/>
    ```

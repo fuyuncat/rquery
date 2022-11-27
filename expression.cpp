@@ -543,7 +543,8 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
     }else if (expStr[0] == '~'){ // checking User Defined Macro Function Parameter ~nam[=val]~
       size_t pos=0;
       string sParastr = trim_copy(readQuotedStr(expStr, pos, "~~", "''", '\0', {}));
-      vector<string> vMacroNamVal = split(sParastr,'=',"''()",'\\',{'(',')'},false,true);
+      vector<string> vMacroNamVal;
+      split(vMacroNamVal,sParastr,'=',"''()",'\\',{'(',')'},false,true);
       if (vMacroNamVal.size()==0 || trim_copy(vMacroNamVal[0]).empty()){
         trace(FATAL, "(2) Macro function parameter '%s' has an invalid definition! \n", sParastr.c_str());
         return false;
@@ -1669,7 +1670,7 @@ void ExpressionC::setTreeFuncs(unordered_map< string,string > & treeFuncVals)
   }
 }
 
-int ExpressionC::getSideWorkID() const
+int ExpressionC::getSideWorkID()
 {
   if (m_type == LEAF){
     if (m_expType == VARIABLE && m_expStr.length()>=8 && m_expStr[1]=='R' && m_expStr[2]=='['){
@@ -1691,7 +1692,7 @@ int ExpressionC::getSideWorkID() const
   return -1;
 }
 
-bool ExpressionC::containRefVar() const
+bool ExpressionC::containRefVar()
 {
   if (m_type == LEAF){
     if (m_expType == FUNCTION && m_Function && m_Function->containRefVar())
@@ -1708,7 +1709,7 @@ bool ExpressionC::containRefVar() const
   return false;
 }
 
-bool ExpressionC::containGroupFunc() const
+bool ExpressionC::containGroupFunc()
 {
   if (m_type == LEAF){
     if (m_expType == FUNCTION && m_Function && m_Function->isAggFunc())
@@ -1721,7 +1722,7 @@ bool ExpressionC::containGroupFunc() const
   return false;
 }
 
-bool ExpressionC::containAnaFunc() const
+bool ExpressionC::containAnaFunc()
 {
   if (m_type == LEAF){
     if (m_expType == FUNCTION && m_Function && m_Function->isAnalytic())
@@ -1734,7 +1735,7 @@ bool ExpressionC::containAnaFunc() const
   return false;
 }
 
-bool ExpressionC::groupFuncOnly() const
+bool ExpressionC::groupFuncOnly()
 {
   if (m_type == LEAF){
     if (m_expType == CONST)
@@ -1782,7 +1783,7 @@ bool ExpressionC::existLeafNode(ExpressionC* node)
   }
 }
 
-bool ExpressionC::inColNamesRange(const vector<string> & fieldnames)  const
+bool ExpressionC::inColNamesRange(const vector<string> & fieldnames)
 {
   if (m_type == LEAF){
     if (m_expType == CONST){

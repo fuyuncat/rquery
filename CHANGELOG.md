@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.22] 2022-11-28
+   Fix bug: Compare date incorrectly!.<br/>
    # [1.22] 2022-11-26
    Enhancement: Performance improvement: Function const referrance parameters, static variable, reduce unnecessary temp ExpressionC. <br/>
    # [1.213] 2022-11-25

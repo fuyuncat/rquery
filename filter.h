@@ -64,8 +64,8 @@ class FilterC
     bool analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes); // analyze column ID & name from metadata
     bool columnsAnalyzed();
     bool expstrAnalyzed();
-    bool containAnaFunc() const; // check if the expression contains analytic function
-    bool isConst() const;
+    bool containAnaFunc(); // check if the expression contains analytic function
+    bool isConst();
     bool evalAnaExprs(RuntimeDataStruct & rds, vector<ExpressionC>* anaEvaledExp, string & sResult, DataTypeStruct & dts, const bool & getresultonly); // eval expressions in the filter, to get anaFuncs
     FilterC* cloneMe();
     std::set<int>  getAllColIDs(const int & side); // get all involved colIDs in this prediction

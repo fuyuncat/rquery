@@ -46,22 +46,22 @@ class FunctionC
     //int m_anaFirstParamNum; // The number of first part  parameters of analytic function . 
 
     bool runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
-    bool isConst() const;   // if all parameters are const
+    bool isConst();   // if all parameters are const
     void setExpStr(const string & expStr);
     DataTypeStruct analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes); 
     bool columnsAnalyzed();
     bool expstrAnalyzed();
-    bool isAggFunc() const;
-    bool isMacro() const;
-    bool isAnalytic() const;
-    bool isTree() const;
-    bool containRefVar() const; // check if the function (parameters) contains reference variable @R[][]
+    bool isAggFunc();
+    bool isMacro();
+    bool isAnalytic();
+    bool isTree();
+    bool containRefVar(); // check if the function (parameters) contains reference variable @R[][]
     void dump();
     FunctionC* cloneMe();
     void clear(); // clear predictin
     bool remove(FunctionC* node); // remove a node from prediction. Note: the input node is the address of the node contains in current prediction
-    vector<ExpressionC> expandForeach(const int & maxFieldNum); // expand foreach to a vector of expression
-    vector<ExpressionC> expandForeach(const vector<ExpressionC> & vExps); // expand foreach to a vector of expression
+    void expandForeach(vector<ExpressionC> & vExpr, const int & maxFieldNum); // expand foreach to a vector of expression
+    void expandForeach(vector<ExpressionC> & vExpr, const vector<ExpressionC> & vExps); // expand foreach to a vector of expression
 
   private:
     bool m_metaDataAnzlyzed; // analyze column name to column id.

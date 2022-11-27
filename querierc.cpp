@@ -130,8 +130,9 @@ void QuerierC::init()
   m_sideworktime = 0;
   m_getsidedatarowtime = 0;
   m_savetreedatatime = 0;
-  m_rawreadtime = 0;
+  m_rawprocesstrimtime = 0;
   m_rawanalyzetime = 0;
+  m_readrawlinetime = 0;
   m_appendnonselresulttime = 0;
   m_addanafuncdatatime = 0;
   m_evalanaexprtime = 0;
@@ -187,7 +188,8 @@ void QuerierC::setregexp(const string & regexstr)
     m_searchMode = LINESEARCH;
   }else if ((patternStr[0] == 'w' || patternStr[0] == 'W')&& patternStr[1] == '/'){
     m_searchMode = WILDSEARCH;
-    vector<string> vSearchPattern = split(patternStr.substr(2,patternStr.length()-3),'/',"",'\\',{'(',')'},false,true);
+    vector<string> vSearchPattern;
+    split(vSearchPattern, patternStr.substr(2,patternStr.length()-3),'/',"",'\\',{'(',')'},false,true);
     if (vSearchPattern.size() == 0){
       trace(FATAL, "(1)'%s' is an unrecognized pattern!\n", patternStr.c_str());
       return;
@@ -207,7 +209,8 @@ void QuerierC::setregexp(const string & regexstr)
       spattern = patternStr.substr(2,patternStr.length()-3);
     }else
       trace(FATAL, "'%s' is not a valid searching pattern\n",patternStr.c_str());
-    vector<string> vSearchPattern = split(spattern,'/',"",'\\',{'(',')'},false,true);
+    vector<string> vSearchPattern;
+    split(vSearchPattern, spattern,'/',"",'\\',{'(',')'},false,true);
     if (vSearchPattern.size() == 0){
       trace(FATAL, "(1)'%s' is an unrecognized pattern!\n", patternStr.c_str());
       return;
@@ -257,7 +260,7 @@ bool QuerierC::analyzeExtraFilterStr()
   size_t pos = findFirstSub(m_extfilstr, " TRIM ", 0,"''()",'\\',{'(',')'},false );
   if (pos != string::npos){
     filter = new FilterC(trim_copy(m_extfilstr.substr(0,pos)));
-    m_trimedInitSels = genSelExpression(trim_copy(m_extfilstr.substr(pos+string(" TRIM ").length())), m_trimmedAlias);
+    genSelExpression(m_trimedInitSels, trim_copy(m_extfilstr.substr(pos+string(" TRIM ").length())), m_trimmedAlias);
   }else{
     filter = new FilterC(trim_copy(m_extfilstr));
   }
@@ -316,7 +319,8 @@ bool QuerierC::assignGroupStr(const string & groupstr)
 {
   if (groupstr.empty())
     return true;
-  vector<string> vGroups = split(groupstr,',',"''()",'\\',{'(',')'},false,true);
+  vector<string> vGroups;
+  split(vGroups, groupstr,',',"''()",'\\',{'(',')'},false,true);
   ExpressionC eGroup;
   for (int i=0; i<vGroups.size(); i++){
     trace(DEBUG, "Processing group (%d) '%s'!\n", i, vGroups[i].c_str());
@@ -340,7 +344,8 @@ void QuerierC::setUniqueResult(const string & unistr)
   if (trim_copy(unistr).empty())
     m_bUniqueResult = true;
   else{
-    vector<string> vUni = split(upper_copy(trim_copy(unistr)),' ',"",'\0',{},true,true);
+    vector<string> vUni;
+    split(vUni, upper_copy(trim_copy(unistr)),' ',"",'\0',{},true,true);
     for (int i=0; i<vUni.size(); i++){
       if (trim_copy(vUni[i])[0]=='R')
         m_bUniqueResult=true;
@@ -364,7 +369,8 @@ bool QuerierC::assignLimitStr(const string & limitstr)
 {
   if (limitstr.empty())
     return true;
-  vector<string> vLimits = split(limitstr,',',"''()",'\\',{'(',')'},false,true);
+  vector<string> vLimits;
+  split(vLimits, limitstr,',',"''()",'\\',{'(',')'},false,true);
   string sFirst = trim_copy(vLimits[0]);
   int iFirst = 0;
   if (isInt(sFirst))
@@ -396,7 +402,7 @@ bool QuerierC::assignSelString(const string & selstr)
   return analyzeSelString();
 }
 
-bool QuerierC::checkSelGroupConflict(const ExpressionC & eSel)
+bool QuerierC::checkSelGroupConflict(ExpressionC & eSel)
 {
   vector<string> allColNames;
   for (int i=0; i<m_groups.size(); i++)
@@ -408,13 +414,12 @@ bool QuerierC::checkSelGroupConflict(const ExpressionC & eSel)
   return true;
 }
 
-vector<ExpressionC> QuerierC::genSelExpression(const string & sSel, vector<string> & vAlias)
+void QuerierC::genSelExpression(vector<ExpressionC> & vSelections, const string & sSel, vector<string> & vAlias)
 {
-  vector<ExpressionC> vSelections;
   trace(DEBUG, "Analyzing selections from '%s'!\n", sSel.c_str());
-  vector<string> vSelStrs = split(sSel,',',"''()",'\\',{'(',')'},false,true);
+  vector<string> vSelStrs;
+  split(vSelStrs, sSel,',',"''()",'\\',{'(',')'},false,true);
   string sAlias, sAs=" as ";
-  ExpressionC eSel;
   for (int i=0; i<vSelStrs.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelStrs[i].c_str());
     string sSel = trim_copy(vSelStrs[i]);
@@ -422,17 +427,16 @@ vector<ExpressionC> QuerierC::genSelExpression(const string & sSel, vector<strin
       trace(FATAL, "Empty selection string!\n");
       continue;
     }
-    vector<string> vSelAlias = split(sSel,sAs,"''()",'\\',{'(',')'},false,true,false);
+    vector<string> vSelAlias;
+    split(vSelAlias, sSel,sAs,"''()",'\\',{'(',')'},false,true,false);
     sAlias = "";
     if (vSelAlias.size()>1)
       sAlias = upper_copy(trim_copy(vSelAlias[1]));
-    eSel = ExpressionC(vSelAlias[0]);
     //trace(DEBUG2,"Selection expression: '%s'\n",vSelAlias[0].c_str());
     //eSel.dump();
-    vSelections.push_back(eSel);
+    vSelections.push_back(ExpressionC(vSelAlias[0]));
     vAlias.push_back(sAlias);
   }
-  return vSelections;
 }
 
 bool QuerierC::analyzeSelString(){
@@ -441,7 +445,7 @@ bool QuerierC::analyzeSelString(){
   m_selnames.clear();
   vector<ExpressionC> vExpandedExpr; 
   vector<string> vAlias;
-  m_selections = genSelExpression(m_selstr, vAlias);
+  genSelExpression(m_selections, m_selstr, vAlias);
   for (int i=0; i<m_selections.size(); i++)
     if (i<vAlias.size()&& !vAlias[i].empty())
       m_selnames.push_back(vAlias[i]);
@@ -499,9 +503,9 @@ bool QuerierC::analyzeSelString(){
         switch(tmpSels[i].m_Function->m_funcID){
           case FOREACH:{
             if (m_groups.size()>0)
-              vExpandedExpr = tmpSels[i].m_Function->expandForeach(m_groups);
+              tmpSels[i].m_Function->expandForeach(vExpandedExpr, m_groups);
             else
-              vExpandedExpr = tmpSels[i].m_Function->expandForeach(m_fieldtypes.size());
+              tmpSels[i].m_Function->expandForeach(vExpandedExpr, m_fieldtypes.size());
             trace(DEBUG2,"Expanding FOREACH: '%s'\n",tmpSels[i].m_expStr.c_str());
             m_selections.erase(m_selections.begin()+i+extendedSelNum);
             m_selnames.erase(m_selnames.begin()+i+extendedSelNum);
@@ -582,18 +586,21 @@ bool QuerierC::assignSortStr(const string & sortstr)
 bool QuerierC::analyzeTreeStr()
 {
   clearTree();
-  vector<string> vRawStrs = split(m_treestr,';',"''()",'\\',{'(',')'},false,true);
+  vector<string> vRawStrs;
+  split(vRawStrs, m_treestr,';',"''()",'\\',{'(',')'},false,true);
   if (vRawStrs.size()<2){
     trace(FATAL,"You must provide tree keys and parent keys!\n");
     return false;
   }
   for (int i=0;i<vRawStrs.size();i++){
-    vector<string> vMapStrs = split(vRawStrs[i],':',"''()",'\\',{'(',')'},false,true);
+    vector<string> vMapStrs;
+    split(vMapStrs, vRawStrs[i],':',"''()",'\\',{'(',')'},false,true);
     if (vMapStrs.size()<2){
       trace(ERROR,"The key string format should be 'k:expr1...' or 'p:expr1..., skip it'!\n");
       continue;
     }
-    vector<string> vKeyStrs = split(vMapStrs[1],',',"''()",'\\',{'(',')'},false,true);
+    vector<string> vKeyStrs;
+    split(vKeyStrs, vMapStrs[1],',',"''()",'\\',{'(',')'},false,true);
     if (upper_copy(trim_copy(vMapStrs[0])).compare("K")==0){
       for (int j=0; j<vKeyStrs.size(); j++){
         m_treeProps.push_back(ExpressionC(vKeyStrs[j]));
@@ -643,13 +650,15 @@ bool QuerierC::assignTreeStr(const string & treestr)
 bool QuerierC::analyzeReportStr()
 {
   clearReport();
-  vector<string> vRawStrs = split(m_reportstr,',',"''()",'\\',{'(',')'},false,true);
+  vector<string> vRawStrs;
+  split(vRawStrs, m_reportstr,',',"''()",'\\',{'(',')'},false,true);
   if (vRawStrs.size()<2){
     trace(FATAL,"You must provide at one pair of selection index and aggregation operation!\n");
     return false;
   }
   for (int i=0;i<vRawStrs.size();i++){
-    vector<string> vMapStrs = split(vRawStrs[i],':',"''()",'\\',{'(',')'},false,true);
+    vector<string> vMapStrs;
+    split(vMapStrs, vRawStrs[i],':',"''()",'\\',{'(',')'},false,true);
     if (vMapStrs.size()<2){
       trace(FATAL,"The pair format should be 'selection_index:operation...'!\n");
       continue;
@@ -707,7 +716,7 @@ bool QuerierC::assignDupStr(const string & dupstr)
   return analyzeDupStr();
 }
 
-bool QuerierC::checkSortGroupConflict(const ExpressionC & eSort)
+bool QuerierC::checkSortGroupConflict(ExpressionC & eSort)
 {
   if (m_groups.size() > 0) {// checking if compatible with GROUP
     vector<string> allColNames;
@@ -729,11 +738,12 @@ bool QuerierC::checkSortGroupConflict(const ExpressionC & eSort)
 
 bool QuerierC::analyzeSortStr(){
   // if macro function is involved in select , need to wait util the first data analyzed to analyze sort expression
-  if (m_bToAnalyzeSelectMacro)
+  if (m_bToAnalyzeSelectMacro || m_sortstr.empty())
     return true;
   m_sorts.clear();
   trace(DEBUG, "Processing sorting string '%s'!\n", m_sortstr.c_str());
-  vector<string> vSorts = split(m_sortstr,',',"''()",'\\',{'(',')'},false,true);
+  vector<string> vSorts;
+  split(vSorts, m_sortstr,',',"''()",'\\',{'(',')'},false,true);
   SortProp keyProp;
   for (int i=0; i<vSorts.size(); i++){
     keyProp = SortProp();
@@ -743,7 +753,8 @@ bool QuerierC::analyzeSortStr(){
       trace(FATAL, "Empty sorting key!\n");
       return false;
     }
-    vector<string> vKP = split(sSort,' ',"''()",'\\',{'(',')'},false,true);
+    vector<string> vKP;
+    split(vKP, sSort,' ',"''()",'\\',{'(',')'},false,true);
     if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
       keyProp.direction = ASC;
     else
@@ -762,13 +773,13 @@ bool QuerierC::analyzeSortStr(){
           case FOREACH:{
             vector<ExpressionC> vExpandedExpr;
             if (m_groups.size()>0)
-              vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_groups);
+              keyProp.sortKey.m_Function->expandForeach(vExpandedExpr, m_groups);
             else
-              vExpandedExpr = keyProp.sortKey.m_Function->expandForeach(m_fieldtypes.size());
+              keyProp.sortKey.m_Function->expandForeach(vExpandedExpr, m_fieldtypes.size());
             SortProp keyPropE;
             for (int j=0; j<vExpandedExpr.size(); j++){
               keyPropE = SortProp();
-              vKP = split(vExpandedExpr[j].getEntireExpstr(),' ',"''()",'\\',{'(',')'},false,true);
+              split(vKP, vExpandedExpr[j].getEntireExpstr(),' ',"''()",'\\',{'(',')'},false,true);
               trace(DEBUG, "Splited from expanded expression '%s' to '%s'(%d)\n",vExpandedExpr[j].getEntireExpstr().c_str(),vKP[0].c_str(),vKP.size());
               if (vKP.size()<=1 || upper_copy(trim_copy(vKP[1])).compare("DESC")!=0)
                 keyPropE.direction = ASC;
@@ -806,7 +817,8 @@ bool QuerierC::analyzeSortStr(){
 
 bool QuerierC::assignMeanwhileString(const string & mwstr)
 {
-  vector<string> vSideWorks = split(mwstr,';',"''()",'\\',{'(',')'},false,true);
+  vector<string> vSideWorks;
+  split(vSideWorks, mwstr,';',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vSideWorks.size(); i++){
     size_t pos = findFirstSub(vSideWorks[i], " WHERE ", 0,"''()",'\\',{'(',')'},false );
     FilterC filter;
@@ -814,10 +826,10 @@ bool QuerierC::assignMeanwhileString(const string & mwstr)
     vector<string> vAlias;
     if (pos != string::npos){
       filter.setExpstr(trim_copy(vSideWorks[i].substr(pos+string(" WHERE ").length())));
-      vSelections = genSelExpression(trim_copy(vSideWorks[i].substr(0,pos)), vAlias);
+      genSelExpression(vSelections, trim_copy(vSideWorks[i].substr(0,pos)), vAlias);
     }else{
       filter.setExpstr("1=1");
-      vSelections = genSelExpression(trim_copy(vSideWorks[i]), vAlias);
+      genSelExpression(vSelections, trim_copy(vSideWorks[i]), vAlias);
     }
     m_sideFilters.push_back(filter);
     m_sideSelections.push_back(vSelections);
@@ -830,11 +842,14 @@ bool QuerierC::setFieldTypeFromStr(const string & setstr)
 {
   if (setstr.empty())
     return true;
-  vector<string> vSetFields = split(setstr,',',"''()",'\\',{'(',')'},false,true);
+  vector<string> vSetFields;
+  split(vSetFields, setstr,',',"''()",'\\',{'(',')'},false,true);
   string fieldname = "";
   for (int i=0; i<vSetFields.size(); i++){
-    vector<string> vField = split(vSetFields[i],' ',"''()",'\\',{'(',')'},false,true);
-    vField = vField.size()>=2?vField:split(vSetFields[i],'\t',"''()",'\\',{'(',')'},false,true);
+    vector<string> vField;
+    split(vField, vSetFields[i],' ',"''()",'\\',{'(',')'},false,true);
+    if (vField.size()<2)
+      split(vField, vSetFields[i],'\t',"''()",'\\',{'(',')'},false,true);
     if (vField[0].empty()){
       trace(FATAL, "Field name is empty!\n");
       return false;
@@ -874,9 +889,11 @@ void QuerierC::setUserVars(const string & variables)
   vector<ExpressionC> fakeSels;
   vector<string> fakeAlias;
   vector<ExpressionC> fakeExprs;
-  vector<string> vVariables = split(variables,';',"''()",'\\',{'(',')'},false,true);
+  vector<string> vVariables;
+  split(vVariables, variables,';',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vVariables.size(); i++){
-    vector<string> vNameVal = split(trim_copy(vVariables[i]),':',"''()",'\\',{'(',')'},false,true);
+    vector<string> vNameVal;
+    split(vNameVal, trim_copy(vVariables[i]),':',"''()",'\\',{'(',')'},false,true);
     if (vNameVal.size()<2){
       trace(FATAL, "Incorrect variable format!\n", vVariables[i].c_str());
       continue;
@@ -905,12 +922,16 @@ void QuerierC::setUserVars(const string & variables)
         trace(WARNING, "The filter has been defined in the first dynamic variable @R declaration, '%s' will be skipped!\n", vNameVal[3].c_str());
 
       fakeId++;
-      ExpressionC tmpExp;
+      //ExpressionC tmpExp;
+      //if (vNameVal.size()>1)
+      //  tmpExp = ExpressionC(trim_copy(vNameVal[1]));
+      //else
+      //  tmpExp = ExpressionC("''");
+      //fakeExprs.push_back(tmpExp);
       if (vNameVal.size()>1)
-        tmpExp = ExpressionC(trim_copy(vNameVal[1]));
+        fakeExprs.push_back(ExpressionC(trim_copy(vNameVal[1])));
       else
-        tmpExp = ExpressionC("''");
-      fakeExprs.push_back(tmpExp);
+        fakeExprs.push_back(ExpressionC("''"));
       continue;
     }
     bool bGlobal=false;
@@ -925,8 +946,9 @@ void QuerierC::setUserVars(const string & variables)
     }
     m_uservalnames.push_back(sVName);
     if (vNameVal.size()>2 && m_uservarexprs.find(sVName) == m_uservarexprs.end()){ // dynamic variable has an expression
-      ExpressionC tmpExp = ExpressionC(trim_copy(vNameVal[2]));
-      m_uservarexprs.insert(pair<string, ExpressionC> (sVName,tmpExp));
+      //ExpressionC tmpExp = ExpressionC(trim_copy(vNameVal[2]));
+      //m_uservarexprs.insert(pair<string, ExpressionC> (sVName,tmpExp));
+      m_uservarexprs.insert(pair<string, ExpressionC> (sVName,ExpressionC(trim_copy(vNameVal[2]))));
     }
   }
   // set m_sideSelections to get side data types in trialAnalyze()
@@ -951,9 +973,11 @@ void QuerierC::setUserMaroFuncs(const string & macrostr)
   g_userMacroFuncNames.clear();
   trace(DEBUG, "Setting macro functions from '%s' !\n", macrostr.c_str());
   m_usermacrostr = macrostr;
-  vector<string> vMacroraws = split(macrostr,';',"''()",'\\',{'(',')'},false,true);
+  vector<string> vMacroraws;
+  split(vMacroraws, macrostr,';',"''()",'\\',{'(',')'},false,true);
   for (int i=0; i<vMacroraws.size(); i++){
-    vector<string> vNameVal = split(trim_copy(vMacroraws[i]),':',"''()",'\\',{'(',')'},false,true);
+    vector<string> vNameVal;
+    split(vNameVal, trim_copy(vMacroraws[i]),':',"''()",'\\',{'(',')'},false,true);
     if (vNameVal.size()<2){
       trace(FATAL, "Incorrect macro function format!\n", vMacroraws[i].c_str());
       continue;
@@ -977,7 +1001,8 @@ void QuerierC::setUserMaroFuncs(const string & macrostr)
       string sParastr = trim_copy(readQuotedStr(expStr, pos, "~~", "''", '\0', {}));
       if (sParastr.empty() || pos<0)
         break;
-      vector<string> vMacroNamVal = split(sParastr,'=',"''()",'\\',{'(',')'},false,true);
+      vector<string> vMacroNamVal;
+      split(vMacroNamVal, sParastr,'=',"''()",'\\',{'(',')'},false,true);
       if (vMacroNamVal.size()==0 || trim_copy(vMacroNamVal[0]).empty()){
         trace(FATAL, "(1) Macro function parameter '%s' has an invalid definition! \n", sParastr.c_str());
         return;
@@ -1366,10 +1391,12 @@ long int thistime = curtime();
       //tmpExp.dump();
       //expressions[i].evalExpression(fieldvalues, varvalues, aggFuncs, anaFuncs, &m_sideDatasets, &matchedSideDatarow, &m_sideDatatypes, sResult, dts, true);
       if (expressions[i].containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
-        ExpressionC tmpExp;
-        tmpExp = expressions[i];
-        tmpExp.evalExpression(rds, sResult, dts, false);
-        anaEvaledExp->push_back(tmpExp);
+        //ExpressionC tmpExp;
+        //tmpExp = expressions[i];
+        //tmpExp.evalExpression(rds, sResult, dts, false);
+        //anaEvaledExp->push_back(tmpExp);
+        anaEvaledExp->push_back(expressions[i]);
+        (*anaEvaledExp)[anaEvaledExp->size()-1].evalExpression(rds, sResult, dts, false);
         trace(DEBUG, "evalAddExprArray: adding analytic function involved expression '%s':\n",expressions[i].getEntireExpstr().c_str());
       }else
         expressions[i].evalExpression(rds, sResult, dts, true);
@@ -1412,10 +1439,11 @@ void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* ana
       if (iSel >= 0){
         sResult = m_results[m_results.size()-1][iSel + 1];
         if (m_selections[iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
-          ExpressionC tmpExp;
-          tmpExp = m_selections[iSel];
-          tmpExp.evalExpression(rds, sResult, dts, false);
-          anaEvaledExp->push_back(tmpExp);
+          //ExpressionC tmpExp;
+          //tmpExp = m_selections[iSel];
+          //tmpExp.evalExpression(rds, sResult, dts, false);
+          //anaEvaledExp->push_back(tmpExp);
+          anaEvaledExp->push_back(m_selections[iSel]);
         }
       // if the sort key is a integer, get the result from the result set at the same sequence number
       //}else if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())<=m_selections.size()){
@@ -1423,17 +1451,21 @@ void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* ana
         //int iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str())-1;
         sResult = m_results[m_results.size()-1][m_sorts[i].iSel + 1];
         if (m_selections[m_sorts[i].iSel].containAnaFunc()){ // add a evaled expression from the mapped selections for analytic function involved expression
-          ExpressionC tmpExp;
-          tmpExp = m_selections[m_sorts[i].iSel];
-          tmpExp.evalExpression(rds, sResult, dts, false);
-          anaEvaledExp->push_back(tmpExp);
+          //ExpressionC tmpExp;
+          //tmpExp = m_selections[m_sorts[i].iSel];
+          //tmpExp.evalExpression(rds, sResult, dts, false);
+          //anaEvaledExp->push_back(tmpExp);
+          anaEvaledExp->push_back(m_selections[m_sorts[i].iSel]);
+          (*anaEvaledExp)[anaEvaledExp->size()-1].evalExpression(rds, sResult, dts, false);
         }
       }else{
        // m_sorts[i].sortKey.evalExpression(&fieldValues, &varValues, &aggGroupProp, &anaFuncData, sResult, dts, true);
         if (m_sorts[i].sortKey.containAnaFunc()) {// no actual result for analytic function yet. Keep the evaled expression
-          ExpressionC tmpExp;
-          tmpExp.evalExpression(rds, sResult, dts, false);
-          anaEvaledExp->push_back(tmpExp);
+          //ExpressionC tmpExp;
+          //tmpExp.evalExpression(rds, sResult, dts, false);
+          //anaEvaledExp->push_back(tmpExp);
+          anaEvaledExp->push_back(ExpressionC());
+          (*anaEvaledExp)[anaEvaledExp->size()-1].evalExpression(rds, sResult, dts, false);
         }else
           m_sorts[i].sortKey.evalExpression(rds, sResult, dts, true);
       }
@@ -1502,8 +1534,10 @@ thistime = curtime();
 m_evalanaexprtime += (curtime()-thistime);
 thistime = curtime();
 #endif // __DEBUG__
-      m_anaEvaledExp.push_back(anaEvaledExp);
-      addAnaFuncData(*rds.anaFuncs);
+      if (anaEvaledExp.size()>0){
+        m_anaEvaledExp.push_back(anaEvaledExp);
+        addAnaFuncData(*rds.anaFuncs);
+      }
 #ifdef __DEBUG__
 m_addanafuncdatatime += (curtime()-thistime);
 thistime = curtime();
@@ -1584,8 +1618,6 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > & anaFuncDa
       newData.clear();
       sortProps.clear();
       FunctionC* anaFunc;
-      vector<ExpressionC> funcExps;
-      ExpressionC funExp;
       SortProp sp;
       //Add sort props, the second part of parameters of analytic functions is the sort keys.
       for(int j=0;j<it->second.size();j++){
@@ -1596,23 +1628,21 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > & anaFuncDa
             sortKey.push_back(it->second[j]);
           else{
             anaFunc = NULL;
-            funcExps = m_anaEvaledExp[0];
-            funExp = ExpressionC();
-            for (int i=0; i<funcExps.size();i++){
-              //trace(DEBUG,"Searching analytic function '%s' from '%s'\n",it->first.c_str(),funcExps[i].getEntireExpstr().c_str());
-              //funcExps[i].dump();
-              anaFunc = funcExps[i].getAnaFunc(it->first);
+            for (int i=0; i<m_anaEvaledExp[0].size();i++){
+              //trace(DEBUG,"Searching analytic function '%s' from '%s'\n",it->first.c_str(),m_anaEvaledExp[0][i].getEntireExpstr().c_str());
+              //m_anaEvaledExp[0][i].dump();
+              anaFunc = m_anaEvaledExp[0][i].getAnaFunc(it->first);
               if (anaFunc)
                 break;
             }
             if (!anaFunc){
               trace(ERROR, "(1)Failed to find analytic function expression '%s'\n", it->first.c_str());
+              sp.sortKey = ExpressionC();
             }else{
               if (anaFunc->m_params.size() != it->second.size())
                 trace(ERROR, "(1)Analytic function '%s' sortkey size %d doesnot match the function parameter size %d!\n", it->first.c_str(), it->second.size(), anaFunc->m_params.size());
-              funExp = anaFunc->m_params[j-1];
+              sp.sortKey = anaFunc->m_params[j-1];
             }
-            sp.sortKey = funExp;
             sp.direction = isInt(it->second[j])&&atoi(it->second[j].c_str())<0?DESC:ASC;
             sortProps.push_back(sp);
           }
@@ -1700,10 +1730,10 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   rowValue.push_back(intToStr(m_line));
   rowValue.push_back(intToStr(m_matchcount+1));
   rowValue.push_back(intToStr(m_fileline));
-  vector<string> fieldValues;
+  vector<string> fieldValues(rowValue.begin()+1,rowValue.end()-3);
   unordered_map<string, string> varValues;
-  for (int i=0; i<rowValue.size()-4; i++)
-    fieldValues.push_back(rowValue[i+1]);
+  //for (int i=0; i<rowValue.size()-4; i++)
+  //  fieldValues.push_back(rowValue[i+1]);
     //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
   varValues.insert( pair<string,string>("@RAW",rowValue[0]));
   varValues.insert( pair<string,string>("@FILE",m_filename));
@@ -1897,8 +1927,10 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
         vEvaledParams.clear();
         anaFuncData.insert(pair< string,vector<string> >(it->first,vEvaledParams));
       }
-      m_anaEvaledExp.push_back(anaEvaledExp);
-      addAnaFuncData(anaFuncData);
+      if (anaEvaledExp.size()>0){
+        m_anaEvaledExp.push_back(anaEvaledExp);
+        addAnaFuncData(anaFuncData);
+      }
 #ifdef __DEBUG__
   m_addanafuncdatatime += (curtime()-thistime);
   thistime = curtime();
@@ -2001,7 +2033,8 @@ void QuerierC::trialAnalyze(const vector<string> & matcheddata)
       // process foreach
       for (int i=0; i<m_trimedInitSels.size(); i++){
         if (m_trimedInitSels[i].m_expType == FUNCTION && m_trimedInitSels[i].m_Function && m_trimedInitSels[i].m_Function->m_funcID == FOREACH){
-          vector<ExpressionC> vExpandedExpr = m_trimedInitSels[i].m_Function->expandForeach(m_trimmedFieldtypes.size());
+          vector<ExpressionC> vExpandedExpr;
+          m_trimedInitSels[i].m_Function->expandForeach(vExpandedExpr, m_trimmedFieldtypes.size());
           tmpSels.erase(tmpSels.begin()+i+extendedSelNum);
           for (int j=0; j<vExpandedExpr.size();j++)
             tmpSels.insert(tmpSels.begin()+i+j+extendedSelNum,vExpandedExpr[j]);
@@ -2023,6 +2056,8 @@ int QuerierC::searchNextReg()
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
+  long int searchstarttime = thistime;
+  long int rawanalyzestarttime;
 #endif // __DEBUG__
   int found = 0;
   try {
@@ -2031,6 +2066,7 @@ int QuerierC::searchNextReg()
 #ifdef __DEBUG__
   m_parsepatterntime += (curtime()-thistime);
   thistime = curtime();
+  rawanalyzestarttime = thistime;
 #endif // __DEBUG__
       m_line++;
       m_fileline++;
@@ -2068,7 +2104,7 @@ int QuerierC::searchNextReg()
         trialAnalyze(matcheddata);
       }
 #ifdef __DEBUG__
-  m_rawanalyzetime += (curtime()-thistime);
+  m_rawanalyzetime += (curtime()-rawanalyzestarttime);
   thistime = curtime();
 #endif // __DEBUG__
       // append variables
@@ -2109,7 +2145,7 @@ int QuerierC::searchNextReg()
   }
   //trace(DEBUG, "(1)Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
-  m_searchtime += (curtime()-thistime);
+  m_searchtime += (curtime()-searchstarttime);
 #endif // __DEBUG__
   return found;
 }
@@ -2118,15 +2154,29 @@ int QuerierC::searchNextWild()
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
+  long int searchstarttime = thistime;
+  long int rawanalyzestarttime;
 #endif // __DEBUG__
   trace(DEBUG, "Wild searching '%s'\n", m_regexstr.c_str());
   int found = 0;
   size_t pos = 0, opos;
   bool bEnded = false; // whether reach the end of current rawstr
   while (!bEnded && !m_rawstr.empty() && pos<m_rawstr.length()){
+#ifdef __DEBUG__
+  thistime = curtime();
+  rawanalyzestarttime = thistime;
+#endif // __DEBUG__
     // Unlike regular matching, wildcard and delimiter only match lines.
     opos = pos;
-    string sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
+    string sLine;
+    if (m_readmode==READLINE)
+      sLine=m_rawstr;
+    else
+      readLine(m_rawstr, pos, sLine);
+#ifdef __DEBUG__
+  m_readrawlinetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
     pos = 0;
@@ -2135,12 +2185,11 @@ int QuerierC::searchNextWild()
       m_rawstr = "";
     }
     //trace(DEBUG, "Read '%s'\n", sLine.c_str());
-#ifdef __DEBUG__
-  thistime = curtime();
-#endif // __DEBUG__
-    vector<string> matcheddata = matchWildcard(sLine,m_regexstr,m_quoters,'\\',{});
+    vector<string> matcheddata;
+    matchWildcard(matcheddata,sLine,m_regexstr,m_quoters,'\\',{});
 #ifdef __DEBUG__
   m_parsepatterntime += (curtime()-thistime);
+  thistime = curtime();
 #endif // __DEBUG__
     if (matcheddata.size()==0 && bEnded)
       continue;
@@ -2177,7 +2226,7 @@ int QuerierC::searchNextWild()
       trialAnalyze(matcheddata);
     }
 #ifdef __DEBUG__
-  m_rawanalyzetime += (curtime()-thistime);
+  m_rawanalyzetime += (curtime()-rawanalyzestarttime);
   thistime = curtime();
 #endif // __DEBUG__
     // append variables
@@ -2190,7 +2239,7 @@ int QuerierC::searchNextWild()
   }
   //trace(DEBUG, "(2)Found: %d in this searching\n", m_matchcount);
 #ifdef __DEBUG__
-  m_searchtime += (curtime()-thistime);
+  m_searchtime += (curtime()-searchstarttime);
 #endif // __DEBUG__
   return found;
 }
@@ -2198,8 +2247,9 @@ int QuerierC::searchNextWild()
 int QuerierC::searchNextDelm()
 {
 #ifdef __DEBUG__
-  long int searchstarttime = curtime();
   long int thistime = curtime();
+  long int searchstarttime = thistime;
+  long int rawanalyzestarttime;
 #endif // __DEBUG__
   trace(DEBUG, "Delm searching '%s'\n", m_regexstr.c_str());
   int found = 0;
@@ -2207,9 +2257,21 @@ int QuerierC::searchNextDelm()
   bool bEnded = false;
   string sLine;
   while (!bEnded && !m_rawstr.empty() && pos<m_rawstr.length()){
+#ifdef __DEBUG__
+  thistime = curtime();
+  rawanalyzestarttime = thistime;
+#endif // __DEBUG__
     // Unlike regular matching, wildcard and delimiter only match lines.
     opos = pos;
-    sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
+    sLine;
+    if (m_readmode==READLINE)
+      sLine=m_rawstr;
+    else
+      readLine(m_rawstr, pos,sLine);
+#ifdef __DEBUG__
+  m_readrawlinetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
     if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
@@ -2220,7 +2282,7 @@ int QuerierC::searchNextDelm()
     if (!m_delmkeepspace && !trim_copy(sLine).empty())
       sLine = trim_copy(sLine);
 #ifdef __DEBUG__
-  m_rawreadtime += (curtime()-thistime);
+  m_rawprocesstrimtime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
     vector<string> matcheddata;
@@ -2229,9 +2291,9 @@ int QuerierC::searchNextDelm()
         matcheddata.push_back(sLine);
     }else{
       if (m_delmMulitChar)
-        matcheddata = split(sLine,m_delimSet,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
+        split(matcheddata, sLine,m_delimSet,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
       else
-        matcheddata = split(sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded, true);
+        split(matcheddata, sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded, true);
     }
 #ifdef __DEBUG__
   m_parsepatterntime += (curtime()-thistime);
@@ -2276,7 +2338,7 @@ int QuerierC::searchNextDelm()
       trialAnalyze(matcheddata);
     }
 #ifdef __DEBUG__
-  m_rawanalyzetime += (curtime()-thistime);
+  m_rawanalyzetime += (curtime()-rawanalyzestarttime);
   thistime = curtime();
 #endif // __DEBUG__
     // append variables
@@ -2297,8 +2359,9 @@ int QuerierC::searchNextDelm()
 int QuerierC::searchNextLine()
 {
 #ifdef __DEBUG__
-  long int searchstarttime = curtime();
   long int thistime = curtime();
+  long int searchstarttime = thistime;
+  long int rawanalyzestarttime;
 #endif // __DEBUG__
   trace(DEBUG, "Line searching '%s'\n", m_regexstr.c_str());
   int found = 0;
@@ -2308,10 +2371,19 @@ int QuerierC::searchNextLine()
   while (!bEnded && !m_rawstr.empty() && pos<m_rawstr.length()){
 #ifdef __DEBUG__
   thistime = curtime();
+  rawanalyzestarttime = thistime;
 #endif // __DEBUG__
     // Unlike regular matching, wildcard and delimiter only match lines.
     opos = pos;
-    sLine = m_readmode==READLINE?m_rawstr:readLine(m_rawstr, pos);
+    sLine;
+    if (m_readmode==READLINE)
+      sLine=m_rawstr;
+    else
+      readLine(m_rawstr, pos, sLine);
+#ifdef __DEBUG__
+  m_readrawlinetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
     m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
     if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
@@ -2357,7 +2429,7 @@ int QuerierC::searchNextLine()
       trialAnalyze(matcheddata);
     }
 #ifdef __DEBUG__
-  m_rawanalyzetime += (curtime()-thistime);
+  m_rawanalyzetime += (curtime()-rawanalyzestarttime);
   thistime = curtime();
 #endif // __DEBUG__
     // append variables
@@ -2398,11 +2470,8 @@ int QuerierC::searchNext()
 int QuerierC::searchAll()
 {
   // initialize aggregation function expressions
-  ExpressionC exp;
-  for (unordered_map< string,GroupProp >::iterator it=m_initAggProps.begin(); it!=m_initAggProps.end(); ++it){
-    exp = ExpressionC(it->first);
-    m_aggFuncExps.insert(pair<string,ExpressionC>(it->first,exp));
-  }
+  for (unordered_map< string,GroupProp >::iterator it=m_initAggProps.begin(); it!=m_initAggProps.end(); ++it)
+    m_aggFuncExps.insert(pair<string,ExpressionC>(it->first,ExpressionC(it->first)));
 
   int totalfound = 0;
   //trace(DEBUG2, "Searching pattern: %s\n", m_regexstr.c_str());
@@ -2681,26 +2750,23 @@ bool QuerierC::processAnalyticB(const short int & iFuncID, const string & sFuncE
     }
     FunctionC* anaFunc;
     SortProp sp;
-    vector<ExpressionC> funcExps;
-    ExpressionC funExp;
     for (int j=0;j<iAnaGroupNum;j++){
       anaFunc = NULL;
-      funcExps = m_anaEvaledExp[0];
-      for (int i=0; i<funcExps.size();i++){
-        //trace(DEBUG,"(2)Searching analytic function '%s' from '%s'\n",sFuncExpStr.c_str(),funcExps[i].getEntireExpstr().c_str());
-        //funcExps[i].dump();
-        anaFunc = funcExps[i].getAnaFunc(sFuncExpStr);
+      for (int i=0; i<m_anaEvaledExp[0].size();i++){
+        //trace(DEBUG,"(2)Searching analytic function '%s' from '%s'\n",sFuncExpStr.c_str(),m_anaEvaledExp[0][i].getEntireExpstr().c_str());
+        //m_anaEvaledExp[0][i].dump();
+        anaFunc = m_anaEvaledExp[0][i].getAnaFunc(sFuncExpStr);
         if (anaFunc)
           break;
       }
       if (!anaFunc){
         trace(ERROR, "(2)Failed to find analytic function expression '%s'\n", sFuncExpStr.c_str());
+        sp.sortKey = ExpressionC();
       }else{
         if (anaFunc->m_params.size() < j)
           trace(ERROR, "(2)Analytic function '%s' parameter size %d is smaller than expected!\n", sFuncExpStr.c_str(), anaFunc->m_params.size());
-        funExp = anaFunc->m_params[j];
+        sp.sortKey = anaFunc->m_params[j];
       }
-      sp.sortKey = funExp;
       sp.direction = ASC;
       sortProps.push_back(sp);
     }
@@ -3653,8 +3719,9 @@ void QuerierC::outputExtraInfo(const size_t & total, const bool & bPrintHeader)
   trace(PERFM, ", Trial Analyze Columns time (detected rows: %d): %d\n", m_detectedTypeRows, m_trialanalyzetime);
   trace(PERFM, ", Searching (matched rows %d) time: %d. Break down:\n", m_line, m_searchtime);
   trace(PERFM, ",   Analyze raw content time: %d\n", m_rawanalyzetime);
-  trace(PERFM, ",   Read raw content time: %d\n", m_rawreadtime);
-  trace(PERFM, ",   Raw content pattern parsing time: %d\n", m_parsepatterntime);
+  trace(PERFM, ",     Read raw line time: %d\n", m_readrawlinetime);
+  trace(PERFM, ",     Read line process trim time: %d\n", m_rawprocesstrimtime);
+  trace(PERFM, ",     Raw content pattern parsing time: %d\n", m_parsepatterntime);
 
   trace(PERFM, ",   eval expression and filtering time: %d. Break down:\n", m_filtertime);
   trace(PERFM, ",     Run time data for evaling prepare time: %d\n", m_runtimedatapreparetime);
@@ -3698,7 +3765,7 @@ void QuerierC::outputExtraInfo(const size_t & total, const bool & bPrintHeader)
   trace(PERFM, ",   Eval macro parameter expression time: %d\n", g_evalexprmacpatime);
   trace(PERFM, ",   Eval expression calculation time: %d\n", g_evalexprcaltime);
   trace(PERFM, ", matched lines: %d\n", m_line);
-  //trace(PERFM, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, Trial Analyze Columns time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawreadtime, m_parsepatterntime, m_line,m_rawanalyzetime, m_trialanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalRawdatatime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
+  //trace(PERFM, "Total time: %d. Break down:\n, Searching time: %d\n, Read raw content time: %d\n, Split raw content time: %d\n, Analyze raw content(analyzed rows %d) time: %d\n, Trial Analyze Columns time: %d\n, filtering time: %d\n, extra filtering time: %d\n, sorting time: %d\n, constructing tree time: %d\n, unique time: %d\n, aggregation time: %d\n, analytic time: %d\n, eval group key time: %d\n, filter compare time: %d\n, extra filter compare time: %d\n, prepare Agg GP time: %d\n, eval agg expression time: %d\n, eval selection time: %d\n, eval sort time: %d\n, update restult time: %d\n, Output time: %d\n, matched lines: %d\n", m_totaltime, m_searchtime, m_rawprocesstrimtime, m_parsepatterntime, m_line,m_rawanalyzetime, m_trialanalyzetime, m_filtertime, m_extrafiltertime, m_sorttime, m_treetime,  m_uniquetime, m_grouptime, m_analytictime, m_evalGroupKeytime, m_filtercomptime, m_extrafiltercomptime, m_prepAggGPtime, m_evalAggExptime, m_evalRawdatatime, m_evalSorttime, m_updateResulttime, m_outputtime, m_line);
 #endif // __DEBUG__
 }
 

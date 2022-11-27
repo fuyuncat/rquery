@@ -522,21 +522,21 @@ size_t findFirstSub(const string & str, const string & lookfor, const size_t & p
   return -1;
 }
 
-string readLine(string str, size_t & pos)
+void readLine(const string & str, size_t & pos, string & sline)
 {
-  string sReturn="";
+  sline="";
   size_t origpos = pos;
   while(pos<str.length() && str[pos]!='\n'){
-    sReturn.push_back(str[pos]);
+    //sline.push_back(str[pos]);
     pos++;
   }
-  if (pos<str.length() && str[pos]=='\n')
+  if (pos<str.length() && str[pos]=='\n'){
+    sline.insert(0,str.c_str()+origpos,pos-origpos);
     pos++;
-  else{
+  }else{
     pos = origpos;
-    sReturn = "";
+    sline = "";
   }
-  return sReturn;
 }
 
 string readWordTillStop(const string & str, size_t & pos, const char & stopper, const char & escape)
@@ -551,9 +551,9 @@ string readWordTillStop(const string & str, size_t & pos, const char & stopper, 
   return sub;
 }
 
-vector<string> matchWildcard(const string & str, const string & wildStr, const string & quoters, const char & escape, const std::set<char> & nestedQuoters)
+void matchWildcard(vector<string> & matches, const string & str, const string & wildStr, const string & quoters, const char & escape, const std::set<char> & nestedQuoters)
 {
-  vector<string> matches;
+  matches.clear();
   size_t iBPos=0, iWPos=0;
   bool bToMatch;
   while (iWPos<wildStr.length() && iBPos<str.length()){
@@ -576,7 +576,6 @@ vector<string> matchWildcard(const string & str, const string & wildStr, const s
       }
     }
   }
-  return matches;
 }
 
 void replaceunquotedstr(string & str, const string & sReplace, const string & sNew, const string & quoters, const char & escape, const std::set<char> & nestedQuoters)
@@ -622,10 +621,10 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
   str = sReturn;
 }
 
-vector<string> split(const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement)
+void split(vector<string> & v, const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement)
 {
+  v.clear();
   trace(DEBUG, "Splitting string:'%s', quoters: '%s'\n",str.c_str(), quoters.c_str());
-  vector<string> v;
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.length()) {
@@ -666,14 +665,12 @@ vector<string> split(const string & str, const std::set<char> & delims, const st
 
   if (q.size() > 0)
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
-
-  return v;
 }
 
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-vector<string> split(const string & str, const char & delim, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement) 
+void split(vector<string> & v, const string & str, const char & delim, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement) 
 {
-  vector<string> v;
+  v.clear();
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.length()) {
@@ -682,6 +679,7 @@ vector<string> split(const string & str, const char & delim, const string & quot
       //trace(DEBUG, "(1)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       if (!skipemptyelement || i>begin)
         v.push_back(str.substr(begin, i-begin));
+        //v.push_back(string(str.c_str()+begin, i-begin));
       while(repeatable && i<str.length()-1 && str[i+1] == delim) // skip repeated delim
         i++;
       begin = i+1;
@@ -710,13 +708,12 @@ vector<string> split(const string & str, const char & delim, const string & quot
   trace(DEBUG, "(2)Split the end of the string:%d/%d\n",begin, str.length());
   if (!skipemptyelement || str.length()>begin)
     v.push_back(str.length()>begin?str.substr(begin, str.length()-begin):"");
+    //v.push_back(str.length()>begin?string(str.c_str()+begin, str.length()-begin):string(""));
   //if (begin<str.length() && (!skipemptyelement || str.length()>begin))
   //  v.push_back(str.substr(begin, str.length()-begin));
 
   if (q.size() > 0)
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
-
-  return v;
 }
 
 int compareStr(const string & str1, const size_t & str1pos, const size_t & str1len, const string & str2, const size_t & str2pos, const size_t & str2len, const bool & casesensive)
@@ -739,11 +736,13 @@ int compareStr(const string & str1, const size_t & str1pos, const size_t & str1l
 }
 
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
-vector<string> split(const string & str, string & delim, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement, const bool & delimcasesensive) 
+void split(vector<string> & v, const string & str, string & delim, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement, const bool & delimcasesensive) 
 {
-  if (delim.length()==1)
-    return split(str,delim[0],quoters,escape,nestedQuoters,repeatable,skipemptyelement);
-  vector<string> v;
+  v.clear();
+  if (delim.length()==1){
+    split(v, str,delim[0],quoters,escape,nestedQuoters,repeatable,skipemptyelement);
+    return;
+  }
   if (!delimcasesensive)
     delim = upper_copy(delim);
   size_t i = 0, j = 0, begin = 0;
@@ -787,8 +786,6 @@ vector<string> split(const string & str, string & delim, const string & quoters,
 
   if (q.size() > 0)
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
-
-  return v;
 }
 
 string trim_pair(const string & str, const string & pair)
@@ -2328,12 +2325,10 @@ string convertzone(const string & sdate, const string & sFmt, const string & fro
 //  return v;
 //}
 
-vector<int> genlist(const int& start, const int& end, const int& step)
+void genlist(vector<int> & vLiet, const int& start, const int& end, const int& step)
 {
-  vector<int> v;
   for (int i=start; i<=end; i+=step)
-    v.push_back(i);
-  return v;
+    vLiet.push_back(i);
 }
 
 // get the compatible data type from two data types
@@ -3355,18 +3350,17 @@ int anyDataCompare(const string & str1, const int & comparator, const string & s
       string fmt1, fmt2;
       bool bIsDate1 = true, bIsDate2 = true;
       int offSet1, offSet2;
-      string newstr1,newstr2;
       if (dts1.extrainfo.empty())
-        bIsDate1 = isDate(newstr1,offSet1,fmt1);
+        bIsDate1 = isDate(str1,offSet1,fmt1);
       else
         fmt1 = dts1.extrainfo;
       if (dts2.extrainfo.empty())
-        bIsDate2 = isDate(newstr2,offSet2,fmt2);
+        bIsDate2 = isDate(str2,offSet2,fmt2);
       else
         fmt2 = dts2.extrainfo;
       if (bIsDate1 && bIsDate2){
         struct tm tm1, tm2;
-        if (strToDate(newstr1, tm1, offSet1, fmt1) && strToDate(newstr2, tm2, offSet2, fmt2)){
+        if (strToDate(str1, tm1, offSet1, fmt1) && strToDate(str2, tm2, offSet2, fmt2)){
           //time_t t1 = mktime(&tm1);
           //time_t t2 = mktime(&tm2);
           //double diffs = difftime(t1, t2);
@@ -3742,9 +3736,9 @@ string getFirstToken(const string & str, const string & token){
 }
 
 //get all matched regelar token from a string
-vector < vector <string> > getAllTokens(const string & str, const string & token)
+void getAllTokens(vector < vector <string> > & findings, const string & str, const string & token)
 {
-  vector < vector <string> > findings;
+  findings.clear();
   string::const_iterator searchStart( str.begin() );
   try{
     sregex regexp = sregex::compile(token);
@@ -3758,9 +3752,7 @@ vector < vector <string> > getAllTokens(const string & str, const string & token
     }
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());
-    return findings;
   }
-  return findings;
 }
 
 string getFileError(const int & err)

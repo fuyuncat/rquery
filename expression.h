@@ -62,13 +62,13 @@ class ExpressionC
     DataTypeStruct analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>* fieldtypes, DataTypeStruct* rawDatatype, unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes); // analyze column ID & name from metadata, return data type of current node
     bool columnsAnalyzed();
     bool expstrAnalyzed();
-    bool groupFuncOnly() const; // check if the expression contains group (aggregation) function only except CONST
-    bool containGroupFunc() const; // check if the expression contains group (aggregation) function
-    bool containAnaFunc() const; // check if the expression contains analytic function
-    bool containRefVar() const; // check if the expression contains reference variable @R[][]
-    int getSideWorkID() const; // if the expression contains reference variable @R[][], return the first found side work ID (the first subscribe)
+    bool groupFuncOnly(); // check if the expression contains group (aggregation) function only except CONST
+    bool containGroupFunc(); // check if the expression contains group (aggregation) function
+    bool containAnaFunc(); // check if the expression contains analytic function
+    bool containRefVar(); // check if the expression contains reference variable @R[][]
+    int getSideWorkID(); // if the expression contains reference variable @R[][], return the first found side work ID (the first subscribe)
     void getAllColumnNames(vector<string> & fieldnames);  // get all potential column/variable (upper case)
-    bool inColNamesRange(const vector<string> & fieldnames) const; // check if all column/variable in a given list of names (upper case).
+    bool inColNamesRange(const vector<string> & fieldnames); // check if all column/variable in a given list of names (upper case).
     ExpressionC* cloneMe();
     std::set<int>  getAllColIDs(const int & side); // get all involved colIDs in this prediction
     unordered_map<int,string>  buildMap(); // build the prediction as a HashMap

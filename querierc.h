@@ -242,14 +242,14 @@ class QuerierC
     unordered_map< int,double > m_reportResult; // report aggregation results. mapping <selectionIndex>:<result>
 
     bool analyzeSelString();
-    vector<ExpressionC> genSelExpression(const string & sSel, vector<string> & vAlias);
+    void genSelExpression(vector<ExpressionC> & vSelections, const string & sSel, vector<string> & vAlias);
     bool analyzeSortStr();
     bool analyzeTreeStr();
     bool analyzeReportStr();
     bool analyzeDupStr();
     bool analyzeExtraFilterStr();
-    bool checkSelGroupConflict(const ExpressionC & eSel);
-    bool checkSortGroupConflict(const ExpressionC & eSort);
+    bool checkSelGroupConflict(ExpressionC & eSel);
+    bool checkSortGroupConflict(ExpressionC & eSort);
     void addResultOutputFileMap(vector<string>* fieldvalues, unordered_map<string,string>* varvalues, unordered_map< string,GroupProp >* aggFuncs, unordered_map< string,vector<string> >* anaFuncs, unordered_map< string, unordered_map<string,string> >* matchedSideDatarow);
     void doSideWorks(vector<string> * pfieldValues, unordered_map<string, string> * pvarValues, unordered_map< string,GroupProp > * paggGroupProp, unordered_map< string,vector<string> > * panaFuncData); // do side queries
     void getSideDatarow(vector< unordered_map< int,int > > & sideMatchedRowIDs, vector< unordered_map< string, unordered_map<string,string> > > & matchedSideDatarows);
@@ -295,8 +295,9 @@ class QuerierC
     long int m_savetreedatatime;
     long int m_appendnonselresulttime;
     long int m_addanafuncdatatime;
-    long int m_rawreadtime;
+    long int m_rawprocesstrimtime;
     long int m_rawanalyzetime;
+    long int m_readrawlinetime;
     long int m_parsepatterntime;
     long int m_trialanalyzetime;
     long int m_filtertime;

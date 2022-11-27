@@ -460,15 +460,15 @@ string exec(const string & cmd);
 //string string_format( const string& format, Args ... args );
 string readQuotedStr(const string & str, size_t& pos, const string & targetquoters, const string & quoters = "", const char & escape = '\\', const std::set<char> & nestedQuoters={}); // return most outer quoted string. pos is start pos and return the position of next char of the end of the quoted string.  
 int matchQuoters(const string & listStr, const size_t & offset, const string & quoters); // detect if quoters matched.
-vector<string> split(const string & str, string & delim, const string & quoters = "''", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & repeatable=false, const bool & skipemptyelement=false, const bool & delimcasesensive=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-vector<string> split(const string & str, const char & delim = ' ', const string & quoters = "''", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & repeatable=false, const bool & skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-vector<string> split(const string & str, const std::set<char> & delims = {' ','\t','\n','\r'}, const string & quoters = "''\"\"", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & repeatable=false, const bool & skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+void split(vector<string> & v, const string & str, string & delim, const string & quoters = "''", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & repeatable=false, const bool & skipemptyelement=false, const bool & delimcasesensive=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+void split(vector<string> & v, const string & str, const char & delim = ' ', const string & quoters = "''", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & repeatable=false, const bool & skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
+void split(vector<string> & v, const string & str, const std::set<char> & delims = {' ','\t','\n','\r'}, const string & quoters = "''\"\"", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & repeatable=false, const bool & skipemptyelement=false); // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 size_t findNthCharacter(const string & str, const std::set<char> & lookfor, const size_t & pos=0, const int & seq=1, const bool & forward=true, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}); // find the Nth(seq) position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, const size_t & pos=0, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 size_t findNthSub(const string & str, const string & lookfor, const size_t & pos=0, const int & seq=1, const bool & forward=true, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & casesensitive=true); // find the Nth(seq) position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 size_t findFirstSub(const string & str, const string & lookfor, const size_t & pos=0, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & casesensitive=true); // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-string readLine(string str, size_t & pos); // read a line
-vector<string> matchWildcard(const string & str, const string & wildStr, const string & quoters = "\"\"", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}); // match wildcard to transfer a string to a vector
+void readLine(const string & str, size_t & pos, string & sline); // read a line
+void matchWildcard(vector<string> & matches, const string & str, const string & wildStr, const string & quoters = "\"\"", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}); // match wildcard to transfer a string to a vector
 string readWordTillStop(const string & str, size_t & pos, const char & stopper='*', const char & escape = '\\'); // read the first word until reaches stopper
 string concatArray(const vector<string> & array, const string & delim = ""); // concatenate an array to string
 void eliminateDups(vector<string> & array); // eliminate duplicates
@@ -477,7 +477,7 @@ int startsWithWords(const string & str, const vector<string> & words, const int 
 int startsWithWords(const string & str, const vector<string> & words); // detect if string start with special words
 string removeSpace(const string & originalStr, const string & keepPattern); //remove space
 string getFirstToken(const string & str, const string & token); //get the first matched regelar token from a string
-vector < vector <string> > getAllTokens(const string & str, const string & token); //get all matched regelar token from a string
+void getAllTokens(vector < vector <string> > & findings, const string & str, const string & token); //get all matched regelar token from a string
 bool matchToken(const string & str, const string & token); // check if matched regelar token
 
 string trim_pair(const string & str, const string & pair);
@@ -588,7 +588,7 @@ int detectDataType(const string & str, string & extrainfo); // detect the data t
 DataTypeStruct getCompatibleDataType(const DataTypeStruct & ldatatype, const DataTypeStruct & rdatatype); // get the compatible data type from two data types
 
 //vector<string> split(const string& str, const string& delim); // split str to an array
-vector<int> genlist(const int& start, const int& end, const int& step); // generate a number array
+void genlist(vector<int> & vLiet, const int& start, const int& end, const int& step); // generate a number array
 
 string hostname();
 unordered_map< string,string > getmyips();

@@ -1663,26 +1663,43 @@ struct tm zonetime(const time_t & t1, const string & zone)
 // get the local time in the specific timezone
 struct tm zonetime(const time_t & t1, const int & iOffSet)
 {
-  struct tm tm;
-  if (iOffSet>=-1200 && iOffSet<=1200){
-    string sNewTimeZone = "GMT"+intToStr(iOffSet/100*-1);
-    tm = zonetime(t1, sNewTimeZone);
-  }else
-    tm = *(localtime(&t1));
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
+  struct tm curt = now();
+  time_t t2 = t1-(curt.tm_gmtoff-iOffSet*36);
+  struct tm tm = *(localtime(&t2));
+  tm.tm_gmtoff = iOffSet*36;
+  //if (iOffSet>=-1200 && iOffSet<=1200){
+  //  string sNewTimeZone = "GMT"+intToStr(iOffSet/100*-1);
+  //  tm = zonetime(t1, sNewTimeZone);
+  //}else
+  //  tm = *(localtime(&t1));
+#ifdef __DEBUG__
+  g_zonetimetime += curtime()-thistime;
+#endif // __DEBUG__
   return tm;
 }
 
 string dateToStr(struct tm & val, const int & iOffSet, const string & fmt)
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   try{
     char buffer [256];
     // trace(DEBUG2, "(2)Converting %d %d %d %d %d %d %d, format '%s' \n",val.tm_year+1900, val.tm_mon, val.tm_mday, val.tm_hour, val.tm_min, val.tm_sec, val.tm_isdst, fmt.c_str());
-    time_t t1 = mktime(&val);
-    int off = iOffSet;
-    //if (off==0 && fmt.find("%z") == string::npos) // no timezone provided, use local timezone.
-    //  off = localOffset();
-    struct tm tm = zonetime(t1, off);
+    // It's strange here. Before mktime, val doesnot have daylight saving time, after mktime, it has...
+    //time_t t1 = mktime(&val);
+    //struct tm tm = zonetime(t1, iOffSet);
+    // if need the offset with DST, can call now() to get tm_gmtoff.
+    struct tm tm = val;
+    addhours(tm, (iOffSet+timezone/36)/100);
+    tm.tm_gmtoff = iOffSet*36;
     if (strftime(buffer,256,fmt.c_str(),&tm)){
+#ifdef __DEBUG__
+  g_datetostrtime += curtime()-thistime;
+#endif // __DEBUG__
       return string(buffer);
       //trace(DEBUG2, "(3)Converting %d %d %d %d %d %d %d to '%s' \n",tm->tm_year+1900, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, tm->tm_isdst, string(buffer).c_str());
     }else {
@@ -2098,6 +2115,9 @@ void addtime(struct tm & tm, const int & diff, const char & unit)
 
 string truncdate(const string & datesrc, const string & fmt, const int & seconds)
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
   struct tm tm;
   string sResult, sFmt = fmt;
   int iOffSet;
@@ -2106,16 +2126,19 @@ string truncdate(const string & datesrc, const string & fmt, const int & seconds
   else if (strToDate(datesrc, tm, iOffSet, sFmt)){
     time_t t1 = mktime(&tm) - timezone; // adjust timezone
     time_t t2 = (time_t)(trunc((long double)t1/seconds))*seconds - timezone; // adjust timezone for gmtime
-    trace(DEBUG2, "(truncdate)(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d seconds: %d t2: %d timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, seconds, (long) t2, timezone);
+    //trace(DEBUG2, "(truncdate)(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d seconds: %d t2: %d timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, seconds, (long) t2, timezone);
     //tm = *(localtime(&t2));
     tm = *(gmtime(&t2));
     //tm = zonetime(t2, 0); // as tm returned from strToDate is GMT time
     sResult = dateToStr(tm, iOffSet, sFmt);
-    trace(DEBUG2, "(truncdate)(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    //trace(DEBUG2, "(truncdate)(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
     //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", seconds, datesrc.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
   }else{
     trace(ERROR, "(truncdate)'%s' is not a correct date!\n", datesrc.c_str());
   }
+#ifdef __DEBUG__
+  g_truncdatetime += curtime()-thistime;
+#endif // __DEBUG__
   return sResult;
 }
 

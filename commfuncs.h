@@ -28,7 +28,7 @@
 
 using namespace std;
 
-#define VERSION "v1.22"
+#define VERSION "v1.221"
 
 #define UNKNOWN 0
 
@@ -430,6 +430,9 @@ extern std::set<string> g_userMacroFuncNames; // the global array is used for id
 
 #ifdef __DEBUG__
 extern long int g_strtodatetime;
+extern long int g_datetostrtime;
+extern long int g_zonetimetime;
+extern long int g_truncdatetime;
 extern long int g_evalexprtime;
 extern long int g_evalexprconsttime;
 extern long int g_evalexprfunctime;

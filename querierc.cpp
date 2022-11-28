@@ -56,6 +56,9 @@ vector<string>::const_iterator namesaving_smatch::names_end() const
 
 #ifdef __DEBUG__
 long int g_strtodatetime;
+long int g_datetostrtime;
+long int g_zonetimetime;
+long int g_truncdatetime;
 #endif // __DEBUG__
 
 QuerierC::QuerierC()
@@ -164,6 +167,9 @@ void QuerierC::init()
   m_outputtime = 0;
   
   g_strtodatetime = 0;
+  g_datetostrtime = 0;
+  g_zonetimetime = 0;
+  g_truncdatetime = 0;
   g_evalexprtime = 0;
   g_evalexprconsttime = 0;
   g_evalexprfunctime = 0;
@@ -1744,12 +1750,12 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   varValues.insert( pair<string,string>("@%",intToStr(rowValue.size()-4)));
   varValues.insert( pair<string,string>("@DUPID","1"));
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
-  static unordered_map< string,GroupProp > aggGroupProp;
-  static unordered_map< string,vector<string> > anaFuncData;
+  unordered_map< string,GroupProp > aggGroupProp;
+  unordered_map< string,vector<string> > anaFuncData;
   vector< unordered_map< int,int > > sideMatchedRowIDs;
   vector< unordered_map< string, unordered_map<string,string> > > matchedSideDatarows;
-  static unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
-  static RuntimeDataStruct rds;
+  unordered_map< string, unordered_map<string,string> > matchedSideDatarow;
+  RuntimeDataStruct rds;
   rds.fieldvalues = &fieldValues;
   rds.varvalues = &varValues;
   rds.aggFuncs = &aggGroupProp;
@@ -1869,15 +1875,15 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
         else // group expressions to the sorting keys
           for (int i=0; i<m_groups.size(); i++){
             m_groups[i].evalExpression(rds, sResult, dts, true);
-            trace(DEBUG2, "Adding '%s' for Group '%s', eval from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str(),rowValue[0].c_str());
+            //trace(DEBUG2, "Adding '%s' for Group '%s', eval from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str(),rowValue[0].c_str());
             groupExps.push_back(sResult);
           }
         //trace(DEBUG2, "Checking  '%s' (%d)\n", groupExps[0].c_str(), m_aggrOnly);
+        m_groupKeys.insert(groupExps);
 #ifdef __DEBUG__
   m_evalGroupKeytime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
-        m_groupKeys.insert(groupExps);
         unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it1 = m_aggRowValues.find(groupExps);
         unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > >::iterator it2 = m_aggGroupProp.find(groupExps);
         if (it2 == m_aggGroupProp.end()){
@@ -3756,7 +3762,10 @@ void QuerierC::outputExtraInfo(const size_t & total, const bool & bPrintHeader)
   trace(PERFM, ", prepare Agg GP time: %d\n", m_prepAggGPtime);
   trace(PERFM, ", eval agg expression time: %d\n", m_evalAggExptime);
   trace(PERFM, ", Output time: %d\n", m_outputtime);
+  trace(PERFM, ", Truncate date time: %d\n", g_truncdatetime);
   trace(PERFM, ", Convert string to date time: %d\n", g_strtodatetime);
+  trace(PERFM, ", Convert date to string time: %d\n", g_datetostrtime);
+  trace(PERFM, ", Zonetime time: %d\n", g_zonetimetime);
   trace(PERFM, ", Eval expression time: %d. Break down:\n", g_evalexprtime);
   trace(PERFM, ",   Eval const expression time: %d\n", g_evalexprconsttime);
   trace(PERFM, ",   Eval function expression time: %d.\n", g_evalexprfunctime);

@@ -630,9 +630,14 @@ void quicksplit(vector<string> & v, const string & str, const std::set<char> & d
     }else
       p++;
   }
-  token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
-  if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
-    v.push_back(token);
+  if (nq>0 || b!=p || (b==p && !skipemptyelement)){ // whether add the last empty element.
+    token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+    if (!skipemptyelement || token.length()>0)
+      v.push_back(token);
+  }
+  //token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+  //if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
+  //  v.push_back(token);
 }
 
 void split(vector<string> & v, const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement)
@@ -835,7 +840,7 @@ void quicksplit(vector<string> & v, const string & str, const char & delim, cons
     }else
       p++;
   }
-  if (nq>0 || b!=p || !repeatable){ // skip repeated delim
+  if (nq>0 || b!=p || (b==p && !skipemptyelement)){ // whether add the last empty element.
     token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
     if (!skipemptyelement || token.length()>0)
       v.push_back(token);
@@ -934,9 +939,14 @@ void quicksplit(vector<string> & v, const string & str, string & delim, const st
     }else
       p++;
   }
-  token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
-  if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
-    v.push_back(token);
+  if (nq>0 || b!=p || (b==p && !skipemptyelement)){ // whether add the last empty element.
+    token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+    if (!skipemptyelement || token.length()>0)
+      v.push_back(token);
+  }
+  //token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+  //if ((!skipemptyelement) || token.length()>0) // skip repeated delim
+  //  v.push_back(token);
 }
 
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.

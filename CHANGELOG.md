@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.222] 2022-11-29
+   Fix bug: Expression goes wrong when quoters involved.<br/>
    # [1.221] 2022-11-29
    Enhancement: Improved performance of split().<br/>
    Enhancement: Further performance improvement: avoid converting int to size_t.<br/>

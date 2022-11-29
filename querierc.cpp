@@ -2300,6 +2300,7 @@ int QuerierC::searchNextDelm()
         split(matcheddata, sLine,m_delimSet,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
       else
         split(matcheddata, sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded, true);
+        //quicksplit(matcheddata, sLine,m_regexstr[0],m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
     }
 #ifdef __DEBUG__
   m_parsepatterntime += (curtime()-thistime);

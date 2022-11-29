@@ -522,23 +522,6 @@ size_t findFirstSub(const string & str, const string & lookfor, const size_t & p
   return -1;
 }
 
-void readLine(const string & str, size_t & pos, string & sline)
-{
-  sline="";
-  size_t origpos = pos;
-  while(pos<str.length() && str[pos]!='\n'){
-    //sline.push_back(str[pos]);
-    pos++;
-  }
-  if (pos<str.length() && str[pos]=='\n'){
-    sline.insert(0,str.c_str()+origpos,pos-origpos);
-    pos++;
-  }else{
-    pos = origpos;
-    sline = "";
-  }
-}
-
 string readWordTillStop(const string & str, size_t & pos, const char & stopper, const char & escape)
 {
   string sub="";
@@ -621,9 +604,42 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
   str = sReturn;
 }
 
+void quicksplit(vector<string> & v, const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const bool & repeatable, const bool & skipemptyelement)
+{
+  string token;
+  size_t nq=0, p=0, b=0;
+  while(p<str.length()){
+    // check quoters
+    if (b==p){
+      nq=0;
+      for (size_t i=0;i<quoters.length();i+=2) // check multiple quoters
+        if (str[p]==quoters[i] && i+1<quoters.length()){
+          nq=i+1;
+          break;
+        }
+    }
+    if ((nq<=0 && delims.find(str[p])!=delims.end()) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq])){
+      token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+      if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
+        v.push_back(token);
+      token="";
+      p++;
+      b=p;
+    }else
+      p++;
+  }
+  token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+  if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
+    v.push_back(token);
+}
+
 void split(vector<string> & v, const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement)
 {
   v.clear();
+  if (nestedQuoters.size()==0){
+    quicksplit(v, str, delims, quoters, escape, repeatable, skipemptyelement);
+    return;
+  }
   trace(DEBUG, "Splitting string:'%s', quoters: '%s'\n",str.c_str(), quoters.c_str());
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
@@ -667,6 +683,161 @@ void split(vector<string> & v, const string & str, const std::set<char> & delims
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
 }
 
+bool readutill(const string & str, size_t & pos, string & sub, const char & delim)
+{
+  sub="";
+  for (;pos<str.length();pos++){
+    if (str[pos]!=delim)
+      sub.push_back(str[pos]);
+    else{
+      pos++;
+      break;
+    }
+  }
+  return pos<str.length();
+}
+
+istream& mygetline(istream& stream, string& str, const char & delim)
+{
+  char ch;
+  str.clear();
+  //stringstream os;
+  while (stream.get(ch) && ch != delim)
+    str.push_back(ch);
+    //os<<ch;
+  //str=os.str();
+  return stream;
+}
+
+bool readLine(const string & str, size_t & pos, string & sline, const char & delim)
+{
+  sline="";
+  size_t origpos = pos;
+  while(pos<str.length() && str[pos]!=delim){
+    //sline.push_back(str[pos]);
+    pos++;
+  }
+  if (pos<str.length() && str[pos]==delim){
+    sline.insert(0,str.c_str()+origpos,pos-origpos);
+    pos++;
+    return true;
+  }else{
+    pos = origpos;
+    sline = "";
+    return false;
+  }
+}
+
+void quicksplit(vector<string> & v, const string & str, const char & delim, const string & quoters, const char & escape, const bool & repeatable, const bool & skipemptyelement)
+{
+  //stringstream ss(str);
+  //string e;
+  //size_t pos=0;
+  ////while (getline(ss, e, delim)){
+  //while (readLine(str, pos, e, delim)){
+  ////while (readutill(str, pos, e, delim)){
+  //  int nq=-1;
+  //  for (size_t i=0;i<quoters.length();i+=2) // check multiple quoters
+  //    if (e[0]==quoters[i] && i+1<quoters.length()){
+  //      nq=i+1;
+  //      break;
+  //    }
+  //  if (nq>0){
+  //    e.push_back(delim);
+  //    string more;
+  //    //getline(ss, more, quoters[nq]);
+  //    readLine(str, pos, more, quoters[nq]);
+  //    //readutill(str, pos, more, quoters[nq]);
+  //    more.push_back(quoters[nq]);
+  //    v.push_back(e+more);
+  //  }else
+  //    v.push_back(e);
+  //}
+
+  //stringstream os;
+  //char ch,qc;
+  size_t nq=0, s=0;
+  string token;
+  //while(ss.get(ch)){
+    //stringstream qs(quoters);
+    //if (s==1){
+    //  char fc=os.str()[0];
+    //  nq=-1;
+    //  for (size_t i=0;i<quoters.length();i+=2) // check multiple quoters
+    //    if (fc==quoters[i] && i+1<quoters.length()){
+    //      nq=i+1;
+    //      break;
+    //    }
+    //}
+    //if ((nq<=0 && ch!=delim) || (nq>0 && ch!=quoters[nq])){
+    //if (ch!=delim){
+    //if (*p!=delim){
+      //os<<ch;
+      //token.push_back(ch);
+    //  token.push_back(*p);
+      //s++;
+    //}else{
+      //if (nq>0){
+      //  os<<quoters[nq];
+      //  nq=-1;
+      //}else{
+        //if (repeatable && s==0)// skip repeated delim
+        //  continue;
+        //v.push_back(os.str());
+        //os.str("");
+    //    v.push_back(token);
+    //    token="";
+        //s=0;
+      //}
+    //}
+  //if (s>0 || !repeatable)
+    //v.push_back(os.str());
+
+  //auto p = str.cbegin(), b=p;
+  //while(p!=str.cend()){
+  //  if (*p==delim){
+  //    if (b!=p || !repeatable){ // skip repeated delim
+  //      //v.push_back(string(b,p));
+  //    }
+  //    p++;
+  //    b=p;
+  //  }else
+  //    p++;
+  //}
+  //if (b!=p || !repeatable) // skip repeated delim
+  //  v.push_back(token);
+
+  size_t p=0, b=0;
+  while(p<str.length()){
+    // check quoters
+    if (b==p){
+      nq=0;
+      for (size_t i=0;i<quoters.length();i+=2) // check multiple quoters
+        if (str[p]==quoters[i] && i+1<quoters.length()){
+          nq=i+1;
+          break;
+        }
+    }
+    if ((nq<=0 && str[p]==delim) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq])){
+      if (nq>0 || b!=p || !repeatable){ // skip repeated delim
+        token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+        if (!skipemptyelement || token.length()>0)
+          v.push_back(token);
+        token="";
+        //v.push_back(string(b,p));
+      }
+      p++;
+      b=p;
+    }else
+      p++;
+  }
+  if (nq>0 || b!=p || !repeatable){ // skip repeated delim
+    token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+    if (!skipemptyelement || token.length()>0)
+      v.push_back(token);
+  }
+}
+
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
 void split(vector<string> & v, const string & str, const char & delim, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement) 
 {
@@ -705,7 +876,7 @@ void split(vector<string> & v, const string & str, const char & delim, const str
       }
     ++i;
   }
-  trace(DEBUG, "(2)Split the end of the string:%d/%d\n",begin, str.length());
+  //trace(DEBUG, "(2)Split the end of the string:%d/%d\n",begin, str.length());
   if (!skipemptyelement || str.length()>begin)
     v.push_back(str.length()>begin?str.substr(begin, str.length()-begin):"");
     //v.push_back(str.length()>begin?string(str.c_str()+begin, str.length()-begin):string(""));
@@ -735,14 +906,52 @@ int compareStr(const string & str1, const size_t & str1pos, const size_t & str1l
     return 1;
 }
 
+void quicksplit(vector<string> & v, const string & str, string & delim, const string & quoters, const char & escape, const bool & repeatable, const bool & skipemptyelement, const bool & delimcasesensive)
+{
+  string token;
+  size_t nq=0, p=0, b=0;
+  while(p<str.length()){
+    // check quoters
+    if (b==p){
+      nq=0;
+      for (size_t i=0;i<quoters.length();i+=2) // check multiple quoters
+        if (str[p]==quoters[i] && i+1<quoters.length()){
+          nq=i+1;
+          break;
+        }
+    }
+    if ((nq<=0 && str.length()>=p+delim.length() && compareStr(str,p,delim.length(),delim,0,delim.length(),delimcasesensive)==0) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq])){
+      token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+      if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
+        v.push_back(token);
+      token="";
+      p=p+(nq<=0?delim.length():1);
+      b=p;
+    }else
+      p++;
+  }
+  token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+  if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
+    v.push_back(token);
+}
+
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
 void split(vector<string> & v, const string & str, string & delim, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement, const bool & delimcasesensive) 
 {
   v.clear();
+  if (skipemptyelement && str.empty())
+    return;
   if (delim.length()==1){
-    split(v, str,delim[0],quoters,escape,nestedQuoters,repeatable,skipemptyelement);
+    if (nestedQuoters.size()==0)
+      quicksplit(v, str, delim[0], quoters, escape, repeatable, skipemptyelement);
+    else
+      split(v, str,delim[0],quoters,escape,nestedQuoters,repeatable,skipemptyelement);
+    return;
+  }else if (nestedQuoters.size()==0){
+    quicksplit(v, str, delim, quoters, escape, repeatable, skipemptyelement, delimcasesensive);
     return;
   }
+
   if (!delimcasesensive)
     delim = upper_copy(delim);
   size_t i = 0, j = 0, begin = 0;
@@ -1840,8 +2049,6 @@ bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string &
   }
   string sRaw, sTimeZone, sFm = fmt;
   iOffSet = 0;
-  //bool localTime = false;
-  //short int iOffOp = PLUS;
   sRaw = stripTimeZone(str, iOffSet, sTimeZone);
   size_t zpos = sFm.find("%z");
   if (sFm.length()>5 && zpos != string::npos){
@@ -1853,8 +2060,6 @@ bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string &
       //trace(DEBUG2, "'%s' (format: '%s') should not contain timezone '%s' \n", str.c_str(), sFm.c_str(), sTimeZone.c_str());
       return false;
     }
-    //iOffSet = localOffset();
-    //localTime = true;
   }
   // bare in mind: strptime will ignore %z. means we need to treat its returned time as GMT time
   char * c = strptime(sRaw.c_str(), sFm.c_str(), &tm);
@@ -1862,23 +2067,10 @@ bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string &
   cleanuptm(tm);
   bool bResult=false;
   if (c && c == sRaw.c_str()+sRaw.length()){
-  //if (c && string(c).empty()){
-    //trace(DEBUG2, "(1)Converting '%s' => %d %d %d %d %d %d %d offset %d format '%s' \n",sRaw.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst, iOffSet, sFm.c_str());
     tm.tm_isdst = 0;
-    //string sDate = dateToStr(tm, 0, sFm); // as tm got from strptime ignored offset, need to set offset to 0
-    //trace(DEBUG2, "(2)Converting '%s' (%s) get '%s' \n",sRaw.c_str(), sFm.c_str(), sDate.c_str());
-    //if (sDate.compare(sRaw) != 0)
-    //  return false;
     if (iOffSet != 0){
       addhours(tm, iOffSet/100*-1);
-      //tm.tm_hour = tm.tm_hour+(iOffSet/100*-1);
     }
-    //if (localTime)
-    //  iOffSet = 0;
-    //time_t t1;
-    //t1 = mktime(&tm);
-    //tm = zonetime(t1, iOffSet*-1); // we cannot get any local time as strptime ignored the timezone, return GMT time only.
-    //tm.tm_isdst = 0;
     //trace(DEBUG2, "(3)Converting '%s'(format '%s') to local time => %d %d %d %d %d %d %d \n",str.c_str(), fmt.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst);
     //trace(DEBUG, "Trying final get format %s : %s\n", str.c_str(), fmt.c_str());
     bResult = true;

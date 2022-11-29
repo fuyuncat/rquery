@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.221] 2022-11-29
+   Enhancement: Improved performance of split().<br/>
    # [1.221] 2022-11-28
    Fix bug: Aggregation function return wrong result.<br/>
    # [1.22] 2022-11-28

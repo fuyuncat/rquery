@@ -604,92 +604,6 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
   str = sReturn;
 }
 
-void quicksplit(vector<string> & v, const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const bool & repeatable, const bool & skipemptyelement)
-{
-  string token;
-  size_t nq=0, p=0, b=0;
-  while(p<str.length()){
-    // check quoters
-    if (b==p){
-      nq=0;
-      for (size_t i=0;i<quoters.length();i+=2) // check multiple quoters
-        if (str[p]==quoters[i] && i+1<quoters.length()){
-          nq=i+1;
-          break;
-        }
-    }
-    if ((nq<=0 && delims.find(str[p])!=delims.end()) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq] && (p>=str.length()-1 || delims.find(str[p+1])!=delims.end()))){
-      token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
-      if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
-        v.push_back(token);
-      token="";
-      p++;
-      if (nq>0 && p<str.length()-1)
-        p++;
-      b=p;
-    }else
-      p++;
-  }
-  if (nq>0 || b!=p || (b==p && !skipemptyelement)){ // whether add the last empty element.
-    token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
-    if (!skipemptyelement || token.length()>0)
-      v.push_back(token);
-  }
-  //token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
-  //if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
-  //  v.push_back(token);
-}
-
-void split(vector<string> & v, const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement)
-{
-  v.clear();
-  if (nestedQuoters.size()==0){
-    quicksplit(v, str, delims, quoters, escape, repeatable, skipemptyelement);
-    return;
-  }
-  trace(DEBUG, "Splitting string:'%s', quoters: '%s'\n",str.c_str(), quoters.c_str());
-  size_t i = 0, j = 0, begin = 0;
-  vector<int> q;
-  while(i < str.length()) {
-    if (delims.find(str[i])!=delims.end() && (i==0 || (i>0 && str[i-1]!=escape)) && q.size()==0) {
-      trace(DEBUG, "(1)found delim '%s', split string:'%s' (%d to %d)\n",str.substr(i,1).c_str(),str.substr(begin, i-begin).c_str(), begin, i);
-      if (!skipemptyelement || i>begin)
-        v.push_back(str.substr(begin, i-begin));
-      while(repeatable && i<str.length()-1 && delims.find(str[i+1])!=delims.end()) // skip repeated delim
-        i++;
-      begin = i+1;
-    }else{
-      if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
-        i++;
-    }
-    if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
-      if (i>0 && str[i-1]!=escape){
-        //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
-        q.pop_back();
-        ++i;
-        continue;
-      }
-    if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (size_t k=0; k<(size_t)(quoters.length()/2); k++){
-        if (str[i] == quoters[k*2])
-          if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
-            //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
-            q.push_back(k*2+1); // quoted start, need to pair the right quoter
-            break;
-          }
-      }
-    ++i;
-  }
-  trace(DEBUG, "(1)Split the end of the string:%d/%d\n",begin, str.length());
-  if (!skipemptyelement || str.length()>begin)
-    v.push_back(str.length()>begin?str.substr(begin, str.length()-begin):"");
-  //if (begin<str.length() && (!skipemptyelement || str.length()>begin))
-  //  v.push_back(str.substr(begin, str.length()-begin));
-
-  if (q.size() > 0)
-    trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
-}
-
 bool readutill(const string & str, size_t & pos, string & sub, const char & delim)
 {
   sub="";
@@ -826,7 +740,7 @@ void quicksplit(vector<string> & v, const string & str, const char & delim, cons
         }
     }
     if ((nq<=0 && str[p]==delim) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq] && (p>=str.length()-1 || str[p+1]==delim))){
-      if (nq>0 || b!=p || !repeatable){ // skip repeated delim
+      if (nq>0 || p==0|| b!=p || !repeatable){ // skip repeated delim
         token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
         if (!skipemptyelement || token.length()>0)
           v.push_back(token);
@@ -840,7 +754,7 @@ void quicksplit(vector<string> & v, const string & str, const char & delim, cons
     }else
       p++;
   }
-  if (nq>0 || b!=p || (b==p && !skipemptyelement)){ // whether add the last empty element.
+  if (b!=p || (b==p && nq==0 && !skipemptyelement)){ // whether add the last empty element.
     token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
     if (!skipemptyelement || token.length()>0)
       v.push_back(token);
@@ -850,6 +764,10 @@ void quicksplit(vector<string> & v, const string & str, const char & delim, cons
 // split string by delim, skip the delim in the quoted part. The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting. Nested quoters like "()" can quote other quoters, while any other quoters in unnested quoters like ''{}// should be ignored.
 void split(vector<string> & v, const string & str, const char & delim, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement) 
 {
+  if (nestedQuoters.size()==0){
+    quicksplit(v, str, delim, quoters, escape, repeatable, skipemptyelement);
+    return;
+  }
   v.clear();
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
@@ -896,6 +814,96 @@ void split(vector<string> & v, const string & str, const char & delim, const str
     trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
 }
 
+void quicksplit(vector<string> & v, const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const bool & repeatable, const bool & skipemptyelement)
+{
+  if (delims.size()==0){
+    quicksplit(v, str, *delims.begin(), quoters, escape, repeatable, skipemptyelement);
+    return;
+  }
+  string token;
+  size_t nq=0, p=0, b=0;
+  while(p<str.length()){
+    // check quoters
+    if (b==p){
+      nq=0;
+      for (size_t i=0;i<quoters.length();i+=2) // check multiple quoters
+        if (str[p]==quoters[i] && i+1<quoters.length()){
+          nq=i+1;
+          break;
+        }
+    }
+    if ((nq<=0 && delims.find(str[p])!=delims.end()) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq] && (p>=str.length()-1 || delims.find(str[p+1])!=delims.end()))){
+      token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+      if (p==0 || (!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
+        v.push_back(token);
+      token="";
+      p++;
+      if (nq>0 && p<str.length()-1)
+        p++;
+      b=p;
+    }else
+      p++;
+  }
+  if (b!=p || (b==p && nq==0 && !skipemptyelement)){ // whether add the last empty element.
+    token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+    if (!skipemptyelement || token.length()>0)
+      v.push_back(token);
+  }
+  //token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
+  //if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
+  //  v.push_back(token);
+}
+
+void split(vector<string> & v, const string & str, const std::set<char> & delims, const string & quoters, const char & escape, const std::set<char> & nestedQuoters, const bool & repeatable, const bool & skipemptyelement)
+{
+  v.clear();
+  if (nestedQuoters.size()==0){
+    quicksplit(v, str, delims, quoters, escape, repeatable, skipemptyelement);
+    return;
+  }
+  trace(DEBUG, "Splitting string:'%s', quoters: '%s'\n",str.c_str(), quoters.c_str());
+  size_t i = 0, j = 0, begin = 0;
+  vector<int> q;
+  while(i < str.length()) {
+    if (delims.find(str[i])!=delims.end() && (i==0 || (i>0 && str[i-1]!=escape)) && q.size()==0) {
+      trace(DEBUG, "(1)found delim '%s', split string:'%s' (%d to %d)\n",str.substr(i,1).c_str(),str.substr(begin, i-begin).c_str(), begin, i);
+      if (!skipemptyelement || i>begin)
+        v.push_back(str.substr(begin, i-begin));
+      while(repeatable && i<str.length()-1 && delims.find(str[i+1])!=delims.end()) // skip repeated delim
+        i++;
+      begin = i+1;
+    }else{
+      if (str[i]==escape && i<str.length()-1 && (quoters.find(str[i+1]) >= 0 || nestedQuoters.find(str[i+1]) != nestedQuoters.end())) // skip escape
+        i++;
+    }
+    if (q.size()>0 && str[i] == quoters[q[q.size()-1]]) // checking the latest quoter
+      if (i>0 && str[i-1]!=escape){
+        //trace(DEBUG, "Pop out quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+        q.pop_back();
+        ++i;
+        continue;
+      }
+    if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
+      for (size_t k=0; k<(size_t)(quoters.length()/2); k++){
+        if (str[i] == quoters[k*2])
+          if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
+            //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
+            q.push_back(k*2+1); // quoted start, need to pair the right quoter
+            break;
+          }
+      }
+    ++i;
+  }
+  trace(DEBUG, "(1)Split the end of the string:%d/%d\n",begin, str.length());
+  if (!skipemptyelement || str.length()>begin)
+    v.push_back(str.length()>begin?str.substr(begin, str.length()-begin):"");
+  //if (begin<str.length() && (!skipemptyelement || str.length()>begin))
+  //  v.push_back(str.substr(begin, str.length()-begin));
+
+  if (q.size() > 0)
+    trace(ERROR, "(2)Quoters in '%s' are not paired!\n",str.c_str());
+}
+
 int compareStr(const string & str1, const size_t & str1pos, const size_t & str1len, const string & str2, const size_t & str2pos, const size_t & str2len, const bool & casesensive)
 {
   size_t i1=str1pos, i2=str2pos, len1=min(str1pos+str1len,str1.length()), len2=min(str2pos+str2len,str2.length());
@@ -931,7 +939,7 @@ void quicksplit(vector<string> & v, const string & str, string & delim, const st
     }
     if ((nq<=0 && str.length()>=p+delim.length() && compareStr(str,p,delim.length(),delim,0,delim.length(),delimcasesensive)==0) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq] && (str.length()<p+delim.length()+1 || compareStr(str,p+1,delim.length(),delim,0,delim.length(),delimcasesensive)==0))){
       token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
-      if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
+      if (p==0 || (!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
         v.push_back(token);
       token="";
       p=p+(nq<=0?delim.length():(str.length()<p+delim.length()+1?1:delim.length()+1));
@@ -939,7 +947,7 @@ void quicksplit(vector<string> & v, const string & str, string & delim, const st
     }else
       p++;
   }
-  if (nq>0 || b!=p || (b==p && !skipemptyelement)){ // whether add the last empty element.
+  if (b!=p || (b==p && nq==0 && !skipemptyelement)){ // whether add the last empty element.
     token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
     if (!skipemptyelement || token.length()>0)
       v.push_back(token);

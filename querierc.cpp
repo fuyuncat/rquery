@@ -1733,18 +1733,22 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
     return false;
   }
   // add @line @row @fileline
-  rowValue.push_back(intToStr(m_line));
-  rowValue.push_back(intToStr(m_matchcount+1));
-  rowValue.push_back(intToStr(m_fileline));
-  vector<string> fieldValues(rowValue.begin()+1,rowValue.end()-3);
+  //rowValue.push_back(intToStr(m_line));
+  //rowValue.push_back(intToStr(m_matchcount+1));
+  //rowValue.push_back(intToStr(m_fileline));
+  vector<string> fieldValues(rowValue.begin()+1,rowValue.end());
   unordered_map<string, string> varValues{ 
     {"@RAW",rowValue[0]},
     {"@FILE",m_filename},
     {"@FILEID",intToStr(m_fileid)},
-    {"@LINE",rowValue[rowValue.size()-3]},
-    {"@ROW",rowValue[rowValue.size()-2]},
-    {"@FILELINE",rowValue[rowValue.size()-1]},
-    {"@%",intToStr(rowValue.size()-4)},{"@DUPID","1"} 
+    {"@LINE",intToStr(m_line)},
+    {"@ROW",intToStr(m_matchcount+1)},
+    {"@FILELINE",intToStr(m_fileline)},
+    //{"@LINE",rowValue[rowValue.size()-3]},
+    //{"@ROW",rowValue[rowValue.size()-2]},
+    //{"@FILELINE",rowValue[rowValue.size()-1]},
+    {"@%",intToStr(fieldValues.size())},
+    {"@DUPID","1"} 
   };
   //for (size_t i=0; i<rowValue.size()-4; i++)
   //  fieldValues.push_back(rowValue[i+1]);
@@ -1839,6 +1843,9 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
         // If need to construct tree, save all fields value to m_results first, process the expressions in tree()
         if (m_treeProps.size()>0 && m_treeProps.size() == m_treeParentProps.size()){
           vector<string> extendedRowValues = rowValue;
+          extendedRowValues.push_back(intToStr(m_line));
+          extendedRowValues.push_back(intToStr(m_matchcount+1));
+          extendedRowValues.push_back(intToStr(m_fileline));
           extendedRowValues.push_back(m_filename);
           extendedRowValues.push_back(intToStr(m_fileid));
           extendedRowValues.push_back(intToStr(m_fieldnames.size()));
@@ -1912,7 +1919,7 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   thistime = curtime();
 #endif // __DEBUG__
       }
-    }else{
+    }else{ // since if no "select" provided, we will add @raw as default, this part of code will never be run.
 #ifdef __DEBUG__
   thistime = curtime();
 #endif // __DEBUG__
@@ -3550,7 +3557,7 @@ bool QuerierC::applyExtraFilter(const vector<string> & aRow, const unordered_map
   for (size_t j=1; j<aRow.size(); j++)
     fieldValues.push_back(aRow[j]);
   newVarVals["@RAW"]=concatArray(aRow,m_fielddelim);
-  newVarVals["@%"]=intToStr(aRow.size());
+  newVarVals["@%"]=intToStr(aRow.size()-1);
   //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
   if (!m_extrafilter || m_extrafilter->compareExpression(rds, sideMatchedRowIDs)){
     if (m_trimedSelctions.size()>0){

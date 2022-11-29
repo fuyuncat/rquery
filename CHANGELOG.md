@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.223] 2022-11-30
+   Fix bug: Data parsing incorrectly in some special cases.<br/>
    # [1.222] 2022-11-29
    Fix bug: Expression goes wrong when quoters involved.<br/>
    # [1.221] 2022-11-29

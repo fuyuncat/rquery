@@ -328,7 +328,7 @@ bool QuerierC::assignGroupStr(const string & groupstr)
   vector<string> vGroups;
   split(vGroups, groupstr,',',"''()",'\\',{'(',')'},false,true);
   ExpressionC eGroup;
-  for (int i=0; i<vGroups.size(); i++){
+  for (size_t i=0; i<vGroups.size(); i++){
     trace(DEBUG, "Processing group (%d) '%s'!\n", i, vGroups[i].c_str());
     string sGroup = trim_copy(vGroups[i]);
     if (sGroup.empty()){
@@ -352,7 +352,7 @@ void QuerierC::setUniqueResult(const string & unistr)
   else{
     vector<string> vUni;
     split(vUni, upper_copy(trim_copy(unistr)),' ',"",'\0',{},true,true);
-    for (int i=0; i<vUni.size(); i++){
+    for (size_t i=0; i<vUni.size(); i++){
       if (trim_copy(vUni[i])[0]=='R')
         m_bUniqueResult=true;
       if (trim_copy(vUni[i])[0]=='F')
@@ -411,7 +411,7 @@ bool QuerierC::assignSelString(const string & selstr)
 bool QuerierC::checkSelGroupConflict(ExpressionC & eSel)
 {
   vector<string> allColNames;
-  for (int i=0; i<m_groups.size(); i++)
+  for (size_t i=0; i<m_groups.size(); i++)
     m_groups[i].getAllColumnNames(allColNames);
   if (m_groups.size()>0 && !eSel.groupFuncOnly() && !eSel.inColNamesRange(allColNames)){
     trace(WARNING, "Selection '%s' does not exist in Group or invalid using aggregation function \n", eSel.m_expStr.c_str());
@@ -426,7 +426,7 @@ void QuerierC::genSelExpression(vector<ExpressionC> & vSelections, const string 
   vector<string> vSelStrs;
   split(vSelStrs, sSel,',',"''()",'\\',{'(',')'},false,true);
   string sAlias, sAs=" as ";
-  for (int i=0; i<vSelStrs.size(); i++){
+  for (size_t i=0; i<vSelStrs.size(); i++){
     trace(DEBUG, "Processing selection(%d) '%s'!\n", i, vSelStrs[i].c_str());
     string sSel = trim_copy(vSelStrs[i]);
     if (sSel.empty()){
@@ -452,7 +452,7 @@ bool QuerierC::analyzeSelString(){
   vector<ExpressionC> vExpandedExpr; 
   vector<string> vAlias;
   genSelExpression(m_selections, m_selstr, vAlias);
-  for (int i=0; i<m_selections.size(); i++)
+  for (size_t i=0; i<m_selections.size(); i++)
     if (i<vAlias.size()&& !vAlias[i].empty())
       m_selnames.push_back(vAlias[i]);
     else{
@@ -463,14 +463,14 @@ bool QuerierC::analyzeSelString(){
   m_colToRows.clear();
   m_colToRowNames.clear();
   // process COLTOROW first, in case FOREACH is a parameter of COLTOROW
-  for (int i=0; i<m_selections.size(); i++){
+  for (size_t i=0; i<m_selections.size(); i++){
     // transfer parameters of COLTOROW macro function to selections
     //int iExpandedCols = 0; // number of expended fields when COLTOROW  involved. Need to be skipped in the loop
     if (m_selections[i].m_type == LEAF && m_selections[i].m_expType == FUNCTION && m_selections[i].m_Function && m_selections[i].m_Function->m_funcID==COLTOROW){
       m_colToRowNames.push_back(m_selnames[i]);
       vector<int> colToRowSels;
       m_selnames.erase(m_selnames.begin()+i);
-      for (int j=0; j<m_selections[i].m_Function->m_params.size(); j++){
+      for (size_t j=0; j<m_selections[i].m_Function->m_params.size(); j++){
         m_selnames.insert(m_selnames.begin()+i+j,m_selections[i].m_Function->m_params[j].getEntireExpstr());
         colToRowSels.push_back(i+j);
       }
@@ -482,11 +482,11 @@ bool QuerierC::analyzeSelString(){
     }
   }
   
-  int l=0, k=0; // indexes of m_colToRows
+  size_t l=0, k=0; // indexes of m_colToRows
   int extendedSelNum = 0; // extended selection number caused by foreach
   vector<ExpressionC> tmpSels=m_selections; // temp selections in case foreach expanding selections.
   // then process FOREACH
-  for (int i=0; i<tmpSels.size(); i++){
+  for (size_t i=0; i<tmpSels.size(); i++){
     if (tmpSels[i].m_expType == FUNCTION && tmpSels[i].m_Function && (tmpSels[i].m_Function->m_funcID == ANYCOL || tmpSels[i].m_Function->m_funcID == ALLCOL)){
       trace(FATAL, "Marco function %s can not be used in SELECT", tmpSels[i].getEntireExpstr().c_str());
       return false;
@@ -534,7 +534,7 @@ bool QuerierC::analyzeSelString(){
               bToConvColToRow = true;
             }
             // expand and insert FOREACH selections.
-            for (int j=0; j<vExpandedExpr.size(); j++){
+            for (size_t j=0; j<vExpandedExpr.size(); j++){
               trace(DEBUG2,"Expanded FOREACH expression: '%s'\n",vExpandedExpr[j].m_expStr.c_str());
               if (bToConvColToRow){
                 m_colToRows[l].insert(m_colToRows[l].begin()+k,i+j+extendedSelNum);
@@ -598,7 +598,7 @@ bool QuerierC::analyzeTreeStr()
     trace(FATAL,"You must provide tree keys and parent keys!\n");
     return false;
   }
-  for (int i=0;i<vRawStrs.size();i++){
+  for (size_t i=0;i<vRawStrs.size();i++){
     vector<string> vMapStrs;
     split(vMapStrs, vRawStrs[i],':',"''()",'\\',{'(',')'},false,true);
     if (vMapStrs.size()<2){
@@ -608,7 +608,7 @@ bool QuerierC::analyzeTreeStr()
     vector<string> vKeyStrs;
     split(vKeyStrs, vMapStrs[1],',',"''()",'\\',{'(',')'},false,true);
     if (upper_copy(trim_copy(vMapStrs[0])).compare("K")==0){
-      for (int j=0; j<vKeyStrs.size(); j++){
+      for (size_t j=0; j<vKeyStrs.size(); j++){
         m_treeProps.push_back(ExpressionC(vKeyStrs[j]));
         if (m_treeProps[m_treeProps.size()-1].containAnaFunc() || m_treeProps[m_treeProps.size()-1].containGroupFunc()){
           trace(FATAL,"Tree key cannot contain any aggregation or analytic function!\n");
@@ -617,7 +617,7 @@ bool QuerierC::analyzeTreeStr()
         }
       }
     }else if (upper_copy(trim_copy(vMapStrs[0])).compare("P")==0){
-      for (int j=0; j<vKeyStrs.size(); j++){
+      for (size_t j=0; j<vKeyStrs.size(); j++){
         m_treeParentProps.push_back(ExpressionC(vKeyStrs[j]));
         if (m_treeParentProps[m_treeParentProps.size()-1].containAnaFunc() || m_treeParentProps[m_treeParentProps.size()-1].containGroupFunc()){
           trace(FATAL,"Tree parent key cannot contain any aggregation or analytic function!\n");
@@ -662,7 +662,7 @@ bool QuerierC::analyzeReportStr()
     trace(FATAL,"You must provide at one pair of selection index and aggregation operation!\n");
     return false;
   }
-  for (int i=0;i<vRawStrs.size();i++){
+  for (size_t i=0;i<vRawStrs.size();i++){
     vector<string> vMapStrs;
     split(vMapStrs, vRawStrs[i],':',"''()",'\\',{'(',')'},false,true);
     if (vMapStrs.size()<2){
@@ -726,7 +726,7 @@ bool QuerierC::checkSortGroupConflict(ExpressionC & eSort)
 {
   if (m_groups.size() > 0) {// checking if compatible with GROUP
     vector<string> allColNames;
-    for (int i=0; i<m_groups.size(); i++)
+    for (size_t i=0; i<m_groups.size(); i++)
       m_groups[i].getAllColumnNames(allColNames);
     if (!eSort.groupFuncOnly() && !eSort.inColNamesRange(allColNames)){
       trace(WARNING, "Sorting key '%s' does not exist in Group or invalid using aggregation function \n", eSort.m_expStr.c_str());
@@ -751,7 +751,7 @@ bool QuerierC::analyzeSortStr(){
   vector<string> vSorts;
   split(vSorts, m_sortstr,',',"''()",'\\',{'(',')'},false,true);
   SortProp keyProp;
-  for (int i=0; i<vSorts.size(); i++){
+  for (size_t i=0; i<vSorts.size(); i++){
     keyProp = SortProp();
     trace(DEBUG, "Processing sorting keys (%d) '%s'!\n", i, vSorts[i].c_str());
     string sSort = trim_copy(vSorts[i]);
@@ -783,7 +783,7 @@ bool QuerierC::analyzeSortStr(){
             else
               keyProp.sortKey.m_Function->expandForeach(vExpandedExpr, m_fieldtypes.size());
             SortProp keyPropE;
-            for (int j=0; j<vExpandedExpr.size(); j++){
+            for (size_t j=0; j<vExpandedExpr.size(); j++){
               keyPropE = SortProp();
               split(vKP, vExpandedExpr[j].getEntireExpstr(),' ',"''()",'\\',{'(',')'},false,true);
               trace(DEBUG, "Splited from expanded expression '%s' to '%s'(%d)\n",vExpandedExpr[j].getEntireExpstr().c_str(),vKP[0].c_str(),vKP.size());
@@ -815,7 +815,7 @@ bool QuerierC::analyzeSortStr(){
       m_sorts.push_back(keyProp);
     }
   }
-  for (int i=0; i<m_sorts.size(); i++)
+  for (size_t i=0; i<m_sorts.size(); i++)
     trace(DEBUG, "Sorting key '%s'(%d) !\n",m_sorts[i].sortKey.getEntireExpstr().c_str(),i);
   //trace(DEBUG1, "Got %d sorting keys!\n",m_sorts.size());
   return true;
@@ -825,7 +825,7 @@ bool QuerierC::assignMeanwhileString(const string & mwstr)
 {
   vector<string> vSideWorks;
   split(vSideWorks, mwstr,';',"''()",'\\',{'(',')'},false,true);
-  for (int i=0; i<vSideWorks.size(); i++){
+  for (size_t i=0; i<vSideWorks.size(); i++){
     size_t pos = findFirstSub(vSideWorks[i], " WHERE ", 0,"''()",'\\',{'(',')'},false );
     FilterC filter;
     vector<ExpressionC> vSelections;
@@ -851,7 +851,7 @@ bool QuerierC::setFieldTypeFromStr(const string & setstr)
   vector<string> vSetFields;
   split(vSetFields, setstr,',',"''()",'\\',{'(',')'},false,true);
   string fieldname = "";
-  for (int i=0; i<vSetFields.size(); i++){
+  for (size_t i=0; i<vSetFields.size(); i++){
     vector<string> vField;
     split(vField, vSetFields[i],' ',"''()",'\\',{'(',')'},false,true);
     if (vField.size()<2)
@@ -897,7 +897,7 @@ void QuerierC::setUserVars(const string & variables)
   vector<ExpressionC> fakeExprs;
   vector<string> vVariables;
   split(vVariables, variables,';',"''()",'\\',{'(',')'},false,true);
-  for (int i=0; i<vVariables.size(); i++){
+  for (size_t i=0; i<vVariables.size(); i++){
     vector<string> vNameVal;
     split(vNameVal, trim_copy(vVariables[i]),':',"''()",'\\',{'(',')'},false,true);
     if (vNameVal.size()<2){
@@ -981,7 +981,7 @@ void QuerierC::setUserMaroFuncs(const string & macrostr)
   m_usermacrostr = macrostr;
   vector<string> vMacroraws;
   split(vMacroraws, macrostr,';',"''()",'\\',{'(',')'},false,true);
-  for (int i=0; i<vMacroraws.size(); i++){
+  for (size_t i=0; i<vMacroraws.size(); i++){
     vector<string> vNameVal;
     split(vNameVal, trim_copy(vMacroraws[i]),':',"''()",'\\',{'(',')'},false,true);
     if (vNameVal.size()<2){
@@ -1080,7 +1080,7 @@ void QuerierC::pairFiledNames(const namesaving_smatch & matches)
   using boost::lexical_cast;
   using boost::bad_lexical_cast; 
 
-  for (int i=1; i<matches.size(); i++){
+  for (size_t i=1; i<matches.size(); i++){
     bool foundName = false;
     for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
       if (&(matches[i]) == &(matches[*it])){
@@ -1105,7 +1105,7 @@ void QuerierC::setFieldDatatype(const string & field, const int & datetype, cons
     m_fieldntypes[fname] = dts;
   else
     m_fieldntypes.insert( pair<string, DataTypeStruct>(fname,dts) );
-  for (int i=0;i<m_fieldnames.size();i++){
+  for (size_t i=0;i<m_fieldnames.size();i++){
     if (fname.compare(m_fieldnames[i]) == 0 && i<m_fieldtypes.size())
       m_fieldtypes[i] = dts;
   }
@@ -1129,7 +1129,7 @@ void QuerierC::analyzeFiledTypes(const vector<string> & matches)
     if (m_rawDatatype.datatype == UNKNOWN)
       m_rawDatatype.datatype = STRING;
   }
-  for (int i=(m_bDetectAllOnChange||m_detectedTypeRows<=m_detectTypeMaxRowNum)?1:m_fieldtypes.size()+1; i<matches.size(); i++){
+  for (size_t i=(m_bDetectAllOnChange||m_detectedTypeRows<=m_detectTypeMaxRowNum)?1:m_fieldtypes.size()+1; i<matches.size(); i++){
     dts = DataTypeStruct();
     if (m_detectedTypeRows>m_detectTypeMaxRowNum && m_fieldnames.size()>i-1 && m_fieldntypes.find(m_fieldnames[i-1]) != m_fieldntypes.end()){
       if (m_fieldtypes.size()>i-1)
@@ -1179,9 +1179,9 @@ void QuerierC::getSideDatarow(vector< unordered_map< int,int > > & sideMatchedRo
     //trace(ERROR, "Side dataset vector size %d doesnot match side matched rowID vector size %d!\n", m_sideDatasets.size(), sideMatchedRowIDs.size());
     return;
   }
-  for (int k=0; k<sideMatchedRowIDs.size(); k++){
+  for (size_t k=0; k<sideMatchedRowIDs.size(); k++){
     unordered_map< string, unordered_map<string,string> > matchedRow;
-    for (int i=0; i<m_sideDatasets.size(); i++){
+    for (size_t i=0; i<m_sideDatasets.size(); i++){
       //if (sideMatchedRowIDs[k].find(i) == sideMatchedRowIDs[k].end())
       //  continue;
       if (sideMatchedRowIDs[k][i] >= m_sideDatasets[i].size()){
@@ -1320,13 +1320,13 @@ void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, unordered_map
 bool QuerierC::appendResultSet(const vector<string> & vResult, const unordered_map<string, string> & varValues, const bool & bApplyExtraFilter)
 {
   int iRowNumFromCols = 0;
-  for (int i=0; i<m_colToRows.size(); i++)
+  for (size_t i=0; i<m_colToRows.size(); i++)
     iRowNumFromCols = max(iRowNumFromCols, (int)m_colToRows[i].size());
   if (iRowNumFromCols>0){ // convert cols to rows
-    int k=0;
+    size_t k=0;
     vector<string> datas;
     vector< vector<string> > tmpResult;
-    for (int j=1; j<vResult.size(); j++){
+    for (size_t j=1; j<vResult.size(); j++){
       if(k<m_colToRows.size() && j-1>=m_colToRows[k][0] && j-1<=m_colToRows[k][m_colToRows[k].size()-1]){ // the selection is a part of a COLTOROW function
         datas.push_back(vResult[j]);
         if (j-1==m_colToRows[k][m_colToRows[k].size()-1] || j-1==vResult.size()-1){ // if current selection is the last one, complement empty strings
@@ -1342,10 +1342,10 @@ bool QuerierC::appendResultSet(const vector<string> & vResult, const unordered_m
         datas.clear();
       }
     }
-    for (int j=0;j<iRowNumFromCols;j++){
+    for (size_t j=0;j<iRowNumFromCols;j++){
       datas.clear();
       datas.push_back("");
-      for (int k=0;k<tmpResult.size();k++)
+      for (size_t k=0;k<tmpResult.size();k++)
         datas.push_back(tmpResult[k][j]);
       if (bApplyExtraFilter)
         return applyExtraFilter(datas, varValues);
@@ -1380,7 +1380,7 @@ long int thistime = curtime();
   m_evalSeldeclaretime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
-  for (int i=0; i<expressions.size(); i++){
+  for (size_t i=0; i<expressions.size(); i++){
     dts = DataTypeStruct();
     //tmpExp = ExpressionC();
 #ifdef __DEBUG__
@@ -1433,11 +1433,11 @@ void QuerierC::evalAddSortkeys(RuntimeDataStruct & rds, vector<ExpressionC>* ana
   vector<string> vResults;
   static string sResult;
   static DataTypeStruct dts;
-  for (int i=0; i<m_sorts.size(); i++){
+  for (size_t i=0; i<m_sorts.size(); i++){
     if (!bCheckGroupFunc || !m_sorts[i].sortKey.containGroupFunc()){
       //if it has the exact same expression as any selection, get the result from selection
       int iSel = -1;
-      for (int j=0; j<m_selections.size(); j++)
+      for (size_t j=0; j<m_selections.size(); j++)
         if (m_selections[j].getEntireExpstr().compare(m_sorts[i].sortKey.getEntireExpstr())==0){
           iSel = j;
           break;
@@ -1499,7 +1499,7 @@ long int thistime = curtime();
   static DataTypeStruct dts;
   static vector<string> vResults;
   // make duplicate records
-  for (int i=0; i<nDupNum; i++){
+  for (size_t i=0; i<nDupNum; i++){
     vector<ExpressionC> anaEvaledExp;
     (*rds.varvalues)["@DUPID"]=intToStr(i+1);
     rds.anaFuncs->clear();
@@ -1565,7 +1565,7 @@ long int thistime = curtime();
     nDupNum = atoi(sResult.c_str()); 
   if (matchedSideDatarows && matchedSideDatarows->size()>0){
     unordered_map< string, unordered_map<string,string> >* oldsideDatarow = rds.sideDatarow;
-    for (int i=0; i<matchedSideDatarows->size(); i++){
+    for (size_t i=0; i<matchedSideDatarows->size(); i++){
       rds.sideDatarow = &((*matchedSideDatarows)[i]);
 #ifdef __DEBUG__
 m_evalRawdupjointime += (curtime()-thistime);
@@ -1599,7 +1599,7 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > & anaFuncDa
   vector<SortProp> sortProps;
   for (unordered_map< string,vector<string> >::iterator it=anaFuncData.begin(); it!=anaFuncData.end(); it++){
     sortKey.clear();
-    int iAnaGroupNum = 0, iAnaSortNum = 0;
+    size_t iAnaGroupNum = 0, iAnaSortNum = 0;
     unordered_map< string,vector<int> >::iterator itn = m_anaFuncParaNums.find(it->first);
     if (itn == m_anaFuncParaNums.end())
       trace(ERROR, "(1)Failed to find analytic function parameter numbers '%s'\n", it->first.c_str());
@@ -1611,7 +1611,7 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > & anaFuncDa
     }
     if (m_anaSortData.find(it->first) != m_anaSortData.end()){
       //group1,group2...,sort1[,sort_direction1(1|-1)][,sort2,[,sort_direction2(1|-1)]...], group number
-      for(int j=0;j<it->second.size();j++)
+      for(size_t j=0;j<it->second.size();j++)
         if (j<iAnaGroupNum || j>=iAnaGroupNum+iAnaSortNum*2) // all parts except the second part of analytic function parameters
           sortKey.push_back(it->second[j]);
         else{ // second part of analytic function parameters, which are always sort keys for all analytic functions
@@ -1626,7 +1626,7 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > & anaFuncDa
       FunctionC* anaFunc;
       SortProp sp;
       //Add sort props, the second part of parameters of analytic functions is the sort keys.
-      for(int j=0;j<it->second.size();j++){
+      for(size_t j=0;j<it->second.size();j++){
         if (j<iAnaGroupNum || j>=iAnaGroupNum+iAnaSortNum*2) // all parts except the second part of analytic function parameters
           sortKey.push_back(it->second[j]);
         else { // second part of analytic function parameters, which are always sort keys for all analytic functions
@@ -1634,7 +1634,7 @@ void QuerierC::addAnaFuncData(unordered_map< string,vector<string> > & anaFuncDa
             sortKey.push_back(it->second[j]);
           else{
             anaFunc = NULL;
-            for (int i=0; i<m_anaEvaledExp[0].size();i++){
+            for (size_t i=0; i<m_anaEvaledExp[0].size();i++){
               //trace(DEBUG,"Searching analytic function '%s' from '%s'\n",it->first.c_str(),m_anaEvaledExp[0][i].getEntireExpstr().c_str());
               //m_anaEvaledExp[0][i].dump();
               anaFunc = m_anaEvaledExp[0][i].getAnaFunc(it->first);
@@ -1690,13 +1690,13 @@ void QuerierC::doSideWorks(vector<string> * pfieldValues, unordered_map<string, 
     rds.sideDatarow = &matchedSideDatarow;
     rds.sideDatatypes = &m_sideDatatypes;
     rds.macroFuncExprs = &m_userMacroExprs;
-    for(int i=nRealSWStart;i<m_sideSelections.size();i++){
+    for(size_t i=nRealSWStart;i<m_sideSelections.size();i++){
       vector< unordered_map<string,string> > resultSet;
       sideMatchedRowIDs.clear();
       if (m_sideFilters[i].compareExpression(rds, sideMatchedRowIDs)){
         getSideDatarow(sideMatchedRowIDs, matchedSideDatarows);
         unordered_map<string,string> thisResult;
-        for (int j=0; j<m_sideSelections[i].size(); j++){
+        for (size_t j=0; j<m_sideSelections[i].size(); j++){
           string sResult;
           DataTypeStruct dts;
           m_sideSelections[i][j].evalExpression(rds, sResult, dts, true);
@@ -1737,18 +1737,26 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   rowValue.push_back(intToStr(m_matchcount+1));
   rowValue.push_back(intToStr(m_fileline));
   vector<string> fieldValues(rowValue.begin()+1,rowValue.end()-3);
-  unordered_map<string, string> varValues;
-  //for (int i=0; i<rowValue.size()-4; i++)
+  unordered_map<string, string> varValues{ 
+    {"@RAW",rowValue[0]},
+    {"@FILE",m_filename},
+    {"@FILEID",intToStr(m_fileid)},
+    {"@LINE",rowValue[rowValue.size()-3]},
+    {"@ROW",rowValue[rowValue.size()-2]},
+    {"@FILELINE",rowValue[rowValue.size()-1]},
+    {"@%",intToStr(rowValue.size()-4)},{"@DUPID","1"} 
+  };
+  //for (size_t i=0; i<rowValue.size()-4; i++)
   //  fieldValues.push_back(rowValue[i+1]);
     //fieldValues.insert( pair<string,string>(upper_copy(m_fieldnames[i]),rowValue[i+1]));
-  varValues.insert( pair<string,string>("@RAW",rowValue[0]));
-  varValues.insert( pair<string,string>("@FILE",m_filename));
-  varValues.insert( pair<string,string>("@FILEID",intToStr(m_fileid)));
-  varValues.insert( pair<string,string>("@LINE",rowValue[rowValue.size()-3]));
-  varValues.insert( pair<string,string>("@ROW",rowValue[rowValue.size()-2]));
-  varValues.insert( pair<string,string>("@FILELINE",rowValue[rowValue.size()-1]));
-  varValues.insert( pair<string,string>("@%",intToStr(rowValue.size()-4)));
-  varValues.insert( pair<string,string>("@DUPID","1"));
+  //varValues.insert( {"@RAW",rowValue[0]});
+  //varValues.insert( {"@FILE",m_filename});
+  //varValues.insert( {"@FILEID",intToStr(m_fileid)});
+  //varValues.insert( {"@LINE",rowValue[rowValue.size()-3]});
+  //varValues.insert( {"@ROW",rowValue[rowValue.size()-2]});
+  //varValues.insert( {"@FILELINE",rowValue[rowValue.size()-1]});
+  //varValues.insert( {"@%",intToStr(rowValue.size()-4)});
+  //varValues.insert( {"@DUPID","1"});
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
@@ -1773,9 +1781,9 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   thistime = curtime();
 #endif // __DEBUG__
   // calculate user defined variables
-  int iR = 0;
+  size_t iR = 0;
   unordered_map<string,string> fakeResult; // faked sidework dataset from variable R
-  for (int i=0; i<m_uservalnames.size(); i++){ // make sure we calculate the dynamic and R variables in the order of input.
+  for (size_t i=0; i<m_uservalnames.size(); i++){ // make sure we calculate the dynamic and R variables in the order of input.
     if (m_uservalnames[i].compare("@R")!=0){ // eval normal dynamic variables
       m_uservarexprs[m_uservalnames[i]].evalExpression(rds, sResult, dts, true);
       m_uservariables[m_uservalnames[i]] = sResult;
@@ -1836,15 +1844,15 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
           extendedRowValues.push_back(intToStr(m_fieldnames.size()));
           appendResultSet(extendedRowValues, varValues, false);
           ////eval selection expression to get side dataset only.
-          //for (int i=0; i<m_selections.size()l i++)
+          //for (size_t i=0; i<m_selections.size()l i++)
           //  m_selections[i].evalExpression(rds, sResult, dts, true);
-          for (int i=0; i<m_treeProps.size(); i++){
+          for (size_t i=0; i<m_treeProps.size(); i++){
             m_treeProps[i].evalExpression(rds, sResult, dts, true);
             vResults.push_back(sResult);
           }
           m_treeKeys.push_back(vResults);
           vResults.clear();
-          for (int i=0; i<m_treeParentProps.size(); i++){
+          for (size_t i=0; i<m_treeParentProps.size(); i++){
             m_treeParentProps[i].evalExpression(rds, sResult, dts, true);
             vResults.push_back(sResult);
           }
@@ -1873,7 +1881,7 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
         if (m_aggrOnly) // has aggregation function without any group, give an empty string as the key
           groupExps.push_back("");
         else // group expressions to the sorting keys
-          for (int i=0; i<m_groups.size(); i++){
+          for (size_t i=0; i<m_groups.size(); i++){
             m_groups[i].evalExpression(rds, sResult, dts, true);
             //trace(DEBUG2, "Adding '%s' for Group '%s', eval from '%s'\n", sResult.c_str(),m_groups[i].getEntireExpstr().c_str(),rowValue[0].c_str());
             groupExps.push_back(sResult);
@@ -1912,7 +1920,7 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
       appendResultSet(rowValue, varValues, true);
       addResultOutputFileMap(&fieldValues, &varValues, &aggGroupProp, rds.anaFuncs, &matchedSideDatarow);
       vector<ExpressionC> vKeys;
-      for (int i=0;i<m_sorts.size();i++)
+      for (size_t i=0;i<m_sorts.size();i++)
         vKeys.push_back(m_sorts[i].sortKey);
       evalAddExprArray(vKeys, "", rds, &anaEvaledExp, vResults, true);
       m_sortKeys.push_back(vResults);
@@ -1977,23 +1985,23 @@ void QuerierC::trialAnalyze(const vector<string> & matcheddata)
     analyzeSortStr();
   for(unordered_map<string, ExpressionC>::iterator it=m_uservarexprs.begin(); it!=m_uservarexprs.end(); ++it)
     it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-  for(int i=0; i<m_fakeRExprs.size(); i++)
+  for(size_t i=0; i<m_fakeRExprs.size(); i++)
     m_fakeRExprs[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-  for (int i=0; i<m_sideSelections.size(); i++){
+  for (size_t i=0; i<m_sideSelections.size(); i++){
     unordered_map<string,DataTypeStruct> sideSelDatatypes;
-    for (int j=0; j<m_sideSelections[i].size(); j++){
+    for (size_t j=0; j<m_sideSelections[i].size(); j++){
       m_sideSelections[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
       sideSelDatatypes.insert(pair<string,DataTypeStruct>(m_sideAlias[i][j].empty()?intToStr(j+1):m_sideAlias[i][j], m_sideSelections[i][j].m_datatype));
     }
     m_sideDatatypes.insert(pair< string, unordered_map<string,DataTypeStruct> >(intToStr(i+1),sideSelDatatypes));
   }
-  for (int i=0; i<m_sideFilters.size(); i++)
+  for (size_t i=0; i<m_sideFilters.size(); i++)
     m_sideFilters[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   if (m_filter){
     m_filter->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
     //m_filter->mergeExprConstNodes();
   }
-  for (int i=0; i<m_selections.size(); i++){
+  for (size_t i=0; i<m_selections.size(); i++){
     //trace(DEBUG, "Analyzing selection '%s' (%d), found %d\n", m_selections[i].m_expStr.c_str(), i, found);
     m_selections[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   }
@@ -2001,9 +2009,9 @@ void QuerierC::trialAnalyze(const vector<string> & matcheddata)
     m_dupnumexp->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   if (m_dupfilter)
     m_dupfilter->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-  for (int i=0; i<m_groups.size(); i++)
+  for (size_t i=0; i<m_groups.size(); i++)
     m_groups[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-  for (int i=0; i<m_sorts.size(); i++){
+  for (size_t i=0; i<m_sorts.size(); i++){
     m_sorts[i].sortKey.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
     if (m_sorts[i].sortKey.m_type==LEAF && m_sorts[i].sortKey.m_expType==CONST && isInt(m_sorts[i].sortKey.m_expStr) && atoi(m_sorts[i].sortKey.m_expStr.c_str())>0 && atoi(m_sorts[i].sortKey.m_expStr.c_str())<=m_selections.size()){
       m_sorts[i].iSel = atoi(m_sorts[i].sortKey.m_expStr.c_str()) - 1;
@@ -2013,14 +2021,14 @@ void QuerierC::trialAnalyze(const vector<string> & matcheddata)
   }
   for (unordered_map< string,MacroFuncStruct >::iterator it=m_userMacroExprs.begin(); it!=m_userMacroExprs.end(); it++)
     it->second.funcExpr->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-  for (int i=0; i<m_treeProps.size(); i++)
+  for (size_t i=0; i<m_treeProps.size(); i++)
     m_treeProps[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-  for (int i=0; i<m_treeParentProps.size(); i++)
+  for (size_t i=0; i<m_treeParentProps.size(); i++)
     m_treeParentProps[i].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   for (unordered_map< string,ExpressionC >::iterator it=m_aggFuncExps.begin(); it!=m_aggFuncExps.end(); ++it)
     it->second.analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
-  for (int i=0; i<m_anaEvaledExp.size(); i++)
-    for (int j=0; j<m_anaEvaledExp[i].size(); j++)
+  for (size_t i=0; i<m_anaEvaledExp.size(); i++)
+    for (size_t j=0; j<m_anaEvaledExp[i].size(); j++)
       m_anaEvaledExp[i][j].analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
   if (m_outputfileexp)
     m_outputfileexp->analyzeColumns(&m_fieldnames, &m_fieldtypes, &m_rawDatatype, &m_sideDatatypes);
@@ -2028,7 +2036,7 @@ void QuerierC::trialAnalyze(const vector<string> & matcheddata)
   // analyze extra filter
   if (m_extrafilter){
     m_trimmedFieldtypes.clear();
-    for (int i=0;i<m_selections.size();i++)
+    for (size_t i=0;i<m_selections.size();i++)
       m_trimmedFieldtypes.push_back(m_selections[i].m_datatype);
 
     m_extrafilter->analyzeColumns(&m_selnames, &m_trimmedFieldtypes, &m_rawDatatype, &m_sideDatatypes);
@@ -2037,18 +2045,18 @@ void QuerierC::trialAnalyze(const vector<string> & matcheddata)
       vector<ExpressionC> tmpSels = m_trimedInitSels;
       int extendedSelNum=0;
       // process foreach
-      for (int i=0; i<m_trimedInitSels.size(); i++){
+      for (size_t i=0; i<m_trimedInitSels.size(); i++){
         if (m_trimedInitSels[i].m_expType == FUNCTION && m_trimedInitSels[i].m_Function && m_trimedInitSels[i].m_Function->m_funcID == FOREACH){
           vector<ExpressionC> vExpandedExpr;
           m_trimedInitSels[i].m_Function->expandForeach(vExpandedExpr, m_trimmedFieldtypes.size());
           tmpSels.erase(tmpSels.begin()+i+extendedSelNum);
-          for (int j=0; j<vExpandedExpr.size();j++)
+          for (size_t j=0; j<vExpandedExpr.size();j++)
             tmpSels.insert(tmpSels.begin()+i+j+extendedSelNum,vExpandedExpr[j]);
           extendedSelNum+=vExpandedExpr.size()-1;
         }
       }
       m_trimedSelctions = tmpSels;
-      for (int j=0; j<m_trimedSelctions.size(); j++)
+      for (size_t j=0; j<m_trimedSelctions.size(); j++)
         m_trimedSelctions[j].analyzeColumns(&m_selnames, &m_trimmedFieldtypes, &m_rawDatatype, &m_sideDatatypes);
     }
   }
@@ -2078,14 +2086,14 @@ int QuerierC::searchNextReg()
       m_fileline++;
       vector<string> matcheddata;
       if (m_nameline && m_line==1){ // use the first line as field names
-        for (int i=1; i<m_matches.size(); i++)
+        for (size_t i=1; i<m_matches.size(); i++)
           m_fieldnames.push_back(m_matches[i]);
         m_nameline = false;
         m_line--;
         m_fileline--;
         continue;
       }else
-        for (int i=0; i<m_matches.size(); i++)
+        for (size_t i=0; i<m_matches.size(); i++)
           matcheddata.push_back(m_matches[i]);
       //trace(DEBUG2,"Detected rows %d/%d\n", m_detectedRawDatatype.size(), m_detectTypeMaxRowNum);
       // detect fileds data type. When m_bDetectAllOnChange is false, only matcheddata.size()>m_fieldnames.size()+1 triggers redetect
@@ -2101,10 +2109,10 @@ int QuerierC::searchNextReg()
           m_fieldInitNames.clear();
           pairFiledNames(m_matches);
         }else{
-          int initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
-          for (int i=m_fieldnames.size(); i<initSize; i++)
+          size_t initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
+          for (size_t i=m_fieldnames.size(); i<initSize; i++)
             m_fieldnames.push_back(m_fieldInitNames[i]);
-          for (int i=m_fieldnames.size();i<matcheddata.size()-1;i++)  // matcheddata[0] needs to be skipped
+          for (size_t i=m_fieldnames.size();i<matcheddata.size()-1;i++)  // matcheddata[0] needs to be skipped
             m_fieldnames.push_back("@FIELD"+intToStr(i+1));
         }
         trialAnalyze(matcheddata);
@@ -2134,7 +2142,7 @@ int QuerierC::searchNextReg()
     }
     if (found == 0){
       // if didnt match any one, discard all until the last newline
-      int i = m_rawstr.size(), newlnpos = -1;
+      size_t i = m_rawstr.size(), newlnpos = -1;
       while (i>=0){
         if (m_rawstr[i] == '\n'){
           newlnpos = i;
@@ -2202,7 +2210,7 @@ int QuerierC::searchNextWild()
     m_line++;
     m_fileline++;
     if (m_nameline && m_line==1){ // use the first line as field names
-      for (int i=0; i<matcheddata.size(); i++){
+      for (size_t i=0; i<matcheddata.size(); i++){
         m_fieldnames.push_back(matcheddata[i]);
         m_fieldInitNames.push_back(matcheddata[i]);
       }
@@ -2213,7 +2221,7 @@ int QuerierC::searchNextWild()
     }
     matcheddata.insert(matcheddata.begin(),sLine); // whole matched line for @raw
     //trace(DEBUG, "Matched %d\n", matcheddata.size());
-    //for (int i=0; i<matcheddata.size(); i++)
+    //for (size_t i=0; i<matcheddata.size(); i++)
     //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
     // detect fileds data type
     if (m_detectedTypeRows < m_detectTypeMaxRowNum || (!m_bDetectAllOnChange && matcheddata.size()>m_fieldnames.size()+1) || (m_bDetectAllOnChange && matcheddata.size()!=m_fieldnames.size()+1)){
@@ -2224,10 +2232,10 @@ int QuerierC::searchNextWild()
         m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
         m_bToAnalyzeSortMacro = m_bSortContainMacro;
       }
-      int initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
-      for (int i=m_fieldnames.size(); i<initSize; i++)
+      size_t initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
+      for (size_t i=m_fieldnames.size(); i<initSize; i++)
         m_fieldnames.push_back(m_fieldInitNames[i]);
-      for (int i=m_fieldnames.size();i<matcheddata.size()-1;i++) // matcheddata[0] needs to be skipped
+      for (size_t i=m_fieldnames.size();i<matcheddata.size()-1;i++) // matcheddata[0] needs to be skipped
         m_fieldnames.push_back("@FIELD"+intToStr(i+1));
       trialAnalyze(matcheddata);
     }
@@ -2315,7 +2323,7 @@ int QuerierC::searchNextDelm()
     m_line++;
     m_fileline++;
     if (m_nameline && m_line==1){ // use the first line as field names
-      for (int i=0; i<matcheddata.size(); i++){
+      for (size_t i=0; i<matcheddata.size(); i++){
         m_fieldnames.push_back(matcheddata[i]);
         m_fieldInitNames.push_back(matcheddata[i]);
       }
@@ -2326,7 +2334,7 @@ int QuerierC::searchNextDelm()
     }
     matcheddata.insert(matcheddata.begin(),untrimmedLine); // whole matched line for @raw
     //trace(DEBUG, "Matched %d\n", matcheddata.size());
-    //for (int i=0; i<matcheddata.size(); i++)
+    //for (size_t i=0; i<matcheddata.size(); i++)
     //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
     // detect fileds data type
     if (m_detectedTypeRows < m_detectTypeMaxRowNum || (!m_bDetectAllOnChange && matcheddata.size()>m_fieldnames.size()+1) || (m_bDetectAllOnChange && matcheddata.size()!=m_fieldnames.size()+1)){
@@ -2337,10 +2345,10 @@ int QuerierC::searchNextDelm()
         m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
         m_bToAnalyzeSortMacro = m_bSortContainMacro;
       }
-      int initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
-      for (int i=m_fieldnames.size(); i<initSize; i++)
+      size_t initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
+      for (size_t i=m_fieldnames.size(); i<initSize; i++)
         m_fieldnames.push_back(m_fieldInitNames[i]);
-      for (int i=m_fieldnames.size();i<matcheddata.size()-1;i++) // matcheddata[0] needs to be skipped
+      for (size_t i=m_fieldnames.size();i<matcheddata.size()-1;i++) // matcheddata[0] needs to be skipped
         m_fieldnames.push_back("@FIELD"+intToStr(i+1));
       trialAnalyze(matcheddata);
     }
@@ -2406,7 +2414,7 @@ int QuerierC::searchNextLine()
     m_line++;
     m_fileline++;
     if (m_nameline && m_line==1){ // use the first line as field names
-      for (int i=0; i<matcheddata.size(); i++){
+      for (size_t i=0; i<matcheddata.size(); i++){
         m_fieldnames.push_back(matcheddata[i]);
         m_fieldInitNames.push_back(matcheddata[i]);
       }
@@ -2417,7 +2425,7 @@ int QuerierC::searchNextLine()
     }
     matcheddata.insert(matcheddata.begin(),sLine); // whole matched line for @raw
     //trace(DEBUG, "Matched %d\n", matcheddata.size());
-    //for (int i=0; i<matcheddata.size(); i++)
+    //for (size_t i=0; i<matcheddata.size(); i++)
     //  trace(DEBUG, "Matched %d: '%s'\n", i ,matcheddata[i].c_str());
     // detect fileds data type
     if (m_detectedTypeRows < m_detectTypeMaxRowNum || (!m_bDetectAllOnChange && matcheddata.size()>m_fieldnames.size()+1) || (m_bDetectAllOnChange && matcheddata.size()!=m_fieldnames.size()+1)){
@@ -2428,10 +2436,10 @@ int QuerierC::searchNextLine()
         m_bToAnalyzeSelectMacro = m_bSelectContainMacro;
         m_bToAnalyzeSortMacro = m_bSortContainMacro;
       }
-      int initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
-      for (int i=m_fieldnames.size(); i<initSize; i++)
+      size_t initSize=min(m_fieldInitNames.size(),matcheddata.size()-1);
+      for (size_t i=m_fieldnames.size(); i<initSize; i++)
         m_fieldnames.push_back(m_fieldInitNames[i]);
-      for (int i=m_fieldnames.size();i<matcheddata.size()-1;i++) // matcheddata[0] needs to be skipped
+      for (size_t i=m_fieldnames.size();i<matcheddata.size()-1;i++) // matcheddata[0] needs to be skipped
         m_fieldnames.push_back("@FIELD"+intToStr(i+1));
       trialAnalyze(matcheddata);
     }
@@ -2566,7 +2574,7 @@ bool QuerierC::processAnalyticA(const short int & iFuncID, const string & sFuncE
     trace(ERROR,"(1)'%s' should not be processed here!\n", sFuncExpStr.c_str());
     return false;
   }
-  int iAnaGroupNum = 0;
+  size_t iAnaGroupNum = 0;
 
   // first part parameter of SUMA/COUNTA/UNIQUECOUNTA/AVERAGEA/MAXA/MINA are groups
   unordered_map< string,vector<int> >::iterator itn = m_anaFuncParaNums.find(sFuncExpStr);
@@ -2590,9 +2598,9 @@ bool QuerierC::processAnalyticA(const short int & iFuncID, const string & sFuncE
   unordered_map< vector<string>, float, hash_container< vector<string> > > tmpSum; // for calculate suma/averagea
   unordered_map< vector<string>, string, hash_container< vector<string> > > tmpVal; // for calculate maxa/mina
   // calculate SUMA/COUNTA/UNIQUECOUNTA/AVERAGEA/MAXA/MINA
-  for (int i=0; i<vFuncData.size(); i++){
+  for (size_t i=0; i<vFuncData.size(); i++){
     vector<string> vGroups;
-    for (int j=0;j<iAnaGroupNum;j++)
+    for (size_t j=0;j<iAnaGroupNum;j++)
       vGroups.push_back(vFuncData[i][j]);
     switch (iFuncID){
     case SUMA:
@@ -2649,9 +2657,9 @@ bool QuerierC::processAnalyticA(const short int & iFuncID, const string & sFuncE
   }
 
   // assign calculated result of SUMA/COUNTA/UNIQUECOUNTA/AVERAGEA/MAXA/MINA then return
-  for (int i=0; i<m_anaFuncResult.size(); i++){
+  for (size_t i=0; i<m_anaFuncResult.size(); i++){
     vector<string> vGroups;
-    for (int j=0;j<iAnaGroupNum;j++)
+    for (size_t j=0;j<iAnaGroupNum;j++)
       vGroups.push_back(vFuncData[i][j]);
     switch (iFuncID){
     case SUMA:
@@ -2685,7 +2693,7 @@ bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const short int & iFunc
   {
     if (v1.size()!=sortProps.size()+1 || v2.size()!=sortProps.size()+1 || v2.size()!=v1.size())
       return false;
-    for (int i=0;i<sortProps.size();i++){
+    for (size_t i=0;i<sortProps.size();i++){
       int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype,sortProps[i].sortKey.m_datatype);
       if (iCompareRslt == 0) // Compare next key only when current keys equal
         continue;
@@ -2698,7 +2706,7 @@ bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const short int & iFunc
   {
     if (v1.size()<2 || v2.size()<2 || v1.size()!=sortProps.size()+4 || v2.size()!=sortProps.size()+4 || v2.size()!=v1.size())
       return false;
-    for (int i=0;i<sortProps.size();i++){
+    for (size_t i=0;i<sortProps.size();i++){
       int iCompareRslt = anyDataCompare(v1[i+1],v2[i+1],sortProps[i].sortKey.m_datatype,sortProps[i].sortKey.m_datatype);
       if (iCompareRslt == 0) // Compare next key only when current keys equal
         continue;
@@ -2710,12 +2718,12 @@ bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const short int & iFunc
 //#define DEBUG_ANALYTIC
 #ifdef DEBUG_ANALYTIC
   printf("sortProps size: %d\n",sortProps.size());
-  for (int i=0;i<sortProps.size();i++)
+  for (size_t i=0;i<sortProps.size();i++)
     printf("%d:%s %d\t",i,decodeDatatype(sortProps[i].sortKey.m_datatype.datatype).c_str(),sortProps[i].direction);
   printf("\n");
   printf("Before sorting analytic function data [%d][%d]\n",vFuncData.size(), vFuncData[0].size());
-  for (int i=0;i<vFuncData.size();i++){
-    for (int j=0;j<vFuncData[i].size();j++)
+  for (size_t i=0;i<vFuncData.size();i++){
+    for (size_t j=0;j<vFuncData[i].size();j++)
       printf("%d:%s\t",j,vFuncData[i][j].c_str());
     printf("\n");
   }
@@ -2726,8 +2734,8 @@ bool QuerierC::sortAnaData(vector<SortProp> & sortProps, const short int & iFunc
     std::sort(vFuncData.begin(), vFuncData.end(), sortVectorLambdaC);
 #ifdef DEBUG_ANALYTIC
   printf("Sorted analytic function data [%d][%d]\n",vFuncData.size(), vFuncData[0].size());
-  for (int i=0;i<vFuncData.size();i++){
-    for (int j=0;j<vFuncData[i].size();j++)
+  for (size_t i=0;i<vFuncData.size();i++){
+    for (size_t j=0;j<vFuncData[i].size();j++)
       printf("%d:%s\t",j,vFuncData[i][j].c_str());
     printf("\n");
   }
@@ -2743,7 +2751,7 @@ bool QuerierC::processAnalyticB(const short int & iFuncID, const string & sFuncE
   }
   vector<SortProp> sortProps;
   if (iFuncID==RANK || iFuncID==DENSERANK){ // For RANK/DENSERANK, the first part parameters are groups, which also need to be sorted (before sort keys).
-    int iAnaGroupNum = 0;
+    size_t iAnaGroupNum = 0;
     unordered_map< string,vector<int> >::iterator itn = m_anaFuncParaNums.find(sFuncExpStr);
     if (itn == m_anaFuncParaNums.end()){
       trace(ERROR, "(3)Failed to find analytic function parameter numbers '%s'\n", sFuncExpStr.c_str());
@@ -2757,9 +2765,9 @@ bool QuerierC::processAnalyticB(const short int & iFuncID, const string & sFuncE
     }
     FunctionC* anaFunc;
     SortProp sp;
-    for (int j=0;j<iAnaGroupNum;j++){
+    for (size_t j=0;j<iAnaGroupNum;j++){
       anaFunc = NULL;
-      for (int i=0; i<m_anaEvaledExp[0].size();i++){
+      for (size_t i=0; i<m_anaEvaledExp[0].size();i++){
         //trace(DEBUG,"(2)Searching analytic function '%s' from '%s'\n",sFuncExpStr.c_str(),m_anaEvaledExp[0][i].getEntireExpstr().c_str());
         //m_anaEvaledExp[0][i].dump();
         anaFunc = m_anaEvaledExp[0][i].getAnaFunc(sFuncExpStr);
@@ -2784,20 +2792,20 @@ bool QuerierC::processAnalyticB(const short int & iFuncID, const string & sFuncE
 
   // variables for RANK/DENSERANK
   vector<string> preRow;
-  int iRank = 1, iDenseRank = 1;
-  for (int i=0; i<m_anaFuncResult.size(); i++){
-    int iPosBeforeSorted = atoi(vFuncData[i][vFuncData[i].size()-1].c_str());
+  size_t iRank = 1, iDenseRank = 1;
+  for (size_t i=0; i<m_anaFuncResult.size(); i++){
+    size_t iPosBeforeSorted = atoi(vFuncData[i][vFuncData[i].size()-1].c_str());
     bool bNewGroup = false, bSortValueChanged=false;
     if (preRow.size() == 0){
       bNewGroup = true;
-      for (int j=0;j<vFuncData[i].size()-1;j++){
+      for (size_t j=0;j<vFuncData[i].size()-1;j++){
         preRow.push_back(vFuncData[i][j]);
 #ifdef DEBUG_ANALYTIC
         printf("%d:%s\t",j,vFuncData[i][j].c_str());
 #endif
       }
     }else {
-      for (int j=0;j<vFuncData[i].size()-1;j++){
+      for (size_t j=0;j<vFuncData[i].size()-1;j++){
         if (j<m_anaFuncParaNums[sFuncExpStr][0] && vFuncData[i][j].compare(preRow[j])!=0)
           bNewGroup = true;
         if (j>=m_anaFuncParaNums[sFuncExpStr][0] && vFuncData[i][j].compare(preRow[j])!=0)
@@ -2838,7 +2846,7 @@ bool QuerierC::processAnalyticC(const short int & iFuncID, const string & sFuncE
     return false;
 
   // variables for NEARBY
-  int iAnaExprNum = 0, iAnaSortNum = 0, iDistParaNum = 0, iDefaultParaNum = 0;
+  size_t iAnaExprNum = 0, iAnaSortNum = 0, iDistParaNum = 0, iDefaultParaNum = 0;
   unordered_map< string,vector<int> >::iterator itn = m_anaFuncParaNums.find(sFuncExpStr);
   if (itn->second.size()<4){
     trace(ERROR, "NEARBY requires 4 parts parameters, only got %d\n", itn->second.size());
@@ -2865,8 +2873,8 @@ bool QuerierC::processAnalyticC(const short int & iFuncID, const string & sFuncE
     return false;
   }
 
-  for (int i=0; i<m_anaFuncResult.size(); i++){
-    int iPosBeforeSorted = atoi(vFuncData[i][vFuncData[i].size()-1].c_str());
+  for (size_t i=0; i<m_anaFuncResult.size(); i++){
+    size_t iPosBeforeSorted = atoi(vFuncData[i][vFuncData[i].size()-1].c_str());
     int iDistance = 0;
     if (!isInt(vFuncData[i][iAnaExprNum+iAnaSortNum]))
       trace(ERROR, "NEARBY distiance '%s' is not a valid number!\n", vFuncData[i][iAnaExprNum+iAnaSortNum].c_str());
@@ -2899,7 +2907,7 @@ bool QuerierC::processAnalytic(const string & sFuncExpStr, vector< vector<string
     return processAnalyticA(iFuncID, sFuncExpStr, vFuncData);
 
   // add index for each sort key for other analytic functions involved sorting
-  for (int i=0; i<vFuncData.size(); i++)
+  for (size_t i=0; i<vFuncData.size(); i++)
     vFuncData[i].push_back(intToStr(i));
 
   if (iFuncID==RANK || iFuncID==DENSERANK)
@@ -2983,7 +2991,7 @@ bool QuerierC::analytic()
     iRow++;
     int anaExpID = 0;
 
-    for (int j=0; j<m_selections.size(); j++)
+    for (size_t j=0; j<m_selections.size(); j++)
       if (m_selections[j].containAnaFunc()){
         string sResult;
         m_anaEvaledExp[i][anaExpID].evalAnalyticFunc(&(m_anaFuncResult[i]), sResult);
@@ -2993,7 +3001,7 @@ bool QuerierC::analytic()
       }
     // if appendResultSet return false, mean filtered by extra filter
     if (appendResultSet(tmpResults[i], varValues, true)) {
-      for (int j=0; j<m_sorts.size(); j++)
+      for (size_t j=0; j<m_sorts.size(); j++)
         if (m_sorts[j].sortKey.containAnaFunc()){
           string sResult;
           m_anaEvaledExp[i][anaExpID].evalAnalyticFunc(&(m_anaFuncResult[i]), sResult);
@@ -3024,8 +3032,8 @@ void QuerierC::unique()
     return;
   std::set< vector<string> > uresults; // temp result set when UNIQUE involved
   vector< vector<string> > tmpResult; // we need this as SET cannot keep the same sequence with sortkeys
-  int iSize=0, iDups=0;
-  for (int i=0;i<m_results.size();i++){
+  size_t iSize=0, iDups=0;
+  for (size_t i=0;i<m_results.size();i++){
     iSize = uresults.size();
     if (m_eliminateDupField)
       eliminateDups(m_results[i]);
@@ -3040,7 +3048,7 @@ void QuerierC::unique()
   }
   unordered_map<string, string> varValues;
   m_results.clear();
-  for (int i=0;i<tmpResult.size();i++)
+  for (size_t i=0;i<tmpResult.size();i++)
     appendResultSet(tmpResult[i], varValues, false);
   trace(DEBUG, "Result number after unique: %d.\n",m_results.size());
 #ifdef __DEBUG__
@@ -3058,15 +3066,15 @@ void QuerierC::mergeSort(const int & iLeftB, const int & iLeftT, const int & iRi
     mergeSort(iLeftB, max(iLeftB,iLeftB+(int)floor(iLeftT-iLeftB)/2-1), min(iLeftT,max(iLeftB,iLeftB+(int)floor(iLeftT-iLeftB)/2-1)+1), iLeftT);
     mergeSort(iRightB, max(iRightB,iRightB+(int)floor(iRightT-iRightB)/2-1), min(iRightT,max(iRightB,iRightB+(int)floor(iRightT-iRightB)/2-1)+1), iRightT);
 //#ifdef __DEBUG__
-//  for (int i=0; i<m_sortKeys.size(); i++)
+//  for (size_t i=0; i<m_sortKeys.size(); i++)
 //    printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
 //  printf("\n");
 //#endif // __DEBUG__
-    int iLPos = iLeftB, iRPos = iRightB, iCheckPos = iRightB;
+    size_t iLPos = iLeftB, iRPos = iRightB, iCheckPos = iRightB;
     while (iLPos<iCheckPos && iRPos<=iRightT){
       //trace(DEBUG2, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRightT);
       bool exchanged = false;
-      for (int i=0; i<m_sorts.size(); i++){
+      for (size_t i=0; i<m_sorts.size(); i++){
         //trace(DEBUG2, "Checking '%s' : '%s'\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str());
 //#ifdef __DEBUG__
   //trace(DEBUG2, "Checking %s(L) %s(R) (%d %d %d) (%s) (%d)\n", (*(m_sortKeys.begin()+iLPos))[i].c_str(), (*(m_sortKeys.begin()+iRPos))[i].c_str(),iLPos,iCheckPos,iRPos,decodeDatatype(m_sorts[i].sortKey.m_datatype.datatype).c_str(), m_sorts[i].direction);
@@ -3100,7 +3108,7 @@ void QuerierC::mergeSort(const int & iLeftB, const int & iLeftT, const int & iRi
     }
 //#ifdef __DEBUG__
 //  trace(DEBUG1, "Completed merging %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
-//  for (int i=0; i<m_sortKeys.size(); i++)
+//  for (size_t i=0; i<m_sortKeys.size(); i++)
 //    printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
 //  printf("\n");
 //#endif // __DEBUG__
@@ -3117,15 +3125,15 @@ void QuerierC::mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* so
     mergeSort(dataSet, sortProps, sortKeys, iLeftB, max(iLeftB,iLeftB+(int)floor(iLeftT-iLeftB)/2-1), min(iLeftT,max(iLeftB,iLeftB+(int)floor(iLeftT-iLeftB)/2-1)+1), iLeftT);
     mergeSort(dataSet, sortProps, sortKeys, iRightB, max(iRightB,iRightB+(int)floor(iRightT-iRightB)/2-1), min(iRightT,max(iRightB,iRightB+(int)floor(iRightT-iRightB)/2-1)+1), iRightT);
 //#ifdef __DEBUG__
-//  for (int i=0; i<sortKeys->size(); i++)
+//  for (size_t i=0; i<sortKeys->size(); i++)
 //    printf("%s(%d) ", (*(sortKeys->begin()+i))[0].c_str(), i);
 //  printf("\n");
 //#endif // __DEBUG__
-    int iLPos = iLeftB, iRPos = iRightB, iCheckPos = iRightB;
+    size_t iLPos = iLeftB, iRPos = iRightB, iCheckPos = iRightB;
     while (iLPos<iCheckPos && iRPos<=iRightT){
       //trace(DEBUG2, "Swaping %d %d %d %d\n", iLPos, iCheckPos, iRPos, iRightT);
       bool exchanged = false;
-      for (int i=0; i<sortProps->size(); i++){
+      for (size_t i=0; i<sortProps->size(); i++){
         //trace(DEBUG2, "Checking '%s' : '%s'\n", (*(sortKeys->begin()+iLPos))[i].c_str(), (*(sortKeys->begin()+iRPos))[i].c_str());
 //#ifdef __DEBUG__
   //trace(DEBUG2, "Checking %s(L) %s(R) (%d %d %d) (%s) (%d)\n", (*(sortKeys->begin()+iLPos))[i].c_str(), (*(sortKeys->begin()+iRPos))[i].c_str(),iLPos,iCheckPos,iRPos,decodeDatatype((*sortProps)[i].sortKey.m_datatype.datatype).c_str(), (*sortProps)[i].direction);
@@ -3161,7 +3169,7 @@ void QuerierC::mergeSort(vector< vector<string> > *dataSet, vector<SortProp>* so
     }
 //#ifdef __DEBUG__
 //  trace(DEBUG1, "Completed merging %d %d %d %d\n", iLeftB, iLeftT, iRightB, iRightT);
-//  for (int i=0; i<m_sortKeys.size(); i++)
+//  for (size_t i=0; i<m_sortKeys.size(); i++)
 //    printf("%s(%d) ", (*(m_sortKeys.begin()+i))[0].c_str(), i);
 //  printf("\n");
 //#endif // __DEBUG__
@@ -3175,7 +3183,7 @@ bool QuerierC::sort()
   long int thistime = curtime();
 #endif // __DEBUG__
 
-  //for (int i=0; i<m_sorts.size(); i++)
+  //for (size_t i=0; i<m_sorts.size(); i++)
   //  trace(DEBUG, "Sorting key '%s'(%d) !\n",m_sorts[i].sortKey.getEntireExpstr().c_str(),i);
   trace(DEBUG2, "Sorting begins, sort key size %d, sort expr number %d!\n",m_sortKeys.size(),m_sorts.size());
   if (m_sorts.size() == 0 || m_sortKeys.size() == 0 || (m_treeProps.size()>0 && m_treeProps.size() == m_treeParentProps.size())){
@@ -3195,14 +3203,14 @@ bool QuerierC::sort()
   //mergeSort(&m_results,&m_sorts,&m_sortKeys,0,max(0,(int)floor(m_sortKeys.size())/2-1), min((int)(m_sortKeys.size()-1),max(0,(int)floor(m_sortKeys.size())/2-1)+1),m_sortKeys.size()-1);
 
   // add index for each sort key
-  for (int i=0; i<m_sortKeys.size(); i++)
+  for (size_t i=0; i<m_sortKeys.size(); i++)
     m_sortKeys[i].push_back(intToStr(i));
   vector<SortProp> sortProps = m_sorts;
   auto sortVectorLambda = [sortProps] (vector<string> const& v1, vector<string> const& v2) -> bool
   {
     if (v1.size()!=sortProps.size()+1 || v2.size()!=sortProps.size()+1 || v2.size()!=v1.size())
       return false;
-    for (int i=0;i<sortProps.size();i++){
+    for (size_t i=0;i<sortProps.size();i++){
       int iCompareRslt = anyDataCompare(v1[i],v2[i],sortProps[i].sortKey.m_datatype,sortProps[i].sortKey.m_datatype);
       if (iCompareRslt == 0) // Compare next key only when current keys equal
         continue;
@@ -3216,7 +3224,7 @@ bool QuerierC::sort()
   //std::sort(it, it+m_sortKeys.size()-1, sortVectorLambda);
   vector< vector<string> > tmpResults = m_results;
   vector< ofstream* > tmpRsltFiles = m_resultfiles;
-  for (int i=0; i<m_sortKeys.size(); i++){
+  for (size_t i=0; i<m_sortKeys.size(); i++){
     m_results[i] = tmpResults[atoi(m_sortKeys[i][m_sortKeys[i].size()-1].c_str())];
     if (i<m_resultfiles.size())
       m_resultfiles[i] = tmpRsltFiles[atoi(m_sortKeys[i][m_sortKeys[i].size()-1].c_str())];
@@ -3247,7 +3255,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   nodeid++;
   vector<string> fieldValues;
   unordered_map<string, string> varValues;
-  for (int i=0; i<tmpResults[tNode->rowid].size()-6; i++)
+  for (size_t i=0; i<tmpResults[tNode->rowid].size()-6; i++)
     fieldValues.push_back(tmpResults[tNode->rowid][i+1]);
   varValues.insert( pair<string,string>("@RAW",tmpResults[tNode->rowid][0]));
   varValues.insert( pair<string,string>("@LINE",tmpResults[tNode->rowid][tmpResults[tNode->rowid].size()-6]));
@@ -3288,7 +3296,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   string sConn="/";
   for (unordered_map< string,vector<ExpressionC> >::iterator it=treeFuncs.begin(); it!=treeFuncs.end(); it++){
     vResults.clear();
-    for (int i=0; i<it->second.size(); i++){
+    for (size_t i=0; i<it->second.size(); i++){
       it->second[i].evalExpression(rds, sResult, dts, true);
       vResults.push_back(sResult);
     }
@@ -3331,7 +3339,7 @@ bool QuerierC::tree()
 
   std::set < TreeNode* > roots;
   unordered_map< vector<string>, TreeNode*, hash_container< vector<string> > > treeNodes;
-  for (int i=0; i<m_treeKeys.size();i++){
+  for (size_t i=0; i<m_treeKeys.size();i++){
     if (treeNodes.find(m_treeKeys[i]) != treeNodes.end()){
       trace(WARNING, "Duplicated tree keys detected, skip one row!\n");
       continue;
@@ -3372,7 +3380,7 @@ bool QuerierC::tree()
   }
 
   unordered_map< string,vector<ExpressionC> > treeFuncs;
-  for (int i=0; i<m_selections.size(); i++)
+  for (size_t i=0; i<m_selections.size(); i++)
     m_selections[i].getTreeFuncs(treeFuncs);
 
   vector< vector<string> > tmpResults = m_results;
@@ -3394,7 +3402,7 @@ bool QuerierC::tree()
 //{
 //  //for (vector<string>::const_iterator it = matches.names_begin(); it != matches.names_end(); ++it)
 //  //  printf("%s\t", matches[*it].str().c_str());
-//  for (int i=1; i<matches.size(); i++)
+//  for (size_t i=1; i<matches.size(); i++)
 //    printf("%s\t",matches[i].str().c_str());
 //  printf("\n");
 //}
@@ -3444,7 +3452,7 @@ void QuerierC::formatoutput(vector<string> & datas, const int & resultid)
     if (m_selections.size()==0){
       outputstream(resultid, "\t\t\t\"%s\": \"%s\"\n","RAW",datas[0].c_str());
     }else{
-      for (int i=1; i<datas.size(); i++){
+      for (size_t i=1; i<datas.size(); i++){
         if (m_selections[i-1].m_datatype.datatype == INTEGER || m_selections[i-1].m_datatype.datatype == LONG || m_selections[i-1].m_datatype.datatype == DOUBLE || m_selections[i-1].m_datatype.datatype == BOOLEAN)
           outputstream(resultid, "\t\t\t\"%s\": %s",m_selnames[i-1].c_str(),datas[i].c_str());
         else
@@ -3460,7 +3468,7 @@ void QuerierC::formatoutput(vector<string> & datas, const int & resultid)
     if (m_selections.size()==0)
       outputstream(resultid, "%s\n", datas[0].c_str());
     else{
-      for (int i=1; i<datas.size(); i++)
+      for (size_t i=1; i<datas.size(); i++)
         outputstream(resultid, "%s%s", datas[i].c_str(),i<datas.size()-1?m_fielddelim.c_str():"");
       outputstream(resultid, "\n");
     }
@@ -3477,7 +3485,7 @@ void QuerierC::printFieldNames()
   // re-analyze extra filter string to get the trimmed selection alias
   if (m_trimmedAlias.size()>0){
     m_selnames.clear();
-    for (int i=0; i<m_trimedInitSels.size(); i++)
+    for (size_t i=0; i<m_trimedInitSels.size(); i++)
       if (i<m_trimmedAlias.size()&& !m_trimmedAlias[i].empty())
         m_selnames.push_back(m_trimmedAlias[i]);
       else
@@ -3487,18 +3495,18 @@ void QuerierC::printFieldNames()
   if (m_colToRows.size() != m_colToRowNames.size()){
     trace(ERROR,"COLTOROW marco function size %d doesnot match filed names of COLTOROW marco function %d",m_colToRows.size(),m_colToRowNames.size());
   }else{
-    for (int i=m_colToRows.size()-1;i>=0;i--){
+    for (size_t i=m_colToRows.size()-1;i>=0;i--){
       m_selnames.insert(m_selnames.begin()+m_colToRows[i][0],m_colToRowNames[i]);
-      for (int j=m_colToRows[i].size()-1;j>=0;j--)
+      for (size_t j=m_colToRows[i].size()-1;j>=0;j--)
         m_selnames.erase(m_selnames.begin()+1+m_colToRows[i][j]);
     }
   }
   if (m_selnames.size()>0){
-    for (int i=0; i<m_selnames.size(); i++){
+    for (size_t i=0; i<m_selnames.size(); i++){
       printf("%s%s",m_selnames[i].c_str(),i<m_selnames.size()-1?m_fielddelim.c_str():"");
     }
     printf("\n");
-    for (int i=0; i<m_selnames.size(); i++)
+    for (size_t i=0; i<m_selnames.size(); i++)
       printf("%s%s",string(m_selnames[i].length(),'-').c_str(),i<m_selnames.size()-1?m_fielddelim.c_str():"");
   }else{
     printf("Row\n"); 
@@ -3539,7 +3547,7 @@ bool QuerierC::applyExtraFilter(const vector<string> & aRow, const unordered_map
   rds.macroFuncExprs = &m_userMacroExprs;
 
   fieldValues.clear();
-  for (int j=1; j<aRow.size(); j++)
+  for (size_t j=1; j<aRow.size(); j++)
     fieldValues.push_back(aRow[j]);
   newVarVals["@RAW"]=concatArray(aRow,m_fielddelim);
   newVarVals["@%"]=intToStr(aRow.size());
@@ -3550,7 +3558,7 @@ bool QuerierC::applyExtraFilter(const vector<string> & aRow, const unordered_map
       trimmedResult.push_back("");
       string sResult;
       DataTypeStruct dts;
-      for (int j=0; j<m_trimedSelctions.size(); j++){
+      for (size_t j=0; j<m_trimedSelctions.size(); j++){
         m_trimedSelctions[j].evalExpression(rds, sResult, dts, true);
         trimmedResult.push_back(sResult);
       }
@@ -3588,7 +3596,7 @@ void QuerierC::applyExtraFilter()
   m_colToRows.clear();
   vector< vector<string> > tmpResults = m_results;
   m_results.clear();
-  for (int i=0; i<tmpResults.size(); i++)
+  for (size_t i=0; i<tmpResults.size(); i++)
     applyExtraFilter(tmpResults[i], varValues);
 }
 
@@ -3599,7 +3607,7 @@ void QuerierC::genReport(const vector<string> & datas)
   }
 
   if (m_reportResult.size()>0){
-    for (int i=1; i<datas.size(); i++){
+    for (size_t i=1; i<datas.size(); i++){
       if (i<datas.size() && isDouble(datas[i]) && m_reportOps.find(i)!=m_reportOps.end() && m_reportResult.find(i)!=m_reportResult.end()){
         switch (m_reportOps[i]){
           case COUNT:
@@ -3628,10 +3636,10 @@ void QuerierC::output()
   long int thistime = curtime();
 #endif // __DEBUG__
   //printf("Result Num: %d\n",m_results.size());
-  //int iRowNumFromCols = 0;
-  //for (int i=0; i<m_colToRows.size(); i++)
+  //size_t iRowNumFromCols = 0;
+  //for (size_t i=0; i<m_colToRows.size(); i++)
   //  iRowNumFromCols = max(iRowNumFromCols, (int)m_colToRows[i].size());
-  for (int i=0; i<m_results.size(); i++){
+  for (size_t i=0; i<m_results.size(); i++){
     genReport(m_results[i]);
     formatoutput(m_results[i], i);
   }
@@ -3677,7 +3685,7 @@ void QuerierC::outputExtraInfo(const size_t & total, const bool & bPrintHeader)
     if (m_reportResult.size()>0){
       outputstream(-1, "\t\"reports\": [\n");
       outputstream(-1, "\t\t{\n");
-      for (int i=1; i<=m_selections.size(); i++){
+      for (size_t i=1; i<=m_selections.size(); i++){
         if (m_reportOps.find(i)!=m_reportOps.end() && m_reportResult.find(i)!=m_reportResult.end() && m_reportNames.find(i)!=m_reportNames.end()){
           if (m_reportOps[i] == AVERAGE)
             m_reportResult[i]=m_reportResult[i]/(m_outputrow-m_limitbottom+1);
@@ -3701,7 +3709,7 @@ void QuerierC::outputExtraInfo(const size_t & total, const bool & bPrintHeader)
     printf("}\n");
   }else{
     if (m_reportResult.size()>0){
-      for (int i=1; i<=m_selections.size(); i++){
+      for (size_t i=1; i<=m_selections.size(); i++){
         if (m_reportOps.find(i)!=m_reportOps.end() && m_reportResult.find(i)!=m_reportResult.end()){
           if (m_reportOps[i] == AVERAGE)
             m_reportResult[i]=m_reportResult[i]/(m_outputrow-m_limitbottom+1);

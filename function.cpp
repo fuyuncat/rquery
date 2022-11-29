@@ -119,11 +119,11 @@ bool FunctionC::isConst()
   if (isAggFunc() || m_funcID==RCOUNT || m_funcID==RANDOM || m_funcID==RANDSTR || (m_funcID==NOW && m_params.size()>0)) // RCOUNT/RANDOM accept 0 parameter, RANDSTR accept const parameter, unlike NOW(), it cannot be counted as a const function
     return false;
   if (m_expstrAnalyzed){
-    for (int i=0; i<m_params.size(); i++){
+    for (size_t i=0; i<m_params.size(); i++){
       if (m_params[i].m_expType != CONST)
         return false;
     }
-    for (int i=0; i<m_filters.size(); i++){
+    for (size_t i=0; i<m_filters.size(); i++){
       if (!m_filters[i].isConst())
         return false;
     }
@@ -154,7 +154,7 @@ bool FunctionC::isTree()
 
 bool FunctionC::containRefVar()
 {
-  for (int i=0;i<m_params.size();i++)
+  for (size_t i=0;i<m_params.size();i++)
     if (m_params[i].containRefVar())
       return true;
   return false;
@@ -189,11 +189,11 @@ bool FunctionC::analyzeExpStr()
       m_expstrAnalyzed = false;
       return false;
     }
-    for (int i=0; i<vParams.size(); i++){
+    for (size_t i=0; i<vParams.size(); i++){
       vector<string> vAnaPara;
       split(vAnaPara,trim_copy(vParams[i]),',',"''()",'\\',{'(',')'},false,true);
       m_anaParaNums.push_back(vAnaPara.size());
-      for (int j=0;j<vAnaPara.size();j++){
+      for (size_t j=0;j<vAnaPara.size();j++){
         if (i==1){// The second part should always be sort keys for ALL analytic functions.
           vector<string> vSortPara;
           split(vSortPara,trim_copy(vAnaPara[j]),' ',"''()",'\\',{'(',')'},true,true);
@@ -211,7 +211,7 @@ bool FunctionC::analyzeExpStr()
     trace(DEBUG, "FunctionC: The analytic function '%s' group size is %d, param size %d \n", m_expStr.c_str(), m_anaParaNums[0], m_params.size());
   }else{
     split(vParams,strParams,',',"''()",'\\',{'(',')'},false,true);
-    for (int i=0; i<vParams.size(); i++){
+    for (size_t i=0; i<vParams.size(); i++){
       trace(DEBUG, "Processing parameter(%d) '%s'!\n", i, vParams[i].c_str());
       string sParam = trim_copy(vParams[i]);
       if (sParam.empty()){
@@ -461,11 +461,11 @@ DataTypeStruct FunctionC::analyzeColumns(vector<string>* fieldnames, vector<Data
   m_fieldnames = fieldnames;
   m_fieldtypes = fieldtypes;
   m_rawDatatype = rawDatatype;
-  for (int i=0; i<m_params.size(); i++){
+  for (size_t i=0; i<m_params.size(); i++){
     m_params[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
     //trace(DEBUG2, "Analyzing parameter '%s' in function '%s' (%d)\n", m_params[i].getEntireExpstr().c_str(), m_expStr.c_str(),m_params[i].columnsAnalyzed());
   }
-  for (int i=0; i<m_filters.size(); i++){
+  for (size_t i=0; i<m_filters.size(); i++){
     m_filters[i].analyzeColumns(m_fieldnames, m_fieldtypes, rawDatatype, sideDatatypes);
     //trace(DEBUG2, "Analyzing filter '%s' in function '%s' (%d)\n", m_filters[i].m_expStr.c_str(), m_expStr.c_str(),m_filters[i].columnsAnalyzed());
   }
@@ -724,7 +724,7 @@ bool FunctionC::runReplace(RuntimeDataStruct & rds, string & sResult, DataTypeSt
   }
   vector<string> vReplace, vNew;
   string sStr;
-  for (int i=1;i<m_params.size();i++){
+  for (size_t i=1;i<m_params.size();i++){
     if (!m_params[i].evalExpression(rds, sStr, dts, true)){
       trace(ERROR, "(%d-%s)Failed to run replace()!\n", i,m_params[i].getEntireExpstr().c_str());
       return false;
@@ -987,7 +987,7 @@ bool FunctionC::runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
       iEnd = vWords.size()-1;
     }
     sResult = "";
-    for (int i=iStart; iStart<=iEnd?i<=iEnd:i>=iEnd; iStart<=iEnd?i++:i--)
+    for (size_t i=iStart; iStart<=iEnd?i<=iEnd:i>=iEnd; iStart<=iEnd?i++:i--)
       sResult+=vWords[i]+(i!=iEnd?sDelm:"");
     return true;
   }else{
@@ -1075,7 +1075,7 @@ bool FunctionC::runConcat(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     return false;
   }
   string scomp;
-  for (int i=1;i<m_params.size();i++){
+  for (size_t i=1;i<m_params.size();i++){
     if (!m_params[i].evalExpression(rds, scomp, dts2, true)){
       trace(ERROR, "(%d-%s)Failed to run concat()\n",i,m_params[i].getEntireExpstr().c_str());
       return false;
@@ -1100,7 +1100,7 @@ bool FunctionC::runConcatcol(RuntimeDataStruct & rds, string & sResult, DataType
   }
   vector<ExpressionC> vExpandedExpr;
   expandForeach(vExpandedExpr, rds.fieldvalues->size());
-  for (int i=0; i<vExpandedExpr.size(); i++){
+  for (size_t i=0; i<vExpandedExpr.size(); i++){
     vExpandedExpr[i].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
     if (!vExpandedExpr[i].evalExpression(rds, sRaw, dts, true)){
       trace(ERROR, "(%d-%s)Failed to run concatcol(start,end,expr[,step,delm])!\n",i,vExpandedExpr[i].getEntireExpstr().c_str());
@@ -1130,7 +1130,7 @@ bool FunctionC::runCalcol(RuntimeDataStruct & rds, string & sResult, DataTypeStr
   std::set <string> tmpSet;
   vector<ExpressionC> vExpandedExpr;
   expandForeach(vExpandedExpr, rds.fieldvalues->size());
-  for (int i=0; i<vExpandedExpr.size(); i++){
+  for (size_t i=0; i<vExpandedExpr.size(); i++){
     vExpandedExpr[i].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
     if (!vExpandedExpr[i].evalExpression(rds, sRaw, dts, true) || !isDouble(trim_copy(sRaw))){
       trace(ERROR, "(%d-%s)Failed to run calcol(start,end,expr[,step,operation])!\n",i,vExpandedExpr[i].getEntireExpstr().c_str());
@@ -1448,7 +1448,7 @@ bool FunctionC::runMyips(RuntimeDataStruct & rds, string & sResult, DataTypeStru
   dts.datatype = STRING;  
   sResult = "";
   unordered_map< string,string >::iterator it=IPs.begin();
-  for (int i=iStartid; (iStartid<=iEndid?i<=iEndid:i>=iEndid) && it!=IPs.end(); iStartid<=iEndid?i++:i--){
+  for (size_t i=iStartid; (iStartid<=iEndid?i<=iEndid:i>=iEndid) && it!=IPs.end(); iStartid<=iEndid?i++:i--){
     sResult+=it->second+(i!=iEndid?sDelm:"");
     it++;
   }
@@ -3298,7 +3298,7 @@ bool FunctionC::runSwitch(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     return false;
   }
   string scase,sreturn;
-  for (int i=1;i<m_params.size();i++){
+  for (size_t i=1;i<m_params.size();i++){
     if (!m_params[i].evalExpression(rds, scase, dts2, true)){
       trace(ERROR, "(1)Eval expression '%s' failed.\n",m_params[i].getEntireExpstr().c_str());
       return false;
@@ -3346,7 +3346,7 @@ bool FunctionC::runWhen(RuntimeDataStruct & rds, string & sResult, DataTypeStruc
     return false;
   }
   vector< unordered_map< int,int > > sideMatchedRowIDs;
-  for (int i=0; i<m_filters.size(); i++){
+  for (size_t i=0; i<m_filters.size(); i++){
     if (m_filters[i].compareExpression(rds, sideMatchedRowIDs) && m_params[i].evalExpression(rds, sResult, dts, true)){
       m_datatype = dts;
       return true;
@@ -3387,11 +3387,11 @@ bool FunctionC::runGreatest(RuntimeDataStruct & rds, string & sResult, DataTypeS
   }
   string scomp;
   DataTypeStruct dts1, dts2;
-  for (int i=0;i<m_params.size();i++){
+  for (size_t i=0;i<m_params.size();i++){
     if (m_params[i].m_type == LEAF && m_params[i].m_expType == FUNCTION && m_params[i].m_Function && m_params[i].m_Function->m_funcID==FOREACH){
       vector<ExpressionC> vExpandedExpr;
       m_params[i].m_Function->expandForeach(vExpandedExpr, rds.fieldvalues->size());
-      for (int j=0; j<vExpandedExpr.size(); j++){
+      for (size_t j=0; j<vExpandedExpr.size(); j++){
         vExpandedExpr[j].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
         if (!vExpandedExpr[j].evalExpression(rds, scomp, dts2, true)){
           trace(ERROR, "(%d-%d-%s)Failed to run greatest()!\n",i,j,vExpandedExpr[i].getEntireExpstr().c_str());
@@ -3450,11 +3450,11 @@ bool FunctionC::runLeast(RuntimeDataStruct & rds, string & sResult, DataTypeStru
   }
   string scomp;
   DataTypeStruct dts1, dts2;
-  for (int i=0;i<m_params.size();i++){
+  for (size_t i=0;i<m_params.size();i++){
     if (m_params[i].m_type == LEAF && m_params[i].m_expType == FUNCTION && m_params[i].m_Function && m_params[i].m_Function->m_funcID==FOREACH){
       vector<ExpressionC> vExpandedExpr;
       m_params[i].m_Function->expandForeach(vExpandedExpr, rds.fieldvalues->size());
-      for (int j=0; j<vExpandedExpr.size(); j++){
+      for (size_t j=0; j<vExpandedExpr.size(); j++){
         vExpandedExpr[j].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
         if (!vExpandedExpr[j].evalExpression(rds, scomp, dts2, true)){
           trace(ERROR, "(%d-%d-%s)Failed to run least()!\n",i,j,vExpandedExpr[i].getEntireExpstr().c_str());
@@ -3513,11 +3513,11 @@ bool FunctionC::runSumall(RuntimeDataStruct & rds, string & sResult, DataTypeStr
   string scomp;
   double dResult=0;
   DataTypeStruct dts1, dts2;
-  for (int i=0;i<m_params.size();i++){
+  for (size_t i=0;i<m_params.size();i++){
     if (m_params[i].m_type == LEAF && m_params[i].m_expType == FUNCTION && m_params[i].m_Function && m_params[i].m_Function->m_funcID==FOREACH){
       vector<ExpressionC> vExpandedExpr;
       m_params[i].m_Function->expandForeach(vExpandedExpr, rds.fieldvalues->size());
-      for (int j=0; j<vExpandedExpr.size(); j++){
+      for (size_t j=0; j<vExpandedExpr.size(); j++){
         vExpandedExpr[j].analyzeColumns(m_fieldnames, m_fieldtypes, m_rawDatatype, rds.sideDatatypes);
         if (!vExpandedExpr[j].evalExpression(rds, scomp, dts2, true) || !isDouble(scomp)){
           trace(ERROR, "(%d-%d-%s)Failed to run sumall()!\n",i,j,vExpandedExpr[i].getEntireExpstr().c_str());
@@ -3593,7 +3593,7 @@ bool FunctionC::runUsermacro(RuntimeDataStruct & rds, string & sResult, DataType
     trace(ERROR, "Failed to get the macro function '%s' definition.\n",m_funcName.c_str());
     return false;
   }
-  for (int i=0; i<m_params.size(); i++){
+  for (size_t i=0; i<m_params.size(); i++){
     string paraVal;
     if (!m_params[i].evalExpression(rds, paraVal, dts, true)){
       trace(ERROR, "Failed to get the parameter value of '%s'.\n",m_funcName.c_str());
@@ -3652,7 +3652,7 @@ bool FunctionC::runRcount(RuntimeDataStruct & rds, string & sResult, DataTypeStr
           return false;
         }
         int nCount=0;
-        for (int i=0; i<(*rds.sideDatasets)[iS1].size(); i++){
+        for (size_t i=0; i<(*rds.sideDatasets)[iS1].size(); i++){
           if ((*rds.sideDatasets)[iS1][i].find(s2)!=(*rds.sideDatasets)[iS1][i].end() && (*rds.sideDatasets)[iS1][i][s2].compare(memval)==0)
             nCount++;
         }
@@ -3767,7 +3767,7 @@ bool FunctionC::runRmembers(RuntimeDataStruct & rds, string & sResult, DataTypeS
     m_params[4].evalExpression(rds, sDelm, dts, true);
   dts.datatype = STRING;  
   sResult = "";
-  for (int i=iStartid; iStartid<=iEndid?i<=iEndid:i>=iEndid; iStartid<=iEndid?i++:i--)
+  for (size_t i=iStartid; iStartid<=iEndid?i<=iEndid:i>=iEndid; iStartid<=iEndid?i++:i--)
     sResult+=(*rds.sideDatasets)[iS1][i][s2]+(i!=iEndid?sDelm:"");
   return true;
 }
@@ -3802,7 +3802,7 @@ bool FunctionC::runRmemberid(RuntimeDataStruct & rds, string & sResult, DataType
     return false;
   }
   dts.datatype = LONG;
-  for (int i=0; i<(*rds.sideDatasets)[iS1].size(); i++){
+  for (size_t i=0; i<(*rds.sideDatasets)[iS1].size(); i++){
     if ((*rds.sideDatasets)[iS1][i].find(s2)!=(*rds.sideDatasets)[iS1][i].end() && (*rds.sideDatasets)[iS1][i][s2].compare(memval)==0){
       sResult = intToStr(i+1);
       return true;
@@ -4399,7 +4399,7 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
     case MINA:
     case AVERAGEA:
     case SEQNUM:{
-      for (int i=0; i<m_params.size(); i++)
+      for (size_t i=0; i<m_params.size(); i++)
         if (!m_params[i].evalExpression(rds, sResult, dts, true)){
           trace(ERROR, "Failed to eval function (%s) N.O. %d parameter (%s).\n", m_funcName.c_str(),i,m_params[i].getEntireExpstr().c_str());
           return false;

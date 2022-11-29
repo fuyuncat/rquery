@@ -41,7 +41,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
          - parse /parsing string/ : Choose one of three mode to match the content.<br />
             - // quotes a regular expression pattern string to parse the content; <br />
             - w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/. substrings between two \* are the spliters, spliter between quoters will be skipped; <br />
-            - d/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /""/; flag C means whether to treat each character instead of a whole string as delimiter. <br />
+            - d/<Delmiter>/[quoters/][r][s][c] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /""/; flag C means whether to treat each character instead of a whole string as delimiter. <br />
             - l: to parse the whole line as a single field. <br />
          - set <field datatype [date format],...> : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
          - filter <filter conditions> : Filter the parsed records<br />
@@ -82,7 +82,7 @@ The latest version can be downloaded here: https://github.com/fuyuncat/rquery/re
       - parse|p /parsing string/ : Choose one of three mode to match the content.<br />
          - // quotes a regular expression pattern string to parse the content; <br />
          - w/<WildCardExpr>/[quoters/] quotes wildcard expression to parse the content, wildcard '\*' stands for a field, e.g. w/\*abc\*,\*/. substrings between two \* are the spliters, spliter between quoters will be skipped; <br />
-         - d/<Delmiter>/[quoters/][r][s] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /""/ <br />
+         - d/<Delmiter>/[quoters/][r][s][c] quotes delmiter to parse the content, Delmiter splits fields, delmiter between quoters will be skipped, flag r means the delmiter is repeatable; flag s means the leading&trail space will be reserved when the delmiter is space. e.g. d/ /""/; flag C means whether to treat each character instead of a whole string as delimiter. <br />
       - set|t field datatype [date format],... : Set field data type. Supported data types: LONG, INTEGER, DOUBLE, STRING, DATE.<br />
       - filter|f <filter conditions> : Filter the parsed records<br />
       - extrafilter|e <extra filter conditions> [ trim <selections ...>] : Provide filter conditions to filt the resultset. @N refer to Nth selection of the result set. the trim clause specifys the selections after trimmed the result set.<br />

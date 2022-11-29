@@ -936,7 +936,7 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
             }
           }
           // check if it is a column
-          for (int i=0; i<fieldnames->size(); i++){
+          for (size_t i=0; i<fieldnames->size(); i++){
             if (upper_copy(m_expStr).compare(upper_copy((*fieldnames)[i])) == 0){
               if (i>=fieldtypes->size()){
                 trace(ERROR, "Field id %d is out range of filed data types numbers %d\n", i, fieldtypes->size());
@@ -1225,7 +1225,7 @@ bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function
         };
         std::sort(aggGroupProp.varray->begin(), aggGroupProp.varray->end(), sortVectorLambda);
       }
-      for (int i=0;i<aggGroupProp.varray->size();i++)
+      for (size_t i=0;i<aggGroupProp.varray->size();i++)
         sResult.append((i>0?(function->m_params.size()>1?function->m_params[1].m_expStr:" "):"")+(*aggGroupProp.varray)[i]);
       function->m_datatype.datatype = STRING;
       break;
@@ -1307,7 +1307,7 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
             rds.anaFuncs = &dummyAnaFuncs;
             string tmpRslt;
             if (it->second.size()==0)// Empty vector means it's still doing raw data matching, only need to eval parameter expressions. Only retrieve once for each analytic function (identified by its expression str)
-              for (int i=0;i<m_Function->m_params.size();i++){
+              for (size_t i=0;i<m_Function->m_params.size();i++){
                 m_Function->m_params[i].evalExpression(rds, tmpRslt, dts, true);
                 it->second.push_back(tmpRslt);
               }
@@ -1346,7 +1346,7 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
         }
         bResult=true;
       }else{
-        int i=0;
+        size_t i=0;
         for (i=0; i<m_fieldnames->size(); i++)
           if ((*m_fieldnames)[i].compare(m_expStr) == 0)
             break;
@@ -1573,7 +1573,7 @@ bool ExpressionC::getAggFuncs(unordered_map< string,GroupProp > & aggFuncs)
     }else { // check the paramters of normal functions
       //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
       bool bGotAggFunc = false;
-      for (int i=0;i<m_Function->m_params.size();i++){
+      for (size_t i=0;i<m_Function->m_params.size();i++){
         //trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
         bGotAggFunc = m_Function->m_params[i].getAggFuncs(aggFuncs)||bGotAggFunc;
       }
@@ -1594,7 +1594,7 @@ bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaF
       vector<ExpressionC> vParams;
       if (anaFuncs.find(m_Function->m_expStr) == anaFuncs.end()){
         vParams.clear();
-        for (int i=0; i<m_Function->m_params.size();i++)
+        for (size_t i=0; i<m_Function->m_params.size();i++)
           vParams.push_back(m_Function->m_params[i]);
         //trace(DEBUG2,"Adding aggregation function '%s' properties \n",m_Function->m_expStr.c_str());
         anaFuncs.insert(pair< string,vector<ExpressionC> >(m_Function->m_expStr,vParams));
@@ -1605,7 +1605,7 @@ bool ExpressionC::getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaF
     }else { // check the paramters of normal functions
       //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
       bool bGotAnaFunc = false;
-      for (int i=0;i<m_Function->m_params.size();i++){
+      for (size_t i=0;i<m_Function->m_params.size();i++){
         //trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
         bGotAnaFunc = m_Function->m_params[i].getAnaFuncs(anaFuncs, anaParaNums)||bGotAnaFunc;
       }
@@ -1626,7 +1626,7 @@ bool ExpressionC::getTreeFuncs(unordered_map< string,vector<ExpressionC> > & tre
       vector<ExpressionC> vParams;
       if (treeFuncs.find(m_Function->m_expStr) == treeFuncs.end()){
         vParams.clear();
-        for (int i=0; i<m_Function->m_params.size();i++)
+        for (size_t i=0; i<m_Function->m_params.size();i++)
           vParams.push_back(m_Function->m_params[i]);
         treeFuncs.insert(pair< string,vector<ExpressionC> >(m_Function->m_expStr,vParams));
       }
@@ -1634,7 +1634,7 @@ bool ExpressionC::getTreeFuncs(unordered_map< string,vector<ExpressionC> > & tre
     }else { // check the paramters of normal functions
       //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
       bool bGotTreeFunc = false;
-      for (int i=0;i<m_Function->m_params.size();i++){
+      for (size_t i=0;i<m_Function->m_params.size();i++){
         //trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
         bGotTreeFunc = m_Function->m_params[i].getTreeFuncs(treeFuncs)||bGotTreeFunc;
       }
@@ -1657,7 +1657,7 @@ void ExpressionC::setTreeFuncs(unordered_map< string,string > & treeFuncVals)
       SafeDelete(m_Function);
     }else { // check the paramters of normal functions
       //trace(DEBUG2,"Parameter size %d\n",m_Function->m_params.size());
-      for (int i=0;i<m_Function->m_params.size();i++){
+      for (size_t i=0;i<m_Function->m_params.size();i++){
         //trace(DEBUG2,"Parameter '%s'\n",m_Function->m_params[i].getEntireExpstr().c_str());
         m_Function->m_params[i].setTreeFuncs(treeFuncVals);
       }
@@ -1791,7 +1791,7 @@ bool ExpressionC::inColNamesRange(const vector<string> & fieldnames)
       return true;
     }
     else if (m_expType == COLUMN || m_expType == VARIABLE || m_expType == UNKNOWN){
-      for (int i=0;i<fieldnames.size();i++)
+      for (size_t i=0;i<fieldnames.size();i++)
         if (upper_copy(m_expStr).compare(upper_copy(fieldnames[i])) == 0){
           //trace(DEBUG,"777777 '%s' \n", m_expStr.c_str());
           return true;
@@ -1805,7 +1805,7 @@ bool ExpressionC::inColNamesRange(const vector<string> & fieldnames)
       }
       if (m_Function){
         bool compatible = true;
-        for (int i=0;i<m_Function->m_params.size();i++)
+        for (size_t i=0;i<m_Function->m_params.size();i++)
           if (!m_Function->m_params[i].inColNamesRange(fieldnames)){
             compatible = false;
             //trace(DEBUG,"AAAAAA '%s' \n", m_expStr.c_str());

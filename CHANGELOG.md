@@ -2,6 +2,7 @@
 All change logs will be documented here.<br/>
    # [1.221] 2022-11-29
    Enhancement: Improved performance of split().<br/>
+   Enhancement: Further performance improvement: avoid converting int to size_t.<br/>
    # [1.221] 2022-11-28
    Fix bug: Aggregation function return wrong result.<br/>
    # [1.22] 2022-11-28

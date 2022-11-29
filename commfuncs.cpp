@@ -346,7 +346,7 @@ string readQuotedStr(const string & str, size_t& pos, const string & targetquote
             continue;
           }
         if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-          for (int k=0; k<(int)(quoters.length()/2); k++){
+          for (size_t k=0; k<(size_t)(quoters.length()/2); k++){
             if (str[i] == quoters[k*2])
               if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
                 //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
@@ -389,7 +389,7 @@ size_t findNthCharacter(const string & str, const std::set<char> & lookfor, cons
           continue;
         }
       if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-        for (int k=0; k<(int)(quoters.length()/2); k++){
+        for (size_t k=0; k<(size_t)(quoters.length()/2); k++){
           if (str[i] == quoters[k*2])
             if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
               //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
@@ -423,7 +423,7 @@ size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, co
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.length()/2); k++){
+      for (size_t k=0; k<(size_t)(quoters.length()/2); k++){
         if (str[i] == quoters[k*2])
           if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
@@ -465,7 +465,7 @@ size_t findNthSub(const string & str, const string & lookfor, const size_t & pos
           continue;
         }
       if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-        for (int k=0; k<(int)(quoters.size()/2); k++){
+        for (size_t k=0; k<(size_t)(quoters.size()/2); k++){
           if (str[i] == quoters[k*2])
             if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
               //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
@@ -507,7 +507,7 @@ size_t findFirstSub(const string & str, const string & lookfor, const size_t & p
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.size()/2); k++){
+      for (size_t k=0; k<(size_t)(quoters.size()/2); k++){
         if (str[i] == quoters[k*2])
           if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
@@ -587,7 +587,7 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.length()/2); k++){
+      for (size_t k=0; k<(size_t)(quoters.length()/2); k++){
         if (str[i] == quoters[k*2])
           if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
@@ -618,12 +618,14 @@ void quicksplit(vector<string> & v, const string & str, const std::set<char> & d
           break;
         }
     }
-    if ((nq<=0 && delims.find(str[p])!=delims.end()) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq])){
+    if ((nq<=0 && delims.find(str[p])!=delims.end()) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq] && (p>=str.length()-1 || delims.find(str[p+1])!=delims.end()))){
       token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
       if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
         v.push_back(token);
       token="";
       p++;
+      if (nq>0 && p<str.length()-1)
+        p++;
       b=p;
     }else
       p++;
@@ -663,7 +665,7 @@ void split(vector<string> & v, const string & str, const std::set<char> & delims
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.length()/2); k++){
+      for (size_t k=0; k<(size_t)(quoters.length()/2); k++){
         if (str[i] == quoters[k*2])
           if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
@@ -818,7 +820,7 @@ void quicksplit(vector<string> & v, const string & str, const char & delim, cons
           break;
         }
     }
-    if ((nq<=0 && str[p]==delim) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq])){
+    if ((nq<=0 && str[p]==delim) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq] && (p>=str.length()-1 || str[p+1]==delim))){
       if (nq>0 || b!=p || !repeatable){ // skip repeated delim
         token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
         if (!skipemptyelement || token.length()>0)
@@ -827,6 +829,8 @@ void quicksplit(vector<string> & v, const string & str, const char & delim, cons
         //v.push_back(string(b,p));
       }
       p++;
+      if (nq>0 && p<str.length()-1)
+        p++;
       b=p;
     }else
       p++;
@@ -866,7 +870,7 @@ void split(vector<string> & v, const string & str, const char & delim, const str
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.length()/2); k++){
+      for (size_t k=0; k<(size_t)(quoters.length()/2); k++){
         if (str[i] == quoters[k*2])
           if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
@@ -920,12 +924,12 @@ void quicksplit(vector<string> & v, const string & str, string & delim, const st
           break;
         }
     }
-    if ((nq<=0 && str.length()>=p+delim.length() && compareStr(str,p,delim.length(),delim,0,delim.length(),delimcasesensive)==0) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq])){
+    if ((nq<=0 && str.length()>=p+delim.length() && compareStr(str,p,delim.length(),delim,0,delim.length(),delimcasesensive)==0) || (nq>0 && nq<quoters.length() && b!=p && str[p-1]!=escape && str[p]==quoters[nq] && (str.length()<p+delim.length()+1 || compareStr(str,p+1,delim.length(),delim,0,delim.length(),delimcasesensive)==0))){
       token.insert(0,str.c_str()+b,nq>0?p-b+1:p-b);
       if ((!skipemptyelement && !repeatable) || token.length()>0) // skip repeated delim
         v.push_back(token);
       token="";
-      p=p+(nq<=0?delim.length():1);
+      p=p+(nq<=0?delim.length():(str.length()<p+delim.length()+1?1:delim.length()+1));
       b=p;
     }else
       p++;
@@ -977,7 +981,7 @@ void split(vector<string> & v, const string & str, string & delim, const string 
         continue;
       }
     if (q.size()==0 || nestedQuoters.find(quoters[q[q.size()-1]])!=nestedQuoters.end()) // if not quoted or the latest quoter is a nested quoter, then search quoters
-      for (int k=0; k<(int)(quoters.length()/2); k++){
+      for (size_t k=0; k<(size_t)(quoters.length()/2); k++){
         if (str[i] == quoters[k*2])
           if (k*2+1<quoters.length() && (i==0 || (i>0 && str[i-1]!=escape))){
             //trace(DEBUG, "Found quoter <%s>(%d) !\n",str.substr(i,1).c_str(),i);
@@ -1045,7 +1049,8 @@ string trim_one(const string & str, const char & c)
 // count occurences of substr in str
 int countstr(const string & str, const string & substr)
 {
-  int pos=0, count=0;
+  size_t pos=0;
+  int count=0;
   //trace(DEBUG, "counting '%s','%s' ...",str.c_str(),substr.c_str());
   pos = str.find(substr, pos);
   while (pos != string::npos){
@@ -1057,7 +1062,7 @@ int countstr(const string & str, const string & substr)
 
 void replacestr(string & sRaw, const string & sReplace, const string & sNew)
 {
-  int pos=0;
+  size_t pos=0;
   //trace(DEBUG, "replacing '%s','%s','%s' ...",sRaw.c_str(),sReplace.c_str(),sNew.c_str());
   pos = sRaw.find(sReplace, pos);
   while (pos != string::npos){
@@ -1079,7 +1084,7 @@ void replacestr(string & sRaw, const vector<string> & vReplace, const vector<str
   size_t pos=0;
   while (pos<sRaw.length()){
     bool bMatched=false;
-    for (int i=0; i<vReplace.size(); i++){
+    for (size_t i=0; i<vReplace.size(); i++){
       if (!vReplace[i].empty() && sRaw.length()-pos>=vReplace[i].length() && sRaw.substr(pos,vReplace[i].length()).compare(vReplace[i])==0){
         newStr.append(vNew[i]);
         pos+=vReplace[i].length()-1;
@@ -1115,8 +1120,8 @@ void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr)
     //trace(DEBUG2, "'%s' matching '%s'\n", sRaw.c_str(), sPattern.c_str());
     if (regex_match(sRaw, matches, regexp)) {
       //trace(DEBUG2, "Regular matched: %s\n", string(matches[0]).c_str());
-      int iStart=0;
-      for (int i=0; i<sExpr.length(); i++){
+      size_t iStart=0;
+      for (size_t i=0; i<sExpr.length(); i++){
         if (sExpr[i]=='{' && (i==0 || sExpr[i-1]!='\\')){
           iStart=i+1;
           while(sExpr[i]!='}' && i<sExpr.length()){
@@ -1179,7 +1184,7 @@ string camelstr(const string & str)
 {
   string sCamel = "";
   bool preIsLetter = false;
-  for (int i=0; i<str.length(); i++){
+  for (size_t i=0; i<str.length(); i++){
     if ((str[i]>='a' && str[i]<='z') || (str[i]>='A' && str[i]<='Z')){
       if (!preIsLetter){
         sCamel.push_back(upper_char(str[i]));
@@ -1198,7 +1203,7 @@ string camelstr(const string & str)
 string snakestr(const string & str)
 {
   string sSnake = "";
-  for (int i=0; i<str.length(); i++){
+  for (size_t i=0; i<str.length(); i++){
     if ((str[i]>='a' && str[i]<='z') || (str[i]>='A' && str[i]<='Z')){
       if (i==0){
         sSnake.push_back(upper_char(str[i]));
@@ -1214,7 +1219,7 @@ string snakestr(const string & str)
 string revertstr(const string & str)
 {
   string reverse = "";
-  for (int i=str.length()-1;i>=0;i--)
+  for (size_t i=str.length()-1;i>=0;i--)
     reverse.push_back(str[i]);
   return reverse;
 }
@@ -1233,7 +1238,7 @@ char to_hex(const char & code)
 string urlencode(const string & sUrl)
 {
   string ecurl;
-  for(int i=0; i<sUrl.length(); i++){
+  for(size_t i=0; i<sUrl.length(); i++){
     if (isalnum(sUrl[i]) || sUrl[i] == '-' || sUrl[i] == '_' || sUrl[i] == '.' || sUrl[i] == '~') 
       ecurl.push_back(sUrl[i]);
     else if (sUrl[i] == ' ') 
@@ -1250,7 +1255,7 @@ string urlencode(const string & sUrl)
 string urldecode(const string & sEncoded)
 {
   string url;
-  for(int i=0; i<sEncoded.length(); i++){
+  for(size_t i=0; i<sEncoded.length(); i++){
     if (sEncoded[i] == '%') {
       if (sEncoded[i+1] && sEncoded[i+2]) {
         url.push_back(from_hex(sEncoded[i+1]) << 4 | from_hex(sEncoded[i+2]));
@@ -1274,8 +1279,8 @@ static inline bool is_base64(unsigned char c)
 string base64encode(const string & str)
 {
   string ret;
-  int i = 0;
-  int j = 0;
+  size_t i = 0;
+  size_t j = 0;
   unsigned int p = 0;
   unsigned char char_array_3[3];
   unsigned char char_array_4[4];
@@ -1319,10 +1324,10 @@ string base64encode(const string & str)
 
 string base64decode(const string & sEncoded)
 {
-  int in_len = sEncoded.size();
-  int i = 0;
-  int j = 0;
-  int in_ = 0;
+  size_t in_len = sEncoded.size();
+  size_t i = 0;
+  size_t j = 0;
+  size_t in_ = 0;
   unsigned char char_array_4[4], char_array_3[3];
   string ret;
 
@@ -1480,7 +1485,7 @@ static unsigned* MD5Hash(string msg)
 string md5(const string & str)
 {
 	string md5str;
-	int j, k;
+	size_t j, k;
 	unsigned *d = MD5Hash(str);
 	MD5union u;
 	for (j = 0; j<4; j++){
@@ -1527,7 +1532,7 @@ string randstr(const int & len, const string & flags)
   string bracket = "[](){}<>";
   
   // generate compulsory characters first
-  for (int i=0;i<flags.length();i++){
+  for (size_t i=0;i<flags.length();i++){
     if (validflags.find(flags[i])==validflags.end()){
       trace(WARNING,"'%s' is a invlid flag of randstr!\n",flags.substr(i,1).c_str());
       continue;
@@ -1562,7 +1567,7 @@ string randstr(const int & len, const string & flags)
       return genstr;
   }
   char flag;
-  for (int i=genstr.length();i<len;i++){
+  for (size_t i=genstr.length();i<len;i++){
     flag = flags[random(0,flags.length()-1)];
     switch(flag){
     case 'U':
@@ -1607,7 +1612,7 @@ string randstr(const int & len, const string & flags)
 string concatArray(const vector<string> & array, const string & delim)
 {
   string sResult = "";
-  for (int i=0; i<array.size(); i++){
+  for (size_t i=0; i<array.size(); i++){
     sResult+=array[i];
     if (i<array.size()-1)
       sResult+=delim;
@@ -1625,7 +1630,7 @@ void eliminateDups(vector<string> & array)
 
 bool isNumber(const string& str)
 {
-    for (int i=0; i<str.length(); i++) {
+    for (size_t i=0; i<str.length(); i++) {
         if (std::isdigit(str[i]) == 0) return false;
     }
     return true;
@@ -1757,7 +1762,7 @@ string dectohex(const int & val)
 int hextodec(const string& str)
 {
   int val = 0;
-  for (int i=str.length()-1; i>=0; i--){
+  for (size_t i=str.length()-1; i>=0; i--){
     if (str[i]>='0' && str[i]<='9')
       val = val+(int(str[i])-48)*int(pow(16,(str.length()-1)-i));
     else if (str[i]>='a' && str[i]<='f')
@@ -1796,7 +1801,7 @@ string dectobin(const int & val)
 int bintodec(const string& str)
 {
   int val = 0;
-  for (int i=str.length()-1; i>=0; i--){
+  for (size_t i=str.length()-1; i>=0; i--){
     if (str[i]>='0' && str[i]<='1')
       val = val+(int(str[i])-48)*int(pow(2,(str.length()-1)-i));
     else{

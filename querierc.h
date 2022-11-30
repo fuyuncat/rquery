@@ -15,9 +15,6 @@
 #ifndef __QUERIERC_H
 #define __QUERIERC_H
 
-#include <regex.h>
-#include <vector>
-#include <string>
 #include "commfuncs.h"
 #include "filter.h"
 #include <boost/xpressive/xpressive.hpp>
@@ -104,6 +101,7 @@ class QuerierC
     void setStatonly(const bool & bStatonly);
     void setOutputFormat(const short int & format=TEXT);
     void setFieldDelim(const string & delimstr);
+    void readyToGo();
     int searchNext();
     int searchAll();
     bool toGroupOrSort();
@@ -224,7 +222,7 @@ class QuerierC
     //vector< vector< vector<string> > > m_analyticresults; // vector to store result set of agg functions, like rank(group, sort, equalincrease)
     //vector< GroupDataSet > m_tmpResults;  // temp results for calculating aggregation functions. 
     //map<vector<string>, GroupDataSet> m_tmpResults;  // temp results for calculating aggregation functions. 
-    std::set< vector<string> > m_groupKeys;  // group keys
+    unordered_set< vector<string>, hash_container< vector<string> > > m_groupKeys;  // group keys
     unordered_map< vector<string>, vector<string>, hash_container< vector<string> > > m_aggRowValues;  // Matched row values for each group. mapping group keys:selections, it should be 1:1
     unordered_map< string,GroupProp > m_initAggProps; // an initial aggregation function properties map retrieved from the selection&sort expressions
     unordered_map< string,ExpressionC > m_aggFuncExps; // aggregation function expressions map retrieved from the selection&sort expressions. mapping funcExpStr:ExpressionC

@@ -1900,16 +1900,17 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
             groupExps.push_back(sResult);
           }
         //trace(DEBUG2, "Checking  '%s' (%d)\n", groupExps[0].c_str(), m_aggrOnly);
-        m_groupKeys.insert(groupExps);
 #ifdef __DEBUG__
   m_evalGroupKeytime += (curtime()-thistime);
   thistime = curtime();
 #endif // __DEBUG__
+        m_groupKeys.insert(groupExps);
         unordered_map< vector<string>, vector<string>, hash_container< vector<string> > >::iterator it1 = m_aggRowValues.find(groupExps);
         unordered_map< vector<string>, unordered_map< string,GroupProp >, hash_container< vector<string> > >::iterator it2 = m_aggGroupProp.find(groupExps);
         if (it2 == m_aggGroupProp.end()){
-          for (unordered_map< string,GroupProp >::iterator it=m_initAggProps.begin(); it!=m_initAggProps.end(); ++it)
-            aggGroupProp.insert(pair< string,GroupProp >(it->first,it->second));
+          //for (unordered_map< string,GroupProp >::iterator it=m_initAggProps.begin(); it!=m_initAggProps.end(); ++it)
+          //  aggGroupProp.insert(pair< string,GroupProp >(it->first,it->second));
+          aggGroupProp.insert(m_initAggProps.begin(), m_initAggProps.end());
           evalAggExpNode(&fieldValues, &varValues, aggGroupProp, matchedSideDatarow);
           m_aggGroupProp.insert( pair<vector<string>, unordered_map< string,GroupProp > >(groupExps,aggGroupProp));
         }else
@@ -2495,12 +2496,16 @@ int QuerierC::searchNext()
   }
 }
 
-int QuerierC::searchAll()
+// prepare initial data before searching and matching.
+void QuerierC::readyToGo()
 {
   // initialize aggregation function expressions
   for (unordered_map< string,GroupProp >::iterator it=m_initAggProps.begin(); it!=m_initAggProps.end(); ++it)
     m_aggFuncExps.insert(pair<string,ExpressionC>(it->first,ExpressionC(it->first)));
+}
 
+int QuerierC::searchAll()
+{
   int totalfound = 0;
   //trace(DEBUG2, "Searching pattern: %s\n", m_regexstr.c_str());
   int found = searchNext();
@@ -2541,7 +2546,7 @@ bool QuerierC::group()
   rds.sideDatarow = &matchedSideDatarow;
   rds.sideDatatypes = &m_sideDatatypes;
   rds.macroFuncExprs = &m_userMacroExprs;
-  for (std::set< vector<string> >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
+  for (unordered_set< vector<string>, hash_container< vector<string> > >::iterator it=m_groupKeys.begin(); it!=m_groupKeys.end(); ++it){
     rds.fieldvalues = &m_aggRowValues[*it];
     rds.aggFuncs = &m_aggGroupProp[*it];
     varValues.clear();

@@ -27,7 +27,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <map>
 #include <iomanip>
 #include <iostream>
 #include "commfuncs.h"
@@ -466,6 +465,7 @@ void processPrompt(QuerierC & rq, size_t & total)
 void runQuery(vector<string> vContent, QuerierC & rq, short int fileMode=READBUFF, int iSkip=0)
 {
   size_t total = 0;
+  rq.readyToGo();
   if (vContent.size() == 0)
     processPrompt(rq, total);
   for (int i=0;i<vContent.size();i++){

@@ -11,8 +11,6 @@
 //  18/06/2022: Created
 //
 *******************************************************************************/
-#include <stdio.h>
-#include <string.h>
 #include <algorithm>
 #include "expression.h"
 #include "function.h"
@@ -993,15 +991,15 @@ bool ExpressionC::columnsAnalyzed(){
 }
 
 // get all involved colIDs in this expression
-std::set<int> ExpressionC::getAllColIDs(const int & side){
-  std::set<int> colIDs;
+unordered_set<int> ExpressionC::getAllColIDs(const int & side){
+  unordered_set<int> colIDs;
   if (m_type == BRANCH){
     if (m_leftNode){
-      std::set<int> foo = m_leftNode->getAllColIDs(side);
+      unordered_set<int> foo = m_leftNode->getAllColIDs(side);
       colIDs.insert(foo.begin(), foo.end());
     }
     if (m_rightNode){
-      std::set<int> foo = m_rightNode->getAllColIDs(side);
+      unordered_set<int> foo = m_rightNode->getAllColIDs(side);
       colIDs.insert(foo.begin(), foo.end());
     }
   }else if(m_type == LEAF){
@@ -1191,7 +1189,7 @@ bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function
       break;
     case UNIQUECOUNT:{
       //sResult = longToStr(aggGroupProp.uniquec->size());
-      std::set <string> uniquec(aggGroupProp.varray->begin(), aggGroupProp.varray->end());
+      unordered_set <string> uniquec(aggGroupProp.varray->begin(), aggGroupProp.varray->end());
       sResult = longToStr(uniquec.size());
       break;
     }case MAX:
@@ -1204,7 +1202,7 @@ bool ExpressionC::calAggFunc(const GroupProp & aggGroupProp, FunctionC* function
       sResult = "";
       trace(DEBUG, "varray size: %d\n", aggGroupProp.varray->size());
       if (function->m_bDistinct){ // do distinct
-        std::set <string> uniquec(aggGroupProp.varray->begin(), aggGroupProp.varray->end());
+        unordered_set <string> uniquec(aggGroupProp.varray->begin(), aggGroupProp.varray->end());
         aggGroupProp.varray->clear();
         std::copy(uniquec.begin(), uniquec.end(), std::back_inserter(*(aggGroupProp.varray)));
       }

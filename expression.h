@@ -70,7 +70,7 @@ class ExpressionC
     void getAllColumnNames(vector<string> & fieldnames);  // get all potential column/variable (upper case)
     bool inColNamesRange(const vector<string> & fieldnames); // check if all column/variable in a given list of names (upper case).
     ExpressionC* cloneMe();
-    std::set<int>  getAllColIDs(const int & side); // get all involved colIDs in this prediction
+    unordered_set<int>  getAllColIDs(const int & side); // get all involved colIDs in this prediction
     unordered_map<int,string>  buildMap(); // build the prediction as a HashMap
     int size(); // get all involved colIDs in this prediction
     void clear(); // clear predictin

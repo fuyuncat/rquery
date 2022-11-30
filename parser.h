@@ -15,8 +15,6 @@
 #ifndef __PARSERC_H
 #define __PARSERC_H
 
-#include <vector>
-#include <string>
 #include "commfuncs.h"
 //#include "filter.h"
 

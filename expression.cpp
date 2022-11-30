@@ -558,12 +558,11 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
       return true;
     }else if (expStr[0] == '\''){ // checking STRING string
       if (expStr.length()>1 && expStr[expStr.length()-1] == '\''){ // whole string is a STRING string
-        int iOffSet;
         size_t iPos = 0;
         node->m_expStr = readQuotedStr(expStr, iPos, "''", "", '\\', {});
         replacestr(node->m_expStr,{"\\\\","\\'","\\t","\\v","\\n","\\r"},{"\\","'","\t","\v","\n","\r"});
         trace(DEBUG, "Read STRING \"%s\" . \n", node->m_expStr.c_str());
-        if (isDate(node->m_expStr, iOffSet, node->m_datatype.extrainfo))
+        if (isDate(node->m_expStr, node->m_datatype.extrainfo))
           node->m_datatype.datatype = DATE;
         else
           node->m_datatype.datatype = STRING;
@@ -909,9 +908,8 @@ DataTypeStruct ExpressionC::analyzeColumns(vector<string>* fieldnames, vector<Da
         else{
           if (m_expType == CONST){
             // check if it is a time, quoted by {}
-            int iOffSet;
             if (m_expStr.length()>1 && m_expStr[0]=='{' && m_expStr[m_expStr.length()-1]=='}'){
-              if (isDate(m_expStr.substr(1,m_expStr.length()-2),iOffSet,m_datatype.extrainfo)){
+              if (isDate(m_expStr.substr(1,m_expStr.length()-2),m_datatype.extrainfo)){
                 m_datatype.datatype = DATE;
               }else{
                 trace(ERROR,"Failed to get the date format from '%s'.\n", m_expStr.c_str());
@@ -1470,9 +1468,11 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
     }
 #ifdef __DEBUG__
   g_evalexprcaltime += curtime()-thistime;
-  g_evalexprtime += curtime()-evalstarttime;
 #endif // __DEBUG__
   }
+#ifdef __DEBUG__
+  g_evalexprtime += curtime()-evalstarttime;
+#endif // __DEBUG__
   return bResult;
 }
 

@@ -1685,12 +1685,11 @@ bool FunctionC::runComparedate(RuntimeDataStruct & rds, string & sResult, DataTy
   }
   string date1, date2, sFmt; 
   DataTypeStruct dts1, dts2;
-  int offSet;
   if (m_params.size() == 3 && m_params[2].evalExpression(rds, sFmt, dts, true)){
     dts1.extrainfo = sFmt;
     dts2.extrainfo = sFmt;
   }
-  if (m_params[0].evalExpression(rds, date1, dts, true) && isDate(date1, offSet, dts1.extrainfo) && m_params[1].evalExpression(rds, date2, dts, true) && isDate(date2, offSet, dts2.extrainfo)){
+  if (m_params[0].evalExpression(rds, date1, dts, true) && isDate(date1, dts1.extrainfo) && m_params[1].evalExpression(rds, date2, dts, true) && isDate(date2, dts2.extrainfo)){
     if (dts1.extrainfo.compare(dts2.extrainfo)!=0){
       trace(ERROR, "Date format %s of %s doesnot match date format %s of %s!\n", dts1.extrainfo.c_str(), m_params[0].getEntireExpstr().c_str(), dts2.extrainfo.c_str(), m_params[1].getEntireExpstr().c_str());
       return false;
@@ -2481,8 +2480,7 @@ bool FunctionC::runIsdate(RuntimeDataStruct & rds, string & sResult, DataTypeStr
   bool gotResult = m_params[0].evalExpression(rds, sResult, dts, true);
   if (gotResult){
     string extrainfo = "";
-    int iOffSet;
-    sResult = intToStr(isDate(sResult, iOffSet, extrainfo));
+    sResult = intToStr(isDate(sResult, extrainfo));
     dts.datatype = LONG;
     return true;
   }else{
@@ -2577,10 +2575,9 @@ bool FunctionC::runTodate(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     return false;
   }
   DataTypeStruct dts1;
-  int offSet;
   if (m_params.size() != 2 || !m_params[1].evalExpression(rds, dts.extrainfo, dts1, true))
     dts.extrainfo = "";
-  if (m_params[0].evalExpression(rds, sResult, dts, true) && isDate(sResult, offSet, dts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sResult, dts, true) && isDate(sResult, dts.extrainfo)){
     dts.datatype = DATE;
     m_datatype = dts;
     return true;
@@ -2696,13 +2693,9 @@ bool FunctionC::runTimediff(RuntimeDataStruct & rds, string & sResult, DataTypeS
   }
   string sTm1, sTm2; 
   DataTypeStruct dts1, dts2;
-  int offSet1, offSet2;
-  if (m_params[0].evalExpression(rds, sTm1, dts1, true) && isDate(sTm1, offSet1, dts1.extrainfo) && m_params[1].evalExpression(rds, sTm2, dts2, true) && isDate(sTm2, offSet2, dts2.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm1, dts1, true) && isDate(sTm1, dts1.extrainfo) && m_params[1].evalExpression(rds, sTm2, dts2, true) && isDate(sTm2, dts2.extrainfo)){
     struct tm tm1, tm2;
-    if (strToDate(sTm1, tm1, offSet1, dts1.extrainfo) && strToDate(sTm2, tm2, offSet2, dts2.extrainfo)){
-      //time_t t1 = mktime(&tm1);
-      //time_t t2 = mktime(&tm2);
-      //sResult = doubleToStr(difftime(t1, t2));
+    if (strToDate(sTm1, tm1, dts1.extrainfo) && strToDate(sTm2, tm2, dts2.extrainfo)){
       sResult = doubleToStr(timediff(tm1, tm2));
       dts.datatype = DOUBLE;
       return true;
@@ -2724,8 +2717,7 @@ bool FunctionC::runAddtime(RuntimeDataStruct & rds, string & sResult, DataTypeSt
   }
   string sTm, sNum, sUnit; 
   DataTypeStruct dts1, dts2;
-  int offSet;
-  if (m_params[0].evalExpression(rds, sTm, dts1, true) && isDate(sTm, offSet, dts1.extrainfo) && m_params[1].evalExpression(rds, sNum, dts2, true) && isInt(sNum)){
+  if (m_params[0].evalExpression(rds, sTm, dts1, true) && isDate(sTm, dts1.extrainfo) && m_params[1].evalExpression(rds, sNum, dts2, true) && isInt(sNum)){
     char unit = 'S';
     if (m_params.size() == 3 && m_params[2].evalExpression(rds, sUnit, dts2, true)){
       sUnit = upper_copy(sUnit);
@@ -2737,14 +2729,9 @@ bool FunctionC::runAddtime(RuntimeDataStruct & rds, string & sResult, DataTypeSt
       }
     }
     struct tm tm;
-    if (strToDate(sTm, tm, offSet, dts1.extrainfo)){
-      tm.tm_gmtoff = offSet*36;
+    if (strToDate(sTm, tm, dts1.extrainfo)){
       addtime(tm, atoi(sNum.c_str()), unit);
-      addhours(tm, offSet/100);
-      char buffer [256];
-      if (strftime(buffer,256,dts1.extrainfo.c_str(),&tm))
-        sResult=string(buffer);
-      //sResult = dateToStr(tm, offSet, dts1.extrainfo);
+      sResult = dateToStr(tm, dts1.extrainfo);
       dts.datatype = DATE;
       dts.extrainfo = dts1.extrainfo;
       m_datatype = dts;
@@ -3044,14 +3031,12 @@ bool FunctionC::runDateformat(RuntimeDataStruct & rds, string & sResult, DataTyp
   }
   string sTm, sFmt;
   DataTypeStruct tmpDts;
-  int iOffSet;
   if (m_params.size() == 2 && m_params[1].evalExpression(rds, sFmt, tmpDts, true))
     dts.extrainfo = sFmt;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, iOffSet, dts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, dts.extrainfo)){
     struct tm tm;
-    if (strToDate(sTm, tm, iOffSet, dts.extrainfo)){
-      addhours(tm, -timezone/3600);
-      sResult = dateToStr(tm, iOffSet, m_params.size()==1?dts.extrainfo:sFmt);
+    if (strToDate(sTm, tm, dts.extrainfo)){
+      sResult = dateToStr(tm, m_params.size()==1?dts.extrainfo:sFmt);
       dts.datatype = STRING;
       return !sResult.empty();
     }else{
@@ -3066,14 +3051,10 @@ bool FunctionC::runDateformat(RuntimeDataStruct & rds, string & sResult, DataTyp
 
 bool FunctionC::runNow(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() < 1){
-    trace(ERROR, "now() function accepts 0 or one parameter.\n");
-    return false;
-  }
   struct tm curtime = now();
   dts.extrainfo = string(DATEFMT)+" %z";
-  sResult = dateToStr(curtime, curtime.tm_gmtoff/36, dts.extrainfo);
-  //sResult = dateToStr(curtime);
+  //sResult = dateToStr(curtime, curtime.tm_gmtoff/36, dts.extrainfo);
+  sResult = dateToStr(curtime, dts.extrainfo);
   dts.datatype = DATE;
   m_datatype = dts;
   return true;
@@ -3086,10 +3067,9 @@ bool FunctionC::runIsleap(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     return false;
   }
   string sTm;
-  int offSet;
   DataTypeStruct tmpDts;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, tmpDts.extrainfo) && strToDate(sTm, tm1, tmpDts.extrainfo)){
     sResult = intToStr(tm1.tm_year%400==0 || (tm1.tm_year%4==0 && tm1.tm_year%100!=0));
   }else{
     trace(ERROR, "Failed to run isleap(%s)!\n", m_params[0].getEntireExpstr().c_str());
@@ -3106,10 +3086,9 @@ bool FunctionC::runWeekday(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     return false;
   }
   string sTm;
-  int offSet;
   DataTypeStruct tmpDts;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, tmpDts.extrainfo) && strToDate(sTm, tm1, tmpDts.extrainfo)){
     sResult = intToStr(tm1.tm_wday==0?7:tm1.tm_wday);
   }else{
     trace(ERROR, "Failed to run weekday(%s)!\n", m_params[0].getEntireExpstr().c_str());
@@ -3126,8 +3105,7 @@ bool FunctionC::runMonthfirstday(RuntimeDataStruct & rds, string & sResult, Data
     return false;
   }
   string sTm;
-  int offSet;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, dts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, dts.extrainfo)){
     sResult = truncdateu(sTm, dts.extrainfo, 'd');
   }else{
     trace(ERROR, "Failed to run weekday(%s)!\n", m_params[0].getEntireExpstr().c_str());
@@ -3145,9 +3123,8 @@ bool FunctionC::runMonthfirstmonday(RuntimeDataStruct & rds, string & sResult, D
     return false;
   }
   string sTm;
-  int offSet;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, dts.extrainfo) && strToDate(sTm, tm1, offSet, dts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, dts.extrainfo) && strToDate(sTm, tm1, dts.extrainfo)){
     sResult = monthfirstmonday(sTm, dts.extrainfo);
   }else{
     trace(ERROR, "Failed to run monthfirstmonday(%s)!\n", m_params[0].getEntireExpstr().c_str());
@@ -3165,10 +3142,9 @@ bool FunctionC::runYearweek(RuntimeDataStruct & rds, string & sResult, DataTypeS
     return false;
   }
   string sTm;
-  int offSet;
   DataTypeStruct tmpDts;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, tmpDts.extrainfo) && strToDate(sTm, tm1, tmpDts.extrainfo)){
     sResult = intToStr(yearweek(sTm, dts.extrainfo));
   }else{
     trace(ERROR, "Failed to run yearweek(%s)!\n", m_params[0].getEntireExpstr().c_str());
@@ -3185,10 +3161,9 @@ bool FunctionC::runYearday(RuntimeDataStruct & rds, string & sResult, DataTypeSt
     return false;
   }
   string sTm;
-  int offSet;
   DataTypeStruct tmpDts;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, tmpDts.extrainfo) && strToDate(sTm, tm1, tmpDts.extrainfo)){
     sResult = intToStr(yearday(sTm, dts.extrainfo));
   }else{
     trace(ERROR, "Failed to run yearday(%s)!\n", m_params[0].getEntireExpstr().c_str());
@@ -3205,11 +3180,10 @@ bool FunctionC::runDatetolong(RuntimeDataStruct & rds, string & sResult, DataTyp
     return false;
   }
   string sTm;
-  int offSet;
   DataTypeStruct tmpDts;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, tmpDts.extrainfo) && strToDate(sTm, tm1, offSet, tmpDts.extrainfo)){
-    sResult = intToStr((long)mktime(&tm1) - timezone);
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, tmpDts.extrainfo) && strToDate(sTm, tm1, tmpDts.extrainfo)){
+    sResult = intToStr((long)mymktime(&tm1));
   }else{
     trace(ERROR, "Failed to run datetolong(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
@@ -3229,12 +3203,12 @@ bool FunctionC::runLongtodate(RuntimeDataStruct & rds, string & sResult, DataTyp
   if (m_params[0].evalExpression(rds, sLong, dts, true) && isLong(sLong)){
     time_t t1 = (time_t)atol(sLong.c_str());
     tm1 = *(localtime(&t1));
-    sResult = dateToStr(tm1, 0, DATEFMT);;
+    dts.extrainfo = string(DATEFMT)+" %z";
+    sResult = dateToStr(tm1, dts.extrainfo);;
   }else{
     trace(ERROR, "Failed to run longtodate(%s)!\n", m_params[0].getEntireExpstr().c_str());
     return false;
   }
-  dts.extrainfo = DATEFMT;
   dts.datatype = DATE;
   m_datatype = dts;
   return true;
@@ -3247,9 +3221,8 @@ bool FunctionC::runLocaltime(RuntimeDataStruct & rds, string & sResult, DataType
     return false;
   }
   string sTm;
-  int offSet;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, dts.extrainfo)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, dts.extrainfo)){
     sResult = rqlocaltime(sTm, dts.extrainfo);;
   }else{
     trace(ERROR, "Failed to run localtime(%s)!\n", m_params[0].getEntireExpstr().c_str());
@@ -3267,9 +3240,8 @@ bool FunctionC::runGmtime(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     return false;
   }
   string sTm, sGmtOff;
-  int offSet;
   struct tm tm1;
-  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, offSet, dts.extrainfo) && m_params[1].evalExpression(rds, sGmtOff, dts, true) && isDouble(sGmtOff)){
+  if (m_params[0].evalExpression(rds, sTm, dts, true) && isDate(sTm, dts.extrainfo) && m_params[1].evalExpression(rds, sGmtOff, dts, true) && isDouble(sGmtOff)){
     double dGmtOff = atof(sGmtOff.c_str());
     if (dGmtOff>12 || dGmtOff<-12){
       trace(ERROR, "The valid GMT offset range is from -12 to 12!\n");

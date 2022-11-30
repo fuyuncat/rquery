@@ -55,10 +55,13 @@ vector<string>::const_iterator namesaving_smatch::names_end() const
 }
 
 #ifdef __DEBUG__
+long int g_tmptimer1time;
+long int g_tmptimer2time;
 long int g_strtodatetime;
 long int g_datetostrtime;
 long int g_zonetimetime;
 long int g_truncdatetime;
+long int g_checkisdatetime;
 #endif // __DEBUG__
 
 QuerierC::QuerierC()
@@ -166,10 +169,13 @@ void QuerierC::init()
   m_updateResulttime = 0;
   m_outputtime = 0;
   
+  g_tmptimer1time = 0;
+  g_tmptimer2time = 0;
   g_strtodatetime = 0;
   g_datetostrtime = 0;
   g_zonetimetime = 0;
   g_truncdatetime = 0;
+  g_checkisdatetime = 0;
   g_evalexprtime = 0;
   g_evalexprconsttime = 0;
   g_evalexprfunctime = 0;
@@ -3778,10 +3784,13 @@ void QuerierC::outputExtraInfo(const size_t & total, const bool & bPrintHeader)
   trace(PERFM, ", prepare Agg GP time: %d\n", m_prepAggGPtime);
   trace(PERFM, ", eval agg expression time: %d\n", m_evalAggExptime);
   trace(PERFM, ", Output time: %d\n", m_outputtime);
+  trace(PERFM, ", Check is date time: %d\n", g_checkisdatetime);
   trace(PERFM, ", Truncate date time: %d\n", g_truncdatetime);
   trace(PERFM, ", Convert string to date time: %d\n", g_strtodatetime);
   trace(PERFM, ", Convert date to string time: %d\n", g_datetostrtime);
   trace(PERFM, ", Zonetime time: %d\n", g_zonetimetime);
+  trace(PERFM, ", Temp timer 1 time: %d\n", g_tmptimer1time);
+  trace(PERFM, ", Temp timer 2 time: %d\n", g_tmptimer2time);
   trace(PERFM, ", Eval expression time: %d. Break down:\n", g_evalexprtime);
   trace(PERFM, ",   Eval const expression time: %d\n", g_evalexprconsttime);
   trace(PERFM, ",   Eval function expression time: %d.\n", g_evalexprfunctime);

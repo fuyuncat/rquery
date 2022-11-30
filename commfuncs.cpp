@@ -155,6 +155,24 @@ void GroupProp::clear()
   init();
 }
 
+time_t mymktime( const struct tm *ltm ) 
+{
+  const int mon_days [] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+  long tyears, tdays, leaps, utc_hrs;
+
+  tyears = ltm->tm_year - 70 ; // tm->tm_year is from 1900.
+  leaps = (tyears + 2) / 4; // no of next two lines until year 2100.
+  tdays = 0;
+  for (size_t i=0; i < ltm->tm_mon; i++) 
+    tdays += mon_days[i];
+
+  tdays += ltm->tm_mday-1; // days of month passed.
+  tdays = tdays + (tyears * 365) + leaps;
+
+  utc_hrs = ltm->tm_hour; // for your time zone.
+  return (tdays * 86400) + (utc_hrs * 3600) + (ltm->tm_min * 60) + ltm->tm_sec - mytimezone;
+}
+
 TimeZone::TimeZone()
 {
   init();
@@ -173,9 +191,9 @@ void TimeZone::init()
     trace(DEBUG,"Initializing time zone list\n");
     string time("1988/08/18 08:18:58"), sFm("%Y/%m/%d %H:%M:%S");
     struct tm tm; 
-    int iOff=0,iOffSet = 0;
-    strToDate(time, tm, iOffSet, sFm);
-    time_t t1 = mktime(&tm);
+    int iOff=0;
+    strToDate(time, tm, sFm);
+    time_t t1 = mymktime(&tm);
     for (int i=0; i<=24; i++){
       int iCurOff = iOff+(int)(i/2)*100;
       if (i%2==1)
@@ -190,10 +208,10 @@ void TimeZone::init()
       cleanuptm(tm);
       if (c && c == curtime.c_str()+curtime.length())
         m_nameoffmap.insert(pair<string,int>(tm.tm_zone?string(tm.tm_zone):"", tm.tm_gmtoff/36));
-      //if (strToDate(curtime, tm, iCurOff, sFm))
+      //if (strToDate(curtime, tm, sFm))
       //  m_nameoffmap.insert(pair<string,int>(tm.tm_zone?string(tm.tm_zone):"", tm.tm_gmtoff/36));
       curtime = time+" -"+sOff;
-      if (strToDate(curtime, tm, iCurOff, sFm))
+      if (strToDate(curtime, tm, sFm))
         m_nameoffmap.insert(pair<string,int>(tm.tm_zone?string(tm.tm_zone):"", tm.tm_gmtoff/36));
     }
   }
@@ -284,6 +302,14 @@ void exitProgram(const short int & code)
     delete gv.g_logfile;
   }
   exit(code);
+}
+
+void getlocalzone()
+{
+  struct tm ctime = now();
+  //mytimezone = (ctime.tm_gmtoff-ctime.tm_isdst*3600)*-1;
+  mytimezone = ctime.tm_gmtoff;
+  mydaylight = ctime.tm_isdst;
 }
 
 void trace(const short & level, const char *fmt, ...)
@@ -1832,6 +1858,8 @@ int bintodec(const string& str)
 
 void cleanuptm(struct tm & tm)
 {
+  if (abs(tm.tm_isdst) > 1)
+    tm.tm_isdst = 0;
   if (abs(tm.tm_gmtoff) > 43200)
     tm.tm_gmtoff = 0;
   if (abs(tm.tm_sec) > 60)
@@ -1898,8 +1926,7 @@ struct tm zonetime(const time_t & t1, const int & iOffSet)
 #ifdef __DEBUG__
   long int thistime = curtime();
 #endif // __DEBUG__
-  struct tm curt = now();
-  time_t t2 = t1-(curt.tm_gmtoff-iOffSet*36);
+  time_t t2 = t1-(mytimezone*-1+mydaylight*3600-iOffSet*36);
   struct tm tm = *(localtime(&t2));
   tm.tm_gmtoff = iOffSet*36;
   //if (iOffSet>=-1200 && iOffSet<=1200){
@@ -1913,21 +1940,19 @@ struct tm zonetime(const time_t & t1, const int & iOffSet)
   return tm;
 }
 
-string dateToStr(struct tm & val, const int & iOffSet, const string & fmt)
+string dateToStr(struct tm & val, const string & fmt)
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
 #endif // __DEBUG__
   try{
     char buffer [256];
+    memset( buffer, '\0', sizeof(char)*256 );
     // trace(DEBUG2, "(2)Converting %d %d %d %d %d %d %d, format '%s' \n",val.tm_year+1900, val.tm_mon, val.tm_mday, val.tm_hour, val.tm_min, val.tm_sec, val.tm_isdst, fmt.c_str());
     // It's strange here. Before mktime, val doesnot have daylight saving time, after mktime, it has...
-    //time_t t1 = mktime(&val);
-    //struct tm tm = zonetime(t1, iOffSet);
     // if need the offset with DST, can call now() to get tm_gmtoff.
     struct tm tm = val;
-    addhours(tm, (iOffSet+timezone/36)/100);
-    tm.tm_gmtoff = iOffSet*36;
+    cleanuptm(tm);
     if (strftime(buffer,256,fmt.c_str(),&tm)){
 #ifdef __DEBUG__
   g_datetostrtime += curtime()-thistime;
@@ -2059,10 +2084,13 @@ int localOffset()
 // note: tm returns GMT time, iOffSet is the timezone
 // strptime doesnot consider the whole datetime string. For example, strptime("20/Jul/2022:01:00:00", "%Y/%b/%d", tm) will return true.
 // The return value of the strptime is a pointer to the first character not processed in this function call. In case the whole input string is consumed, the return value points to the null byte at the end of the string.
-bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string & fmt)
+bool strToDate(const string & str, struct tm & tm, const string & fmt)
 {
 #ifdef __DEBUG__
   long int thistime = curtime();
+#endif // __DEBUG__
+#ifdef __DEBUG__
+  long int tmptime = curtime();
 #endif // __DEBUG__
   // accept %z at then of the time string only
   //trace(DEBUG2, "Trying date format: '%s' (expected len:%d) for '%s'\n", fmt.c_str(), dateFormatLen(fmt), str.c_str());
@@ -2070,38 +2098,21 @@ bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string &
     //trace(DEBUG2, "'%s' len %d doesnot match expected (Format: '%s') \n", str.c_str(), str.length(), fmt.c_str(), dateFormatLen(fmt) );
     return false;
   }
-  string sRaw, sTimeZone, sFm = fmt;
-  iOffSet = 0;
-  sRaw = stripTimeZone(str, iOffSet, sTimeZone);
-  size_t zpos = sFm.find("%z");
-  if (sFm.length()>5 && zpos != string::npos){
-    // trace(DEBUG, "Trying timezone '%s' : '%s'\n", fmt.c_str(), sRaw.c_str());
-    replacestr(sFm,"%z","");
-    sFm = trim_copy(sFm);
-  }else{
-    if (!sTimeZone.empty()) { // no %z in the format, there should no timezone info in the datetime string
-      //trace(DEBUG2, "'%s' (format: '%s') should not contain timezone '%s' \n", str.c_str(), sFm.c_str(), sTimeZone.c_str());
-      return false;
-    }
-  }
-  // bare in mind: strptime will ignore %z. means we need to treat its returned time as GMT time
-  char * c = strptime(sRaw.c_str(), sFm.c_str(), &tm);
+#ifdef __DEBUG__
+  g_tmptimer1time += curtime()-tmptime;
+  tmptime = curtime();
+#endif // __DEBUG__
+  char * c = strptime(str.c_str(), fmt.c_str(), &tm);
+#ifdef __DEBUG__
+  g_tmptimer2time += curtime()-tmptime;
+#endif // __DEBUG__
   // if the date lack of some time info, e.g. 2022-11-18 dont have time info, the time info like tm_sec in tm will be a random number. need to use cleanuptm to do cleanup.
   cleanuptm(tm);
   bool bResult=false;
-  if (c && c == sRaw.c_str()+sRaw.length()){
-    tm.tm_isdst = 0;
-    if (iOffSet != 0){
-      addhours(tm, iOffSet/100*-1);
-    }
-    //trace(DEBUG2, "(3)Converting '%s'(format '%s') to local time => %d %d %d %d %d %d %d \n",str.c_str(), fmt.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst);
-    //trace(DEBUG, "Trying final get format %s : %s\n", str.c_str(), fmt.c_str());
-    bResult = true;
-  }else{
-    //trace(ERROR, "Trying strptime('%s','%s',tm) failed!\n", sRaw.c_str(), sFm.c_str());
-    bResult = false;
-  }
-  
+  //trace(DEBUG2, "(3)Converting '%s'(format '%s') to local time => %d %d %d %d %d %d %d \n",str.c_str(), fmt.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, tm.tm_isdst);
+  //trace(DEBUG, "Trying final get format %s : %s\n", str.c_str(), fmt.c_str());
+  bResult = (c && c == str.c_str()+str.length());
+
 #ifdef __DEBUG__
   g_strtodatetime += curtime()-thistime;
 #endif // __DEBUG__
@@ -2133,54 +2144,73 @@ long int curtime()
   return tp.tv_sec * 1000 + tp.tv_usec / 1000;
 }
 
-bool isDate(const string& str, int & iOffSet, string& fmt)
+bool isDate(const string& str, string& fmt)
 {
+#ifdef __DEBUG__
+  long int thistime = curtime();
+#endif // __DEBUG__
+  bool bResult=false;
   struct tm tm;
-  if (strToDate(str, tm, iOffSet, fmt))
-    return true;
-  std::set<string> alldatefmt, alltimefmt, alljunction, alltzfmt;
-  alldatefmt.insert("%Y-%m-%d");alldatefmt.insert("%Y/%m/%d");alldatefmt.insert("%d/%m/%Y");alldatefmt.insert("%m/%d/%Y");alldatefmt.insert("%m-%d-%Y");alldatefmt.insert("%d-%m-%Y");alldatefmt.insert("%d/%b/%Y");alldatefmt.insert("%b/%d/%Y");alldatefmt.insert("%Y-%b-%d");alldatefmt.insert("%Y/%b/%d");
-  alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%H/%M/%S");
-  alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
-  alltzfmt.insert(" %z");alltzfmt.insert(" %Z");alltzfmt.insert("%z");alltzfmt.insert("%Z");alltzfmt.insert("");
-  for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
-    if (str.length()<=12 && strToDate(str, tm, iOffSet, (*id))){
-      fmt = (*id);
-      return true;
-    }else{
-      for (std::set<string>::iterator it = alltimefmt.begin(); it != alltimefmt.end(); ++it) {
-        if (str.length()<=10){
-          if (strToDate(str, tm, iOffSet, (*it))){
-            fmt = (*it);
-            return true;
-          }
-        }else{ 
-          for (std::set<string>::iterator ij = alljunction.begin(); ij != alljunction.end(); ++ij) {
-            for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
-              //trace(DEBUG2, "Checking '%s' date format: '%s' and '%s'...\n", str.c_str(), string((*id)+(*ij)+(*it)+(*iz)).c_str(), string((*it)+(*ij)+(*id)+(*iz)).c_str());
-              if (strToDate(str, tm, iOffSet, string((*id)+(*ij)+(*it)+(*iz)))){
-                fmt = string((*id)+(*ij)+(*it)+(*iz));
-                //trace(DEBUG2, "(1)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
-                return true;
-              }else if (strToDate(str, tm, iOffSet, string((*it)+(*ij)+(*id)+(*iz)))){
-                fmt = string((*it)+(*ij)+(*id)+(*iz));
-                //trace(DEBUG2, "(2)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
-                return true;
-              }else
-                continue;
+  if (strToDate(str, tm, fmt))
+    bResult = true;
+  else{
+    std::set<string> alldatefmt, alltimefmt, alljunction, alltzfmt;
+    alldatefmt.insert("%Y-%m-%d");alldatefmt.insert("%Y/%m/%d");alldatefmt.insert("%d/%m/%Y");alldatefmt.insert("%m/%d/%Y");alldatefmt.insert("%m-%d-%Y");alldatefmt.insert("%d-%m-%Y");alldatefmt.insert("%d/%b/%Y");alldatefmt.insert("%b/%d/%Y");alldatefmt.insert("%Y-%b-%d");alldatefmt.insert("%Y/%b/%d");
+    alltimefmt.insert("%H:%M:%S");alltimefmt.insert("%H/%M/%S");
+    alljunction.insert(":");alljunction.insert("/");alljunction.insert(" ");
+    alltzfmt.insert(" %z");alltzfmt.insert(" %Z");alltzfmt.insert("%z");alltzfmt.insert("%Z");alltzfmt.insert("");
+    for (std::set<string>::iterator id = alldatefmt.begin(); id != alldatefmt.end(); ++id) {
+      if (str.length()<=12 && strToDate(str, tm, (*id))){
+        fmt = (*id);
+        bResult = true;
+        break;
+      }else{
+        for (std::set<string>::iterator it = alltimefmt.begin(); it != alltimefmt.end(); ++it) {
+          if (str.length()<=10){
+            if (strToDate(str, tm, (*it))){
+              fmt = (*it);
+              bResult = true;
+              break;
+            }
+          }else{ 
+            for (std::set<string>::iterator ij = alljunction.begin(); ij != alljunction.end(); ++ij) {
+              for (std::set<string>::iterator iz = alltzfmt.begin(); iz != alltzfmt.end(); ++iz) {
+                //trace(DEBUG2, "Checking '%s' date format: '%s' and '%s'...\n", str.c_str(), string((*id)+(*ij)+(*it)+(*iz)).c_str(), string((*it)+(*ij)+(*id)+(*iz)).c_str());
+                if (strToDate(str, tm, string((*id)+(*ij)+(*it)+(*iz)))){
+                  fmt = string((*id)+(*ij)+(*it)+(*iz));
+                  //trace(DEBUG2, "(1)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
+                  bResult = true;
+                  break;
+                }else if (strToDate(str, tm, string((*it)+(*ij)+(*id)+(*iz)))){
+                  fmt = string((*it)+(*ij)+(*id)+(*iz));
+                  //trace(DEBUG2, "(2)'%s' Got date format: %s\n", str.c_str(), fmt.c_str());
+                  bResult = true;
+                  break;
+                }else
+                  continue;
+              }
+              if (bResult)
+                break;
             }
           }
+          if (bResult)
+            break;
         }
       }
+      if (bResult)
+        break;
     }
   }
-  return false;
+#ifdef __DEBUG__
+  g_checkisdatetime += curtime()-thistime;
+#endif // __DEBUG__
+  return bResult;
 }
 
 double timediff(struct tm & tm1, struct tm & tm2)
 {
-  time_t t1 = mktime(&tm1);
-  time_t t2 = mktime(&tm2);
+  time_t t1 = mymktime(&tm1);
+  time_t t2 = mymktime(&tm2);
   return difftime(t1, t2);
 }
 
@@ -2335,18 +2365,18 @@ string truncdate(const string & datesrc, const string & fmt, const int & seconds
 #endif // __DEBUG__
   struct tm tm;
   string sResult, sFmt = fmt;
-  int iOffSet;
-  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+  if (sFmt.empty() && !isDate(datesrc, sFmt))
     trace(ERROR, "(truncdate) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
-  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
-    time_t t1 = mktime(&tm) - timezone; // adjust timezone
-    time_t t2 = (time_t)(trunc((long double)t1/seconds))*seconds - timezone; // adjust timezone for gmtime
-    //trace(DEBUG2, "(truncdate)(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d seconds: %d t2: %d timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, seconds, (long) t2, timezone);
-    //tm = *(localtime(&t2));
-    tm = *(gmtime(&t2));
+  else if (strToDate(datesrc, tm, sFmt)){
+    time_t t1 = mymktime(&tm); // adjust timezone
+    t1 = (time_t)(trunc((long double)t1/seconds))*seconds + mytimezone; // adjust timezone for gmtime
+    //trace(DEBUG2, "(truncdate)(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d seconds: %d t2: %d mytimezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, seconds, (long) t2, mytimezone);
+    struct tm tm1 = *(gmtime(&t1));
+    tm1.tm_gmtoff = tm.tm_gmtoff;
+    tm1.tm_isdst = tm.tm_isdst;
     //tm = zonetime(t2, 0); // as tm returned from strToDate is GMT time
-    sResult = dateToStr(tm, iOffSet, sFmt);
-    //trace(DEBUG2, "(truncdate)(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    sResult = dateToStr(tm1, sFmt);
+    //trace(DEBUG2, "(truncdate)(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) mytimezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, mytimezone);
     //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", seconds, datesrc.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
   }else{
     trace(ERROR, "(truncdate)'%s' is not a correct date!\n", datesrc.c_str());
@@ -2361,10 +2391,9 @@ string truncdateu(const string & datesrc, const string & fmt, const char & unit)
 {
   struct tm tm;
   string sResult, sFmt = fmt;
-  int iOffSet;
-  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+  if (sFmt.empty() && !isDate(datesrc, sFmt))
     trace(ERROR, "(truncdateu) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
-  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+  else if (strToDate(datesrc, tm, sFmt)){
     switch(unit){
       case 'b':
       case 'B':
@@ -2373,7 +2402,7 @@ string truncdateu(const string & datesrc, const string & fmt, const char & unit)
         tm.tm_min = 0;
         tm.tm_sec = 0;
         // adjust timezone
-        addhours(tm, -1*(tm.tm_hour+(iOffSet/100)));
+        tm.tm_hour = 0;
         //if (iOffSet<0)
         //  addtime(tm, 1, 'd');
         break;
@@ -2384,16 +2413,14 @@ string truncdateu(const string & datesrc, const string & fmt, const char & unit)
         tm.tm_min = 0;
         tm.tm_sec = 0;
         // adjust timezone
-        addhours(tm, -1*(tm.tm_hour+(iOffSet/100)));
-        //if (iOffSet<0)
-        //  addtime(tm, 1, 'd');
+        tm.tm_hour = 0;
         break;
       case 'h':
       case 'H':
         tm.tm_min = 0;
         tm.tm_sec = 0;
         // adjust timezone
-        addhours(tm, -1*(tm.tm_hour+(iOffSet/100)));
+        tm.tm_hour = 0;
         break;
       case 'm':
       case 'M':
@@ -2405,11 +2432,11 @@ string truncdateu(const string & datesrc, const string & fmt, const char & unit)
         tm.tm_sec = 0;
         break;
     }
-    time_t t1 = mktime(&tm) - timezone - timezone; // adjust timezone, one for mktime converting, one for the gmtime
-    trace(DEBUG2, "(truncdateu)(a)Truncating '%s' (%d) %d %d %d %d %d %d; t1: %d timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, timezone);
-    tm = *(gmtime(&t1));
-    sResult = dateToStr(tm, iOffSet, sFmt);
-    trace(DEBUG2, "(truncdateu)(b)Truncating '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    //time_t t1 = mymktime(&tm) - mytimezone - mytimezone; // adjust timezone, one for mktime converting, one for the gmtime
+    //trace(DEBUG2, "(truncdateu)(a)Truncating '%s' %d %d %d %d %d %d; t1: %d mytimezone: %d \n",datesrc.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (long)t1, mytimezone);
+    //tm = *(gmtime(&t1));
+    sResult = dateToStr(tm, sFmt);
+    trace(DEBUG2, "(truncdateu)(b)Truncating '%s' => '%s' (%d %d %d %d %d %d) mytimezone: %d \n",datesrc.c_str(), sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, mytimezone);
     //trace(DEBUG, "Truncating seconds %d from '%s'(%u) get '%s'(%u), format:%s\n", seconds, datesrc.c_str(), (long)t1, sResult.c_str(), (long)t2, dts.extrainfo.c_str());
   }else{
     trace(ERROR, "(truncdateu) '%s' is not a correct date!\n", datesrc.c_str());
@@ -2421,21 +2448,20 @@ string monthfirstmonday(const string & datesrc, const string & fmt)
 {
   struct tm tm;
   string sResult, sFmt = fmt;
-  int iOffSet;
-  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+  if (sFmt.empty() && !isDate(datesrc, sFmt))
     trace(ERROR, "(monthfirstmonday) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
-  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
-    trace(DEBUG2, "(monthfirstmonday)(a)get monthfirstmonday '%s' (%d) %d %d %d %d %d %d; timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+  else if (strToDate(datesrc, tm, sFmt)){
+    trace(DEBUG2, "(monthfirstmonday)(a)get monthfirstmonday '%s' %d %d %d %d %d %d; mytimezone: %d \n",datesrc.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, mytimezone);
     tm.tm_mday = tm.tm_mday%7;
     if (tm.tm_mday == 0)
       tm.tm_mday = 7;
     int stdwday = tm.tm_wday==0?7:tm.tm_wday;
     if (stdwday!=1)
       tm.tm_mday = tm.tm_mday>=stdwday?tm.tm_mday-(stdwday-1):tm.tm_mday+(8-stdwday);
-    time_t t1 = mktime(&tm) - timezone - timezone; // adjust timezone, one for mktime converting, one for the gmtime
-    tm = *(gmtime(&t1));
-    sResult = dateToStr(tm, iOffSet, sFmt);
-    trace(DEBUG2, "(monthfirstmonday)(b)get monthfirstmonday '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    //time_t t1 = mymktime(&tm) - mytimezone - mytimezone; // adjust timezone, one for mktime converting, one for the gmtime
+    //tm = *(gmtime(&t1));
+    sResult = dateToStr(tm, sFmt);
+    trace(DEBUG2, "(monthfirstmonday)(b)get monthfirstmonday '%s' => '%s' (%d %d %d %d %d %d) mytimezone: %d \n",datesrc.c_str(), sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, mytimezone);
   }else{
     trace(ERROR, "(monthfirstmonday) '%s' is not a correct date!\n", datesrc.c_str());
   }
@@ -2446,11 +2472,10 @@ int yearweek(const string & datesrc, const string & fmt)
 {
   struct tm tm;
   string sResult, sFmt = fmt;
-  int iOffSet;
-  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt)){
+  if (sFmt.empty() && !isDate(datesrc, sFmt)){
     trace(ERROR, "(yearweek) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
     return -1;
-  }else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+  }else if (strToDate(datesrc, tm, sFmt)){
     // get the day in the first week
     int sday = tm.tm_yday%7;
     return (tm.tm_yday-sday)/7+(sday>=tm.tm_wday?1:0);
@@ -2464,11 +2489,10 @@ int yearday(const string & datesrc, const string & fmt)
 {
   struct tm tm;
   string sResult, sFmt = fmt;
-  int iOffSet;
-  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt)){
+  if (sFmt.empty() && !isDate(datesrc, sFmt)){
     trace(ERROR, "(yearday) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
     return -1;
-  }else if (strToDate(datesrc, tm, iOffSet, sFmt)){
+  }else if (strToDate(datesrc, tm, sFmt)){
     return tm.tm_yday;
   }else{
     trace(ERROR, "(yearday) '%s' is not a correct date!\n", datesrc.c_str());
@@ -2480,22 +2504,16 @@ string rqlocaltime(const string & datesrc, const string & fmt)
 {
   struct tm tm;
   string sResult, sFmt = fmt;
-  int iOffSet;
-  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+  if (sFmt.empty() && !isDate(datesrc, sFmt))
     trace(ERROR, "(rqlocaltime) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
-  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
-    trace(DEBUG2, "(rqlocaltime)(a)get localtime '%s' (%d) %d %d %d %d %d %d; timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
-    struct tm curtime = now();
-    //tm.tm_isdst = curtime.tm_isdst;
-    //tm.tm_gmtoff = iOffSet*36;
-    //tm.tm_zone = curtime.tm_zone;
-    time_t t1 = mktime(&tm) - timezone - timezone; // adjust timezone, one for mktime converting, one for the gmtime
-    tm = *(gmtime(&t1));
-    replacestr(sFmt," %z","");
-    replacestr(sFmt," %Z","");
+  else if (strToDate(datesrc, tm, sFmt)){
+    trace(DEBUG2, "(rqlocaltime)(a)get localtime '%s' %d %d %d %d %d %d; mytimezone: %d \n",datesrc.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, mytimezone);
+    addhours(tm, (mytimezone-tm.tm_gmtoff)/3600);
+    tm.tm_gmtoff = mytimezone;
+    tm.tm_isdst = mydaylight;
     // the "timezone" doesnot count the Daylight Saving Time. need to use curtime.tm_gmtoff to adjust
-    sResult = dateToStr(tm, curtime.tm_gmtoff/36, sFmt);
-    trace(DEBUG2, "(rqlocaltime)(b)get localtime '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    sResult = dateToStr(tm, sFmt);
+    trace(DEBUG2, "(rqlocaltime)(b)get localtime '%s' => '%s' (%d %d %d %d %d %d) mytimezone: %d \n",datesrc.c_str(), sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, mytimezone);
   }else{
     trace(ERROR, "(rqlocaltime) '%s' is not a correct date!\n", datesrc.c_str());
   }
@@ -2506,19 +2524,16 @@ string rqgmtime(const string & datesrc, const string & fmt, const double & gmtof
 {
   struct tm tm;
   string sResult, sFmt = fmt;
-  int iOffSet;
-  if (sFmt.empty() && !isDate(datesrc, iOffSet, sFmt))
+  if (sFmt.empty() && !isDate(datesrc, sFmt))
     trace(ERROR, "(rqgmtime) '%s' is a invalid date format or '%s' is not a correct date!\n", sFmt.c_str(), datesrc.c_str());
-  else if (strToDate(datesrc, tm, iOffSet, sFmt)){
-    trace(DEBUG2, "(rqgmtime)(a)get localtime '%s' (%d) %d %d %d %d %d %d; timezone: %d \n",datesrc.c_str(), iOffSet,tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
-    struct tm curtime = now();
-    int goffset = lrint(gmtoff*100);
-    time_t t1 = mktime(&tm)-(curtime.tm_gmtoff+timezone); // adjust timezone, the "timezone" doesnot count the Daylight Saving Time. need to use curtime.tm_gmtoff to adjust
-    tm = *(localtime(&t1));
-    sFmt+=" %z";
-    sResult = dateToStr(tm, goffset, sFmt);
+  else if (strToDate(datesrc, tm, sFmt)){
+    trace(DEBUG2, "(rqgmtime)(a)get localtime '%s' %d %d %d %d %d %d; mytimezone: %d \n",datesrc.c_str(),tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, mytimezone);
+    cleanuptm(tm);
+    addhours(tm,gmtoff-mytimezone/3600);
+    tm.tm_gmtoff = gmtoff*3600;
+    sResult = dateToStr(tm, sFmt);
     //sResult += (gmtoff>=0?" +":" ")+intToStr(gmtoff*100);
-    trace(DEBUG2, "(rqgmtime)(b)get localtime '%s' (%d) => '%s' (%d %d %d %d %d %d) timezone: %d \n",datesrc.c_str(),iOffSet, sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, timezone);
+    trace(DEBUG2, "(rqgmtime)(b)get localtime '%s' => '%s' (%d %d %d %d %d %d) mytimezone: %d \n",datesrc.c_str(), sResult.c_str(), tm.tm_year+1900, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, mytimezone);
   }else{
     trace(ERROR, "(rqgmtime) '%s' is not a correct date!\n", datesrc.c_str());
   }
@@ -2528,7 +2543,7 @@ string rqgmtime(const string & datesrc, const string & fmt, const double & gmtof
 struct tm convertzone(const struct tm & tm, const string & fromzone, const string & tozone)
 {
   struct tm tm1 = tm;
-  time_t t1 = mktime(&tm1);
+  time_t t1 = mymktime(&tm1);
   tm1 = zonetime(t1, fromzone);
   int off1=tm1.tm_gmtoff;
   tm1 = zonetime(t1, tozone);
@@ -2540,11 +2555,10 @@ struct tm convertzone(const struct tm & tm, const string & fromzone, const strin
 string convertzone(const string & sdate, const string & sFmt, const string & fromzone, const string & tozone)
 {
   struct tm tm;
-  int iOffset=0;
   string ddate;
-  if (strToDate(sdate, tm, iOffset, sFmt)){
+  if (strToDate(sdate, tm, sFmt)){
     struct tm tm1 = convertzone(tm, fromzone, tozone);
-    ddate = dateToStr(tm1,0,sFmt);
+    ddate = dateToStr(tm1,sFmt);
   }
   return ddate;
 }
@@ -2636,12 +2650,11 @@ int detectDataType(const string & str, string & extrainfo)
   string trimmedStr = trim_copy(str);
   short int datatype = UNKNOWN;
   extrainfo = "";
-  int iOffSet;
   if (trimmedStr.length()>1 && ((trimmedStr[0]=='\'' && trimmedStr[trimmedStr.length()-1]=='\'' && matchQuoters(trimmedStr, 0, "''")==0) || (trimmedStr[0]=='/' && trimmedStr[trimmedStr.length()-1]=='/' && matchQuoters(trimmedStr, 0, "//")==0))){
     datatype = STRING;
     //trace(DEBUG2, "'%s' has quoters\n", trimmedStr.c_str());
   //else if (matchQuoters(trimmedStr, 0, "{}"))
-  }else if (isDate(trimmedStr, iOffSet, extrainfo))
+  }else if (isDate(trimmedStr, extrainfo))
     datatype = DATE;
   else if (isLong(trimmedStr))
     datatype = LONG;
@@ -3457,7 +3470,6 @@ int anyDataCompare(const string & str1, const string & str2, const DataTypeStruc
       string fmt1, fmt2;
       string newstr1=trim_pair(str1,"{}"),newstr2=trim_pair(str2,"{}");
       bool bIsDate1 = true, bIsDate2 = true;
-      int offSet1,offSet2;
       //if (dts.extrainfo.empty()){
       //  bIsDate1 = isDate(newstr1,offSet1,fmt1);
       //  bIsDate2 = isDate(newstr2,offSet2,fmt2);
@@ -3467,9 +3479,9 @@ int anyDataCompare(const string & str1, const string & str2, const DataTypeStruc
       //}
       //if (bIsDate1 && bIsDate2){
         struct tm tm1, tm2;
-        if (strToDate(newstr1, tm1, offSet1, fmt1) && strToDate(newstr2, tm2, offSet2, fmt2)){
-          //time_t t1 = mktime(&tm1);
-          //time_t t2 = mktime(&tm2);
+        if (strToDate(newstr1, tm1, fmt1) && strToDate(newstr2, tm2, fmt2)){
+          //time_t t1 = mymktime(&tm1);
+          //time_t t2 = mymktime(&tm2);
           //double diffs = difftime(t1, t2); 
           double diffs = timediff(tm1, tm2);
           if (diffs < 0)
@@ -3587,20 +3599,19 @@ int anyDataCompare(const string & str1, const int & comparator, const string & s
     case TIMESTAMP:{
       string fmt1, fmt2;
       bool bIsDate1 = true, bIsDate2 = true;
-      int offSet1, offSet2;
       if (dts1.extrainfo.empty())
-        bIsDate1 = isDate(str1,offSet1,fmt1);
+        bIsDate1 = isDate(str1,fmt1);
       else
         fmt1 = dts1.extrainfo;
       if (dts2.extrainfo.empty())
-        bIsDate2 = isDate(str2,offSet2,fmt2);
+        bIsDate2 = isDate(str2,fmt2);
       else
         fmt2 = dts2.extrainfo;
       if (bIsDate1 && bIsDate2){
         struct tm tm1, tm2;
-        if (strToDate(str1, tm1, offSet1, fmt1) && strToDate(str2, tm2, offSet2, fmt2)){
-          //time_t t1 = mktime(&tm1);
-          //time_t t2 = mktime(&tm2);
+        if (strToDate(str1, tm1, fmt1) && strToDate(str2, tm2, fmt2)){
+          //time_t t1 = mymktime(&tm1);
+          //time_t t2 = mymktime(&tm2);
           //double diffs = difftime(t1, t2);
           double diffs = timediff(tm1, tm2);
           switch (comparator){
@@ -3790,27 +3801,27 @@ bool evalDouble(const string & str1, const int & operate, const string & str2, d
 bool evalDate(const string & str1, const int & operate, const string & str2, const string & fmt, struct tm& result)
 {
   time_t t1;
-  int seconds, iOffSet;
+  int seconds;
   bool bIsDate1 = false, bIsDate2 = false;
   // avoid to use isDate if nfmt is provided, to improve performance
   if (fmt.empty()){
     string nfmt = fmt;
-    bIsDate1 = isDate(str1, iOffSet, nfmt);
+    bIsDate1 = isDate(str1, nfmt);
     if (bIsDate1){
       if (isInt(str2)){
-        strToDate(str1, result, iOffSet, nfmt);
-        t1 = mktime(&result);
+        strToDate(str1, result, nfmt);
+        t1 = mymktime(&result);
         seconds = atoi(str2.c_str());
       }else{
         trace(ERROR, "(1)DATE can only +/- an INTEGER number !\n");
         return false;
       }
     }else{
-      bIsDate2 = isDate(str2, iOffSet, nfmt);
+      bIsDate2 = isDate(str2, nfmt);
       if (bIsDate2){
         if (isInt(str1)){
-          strToDate(str2, result, iOffSet, nfmt);
-          t1 = mktime(&result);
+          strToDate(str2, result, nfmt);
+          t1 = mymktime(&result);
           seconds = atoi(str1.c_str());
         }else{
           trace(ERROR, "(2)DATE can only +/- an INTEGER number !\n");
@@ -3819,20 +3830,20 @@ bool evalDate(const string & str1, const int & operate, const string & str2, con
       }
     }
   }else{
-    bIsDate1 = strToDate(str1, result, iOffSet, fmt);
+    bIsDate1 = strToDate(str1, result, fmt);
     if (bIsDate1){
       if (isInt(str2)){
-        t1 = mktime(&result);
+        t1 = mymktime(&result);
         seconds = atoi(str2.c_str());
       }else{
         trace(ERROR, "(1)DATE can only +/- an INTEGER number !\n");
         return false;
       }
     }else{
-      bIsDate2 = strToDate(str2, result, iOffSet, fmt);
+      bIsDate2 = strToDate(str2, result, fmt);
       if (bIsDate2){
         if (isInt(str1)){
-          t1 = mktime(&result);
+          t1 = mymktime(&result);
           seconds = atoi(str1.c_str());
         }else{
           trace(ERROR, "(2)DATE can only +/- an INTEGER number !\n");
@@ -3883,7 +3894,7 @@ bool anyDataOperate(const string & str1, const int & operate, const string & str
     case TIMESTAMP:{
       struct tm rslt;
       bool gotResult = evalDate(str1, operate, str2, dts.extrainfo, rslt);
-      result = dateToStr(rslt);
+      result = dateToStr(rslt, dts.extrainfo);
       //char buffer [256];
       //strftime (buffer,256,DATEFMT,&rslt);
       //result = string(buffer);

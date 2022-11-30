@@ -1,7 +1,10 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.223] 2022-12-01
+   Enhancement: Optimized all date function, discarded mktime, discarded offset in isDate/dateToStr/strToDate. improved performance.<br/>
    # [1.223] 2022-11-30
    Fix bug: Data parsing incorrectly in some special cases.<br/>
+   Enhancement: Improved performance of data functions using mymktime to replace mktime.<br/>
    # [1.222] 2022-11-29
    Fix bug: Expression goes wrong when quoters involved.<br/>
    # [1.221] 2022-11-29

@@ -47,6 +47,8 @@
 //size_t g_inputbuffer;
 
 GlobalVars gv;
+long int mytimezone;
+int mydaylight;
 string currentfolder;
 
 void usage()
@@ -536,6 +538,8 @@ int main(int argc, char *argv[])
     usage();
     exitProgram(1);
   }
+  
+  getlocalzone();
   
   currentfolder = string(argv[0]);
   

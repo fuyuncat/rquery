@@ -428,11 +428,17 @@ struct RuntimeDataStruct{
 extern GlobalVars gv;
 extern std::set<string> g_userMacroFuncNames; // the global array is used for identify the user defined macro functions
 
+extern long int mytimezone;
+extern int mydaylight;
+
 #ifdef __DEBUG__
+extern long int g_tmptimer1time;
+extern long int g_tmptimer2time;
 extern long int g_strtodatetime;
 extern long int g_datetostrtime;
 extern long int g_zonetimetime;
 extern long int g_truncdatetime;
+extern long int g_checkisdatetime;
 extern long int g_evalexprtime;
 extern long int g_evalexprconsttime;
 extern long int g_evalexprfunctime;
@@ -516,21 +522,23 @@ bool isInt(const string& str);
 bool isLong(const string& str);
 bool isFloat(const string& str);
 bool isDouble(const string& str);
-bool isDate(const string& str, int & iOffSet, string& fmt);
+bool isDate(const string& str, string& fmt);
 string intToStr(const int & val);
 string longToStr(const long & val);
 string longlongToStr(const long long & val);
 string longuintToStr(const long unsigned int & val);
 string floatToStr(const float & val);
 string doubleToStr(const double & val);
-string dateToStr(struct tm & val, const int & iOffSet = 888888, const string & fmt = DATEFMT);
+string dateToStr(struct tm & val, const string & fmt = DATEFMT);
 string dectohex(const int & val);
 int hextodec(const string& str);
 string dectobin(const int & val);
 int bintodec(const string& str);
 
+void getlocalzone();
+time_t mymktime( const struct tm *ltm );
 void cleanuptm(struct tm & tm); // clean up the messy date in tm, e.g. 2022 10 18 839979404 32764 839979424 => 2022 10 18 0 0 0
-bool strToDate(const string & str, struct tm & tm, int & iOffSet, const string & fmt=DATEFMT);
+bool strToDate(const string & str, struct tm & tm, const string & fmt=DATEFMT);
 int localOffset();
 struct tm zonetime(const time_t & t1, const string & zone);
 struct tm zonetime(const time_t & t1, const int & iOffSet);

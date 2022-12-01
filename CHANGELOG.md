@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.230] 2022-12-01
+   Enhancement: A quickersplit for simple delimiter parsing. <br/>
    # [1.223] 2022-12-01
    Enhancement: Optimized all date function, discarded mktime, discarded offset in isDate/dateToStr/strToDate. improved performance.<br/>
    Enhancement: Improved performance by using unordered_set to replace set for the large sets.<br/>

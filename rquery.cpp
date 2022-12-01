@@ -122,7 +122,7 @@ vector<string> listFilesInFolder(string foldername)
 void processFile(string filename, QuerierC & rq, size_t& total, short int fileMode=READBUFF, int iSkip=0)
 {
   trace(DEBUG,"Processing file: %s \n", filename.c_str());
-  long int thisTime,lastTime = curtime(), readStartTime, readfiletime=0;
+  long int thisTime,lastTime = curtime(), readStartTime, processStartTime, readfiletime=0, processfiletime=0;
 
   rq.setFileName(filename, gv.g_fileheaderonly);
   ifstream ifile(filename.c_str());
@@ -158,6 +158,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
             break;
           rq.appendrawstr(strline);
           readfiletime += (curtime()-readStartTime);
+          processStartTime = curtime();
           rq.searchAll();
           if (gv.g_printheader && gv.g_ouputformat==TEXT)
             rq.printFieldNames();
@@ -165,6 +166,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
             rq.outputAndClean();
           rq.setrawstr("");
           readLines++;
+          processfiletime += (curtime()-processStartTime);
           thisTime = curtime();
           if (gv.g_showprogress)
             printf("\r'%s': %d lines(%.2f%%) read in %f seconds.", filename.c_str(), readLines, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
@@ -195,6 +197,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
             rq.setEof(true);
           rq.appendrawstr(string(cachebuffer));
           readfiletime += (curtime()-readStartTime);
+          processStartTime = curtime();
           rq.searchAll();
           if (gv.g_printheader && gv.g_ouputformat==TEXT)
             rq.printFieldNames();
@@ -204,6 +207,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
           if (ifile.gcount()==0)
             break;
           memset( cachebuffer, '\0', sizeof(char)*cache_length );
+          processfiletime += (curtime()-processStartTime);
           thisTime = curtime();
           if (gv.g_showprogress)
             printf("\r'%s': %ld bytes(%.2f%%) read in %f seconds.", filename.c_str(), total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
@@ -218,6 +222,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
   thisTime = curtime();
   trace(PERFM, "Reading and searching time: %u\n", thisTime-lastTime);
   trace(PERFM, "  Reading file time: %d\n", readfiletime);
+  trace(PERFM, "  Processing file time: %d\n", processfiletime);
   lastTime = thisTime;
 }
 
@@ -657,7 +662,7 @@ int main(int argc, char *argv[])
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
-      fileMode = (lower_copy(string(argv[i+1])).compare("line")!=0?READBUFF:READLINE);
+      fileMode = ((lower_copy(string(argv[i+1])).compare("line")!=0 && lower_copy(string(argv[i+1])).compare("l")!=0)?READBUFF:READLINE);
       i++;
     }else if (lower_copy(string(argv[i])).compare("-o")==0 || lower_copy(string(argv[i])).compare("--outputformat")==0){
       if (i>=argc-1 || argv[i+1][0] == '-'){

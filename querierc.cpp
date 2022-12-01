@@ -2322,7 +2322,7 @@ int QuerierC::searchNextDelm()
         split(matcheddata, sLine,m_delimSet,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
       else
         split(matcheddata, sLine,m_regexstr,m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded, true);
-        //quicksplit(matcheddata, sLine,m_regexstr[0],m_quoters,'\\',{},m_delmrepeatable, sLine.empty()&&bEnded);
+        //quickersplit(matcheddata, sLine,m_regexstr[0]);
     }
 #ifdef __DEBUG__
   m_parsepatterntime += (curtime()-thistime);
@@ -2421,6 +2421,10 @@ int QuerierC::searchNextLine()
     }
     vector<string> matcheddata;
     matcheddata.push_back(sLine);
+#ifdef __DEBUG__
+  m_parsepatterntime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
     pos = 0;
     //dumpVector(matcheddata);
     if (sLine.empty() && bEnded)

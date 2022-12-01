@@ -675,10 +675,21 @@ bool readLine(const string & str, size_t & pos, string & sline, const char & del
   }
 }
 
-void quicksplit(vector<string> & v, const string & str, const char & delim, const string & quoters, const char & escape, const bool & repeatable, const bool & skipemptyelement)
+void quickersplit(vector<string> & v, const string & str, const char & delim)
 {
-  //stringstream ss(str);
-  //string e;
+#ifdef __DEBUG__
+  long int tmptime = curtime();
+#endif // __DEBUG__
+  stringstream ss(str);
+  string e;
+  while (getline(ss, e, delim))
+    v.push_back(e);
+  if (str[str.size()-1]==delim)
+    v.push_back("");
+#ifdef __DEBUG__
+  g_tmptimer1time += curtime()-tmptime;
+#endif // __DEBUG__
+
   //size_t pos=0;
   ////while (getline(ss, e, delim)){
   //while (readLine(str, pos, e, delim)){
@@ -703,8 +714,8 @@ void quicksplit(vector<string> & v, const string & str, const char & delim, cons
 
   //stringstream os;
   //char ch,qc;
-  size_t nq=0, s=0;
-  string token;
+  //size_t nq=0, s=0;
+  //string token;
   //while(ss.get(ch)){
     //stringstream qs(quoters);
     //if (s==1){
@@ -753,6 +764,16 @@ void quicksplit(vector<string> & v, const string & str, const char & delim, cons
   //}
   //if (b!=p || !repeatable) // skip repeated delim
   //  v.push_back(token);
+}
+
+void quicksplit(vector<string> & v, const string & str, const char & delim, const string & quoters, const char & escape, const bool & repeatable, const bool & skipemptyelement)
+{
+  if (quoters.size()==0 && !repeatable && !skipemptyelement){
+    quickersplit(v, str, delim);
+    return;
+  }
+  size_t nq=0, s=0;
+  string token;
 
   size_t p=0, b=0;
   while(p<str.length()){
@@ -2089,23 +2110,13 @@ bool strToDate(const string & str, struct tm & tm, const string & fmt)
 #ifdef __DEBUG__
   long int thistime = curtime();
 #endif // __DEBUG__
-#ifdef __DEBUG__
-  long int tmptime = curtime();
-#endif // __DEBUG__
   // accept %z at then of the time string only
   //trace(DEBUG2, "Trying date format: '%s' (expected len:%d) for '%s'\n", fmt.c_str(), dateFormatLen(fmt), str.c_str());
   if (fmt.empty() || str.length() < dateFormatLen(fmt)){
     //trace(DEBUG2, "'%s' len %d doesnot match expected (Format: '%s') \n", str.c_str(), str.length(), fmt.c_str(), dateFormatLen(fmt) );
     return false;
   }
-#ifdef __DEBUG__
-  g_tmptimer1time += curtime()-tmptime;
-  tmptime = curtime();
-#endif // __DEBUG__
   char * c = strptime(str.c_str(), fmt.c_str(), &tm);
-#ifdef __DEBUG__
-  g_tmptimer2time += curtime()-tmptime;
-#endif // __DEBUG__
   // if the date lack of some time info, e.g. 2022-11-18 dont have time info, the time info like tm_sec in tm will be a random number. need to use cleanuptm to do cleanup.
   cleanuptm(tm);
   bool bResult=false;
@@ -2668,7 +2679,7 @@ int detectDataType(const string & str, string & extrainfo)
   return datatype;
 }
 
-bool wildmatch(const char *candidate, const char *pattern, int p, int c, char multiwild='*', char singlewild='?', char escape='\\')
+bool wildmatch(const char *candidate, const char *pattern, size_t p, size_t c, char multiwild='*', char singlewild='?', char escape='\\')
 {
   //trace(DEBUG2, "Like matching '%s'(%d) => '%s'(%d)\n", string(pattern+p).c_str(),p, string(candidate+c).c_str(),c);
   if (pattern[p] == '\0') {
@@ -2680,7 +2691,8 @@ bool wildmatch(const char *candidate, const char *pattern, int p, int c, char mu
       if (wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape))
         return true;
     }
-    return wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape);
+    return false;
+    //return wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape);
   } else if ((pattern[p] != '?' || (p > 0 && pattern[p-1] == escape)) && pattern[p] != candidate[c]) {
     return false;
   }  else {

@@ -46,7 +46,7 @@ void FilterC::init()
 
   m_inExpressions.clear();
   m_comparators.clear();
-  m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back("=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back(" LIKE ");m_comparators.push_back(" REGLIKE ");m_comparators.push_back(" NOLIKE ");m_comparators.push_back(" NOREGLIKE ");m_comparators.push_back(" IN ");m_comparators.push_back(" NOIN "); // "=", "<", ">" should be put after "<=" ">=" "!="
+  m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back("=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back(" OPLIKE ");m_comparators.push_back(" OPREGLIKE ");m_comparators.push_back(" OPNOLIKE ");m_comparators.push_back(" OPNOREGLIKE ");m_comparators.push_back(" OPIN ");m_comparators.push_back(" OPNOIN "); // "=", "<", ">" should be put after "<=" ">=" "!="
 }
 
 FilterC::FilterC()
@@ -214,14 +214,14 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
       trace(DEBUG, "Found comparator '%s' in '%s'. '%s' %s '%s'\n",compStr.c_str(),str.c_str(),node->m_leftExpStr.c_str(),compStr.c_str(),node->m_rightExpStr.c_str());
       node->m_leftExpression = new ExpressionC(node->m_leftExpStr);
       node->m_rightExpression = new ExpressionC(node->m_rightExpStr);
-      if (node->m_comparator == IN || node->m_comparator == NOIN){ // hard code for IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
-        if (!node->m_rightExpression->containRefVar()){ // check if it's a side work IN or an iterating element IN
+      if (node->m_comparator == OPIN || node->m_comparator == OPNOIN){ // hard code for OPIN/OPNOIN,m_rightExpression is NULL, m_inExpressions contains OPIN expressions
+        if (!node->m_rightExpression->containRefVar()){ // check if it's a side work OPIN or an iterating element OPIN
           if (node->m_rightExpression){
             node->m_rightExpression->clear();
             SafeDelete(node->m_rightExpression);
           }
           if (node->m_rightExpStr.length()<2 || node->m_rightExpStr[0]!='(' || node->m_rightExpStr[node->m_rightExpStr.length()-1]!=')'){
-            trace(ERROR, "Invalid IN string '%s'\n", node->m_rightExpStr.c_str());
+            trace(ERROR, "Invalid OPIN string '%s'\n", node->m_rightExpStr.c_str());
             return;
           }
           string sElements = node->m_rightExpStr.substr(1,node->m_rightExpStr.length()-2);
@@ -231,7 +231,7 @@ void FilterC::buildLeafNodeFromStr(FilterC* node, string str)
           for (int i=0;i<vElements.size();i++){
             string sResult, sElement = trim_copy(vElements[i]);
             if (sElement.empty()){
-              trace(ERROR, "Empty IN element string!\n");
+              trace(ERROR, "Empty OPIN element string!\n");
               return;
             }
             eElement = ExpressionC(sElement);
@@ -545,9 +545,9 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
         SafeDelete(m_rightExpression);
         m_rightExpression = new ExpressionC(m_leftExpStr);
       }
-    }else if(m_comparator != IN && m_comparator != NOIN)
+    }else if(m_comparator != OPIN && m_comparator != OPNOIN)
       m_rightExpression = new ExpressionC(m_leftExpStr);
-    if (m_rightExpression){ // m_rightExpression exist means it either a Non-IN comparasion or side work IN comparasion
+    if (m_rightExpression){ // m_rightExpression exist means it either a Non-OPIN comparasion or side work OPIN comparasion
       if (!m_rightExpression->expstrAnalyzed()){
         trace(ERROR, "Failed to analyze m_rightExpression of filter '%s'!\n", m_rightExpression->getEntireExpstr().c_str());
         m_rightExpression->clear();
@@ -557,7 +557,7 @@ bool FilterC::analyzeColumns(vector<string>* fieldnames, vector<DataTypeStruct>*
       m_rightExpression->analyzeColumns(fieldnames, fieldtypes, rawDatatype, sideDatatypes);
       m_datatype = getCompatibleDataType(m_leftExpression->m_datatype, m_rightExpression->m_datatype);
     }else{
-      if (m_comparator == IN || m_comparator == NOIN){ // hard code for element iterating IN/NOIN,m_rightExpression is NULL, m_inExpressions contains IN expressions
+      if (m_comparator == OPIN || m_comparator == OPNOIN){ // hard code for element iterating OPIN/OPNOIN,m_rightExpression is NULL, m_inExpressions contains OPIN expressions
         DataTypeStruct dts;
         dts.datatype = -99;
         for (int i=0; i<m_inExpressions.size(); i++){
@@ -810,7 +810,7 @@ bool FilterC::compareIn(RuntimeDataStruct & rds)
   if ((!bDoAggFilter && m_leftExpression && m_leftExpression->containGroupFunc()) || (bDoAggFilter && !m_leftExpression->containGroupFunc() && !(m_leftExpression->m_type==LEAF&&m_leftExpression->m_expType==CONST)))
     return true;
   if (!m_leftExpression || !m_leftExpression->evalExpression(rds, leftRst, dts1, true)){
-    trace(ERROR, "Failed to get the value to be compared in IN!\n"); 
+    trace(ERROR, "Failed to get the value to be compared in OPIN!\n"); 
     return false;
   }
   if (m_rightExpression && m_rightExpression->containRefVar()){
@@ -826,11 +826,11 @@ bool FilterC::compareIn(RuntimeDataStruct & rds)
       sideDatarow.clear();
       sideDatarow.insert(pair<string, unordered_map<string,string> >(intToStr(sidWorkID+1), (*rds.sideDatasets)[sidWorkID][i]));
       if (!m_rightExpression->evalExpression(rds, sResult, dts2, true)){
-        trace(ERROR, "Failed to get result of IN element %s!\n", m_rightExpression->getEntireExpstr().c_str());
+        trace(ERROR, "Failed to get result of OPIN element %s!\n", m_rightExpression->getEntireExpstr().c_str());
         bResult = false;
         break;
       }
-      if (anyDataCompare(leftRst, EQ, sResult, dts1, dts2) == 1){
+      if (anyDataCompare(leftRst, OPEQ, sResult, dts1, dts2) == 1){
         bResult = true;
         break;
       }
@@ -839,18 +839,18 @@ bool FilterC::compareIn(RuntimeDataStruct & rds)
     return bResult;
   }else{
     if (m_inExpressions.size() == 0){
-      trace(ERROR, "Failed to get the IN elements!\n");
+      trace(ERROR, "Failed to get the OPIN elements!\n");
       return false;
     }
-    // trace(DEBUG, "Comparing '%s' IN '%s' (data type: %s)\n", leftRst.c_str(), m_rightExpStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
+    // trace(DEBUG, "Comparing '%s' OPIN '%s' (data type: %s)\n", leftRst.c_str(), m_rightExpStr.c_str(), decodeDatatype(m_datatype.datatype).c_str());
     for (int i=0;i<m_inExpressions.size();i++){
       if ((!bDoAggFilter && m_inExpressions[i].containGroupFunc()) || (bDoAggFilter && !m_inExpressions[i].containGroupFunc() && !(m_inExpressions[i].m_type==LEAF&&m_inExpressions[i].m_expType==CONST)))
         return false;
       if (!m_inExpressions[i].evalExpression(rds, sResult, dts2, true)){
-        trace(ERROR, "Failed to get result of IN element %s!\n", m_inExpressions[i].getEntireExpstr().c_str());
+        trace(ERROR, "Failed to get result of OPIN element %s!\n", m_inExpressions[i].getEntireExpstr().c_str());
         return false;
       }
-      if (anyDataCompare(leftRst, EQ, sResult, dts1, dts2) == 1){
+      if (anyDataCompare(leftRst, OPEQ, sResult, dts1, dts2) == 1){
         return true;
       }
     }
@@ -1044,8 +1044,8 @@ bool FilterC::compareExpressionI(RuntimeDataStruct & rds, vector< unordered_map<
       }
       return bResult;
     }
-    if (m_comparator == IN || m_comparator == NOIN){
-      return compareIn(rds)?(m_comparator == IN?true:false):(m_comparator == IN?false:true);
+    if (m_comparator == OPIN || m_comparator == OPNOIN){
+      return compareIn(rds)?(m_comparator == OPIN?true:false):(m_comparator == OPIN?false:true);
     }
     else{
       if (rds.aggFuncs && rds.aggFuncs->size()==0 && rds.anaFuncs && rds.anaFuncs->size()==0){ // in the matching the raw data process, dont compare aggregation function

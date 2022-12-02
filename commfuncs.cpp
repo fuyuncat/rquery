@@ -37,22 +37,25 @@
 #include <array>
 #endif
 
+//#include <regex>
+#include <boost/regex.hpp>
 //#include <cstdlib>
 //#include <chrono>
-//#include <sstream>
+#include <sstream>
 //#include <stdexcept.h>
 //#include <iostream>
 //#include <boost/date_time.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/xpressive/xpressive.hpp>
-#include <boost/xpressive/regex_actions.hpp>
+#include "boost/lexical_cast.hpp"
+//#include <boost/xpressive/xpressive.hpp>
+//#include <boost/xpressive/regex_actions.hpp>
 #include "commfuncs.h"
 #include <stdlib.h>
 #if defined __MINGW32__ || defined __CYGWIN32__ || defined __CYGWIN64__ || defined __CYGWIN__
 #include <time.h>
 #endif
 
-using namespace boost::xpressive;
+//using namespace boost::xpressive;
 
 GlobalVars::GlobalVars()
 {
@@ -1168,8 +1171,8 @@ void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
 {
   try{
     //trace(DEBUG, "replacing '%s','%s','%s' ...",sRaw.c_str(),sPattern.c_str(),sNew.c_str());
-    sregex regexp = sregex::compile(sPattern);
-    sRaw = regex_replace(sRaw,regexp,sNew.c_str());
+    boost::regex regexp(sPattern);
+    sRaw = boost::regex_replace(sRaw,regexp,sNew);
     //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
   }catch (exception& e) {
     trace(ERROR, "Regular replace exception: %s\n", e.what());
@@ -1179,11 +1182,11 @@ void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
 void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr)
 {
   string sNew = "";
-  smatch matches;
-  sregex regexp = sregex::compile(sPattern);
+  boost::smatch matches;
+  boost::regex regexp(sPattern);
   try{
     //trace(DEBUG2, "'%s' matching '%s'\n", sRaw.c_str(), sPattern.c_str());
-    if (regex_match(sRaw, matches, regexp)) {
+    if (boost::regex_match(sRaw, matches, regexp)) {
       //trace(DEBUG2, "Regular matched: %s\n", string(matches[0]).c_str());
       size_t iStart=0;
       for (size_t i=0; i<sExpr.length(); i++){
@@ -2691,8 +2694,7 @@ bool wildmatch(const char *candidate, const char *pattern, size_t p, size_t c, c
       if (wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape))
         return true;
     }
-    return false;
-    //return wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape);
+    return wildmatch(candidate, pattern, p+1, c, multiwild, singlewild, escape);
   } else if ((pattern[p] != '?' || (p > 0 && pattern[p-1] == escape)) && pattern[p] != candidate[c]) {
     return false;
   }  else {
@@ -2709,11 +2711,11 @@ bool like(const string & str1, const string & str2)
 
 bool reglike(const string & str, const string & regstr)
 {
-  sregex regexp = sregex::compile(regstr);
-  smatch matches;
+  boost::regex regexp(regstr);
+  boost::smatch matches;
   //trace(DEBUG, "Matching: '%s' => %s\n", str.c_str(), regstr.c_str());
   try{
-    return regex_search(str, matches, regexp);
+    return boost::regex_search(str, matches, regexp);
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());
     return false;
@@ -2737,7 +2739,6 @@ string hostname()
   if(::WSAStartup(wVersionRequested, &wsaData) != 0)
     return hname;
 #endif
-
 
   if(gethostname(szBuffer, sizeof(szBuffer)) == 0)
     hname = string(szBuffer);
@@ -2863,30 +2864,30 @@ string decodeJunction(const int & junction){
 
 string decodeComparator(const int & comparator){
   switch (comparator){
-  case EQ:
+  case OPEQ:
     return "=";
-  case LT:
+  case OPLT:
     return ">";
-  case ST:
+  case OPST:
     return "<";
-  case NEQ:
+  case OPNEQ:
     return "!=";
-  case LE:
+  case OPLE:
     return ">=";
-  case SE:
+  case OPSE:
     return "<=";
-  case LIKE:
-    return "LIKE";
-  case REGLIKE:
-    return "REGLIKE";
-  case NOLIKE:
-    return "NOLIKE";
-  case NOREGLIKE:
-    return "NOREGLIKE";
-  case IN:
-    return "IN";
-  case NOIN:
-    return "NOIN";
+  case OPLIKE:
+    return "OPLIKE";
+  case OPREGLIKE:
+    return "OPREGLIKE";
+  case OPNOLIKE:
+    return "OPNOLIKE";
+  case OPNOREGLIKE:
+    return "OPNOREGLIKE";
+  case OPIN:
+    return "OPIN";
+  case OPNOIN:
+    return "OPNOIN";
   default:
     return "UNKNOWN";
   }
@@ -2952,29 +2953,29 @@ short int encodeComparator(const string & str)
   //printf("encode comparator: %s\n",str.c_str());
   string sUpper = upper_copy(str);
   if (sUpper.compare("=") == 0)
-    return EQ;
+    return OPEQ;
   else if (sUpper.compare(">") == 0)
-    return LT;
+    return OPLT;
   else if (sUpper.compare("<") == 0)
-    return ST;
+    return OPST;
   else if (sUpper.compare("!=") == 0)
-    return NEQ;
+    return OPNEQ;
   else if (sUpper.compare(">=") == 0)
-    return LE;
+    return OPLE;
   else if (sUpper.compare("<=") == 0)
-    return SE;
-  else if (sUpper.compare("LIKE") == 0)
-    return LIKE;
-  else if (sUpper.compare("REGLIKE") == 0)
-    return REGLIKE;
-  else if (sUpper.compare("NOLIKE") == 0)
-    return NOLIKE;
-  else if (sUpper.compare("NOREGLIKE") == 0)
-    return NOREGLIKE;
-  else if (sUpper.compare("IN") == 0)
-    return IN;
-  else if (sUpper.compare("NOIN") == 0)
-    return NOIN;
+    return OPSE;
+  else if (sUpper.compare("OPLIKE") == 0)
+    return OPLIKE;
+  else if (sUpper.compare("OPREGLIKE") == 0)
+    return OPREGLIKE;
+  else if (sUpper.compare("OPNOLIKE") == 0)
+    return OPNOLIKE;
+  else if (sUpper.compare("OPNOREGLIKE") == 0)
+    return OPNOREGLIKE;
+  else if (sUpper.compare("OPIN") == 0)
+    return OPIN;
+  else if (sUpper.compare("OPNOIN") == 0)
+    return OPNOIN;
   else
     return UNKNOWN;
 }
@@ -3543,17 +3544,17 @@ int anyDataCompare(const string & str1, const int & comparator, const string & s
         long d1 = atol(str1.c_str());
         long d2 = atol(str2.c_str());
         switch (comparator){
-        case EQ:
+        case OPEQ:
           return d1 == d2?1:0;
-        case LT:
+        case OPLT:
           return d1 > d2?1:0;
-        case ST:
+        case OPST:
           return d1 < d2?1:0;
-        case NEQ:
+        case OPNEQ:
           return d1 != d2?1:0;
-        case LE:
+        case OPLE:
           return d1 >= d2?1:0;
-        case SE:
+        case OPSE:
           return d1 <= d2?1:0;
         default:
           return -101;
@@ -3566,17 +3567,17 @@ int anyDataCompare(const string & str1, const int & comparator, const string & s
         int d1 = atoi(str1.c_str());
         int d2 = atoi(str2.c_str());
         switch (comparator){
-        case EQ:
+        case OPEQ:
           return d1 == d2?1:0;
-        case LT:
+        case OPLT:
           return d1 > d2?1:0;
-        case ST:
+        case OPST:
           return d1 < d2?1:0;
-        case NEQ:
+        case OPNEQ:
           return d1 != d2?1:0;
-        case LE:
+        case OPLE:
           return d1 >= d2?1:0;
-        case SE:
+        case OPSE:
           return d1 <= d2?1:0;
         default:
           return -101;
@@ -3589,17 +3590,17 @@ int anyDataCompare(const string & str1, const int & comparator, const string & s
         double d1 = atof(str1.c_str());
         double d2 = atof(str2.c_str());
         switch (comparator){
-        case EQ:
+        case OPEQ:
           return d1 == d2?1:0;
-        case LT:
+        case OPLT:
           return d1 > d2?1:0;
-        case ST:
+        case OPST:
           return d1 < d2?1:0;
-        case NEQ:
+        case OPNEQ:
           return d1 != d2?1:0;
-        case LE:
+        case OPLE:
           return d1 >= d2?1:0;
-        case SE:
+        case OPSE:
           return d1 <= d2?1:0;
         default:
           return -101;
@@ -3627,17 +3628,17 @@ int anyDataCompare(const string & str1, const int & comparator, const string & s
           //double diffs = difftime(t1, t2);
           double diffs = timediff(tm1, tm2);
           switch (comparator){
-          case EQ:
+          case OPEQ:
             return diffs==0?1:0;
-          case LT:
+          case OPLT:
             return diffs>0?1:0;
-          case ST:
+          case OPST:
             return diffs<0?1:0;
-          case NEQ:
+          case OPNEQ:
             return diffs!=0?1:0;
-          case LE:
+          case OPLE:
             return diffs>=0?1:0;
-          case SE:
+          case OPSE:
             return diffs<=0?1:0;
           default:
             return -101;
@@ -3654,17 +3655,17 @@ int anyDataCompare(const string & str1, const int & comparator, const string & s
         int d1 = atoi(str1.c_str());
         int d2 = atoi(str2.c_str());
         switch (comparator){
-        case EQ:
+        case OPEQ:
           return d1 == d2?1:0;
-        case LT:
+        case OPLT:
           return d1 > d2?1:0;
-        case ST:
+        case OPST:
           return d1 < d2?1:0;
-        case NEQ:
+        case OPNEQ:
           return d1 != d2?1:0;
-        case LE:
+        case OPLE:
           return d1 >= d2?1:0;
-        case SE:
+        case OPSE:
           return d1 <= d2?1:0;
         default:
           return -101;
@@ -3678,29 +3679,29 @@ int anyDataCompare(const string & str1, const int & comparator, const string & s
       //string newstr1=trim_one(str1,'\''),newstr2=trim_one(str2,'\'');
       //newstr1=trim_one(newstr1,'/');newstr2=trim_one(newstr2,'/');
       switch (comparator){
-      case EQ:
+      case OPEQ:
         return str1.compare(str2)==0?1:0;
-      case LT:
+      case OPLT:
         return str1.compare(str2)>0?1:0;
-      case ST:
+      case OPST:
         return str1.compare(str2)<0?1:0;
-      case NEQ:
+      case OPNEQ:
         return str1.compare(str2)!=0?1:0;
-      case LE:
+      case OPLE:
         return str1.compare(str2)>=0?1:0;
-      case SE:
+      case OPSE:
         return str1.compare(str2)<=0?1:0;
-      case LIKE:
+      case OPLIKE:
         return like(str1, str2);
-      case REGLIKE:
+      case OPREGLIKE:
         return reglike(str1, str2);
-      case NOLIKE:
+      case OPNOLIKE:
         return !like(str1, str2);
-      case NOREGLIKE:
+      case OPNOREGLIKE:
         return !reglike(str1, str2);
-      case IN:
+      case OPIN:
         return in(str1, str2);
-      case NOIN:
+      case OPNOIN:
         return !in(str1, str2);
       default:
         return -101;
@@ -3941,7 +3942,7 @@ string removeSpace(const string & originalStr, const string & keepPattern)
 {
   //if (keepPattern == null)
   //    keepPattern =  "(\\s+OR\\s+|\\s+AND\\s+)"; //default pattern
-      // keepPattern =  "\\s+NOT\\s+|\\s+OR\\s+|\\s+AND\\s+|\\s+IN\\s+|\\s+LIKE\\s+"; //default pattern
+      // keepPattern =  "\\s+NOT\\s+|\\s+OR\\s+|\\s+AND\\s+|\\s+OPIN\\s+|\\s+OPLIKE\\s+"; //default pattern
   vector<string> keepWords;
   keepWords.push_back(" OR ");keepWords.push_back(" AND ");
 
@@ -3985,9 +3986,9 @@ int matchQuoters(const string & listStr, const size_t & offset, const string & q
 //get the first matched regelar token from a string
 string getFirstToken(const string & str, const string & token){
   try{
-    sregex regexp = sregex::compile(token);
-    smatch matches;
-    if (regex_search(str, matches, regexp))
+    boost::regex regexp(token);
+    boost::smatch matches;
+    if (boost::regex_search(str, matches, regexp))
       return matches[0];
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());
@@ -4002,9 +4003,9 @@ void getAllTokens(vector < vector <string> > & findings, const string & str, con
   findings.clear();
   string::const_iterator searchStart( str.begin() );
   try{
-    sregex regexp = sregex::compile(token);
-    smatch matches;
-    while ( regex_search( searchStart, str.end(), matches, regexp ) ){
+    boost::regex regexp(token);
+    boost::smatch matches;
+    while ( boost::regex_search( searchStart, str.end(), matches, regexp ) ){
       vector<string> vmatches;
       for (int i=0; i<matches.size(); i++)
         vmatches.push_back(matches[i]);

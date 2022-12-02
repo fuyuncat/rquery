@@ -91,6 +91,8 @@ void QuerierC::init()
   m_searchMode = REGSEARCH;
   m_readmode = READBUFF;
   m_bEof = false;
+  m_quickwildcard = false;
+  m_quickregular = false;
   m_delmrepeatable = false;
   m_delmkeepspace = false;
   m_eliminateDupField = false;
@@ -193,11 +195,16 @@ void QuerierC::setregexp(const string & regexstr)
   m_delmrepeatable = flags.find("R")!=string::npos;
   m_delmkeepspace = flags.find("S")!=string::npos;
   m_delmMulitChar = flags.find("C")!=string::npos;
+  m_quickwildcard = flags.find("W")!=string::npos;
+  m_quickregular = m_delmrepeatable;
   if (trim_copy(patternStr).empty()){
     m_searchMode = DELMSEARCH;
     m_regexstr = trim_copy(patternStr);
   }else if ((patternStr[0] == 'l' || patternStr[0] == 'L') && patternStr.length()==1){
     m_searchMode = LINESEARCH;
+  }else if ((patternStr[0] == 'q' || patternStr[0] == 'Q')&& patternStr[1] == '/'){
+    m_searchMode = QUICKSEARCH;
+    m_regexstr = patternStr.substr(2,patternStr.length()-3);
   }else if ((patternStr[0] == 'w' || patternStr[0] == 'W')&& patternStr[1] == '/'){
     m_searchMode = WILDSEARCH;
     vector<string> vSearchPattern;
@@ -896,7 +903,7 @@ void QuerierC::setUserVars(const string & variables)
   m_uservarstr = variables;
   //m_uservariables.clear();
   //m_uservarexprs.clear();
-  m_uservalnames.clear();
+  m_uservarnames.clear();
   int fakeId = 1;
   vector<ExpressionC> fakeSels;
   vector<string> fakeAlias;
@@ -920,7 +927,7 @@ void QuerierC::setUserVars(const string & variables)
     // fake R variable as a sidework dataset. R definition: R:Element_Expression[:filter], R dont need an initial value.
     string sVName = "@"+sName;
     if (sName.compare("R")==0){
-      m_uservalnames.push_back(sVName);
+      m_uservarnames.push_back(sVName);
       fakeSels.push_back(intToStr(fakeId));
       fakeAlias.push_back("");
       if (m_sideFilters.size()==0){
@@ -956,7 +963,7 @@ void QuerierC::setUserVars(const string & variables)
       m_uservariables.insert(pair<string, string> (sVName,sValue));
       m_uservarinitval.insert(pair<string, string> (sVName,sValue));
     }
-    m_uservalnames.push_back(sVName);
+    m_uservarnames.push_back(sVName);
     if (vNameVal.size()>2 && m_uservarexprs.find(sVName) == m_uservarexprs.end()){ // dynamic variable has an expression
       //ExpressionC tmpExp = ExpressionC(trim_copy(vNameVal[2]));
       //m_uservarexprs.insert(pair<string, ExpressionC> (sVName,tmpExp));
@@ -1793,11 +1800,11 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   // calculate user defined variables
   size_t iR = 0;
   unordered_map<string,string> fakeResult; // faked sidework dataset from variable R
-  for (size_t i=0; i<m_uservalnames.size(); i++){ // make sure we calculate the dynamic and R variables in the order of input.
-    if (m_uservalnames[i].compare("@R")!=0){ // eval normal dynamic variables
-      m_uservarexprs[m_uservalnames[i]].evalExpression(rds, sResult, dts, true);
-      m_uservariables[m_uservalnames[i]] = sResult;
-      varValues[m_uservalnames[i]] = sResult;
+  for (size_t i=0; i<m_uservarnames.size(); i++){ // make sure we calculate the dynamic and R variables in the order of input.
+    if (m_uservarnames[i].compare("@R")!=0){ // eval normal dynamic variables
+      m_uservarexprs[m_uservarnames[i]].evalExpression(rds, sResult, dts, true);
+      m_uservariables[m_uservarnames[i]] = sResult;
+      varValues[m_uservarnames[i]] = sResult;
     }else{ // eval fake sidework data
       if (iR < m_fakeRExprs.size()){
         m_fakeRExprs[iR].evalExpression(rds, sResult, dts, true);
@@ -2206,7 +2213,8 @@ int QuerierC::searchNextWild()
   thistime = curtime();
 #endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
-    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
+    if (m_readmode==READBUFF)
+      m_rawstr = m_rawstr.substr(pos);
     pos = 0;
     if(sLine.empty() && bEnded && m_bEof) {// read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
@@ -2301,7 +2309,8 @@ int QuerierC::searchNextDelm()
   thistime = curtime();
 #endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
-    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
+    if (m_readmode==READBUFF)
+      m_rawstr = m_rawstr.substr(pos);
     if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
@@ -2414,13 +2423,12 @@ int QuerierC::searchNextLine()
   thistime = curtime();
 #endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
-    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
+    if (m_readmode==READBUFF)
+      m_rawstr = m_rawstr.substr(pos);
     if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
     }
-    vector<string> matcheddata;
-    matcheddata.push_back(sLine);
 #ifdef __DEBUG__
   m_parsepatterntime += (curtime()-thistime);
   thistime = curtime();
@@ -2429,6 +2437,8 @@ int QuerierC::searchNextLine()
     //dumpVector(matcheddata);
     if (sLine.empty() && bEnded)
       continue;
+    vector<string> matcheddata;
+    matcheddata.push_back(sLine);
     m_line++;
     m_fileline++;
     if (m_nameline && m_line==1){ // use the first line as field names
@@ -2480,6 +2490,70 @@ int QuerierC::searchNextLine()
   return found;
 }
 
+int QuerierC::searchNextQuick()
+{
+#ifdef __DEBUG__
+  long int thistime = curtime();
+  long int searchstarttime = thistime;
+  long int rawanalyzestarttime;
+#endif // __DEBUG__
+  trace(DEBUG, "Quick searching '%s'\n", m_regexstr.c_str());
+  int found = 0;
+  size_t pos = 0, opos;
+  bool bEnded = false;
+  string sLine;
+  while (!bEnded && !m_rawstr.empty() && pos<m_rawstr.length()){
+#ifdef __DEBUG__
+  thistime = curtime();
+  rawanalyzestarttime = thistime;
+#endif // __DEBUG__
+    // Unlike regular matching, wildcard and delimiter only match lines.
+    opos = pos;
+    sLine;
+    if (m_readmode==READLINE)
+      sLine=m_rawstr;
+    else
+      readLine(m_rawstr, pos, sLine);
+#ifdef __DEBUG__
+  m_readrawlinetime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
+    bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
+    if (m_readmode==READBUFF)
+      m_rawstr = m_rawstr.substr(pos);
+    if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
+      sLine = m_rawstr;
+      m_rawstr = "";
+    }
+    pos = 0;
+    //dumpVector(matcheddata);
+    if (sLine.empty() && bEnded)
+      continue;
+    if (m_line==0){
+      if (m_nameline){ // use the first line as field names
+        m_fieldnames.push_back(sLine);
+        m_line++;
+        continue;
+      }
+    }else
+      m_fieldnames.push_back("@RAW");
+    m_line++;
+    if ((m_quickwildcard && like(sLine, m_regexstr)) || (m_quickregular && reglike(sLine, m_regexstr)) || sLine.find(m_regexstr)!=string::npos){
+      vector<string> matcheddata{"",sLine};
+      m_results.push_back(matcheddata);
+    }
+#ifdef __DEBUG__
+  m_parsepatterntime += (curtime()-thistime);
+  thistime = curtime();
+#endif // __DEBUG__
+  }
+  //trace(DEBUG, "(3)Found: %d in this searching\n", m_matchcount);
+#ifdef __DEBUG__
+  m_searchtime += (curtime()-searchstarttime);
+#endif // __DEBUG__
+  return found;
+}
+
 int QuerierC::searchNext()
 {
   if (searchStopped()){
@@ -2495,6 +2569,8 @@ int QuerierC::searchNext()
       return searchNextDelm();
     case LINESEARCH:
       return searchNextLine();
+    case QUICKSEARCH:
+      return searchNextQuick();
     default:
       return 0;
   }
@@ -2506,6 +2582,11 @@ void QuerierC::readyToGo()
   // initialize aggregation function expressions
   for (unordered_map< string,GroupProp >::iterator it=m_initAggProps.begin(); it!=m_initAggProps.end(); ++it)
     m_aggFuncExps.insert(pair<string,ExpressionC>(it->first,ExpressionC(it->first)));
+  if (m_searchMode == QUICKSEARCH){ // in quick mode, no select/filter/extrafilter/sort/group/user var/tree...
+    clearAllCommands();
+    m_selections.clear();
+    m_selections.push_back(ExpressionC("@RAW"));
+  }
 }
 
 int QuerierC::searchAll()
@@ -3885,22 +3966,25 @@ void QuerierC::clearDuplicate()
   }
 }
 
-void QuerierC::clear()
+void QuerierC::clearOutputfile()
 {
-  clearGroup();
-  clearAnalytic();
-  clearSort();
-  clearTree();
-  clearReport();
-  clearFilter();
-  clearDuplicate();
-  m_results.clear();
-  m_fieldnames.clear();
-  m_fieldInitNames.clear();
-  m_fieldtypes.clear();
-  m_trimmedFieldtypes.clear();
-  m_fieldntypes.clear();
-  m_uservalnames.clear();
+  for (unordered_map< string, ofstream* >::iterator it=m_outputfiles.begin();it!=m_outputfiles.end();it++){
+    if (it->second && it->second->is_open()){
+      it->second->close();
+      SafeDelete(it->second);
+    }
+  }
+  m_outputfiles.clear();
+  if (m_outputfileexp){
+    m_outputfileexp->clear();
+    SafeDelete(m_outputfileexp);
+  }
+  m_resultfiles.clear();
+}
+
+void QuerierC::clearUservars()
+{
+  m_uservarnames.clear();
   m_uservariables.clear();
   m_uservarinitval.clear();
   m_uservarexprs.clear();
@@ -3910,9 +3994,27 @@ void QuerierC::clear()
     SafeDelete(it->second.funcExpr);
   }
   m_userMacroExprs.clear();
+}
+
+void QuerierC::clearAllCommands()
+{
+  clearGroup();
+  clearAnalytic();
+  clearSort();
+  clearTree();
+  clearReport();
+  clearFilter();
+  clearDuplicate();
+  clearOutputfile();
+  clearUservars();
+  m_results.clear();
+  m_fieldnames.clear();
+  m_fieldInitNames.clear();
+  m_fieldtypes.clear();
+  m_trimmedFieldtypes.clear();
+  m_fieldntypes.clear();
   //m_userMacroParas.clear();
   m_selnames.clear();
-  m_selections.clear();
   m_sideSelections.clear();
   m_sideAlias.clear();
   m_sideFilters.clear();
@@ -3921,28 +4023,25 @@ void QuerierC::clear()
   m_trimedSelctions.clear();
   m_trimedInitSels.clear();
   m_trimmedAlias.clear();
-  for (unordered_map< string, ofstream* >::iterator it=m_outputfiles.begin();it!=m_outputfiles.end();it++){
-    if (it->second && it->second->is_open()){
-      it->second->close();
-      SafeDelete(it->second);
-    }
-  }
-  m_outputfiles.clear();
-  if (m_outputfileexp)
-    SafeDelete(m_outputfileexp);
-  m_resultfiles.clear();
   m_colToRows.clear();
   m_colToRowNames.clear();
   m_delimSet.clear();
+}
+
+void QuerierC::clear()
+{
+  clearAllCommands();
+  m_selections.clear();
   m_searchMode = REGSEARCH;
   m_readmode = READBUFF;
   m_uservarstr = "";
   m_quoters = "";
   m_nameline = false;
   m_bEof = false;
+  m_quickwildcard = false;
+  m_quickregular = false;
   m_delmrepeatable = false;
   m_delmkeepspace = false;
-  m_delmrepeatable = false;
   m_eliminateDupField = false;
   m_delmMulitChar = false;
   m_bNamePrinted = false;

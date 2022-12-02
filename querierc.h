@@ -135,6 +135,8 @@ class QuerierC
     short int m_searchMode;
     short int m_readmode;
     bool m_bEof;
+    bool m_quickwildcard; // Do wildcard searching in quick search mode
+    bool m_quickregular; // Do regex searching in quick search mode
     bool m_delmrepeatable;
     bool m_delmkeepspace; // whether to trim the space for delimeter search
     bool m_delmMulitChar; // whether to treat each character instead of a whole string as delimiters.
@@ -187,6 +189,7 @@ class QuerierC
     //unordered_map< string, unordered_map<string,string> > m_matchedSideDatarow; // the matched side work data set rows
 
     //vector<namesaving_smatch> m_results;
+    vector< vector<string> > m_results; // Result set. First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     FilterC* m_filter;
     FilterC* m_extrafilter; // an extra filter to filter the result set.
     vector<ExpressionC> m_trimedInitSels; // Initial trimmed selections in the extra filter, in case FOREACH involved, and the field size variable.
@@ -199,7 +202,7 @@ class QuerierC
     DataTypeStruct m_rawDatatype;  // @raw data type for special cases, e.g. each line contains only one data
     unordered_map<string, DataTypeStruct> m_fieldntypes; // field datatype by names, set by setFieldDatatype
     string m_uservarstr;
-    vector<string> m_uservalnames; // the names of user defined variables, we use this vector to keep the order of calculation.
+    vector<string> m_uservarnames; // the names of user defined variables, we use this vector to keep the order of calculation.
     unordered_map<string, string> m_uservariables; // User defined variables, map to initial/calculated values
     unordered_map<string, string> m_uservarinitval; // User defined variables initial values
     unordered_map<string, ExpressionC> m_uservarexprs; // User defined dynamic variables expressions; we cannot unordered_map, as we need to calculate the dynamic variables according to their input sequnence!
@@ -214,7 +217,6 @@ class QuerierC
     int m_limitbottom;  // output limit start
     int m_limittop;     // output limit top, -1 means no limit
     vector< vector<string> > m_sortKeys;  // extra sorting keys. The sorting keys that are not a parts of selections, it could be aggregation functions
-    vector< vector<string> > m_results; // Result set. First element is the matched raw string, followed by each filed value, then line number, matched row sequence number
     vector<ExpressionC> m_treeProps; // Key Properties (fields) of hierarchy structure (tree)
     vector<ExpressionC> m_treeParentProps; // Parent Key Properties (fields) of hierarchy structure (tree)
     vector< vector<string> > m_treeKeys;  // Keys of hierarchy structure (tree)
@@ -271,6 +273,7 @@ class QuerierC
     int searchNextWild();
     int searchNextDelm();
     int searchNextLine();
+    int searchNextQuick();
     void genReport(const vector<string> & datas);
     void SetTree(const vector< vector<string> > & tmpResults, TreeNode* tNode, const short int & level, int & nodeid, unordered_map< string,vector<ExpressionC> > & treeFuncs);
     void releaseTree(TreeNode* tNode);
@@ -281,6 +284,9 @@ class QuerierC
     void clearReport();
     void clearFilter();
     void clearDuplicate();
+    void clearOutputfile();
+    void clearUservars();
+    void clearAllCommands();
 
 #ifdef __DEBUG__
     long int m_querystartat;

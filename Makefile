@@ -19,7 +19,7 @@ querierc.o: querierc.cpp querierc.h filter.o expression.o
 rquery.o: rquery.cpp commfuncs.h querierc.h parser.h filter.h
 	g++ -std=c++11 -c rquery.cpp
 rquery: rquery.o commfuncs.o querierc.o parser.o expression.o filter.o
-	g++ -std=c++11 -I /usr/lib/boost/include -L /usr/lib/boost/lib rquery.o commfuncs.o function.o expression.o filter.o parser.o querierc.o -o rq
+	g++ -std=c++11 -lboost_regex -I /usr/lib/boost/include -L /usr/lib/boost/lib rquery.o commfuncs.o function.o expression.o filter.o parser.o querierc.o -o rq
 install:
 	install -m 755 rq /usr/local/bin/
 check: all

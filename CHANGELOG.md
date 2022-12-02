@@ -1,5 +1,8 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.230] 2022-12-02
+   New feature: New parsing mode: q/<pattern>/[r|w] quotes to do quick pattern match. <br/>
+   Enhancement: Use boost regex to replace boost/xpressive regex and std regex, improved performance. <br/>
    # [1.230] 2022-12-01
    Enhancement: A quickersplit for simple delimiter parsing. <br/>
    # [1.223] 2022-12-01

@@ -39,18 +39,18 @@ using namespace std;
 #define AND 1
 #define OR 2
 
-#define EQ 1
-#define LT 2
-#define ST 3
-#define NEQ 4
-#define LE 5
-#define SE 6
-#define LIKE 7
-#define REGLIKE 8
-#define NOLIKE 9
-#define NOREGLIKE 10
-#define IN 11
-#define NOIN 12
+#define OPEQ 1
+#define OPLT 2
+#define OPST 3
+#define OPNEQ 4
+#define OPLE 5
+#define OPSE 6
+#define OPLIKE 7
+#define OPREGLIKE 8
+#define OPNOLIKE 9
+#define OPNOREGLIKE 10
+#define OPIN 11
+#define OPNOIN 12
 
 #define LEFT 1
 #define RIGHT 2
@@ -285,6 +285,7 @@ using namespace std;
 #define WILDSEARCH 2
 #define DELMSEARCH 3
 #define LINESEARCH 4
+#define QUICKSEARCH 5
 
 #define STANDARD 1
 #define OVERWRITE 2

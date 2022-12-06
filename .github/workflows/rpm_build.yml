@@ -72,13 +72,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install gcc g++ make libicu-dev libboost-all-dev git libmpc-dev nasm gcc-multilib
-        dpkg --listfiles libboost-regex-dev
-        ldd /usr/lib/x86_64-linux-gnu/libboost_regex.so
-        cuu=$(ldd /usr/lib/x86_64-linux-gnu/libboost_regex.so|grep libicuuc|awk '{print $3}')
-        if [[ "$cuu" = "" ]]; then
-          cuu=$(ldd /usr/lib64/libboost_regex.so|grep libicuuc|awk '{print $3}')
-        fi
-        dpkg --search $cuu
+        cuuver=$(ldd /usr/lib/x86_64-linux-gnu/libboost_regex.so|grep libicuuc|awk '{print $3}'|awk -F '.' '{print $3}')
+        sudo apt-get -y install libicu${cuuver}
         which g++
         ls /usr/include/boost/regex
         g++ --version

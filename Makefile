@@ -5,7 +5,7 @@
 
 all: rquery
 commfuncs.o: commfuncs.cpp commfuncs.h
-	g++ -std=c++11 -lboost_regex -c commfuncs.cpp
+	g++ -std=c++11 -c commfuncs.cpp
 function.o: function.cpp function.h
 	g++ -std=c++11 -c function.cpp
 expression.o: expression.cpp expression.h function.o

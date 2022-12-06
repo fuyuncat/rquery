@@ -262,6 +262,8 @@ bool FunctionC::analyzeExpStr()
     case GETWORD:
     case GETPART:
     case GETPARTS:
+    case REGGETPART:
+    case REGGETPARTS:
     case RANDSTR:
     case TRIMLEFT:
     case TRIMRIGHT:
@@ -353,6 +355,7 @@ bool FunctionC::analyzeExpStr()
     case ISNORMAL:
     case ISSYMBLINK:
     case ISEXECUTABLE:
+    case REGCOUNTPART:
       m_datatype.datatype = LONG;
       break;
     case ROUND:
@@ -398,6 +401,8 @@ bool FunctionC::analyzeExpStr()
     case TANH:
     case TGAMMA:
     case PI:
+    case REGCALPARTS:
+    case CALPARTS:
       m_datatype.datatype = DOUBLE;
       break;
     case NOW:
@@ -950,10 +955,11 @@ bool FunctionC::runGetpart(RuntimeDataStruct & rds, string & sResult, DataTypeSt
 bool FunctionC::runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
   if (m_params.size() < 3){
-    trace(ERROR, "getparts(str,delimiter,startidx[,endidx][,quoters]) function accepts only three or four or five parameters(%d).\n",m_params.size());
+    trace(ERROR, "getparts(str,delimiter,startidx[,endidx][,step][,quoters]) function accepts three to six parameters(%d).\n",m_params.size());
     return false;
   }
-  string sRaw, sDelm, sStart, sEnd, sQuoters; 
+  string sRaw, sDelm, sStart, sEnd, sStep, sQuoters;
+  int iStep=1;
   if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sDelm, dts, true) && m_params[2].evalExpression(rds, sStart, dts, true) && isInt(sStart)){
     int iStart = atoi(sStart.c_str());
     if (iStart==0){
@@ -968,7 +974,11 @@ bool FunctionC::runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
         trace(WARNING, "%s is not a valid index number in getparts()!\n", m_params[0].getEntireExpstr().c_str());
     }
     if (m_params.size()>=5)
-      m_params[4].evalExpression(rds, sQuoters, dts, true);
+      m_params[4].evalExpression(rds, sStep, dts, true);
+    if (isInt(sStep))
+      iStep = max(1,atoi(sStep.c_str()));
+    if (m_params.size()>=6)
+      m_params[5].evalExpression(rds, sQuoters, dts, true);
     vector<string> vWords;
     split(vWords,sRaw,sDelm,sQuoters,'\0',{},true,false,false);
     dts.datatype = STRING;
@@ -987,11 +997,106 @@ bool FunctionC::runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
       iEnd = vWords.size()-1;
     }
     sResult = "";
-    for (size_t i=iStart; iStart<=iEnd?i<=iEnd:i>=iEnd; iStart<=iEnd?i++:i--)
+    for (size_t i=iStart; iStart<=iEnd?i<=iEnd:(int)i>=iEnd; iStart<=iEnd?i+=iStep:i-=iStep)
       sResult+=vWords[i]+(i!=iEnd?sDelm:"");
     return true;
   }else{
     trace(ERROR, "(2)Failed to run getparts(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runCalparts(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 4){
+    trace(ERROR, "calparts(str,delimiter,operation,startidx[,endidx][,step][,quoters]) function accepts four to seven parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sDelm, sOp, sStart, sEnd, sStep, sQuoters;
+  int iStep=1;
+  if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sDelm, dts, true) && m_params[2].evalExpression(rds, sOp, dts, true) && m_params[3].evalExpression(rds, sStart, dts, true) && isInt(sStart)){
+    int iStart = atoi(sStart.c_str());
+    if (iStart==0){
+      trace(ERROR, "%s cannot be zero a negative number in calparts()!\n", sStart.c_str());
+      return false;
+    }
+    int iEnd=-1;
+    if (m_params.size()>=5){
+      if (m_params[4].evalExpression(rds, sEnd, dts, true) && isInt(sEnd)){
+        iEnd = atoi(sEnd.c_str());
+      }else
+        trace(WARNING, "%s is not a valid index number in calparts()!\n", m_params[0].getEntireExpstr().c_str());
+    }
+    if (m_params.size()>=6)
+      m_params[5].evalExpression(rds, sStep, dts, true);
+    if (isInt(sStep))
+      iStep = max(1,atoi(sStep.c_str()));
+    if (m_params.size()>=7)
+      m_params[6].evalExpression(rds, sQuoters, dts, true);
+    vector<string> vWords;
+    split(vWords,sRaw,sDelm,sQuoters,'\0',{},true,false,false);
+    dts.datatype = DOUBLE;
+    if (vWords.size() == 0){
+      trace(ERROR, "'%s' cannot be splited by '%s' in calparts()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+      return false;
+    }
+    iStart = iStart>0?iStart-1:iStart+vWords.size();
+    if (iStart>=vWords.size()){
+      trace(WARNING, "%d is out of range of part number in calparts()!\n", iStart);
+      iStart = vWords.size()-1;
+    }
+    iEnd = iEnd>0?iEnd-1:iEnd+vWords.size();
+    if (iEnd>=vWords.size()){
+      trace(WARNING, "%d is out of range of part number in calparts()!\n", iEnd);
+      iEnd = vWords.size()-1;
+    }
+    short int iOp = encodeFunction(upper_copy(trim_copy(sOp)));
+    std::set<string> tmpSet;
+    double dVal=0, dSum=0;
+    sResult = "";
+    for (size_t i=iStart; iStart<=iEnd?i<=iEnd:(int)i>=iEnd; iStart<=iEnd?i+=iStep:i-=iStep){
+      if (!isDouble(vWords[i])){
+        trace(WARNING, "%s is not a number to be calculated in calparts()!\n", vWords[i].c_str());
+        continue;
+      }
+      double dTmp = atof(trim_copy(vWords[i]).c_str());
+      switch (iOp){
+        case MAX:
+          dVal = i==0?dTmp:max(dTmp,dVal);
+          break;
+        case MIN:
+          dVal = i==0?dTmp:min(dTmp,dVal);
+          break;
+        case UNIQUECOUNT:
+          tmpSet.insert(trim_copy(vWords[i]));
+          break;
+        default:
+          dSum+=dTmp;
+          break;
+      }
+    }
+    switch (iOp){
+      case MAX:
+      case MIN:
+        sResult = doubleToStr(dVal);
+        break;
+      case AVERAGE:
+        sResult = doubleToStr(dSum/(double)vWords.size());
+        break;
+      case UNIQUECOUNT:
+        sResult = intToStr(tmpSet.size());
+        break;
+      case COUNT:
+        sResult = intToStr(vWords.size());
+        break;
+      default:
+        sResult = doubleToStr(dSum);
+        break;
+    }
+    dts.datatype = DOUBLE;
+    return true;
+  }else{
+    trace(ERROR, "(2)Failed to run calparts(%s,%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str(), m_params[3].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1017,6 +1122,213 @@ bool FunctionC::runCountpart(RuntimeDataStruct & rds, string & sResult, DataType
     return true;
   }else{
     trace(ERROR, "(2)Failed to run countpart(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runReggetpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 3){
+    trace(ERROR, "reggetpart(str,pattern,part_index) function accepts only three parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sPattern, sPos; 
+  if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sPattern, dts, true) && m_params[2].evalExpression(rds, sPos, dts, true) && isInt(sPos)){
+    int iPos = atoi(sPos.c_str());
+    if (iPos==0){
+      trace(ERROR, "%s cannot be zero a negative number in reggetpart()!\n", sPos.c_str());
+      return false;
+    }
+    vector<string> vWords;
+    getAllTokens(vWords, sRaw, sPattern);
+    dts.datatype = STRING;
+    if (vWords.size() == 0){
+      trace(ERROR, "'%s' cannot be splited by '%s' in reggetpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+      return false;
+    }
+    if (iPos>0 && iPos<=vWords.size()){
+      sResult = vWords[iPos-1];
+      return true;
+    }else if (iPos<0 && abs(iPos)<=vWords.size()){
+      sResult = vWords[iPos+vWords.size()];
+      return true;
+    }else{
+      sResult = "";
+      trace(WARNING, "%s is out of range of the part list in reggetpart()!\n", m_params[2].getEntireExpstr().c_str());
+      return false;
+    }
+  }else{
+    trace(ERROR, "(2)Failed to run reggetpart(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runReggetparts(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 3){
+    trace(ERROR, "reggetparts(str,pattern,startidx[,endidx][,step][,delimiter]) function accepts three to six parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sPattern, sStart, sEnd, sStep, sDelm=",";
+  int iStep=1;
+  if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sPattern, dts, true) && m_params[2].evalExpression(rds, sStart, dts, true) && isInt(sStart)){
+    int iStart = atoi(sStart.c_str());
+    if (iStart==0){
+      trace(ERROR, "%s cannot be zero a negative number in reggetparts()!\n", sStart.c_str());
+      return false;
+    }
+    int iEnd=-1;
+    if (m_params.size()>=4){
+      if (m_params[3].evalExpression(rds, sEnd, dts, true) && isInt(sEnd)){
+        iEnd = atoi(sEnd.c_str());
+      }else
+        trace(WARNING, "%s is not a valid index number in reggetparts()!\n", m_params[0].getEntireExpstr().c_str());
+    }
+    if (m_params.size()>=5)
+      m_params[4].evalExpression(rds, sStep, dts, true);
+    if (isInt(sStep))
+      iStep = max(1,atoi(sStep.c_str()));
+    if (m_params.size()>=6)
+      m_params[5].evalExpression(rds, sDelm, dts, true);
+    vector<string> vWords;
+    getAllTokens(vWords, sRaw, sPattern);
+    dts.datatype = STRING;
+    if (vWords.size() == 0){
+      trace(ERROR, "'%s' cannot be splited by '%s' in reggetparts()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+      return false;
+    }
+    iStart = iStart>0?iStart-1:iStart+vWords.size();
+    if (iStart>=vWords.size()){
+      trace(WARNING, "%d is out of range of part number in reggetparts()!\n", iStart);
+      iStart = vWords.size()-1;
+    }
+    iEnd = iEnd>0?iEnd-1:iEnd+vWords.size();
+    if (iEnd>=vWords.size()){
+      trace(WARNING, "%d is out of range of part number in reggetparts()!\n", iEnd);
+      iEnd = vWords.size()-1;
+    }
+    sResult = "";
+    for (size_t i=iStart; iStart<=iEnd?i<=iEnd:(int)i>=iEnd; iStart<=iEnd?i+=iStep:i-=iStep)
+      sResult+=vWords[i]+(i!=iEnd?sDelm:"");
+    return true;
+  }else{
+    trace(ERROR, "(2)Failed to run reggetparts(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runRegcalparts(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 4){
+    trace(ERROR, "regcalparts(str,pattern,operation,startidx[,endidx][,step]) function accepts four to six parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sPattern, sOp, sStart, sEnd, sStep;
+  int iStep=1;
+  if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sPattern, dts, true) && m_params[2].evalExpression(rds, sOp, dts, true) && m_params[3].evalExpression(rds, sStart, dts, true) && isInt(sStart)){
+    int iStart = atoi(sStart.c_str());
+    if (iStart==0){
+      trace(ERROR, "%s cannot be zero a negative number in regcalparts()!\n", sStart.c_str());
+      return false;
+    }
+    int iEnd=-1;
+    if (m_params.size()>=5){
+      if (m_params[4].evalExpression(rds, sEnd, dts, true) && isInt(sEnd)){
+        iEnd = atoi(sEnd.c_str());
+      }else
+        trace(WARNING, "%s is not a valid index number in regcalparts()!\n", m_params[0].getEntireExpstr().c_str());
+    }
+    if (m_params.size()>=6)
+      m_params[5].evalExpression(rds, sStep, dts, true);
+    if (isInt(sStep))
+      iStep = max(1,atoi(sStep.c_str()));
+    vector<string> vWords;
+    getAllTokens(vWords, sRaw, sPattern);
+    dts.datatype = DOUBLE;
+    if (vWords.size() == 0){
+      trace(ERROR, "'%s' cannot be splited by '%s' in regcalparts()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+      return false;
+    }
+    iStart = iStart>0?iStart-1:iStart+vWords.size();
+    if (iStart>=vWords.size()){
+      trace(WARNING, "%d is out of range of part number in regcalparts()!\n", iStart);
+      iStart = vWords.size()-1;
+    }
+    iEnd = iEnd>0?iEnd-1:iEnd+vWords.size();
+    if (iEnd>=vWords.size()){
+      trace(WARNING, "%d is out of range of part number in regcalparts()!\n", iEnd);
+      iEnd = vWords.size()-1;
+    }
+    short int iOp = encodeFunction(upper_copy(trim_copy(sOp)));
+    std::set<string> tmpSet;
+    double dVal=0, dSum=0;
+    sResult = "";
+    for (size_t i=iStart; iStart<=iEnd?i<=iEnd:(int)i>=iEnd; iStart<=iEnd?i+=iStep:i-=iStep){
+      if (!isDouble(vWords[i])){
+        trace(WARNING, "%s is not a number to be calculated in regcalparts()!\n", vWords[i].c_str());
+        continue;
+      }
+      double dTmp = atof(trim_copy(vWords[i]).c_str());
+      switch (iOp){
+        case MAX:
+          dVal = i==0?dTmp:max(dTmp,dVal);
+          break;
+        case MIN:
+          dVal = i==0?dTmp:min(dTmp,dVal);
+          break;
+        case UNIQUECOUNT:
+          tmpSet.insert(trim_copy(vWords[i]));
+          break;
+        default:
+          dSum+=dTmp;
+          break;
+      }
+    }
+    switch (iOp){
+      case MAX:
+      case MIN:
+        sResult = doubleToStr(dVal);
+        break;
+      case AVERAGE:
+        sResult = doubleToStr(dSum/(double)vWords.size());
+        break;
+      case UNIQUECOUNT:
+        sResult = intToStr(tmpSet.size());
+        break;
+      case COUNT:
+        sResult = intToStr(vWords.size());
+        break;
+      default:
+        sResult = doubleToStr(dSum);
+        break;
+    }
+    dts.datatype = DOUBLE;
+    return true;
+  }else{
+    trace(ERROR, "(2)Failed to run regcalparts(%s,%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str(), m_params[3].getEntireExpstr().c_str());
+    return false;
+  }
+}
+
+bool FunctionC::runRegcountpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
+{
+  if (m_params.size() < 2){
+    trace(ERROR, "regcountpart(str,pattern) function accepts only two parameters(%d).\n",m_params.size());
+    return false;
+  }
+  string sRaw, sPattern; 
+  if (m_params[0].evalExpression(rds, sRaw, dts, true) && m_params[1].evalExpression(rds, sPattern, dts, true)){
+    vector<string> vWords;
+    getAllTokens(vWords, sRaw, sPattern);
+    if (vWords.size() == 0){
+      trace(ERROR, "'%s' cannot be splited by '%s' in regcountpart()!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
+      return false;
+    }
+    dts.datatype = LONG;
+    sResult = intToStr(vWords.size());
+    return true;
+  }else{
+    trace(ERROR, "(2)Failed to run regcountpart(%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str());
     return false;
   }
 }
@@ -1448,7 +1760,7 @@ bool FunctionC::runMyips(RuntimeDataStruct & rds, string & sResult, DataTypeStru
   dts.datatype = STRING;  
   sResult = "";
   unordered_map< string,string >::iterator it=IPs.begin();
-  for (size_t i=iStartid; (iStartid<=iEndid?i<=iEndid:i>=iEndid) && it!=IPs.end(); iStartid<=iEndid?i++:i--){
+  for (size_t i=iStartid; (iStartid<=iEndid?i<=iEndid:(int)i>=iEndid) && it!=IPs.end(); iStartid<=iEndid?i++:i--){
     sResult+=it->second+(i!=iEndid?sDelm:"");
     it++;
   }
@@ -2124,7 +2436,7 @@ bool FunctionC::runIsinf(RuntimeDataStruct & rds, string & sResult, DataTypeStru
   if (m_params[0].evalExpression(rds, sX, dts, true) && isDouble(sX)){
     dts.datatype = LONG;
     double x = atof(sX.c_str());
-    sResult = intToStr(isinf(x));
+    sResult = intToStr(std::isinf(x));
     return true;
   }else{
     trace(ERROR, "Failed to run isinf(%s)\n", m_params[0].getEntireExpstr().c_str());
@@ -3739,7 +4051,7 @@ bool FunctionC::runRmembers(RuntimeDataStruct & rds, string & sResult, DataTypeS
     m_params[4].evalExpression(rds, sDelm, dts, true);
   dts.datatype = STRING;  
   sResult = "";
-  for (size_t i=iStartid; iStartid<=iEndid?i<=iEndid:i>=iEndid; iStartid<=iEndid?i++:i--)
+  for (size_t i=iStartid; iStartid<=iEndid?i<=iEndid:(int)i>=iEndid; iStartid<=iEndid?i++:i--)
     sResult+=(*rds.sideDatasets)[iS1][i][s2]+(i!=iEndid?sDelm:"");
   return true;
 }
@@ -3980,6 +4292,21 @@ bool FunctionC::runFunction(RuntimeDataStruct & rds, string & sResult, DataTypeS
       break;
     case GETPARTS:
       getResult = runGetparts(rds, sResult, dts);
+      break;
+    case CALPARTS:
+      getResult = runCalparts(rds, sResult, dts);
+      break;
+    case REGGETPART:
+      getResult = runReggetpart(rds, sResult, dts);
+      break;
+    case REGGETPARTS:
+      getResult = runReggetparts(rds, sResult, dts);
+      break;
+    case REGCOUNTPART:
+      getResult = runRegcountpart(rds, sResult, dts);
+      break;
+    case REGCALPARTS:
+      getResult = runRegcalparts(rds, sResult, dts);
       break;
     case RANDSTR:
       getResult = runRandstr(rds, sResult, dts);

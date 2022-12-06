@@ -3069,6 +3069,16 @@ short int encodeFunction(const string & str)
     return GETPART;
   else if(sUpper.compare("GETPARTS")==0)
     return GETPARTS;
+  else if(sUpper.compare("CALPARTS")==0)
+    return CALPARTS;
+  else if(sUpper.compare("REGGETPART")==0)
+    return REGGETPART;
+  else if(sUpper.compare("REGGETPARTS")==0)
+    return REGGETPARTS;
+  else if(sUpper.compare("REGCOUNTPART")==0)
+    return REGCOUNTPART;
+  else if(sUpper.compare("REGCALPARTS")==0)
+    return REGCALPARTS;
   else if(sUpper.compare("COUNTSTR")==0)
     return COUNTSTR;
   else if(sUpper.compare("FIELDNAME")==0)
@@ -3984,9 +3994,9 @@ int matchQuoters(const string & listStr, const size_t & offset, const string & q
 }
 
 //get the first matched regelar token from a string
-string getFirstToken(const string & str, const string & token){
+string getFirstToken(const string & str, const string & pattern){
   try{
-    boost::regex regexp(token);
+    boost::regex regexp(pattern);
     boost::smatch matches;
     if (boost::regex_search(str, matches, regexp))
       return matches[0];
@@ -3997,13 +4007,30 @@ string getFirstToken(const string & str, const string & token){
   return "";
 }
 
-//get all matched regelar token from a string
-void getAllTokens(vector < vector <string> > & findings, const string & str, const string & token)
+//get all matched regelar pattern from a string
+void getAllTokens(vector <string> & findings, const string & str, const string & pattern)
 {
   findings.clear();
   string::const_iterator searchStart( str.begin() );
   try{
-    boost::regex regexp(token);
+    boost::regex regexp(pattern);
+    boost::smatch matches;
+    while ( boost::regex_search( searchStart, str.end(), matches, regexp ) ){
+      findings.push_back(matches[0]);  
+      searchStart = matches.suffix().first;
+    }
+  }catch (exception& e) {
+    trace(ERROR, "Regular search exception: %s\n", e.what());
+  }
+}
+
+//get all matched regelar pattern from a string
+void getAllTokens(vector < vector <string> > & findings, const string & str, const string & pattern)
+{
+  findings.clear();
+  string::const_iterator searchStart( str.begin() );
+  try{
+    boost::regex regexp(pattern);
     boost::smatch matches;
     while ( boost::regex_search( searchStart, str.end(), matches, regexp ) ){
       vector<string> vmatches;
@@ -4271,10 +4298,10 @@ bool rmFile(const string & filename)
   return remove(filename.c_str())==0;
 }
 
-// check if matched regelar token
-bool matchToken(const string & str, const string & token)
+// check if matched regelar pattern
+bool matchToken(const string & str, const string & pattern)
 {
-  return !getFirstToken(str, token).empty();
+  return !getFirstToken(str, pattern).empty();
 }
 
 void dumpVector(const vector<string> & v)

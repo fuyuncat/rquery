@@ -119,7 +119,7 @@ vector<string> listFilesInFolder(string foldername)
   return filelist;
 }
 
-void processFile(string filename, QuerierC & rq, size_t& total, short int fileMode=READBUFF, int iSkip=0)
+void processFile(string filename, QuerierC & rq, size_t& total, short int fileMode=READLINE, int iSkip=0)
 {
   trace(DEBUG,"Processing file: %s \n", filename.c_str());
   long int thisTime,lastTime = curtime(), readStartTime, processStartTime, readfiletime=0, processfiletime=0;
@@ -149,6 +149,8 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
         rq.setReadmode(READLINE);
         readStartTime=curtime();
         while (std::getline(ifile, strline)){
+          readfiletime += (curtime()-readStartTime);
+          processStartTime = curtime();
           total += (strline.length()+1);
           if (readLines<iSkip){
             readLines++;
@@ -157,8 +159,6 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
           if (rq.searchStopped())
             break;
           rq.appendrawstr(strline);
-          readfiletime += (curtime()-readStartTime);
-          processStartTime = curtime();
           rq.searchAll();
           if (gv.g_printheader && gv.g_ouputformat==TEXT)
             rq.printFieldNames();
@@ -467,7 +467,7 @@ void processPrompt(QuerierC & rq, size_t & total)
   printResult(rq, total);
 }
 
-void runQuery(vector<string> vContent, QuerierC & rq, short int fileMode=READBUFF, int iSkip=0)
+void runQuery(vector<string> vContent, QuerierC & rq, short int fileMode=READLINE, int iSkip=0)
 {
   size_t total = 0;
   rq.readyToGo();
@@ -553,7 +553,7 @@ int main(int argc, char *argv[])
   
   gv.setVars(16384, FATAL, false);
   gv.g_consolemode = false;
-  short int fileMode = READBUFF;
+  short int fileMode = READLINE;
   int iSkip = 0;
   string sQuery = "";
   vector<string> vContent;
@@ -662,7 +662,7 @@ int main(int argc, char *argv[])
         trace(FATAL,"You need to provide a value for the parameter %s.\n", argv[i]);
         exitProgram(1);
       }
-      fileMode = ((lower_copy(string(argv[i+1])).compare("line")!=0 && lower_copy(string(argv[i+1])).compare("l")!=0)?READBUFF:READLINE);
+      fileMode = ((lower_copy(string(argv[i+1])).compare("buffer")!=0 && lower_copy(string(argv[i+1])).compare("b")!=0)?READLINE:READBUFF);
       i++;
     }else if (lower_copy(string(argv[i])).compare("-o")==0 || lower_copy(string(argv[i])).compare("--outputformat")==0){
       if (i>=argc-1 || argv[i+1][0] == '-'){
@@ -864,8 +864,8 @@ int main(int argc, char *argv[])
         cout << "\nrquery >";
       }else if (lower_copy(trim_copy(lineInput)).find("filemode ")==0){
         string strParam = trim_copy(lineInput).substr(string("filemode ").length());
-        if (lower_copy(strParam).compare("line")!=0)
-          fileMode=READBUFF;
+        if (lower_copy(strParam).compare("buffer")!=0)
+          fileMode=READLINE;
         cout << "File read mode is set to ";
         cout << (fileMode==READBUFF?"buffer.\n":"line.\n");
         cout << "rquery >";
@@ -876,7 +876,6 @@ int main(int argc, char *argv[])
         }else{
           iSkip = atoi(strParam.c_str());
           cout << strParam.c_str();
-          cout << (fileMode==READBUFF?" bytes":" lines");
           cout << " will be skipped.\n";
         }
         cout << "rquery >";

@@ -24,6 +24,7 @@
 #include <map>
 #include <unordered_set>
 #include <unordered_map>
+#include <boost/unordered_map.hpp>
 #include <ctime>
 #include <fstream>
 
@@ -248,6 +249,11 @@ using namespace std;
 #define ISSYMBLINK 146
 #define GETSYMBLINK 147
 #define DUPLICATE 148
+#define CALPARTS 149
+#define REGGETPART 150
+#define REGGETPARTS 151
+#define REGCOUNTPART 152
+#define REGCALPARTS 153
 #define SUM 201
 #define COUNT 202
 #define UNIQUECOUNT 203
@@ -375,7 +381,7 @@ struct hash_container
   {
     std::size_t hash = V.size();
     for (auto i = V.begin(); i != V.end(); ++i)
-      hash_combine(hash, *i);
+      boost::hash_combine(hash, *i);
     return hash;
   }
 
@@ -478,18 +484,19 @@ size_t findNthCharacter(const string & str, const std::set<char> & lookfor, cons
 size_t findFirstCharacter(const string & str, const std::set<char> & lookfor, const size_t & pos=0, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}); // find the first position of the any character in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 size_t findNthSub(const string & str, const string & lookfor, const size_t & pos=0, const int & seq=1, const bool & forward=true, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & casesensitive=true); // find the Nth(seq) position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
 size_t findFirstSub(const string & str, const string & lookfor, const size_t & pos=0, const string & quoters = "''()", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}, const bool & casesensitive=true); // find the first position of a substring in a given string, return -1 if not found.  The chars with even sequence number in quoters are left quoters, odd sequence number chars are right quoters. No nested quoting
-bool readLine(const string & str, size_t & pos, string & sline, const char & delim='\n'); // read a line
 void matchWildcard(vector<string> & matches, const string & str, const string & wildStr, const string & quoters = "\"\"", const char & escape = '\\', const std::set<char> & nestedQuoters={'(',')'}); // match wildcard to transfer a string to a vector
 string readWordTillStop(const string & str, size_t & pos, const char & stopper='*', const char & escape = '\\'); // read the first word until reaches stopper
 string concatArray(const vector<string> & array, const string & delim = ""); // concatenate an array to string
 void eliminateDups(vector<string> & array); // eliminate duplicates
+bool readLine(const string & str, size_t & pos, string & sline, const char & delim='\n'); // read a line
 
 int startsWithWords(const string & str, const vector<string> & words, const int & offset); // detect if string start with special words
 int startsWithWords(const string & str, const vector<string> & words); // detect if string start with special words
 string removeSpace(const string & originalStr, const string & keepPattern); //remove space
-string getFirstToken(const string & str, const string & token); //get the first matched regelar token from a string
-void getAllTokens(vector < vector <string> > & findings, const string & str, const string & token); //get all matched regelar token from a string
-bool matchToken(const string & str, const string & token); // check if matched regelar token
+string getFirstToken(const string & str, const string & pattern); //get the first matched regelar pattern from a string
+void getAllTokens(vector < vector <string> > & findings, const string & str, const string & pattern); //get all matched regelar pattern from a string
+void getAllTokens(vector <string> & findings, const string & str, const string & pattern);
+bool matchToken(const string & str, const string & pattern); // check if matched regelar pattern
 
 string trim_pair(const string & str, const string & pair);
 string trim_left(const string & str, const char & c = ' ', const bool & repeat=false);

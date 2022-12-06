@@ -89,7 +89,7 @@ void QuerierC::init()
   m_rawstr = "";
   m_searchflags = regex_constants::match_default;
   m_searchMode = REGSEARCH;
-  m_readmode = READBUFF;
+  m_readmode = READLINE;
   m_bEof = false;
   m_quickwildcard = false;
   m_quickregular = false;
@@ -205,6 +205,7 @@ void QuerierC::setregexp(const string & regexstr)
   }else if ((patternStr[0] == 'q' || patternStr[0] == 'Q')&& patternStr[1] == '/'){
     m_searchMode = QUICKSEARCH;
     m_regexstr = patternStr.substr(2,patternStr.length()-3);
+    replacestr(m_regexstr,{"\\\\","\\t","\\/","\\v","\\|"},{"\\","\t","/","\v","|"});
   }else if ((patternStr[0] == 'w' || patternStr[0] == 'W')&& patternStr[1] == '/'){
     m_searchMode = WILDSEARCH;
     vector<string> vSearchPattern;
@@ -1746,10 +1747,8 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
     return false;
   }
   // add @line @row @fileline
-  //rowValue.push_back(intToStr(m_line));
-  //rowValue.push_back(intToStr(m_matchcount+1));
-  //rowValue.push_back(intToStr(m_fileline));
   vector<string> fieldValues(rowValue.begin()+1,rowValue.end());
+  //unordered_map<string, string> varValues;
   unordered_map<string, string> varValues{ 
     {"@RAW",rowValue[0]},
     {"@FILE",m_filename},
@@ -1757,9 +1756,6 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
     {"@LINE",intToStr(m_line)},
     {"@ROW",intToStr(m_matchcount+1)},
     {"@FILELINE",intToStr(m_fileline)},
-    //{"@LINE",rowValue[rowValue.size()-3]},
-    //{"@ROW",rowValue[rowValue.size()-2]},
-    //{"@FILELINE",rowValue[rowValue.size()-1]},
     {"@%",intToStr(fieldValues.size())},
     {"@DUPID","1"} 
   };
@@ -1774,6 +1770,26 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   //varValues.insert( {"@FILELINE",rowValue[rowValue.size()-1]});
   //varValues.insert( {"@%",intToStr(rowValue.size()-4)});
   //varValues.insert( {"@DUPID","1"});
+  // c++17 to improve performance
+  //varValues.try_emplace( "@RAW",rowValue[0]);
+  //varValues.try_emplace( "@FILE",m_filename);
+  //varValues.try_emplace( "@FILEID",intToStr(m_fileid));
+  //varValues.try_emplace( "@LINE",rowValue[rowValue.size()-3]);
+  //varValues.try_emplace( "@ROW",rowValue[rowValue.size()-2]);
+  //varValues.try_emplace( "@FILELINE",rowValue[rowValue.size()-1]);
+  //varValues.try_emplace( "@%",intToStr(rowValue.size()-4));
+  //varValues.try_emplace( "@DUPID","1");
+  //varValues.try_emplace(m_uservariables.begin(), m_uservariables.end());
+  //boost::unordered_maps
+  //varValues.emplace( "@RAW",rowValue[0]);
+  //varValues.emplace( "@FILE",m_filename);
+  //varValues.emplace( "@FILEID",intToStr(m_fileid));
+  //varValues.emplace( "@LINE",rowValue[rowValue.size()-3]);
+  //varValues.emplace( "@ROW",rowValue[rowValue.size()-2]);
+  //varValues.emplace( "@FILELINE",rowValue[rowValue.size()-1]);
+  //varValues.emplace( "@%",intToStr(rowValue.size()-4));
+  //varValues.emplace( "@DUPID","1");
+  //varValues.emplace(m_uservariables.begin(), m_uservariables.end());
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
   unordered_map< string,GroupProp > aggGroupProp;
   unordered_map< string,vector<string> > anaFuncData;
@@ -2213,8 +2229,7 @@ int QuerierC::searchNextWild()
   thistime = curtime();
 #endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
-    if (m_readmode==READBUFF)
-      m_rawstr = m_rawstr.substr(pos);
+    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
     pos = 0;
     if(sLine.empty() && bEnded && m_bEof) {// read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
@@ -2309,8 +2324,7 @@ int QuerierC::searchNextDelm()
   thistime = curtime();
 #endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
-    if (m_readmode==READBUFF)
-      m_rawstr = m_rawstr.substr(pos);
+    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
     if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
@@ -2423,8 +2437,7 @@ int QuerierC::searchNextLine()
   thistime = curtime();
 #endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
-    if (m_readmode==READBUFF)
-      m_rawstr = m_rawstr.substr(pos);
+    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
     if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
@@ -2519,8 +2532,7 @@ int QuerierC::searchNextQuick()
   thistime = curtime();
 #endif // __DEBUG__
     bEnded = opos==pos; // pos will only be set back to the original pos if it reaches the end of current rawstr.
-    if (m_readmode==READBUFF)
-      m_rawstr = m_rawstr.substr(pos);
+    m_rawstr = m_readmode==READLINE?"":m_rawstr.substr(pos);
     if(sLine.empty() && bEnded && m_bEof){ // read the rest of content if file reached eof, opos == pos check if it read an empty line
       sLine = m_rawstr;
       m_rawstr = "";
@@ -3685,15 +3697,24 @@ void QuerierC::applyExtraFilter()
   if (!m_extrafilter)
     return;
 
-  unordered_map<string, string> varValues;
-  varValues.insert( pair<string,string>("@RAW",""));
-  varValues.insert( pair<string,string>("@LINE","0"));
-  varValues.insert( pair<string,string>("@ROW","0"));
-  varValues.insert( pair<string,string>("@FILELINE","0"));
-  varValues.insert( pair<string,string>("@%","0"));
-  varValues.insert( pair<string,string>("@FILE",m_filename));
-  varValues.insert( pair<string,string>("@FILEID",intToStr(m_fileid)));
-  varValues.insert( pair<string,string>("@DUPID","1"));
+  unordered_map<string, string> varValues{
+    {"@RAW",""},
+    {"@LINE","0"},
+    {"@ROW","0"},
+    {"@FILELINE","0"},
+    {"@%","0"},
+    {"@FILE",m_filename},
+    {"@FILEID",intToStr(m_fileid)},
+    {"@DUPID","1"}
+  };
+  //varValues.insert( pair<string,string>("@RAW",""));
+  //varValues.insert( pair<string,string>("@LINE","0"));
+  //varValues.insert( pair<string,string>("@ROW","0"));
+  //varValues.insert( pair<string,string>("@FILELINE","0"));
+  //varValues.insert( pair<string,string>("@%","0"));
+  //varValues.insert( pair<string,string>("@FILE",m_filename));
+  //varValues.insert( pair<string,string>("@FILEID",intToStr(m_fileid)));
+  //varValues.insert( pair<string,string>("@DUPID","1"));
   varValues.insert(m_uservariables.begin(), m_uservariables.end());
 
   m_colToRows.clear();
@@ -4033,7 +4054,7 @@ void QuerierC::clear()
   clearAllCommands();
   m_selections.clear();
   m_searchMode = REGSEARCH;
-  m_readmode = READBUFF;
+  m_readmode = READLINE;
   m_uservarstr = "";
   m_quoters = "";
   m_nameline = false;

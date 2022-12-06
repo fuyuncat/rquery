@@ -93,6 +93,11 @@ class FunctionC
     bool runGetpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runCountpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runCalparts(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runReggetpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runReggetparts(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runRegcountpart(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
+    bool runRegcalparts(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runCountstr(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runFieldname(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);
     bool runConcat(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts);

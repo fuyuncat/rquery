@@ -171,6 +171,46 @@
    ```
    3
    ```
+- calparts(str,delimiter,operation,startidx[,endidx][,step][,quoters]) : Normal function. Do aggregation operation on the parts in a string splitted by delimiter, the startidx should be number value. if startidx/endidx is a negtive number, it will start searching from the end of the string, if the calculated endidx is located before startindex, it will reverse concatenant the parts. The optional parameter quoters defines the the quoters, it can be multiple pairs, the delimiters between the quoters will be skipped.<br />
+   ```
+   rq -q "s calparts('1-2-3','-','sum',1)" " "
+   ```
+   Returns result:<br/>
+   ```
+   6
+   ```
+- reggetpart(str,pattern,part_index) : Normal function. Get a part of a string matching a regular pattern. if part_index is a negtive number, it will start searching from the end of the string.<br />
+   ```
+   rq -q "s reggetpart('1-2-3','[\d]',2)" " "
+   ```
+   Returns result:<br/>
+   ```
+   2
+   ```
+- reggetparts(str,pattern,startidx[,endidx][,step]) : Normal function. Get a group of parts of a string matching a regular pattern, and concatenant them using the delimiter. if startindex/endidx is a negtive number, it will start searching from the end of the string, if the calculated endidx is located before startidx, it will reverse concatenant the parts.<br />
+   ```
+   rq -q "s reggetparts('1-2-3','[\d]',-1,1,1,'|')" " "
+   ```
+   Returns result:<br/>
+   ```
+   3|2|1
+   ```
+- regcountpart(str,pattern) : Normal function. Get the number parts in a string matching a regular pattern. if part_index is a negtive number, it will start searching from the end of the string.<br />
+   ```
+   rq -q "s regcountpart('1-2-3','[\d]')" " "
+   ```
+   Returns result:<br/>
+   ```
+   3
+   ```
+- regcalparts(str,pattern,operation,startidx[,endidx][,step]) : Normal function. Do aggregation operation on the parts in a string matching a regular pattern, the startidx should be number value. if startidx/endidx is a negtive number, it will start searching from the end of the string, if the calculated endidx is located before startindex, it will reverse concatenant the parts.<br />
+   ```
+   rq -q "s regcalparts('1-2-3','[\d]','average',1)" " "
+   ```
+   Returns result:<br/>
+   ```
+   2
+   ```
 - countstr(str,substr) : Normal function. count occurences of substr in str.<br/>
    ```
    rq -q "s countstr(@raw,'123')" "asg123aad123,123;;wrew"
@@ -1388,7 +1428,7 @@
    [22/Jul/2022:01:10:41 -0700]    ip:192.168.1.2, ip:192.168.1.3  3       2
    [22/Jul/2022:01:10:41 -0800]    ip:192.168.1.1, ip:192.168.1.2, ip:192.168.1.3  3       3
    ```
-- Rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
+- rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1;) | o @4,@1 " timezone.log
    ```
@@ -1420,7 +1460,7 @@
    [22/Jul/2022:01:10:41 -0800]    192.168.1.2     2       1
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3       1
    ```
-- Denserank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />
+- denserank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,rank(@4,@1),denserank(@4,@1) | o @4,@2,@3,@1,rank(@4,@1)" timezone.log 
    ```
@@ -1437,7 +1477,7 @@
    [22/Jul/2022:01:10:41 -0800]    192.168.1.2     2       2
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3       3
    ```
-- Nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />
+- nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,nearby(@1;@4,@1;-1;'NULL'),nearby(@1;@4,@1;2;'NULL') | o @1,@4" timezone.log
    ```
@@ -1454,7 +1494,7 @@
    [22/Jul/2022:01:10:41 -0700]    192.168.1.3     192.168.1.2     NULL
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     192.168.1.3     NULL
    ```
-- Counta([group1,group2...];expr) : Analytic function. Count the number of expr of each group.<br />
+- counta([group1,group2...];expr) : Analytic function. Count the number of expr of each group.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,counta(@4;@1) | o @4,@1 " timezone.log
    ```
@@ -1471,7 +1511,7 @@
    [22/Jul/2022:01:10:41 -0800]    192.168.1.2     3
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3
    ```
-- Uniquecounta([group1,group2...];expr) : Analytic function. Count the number of unique expr of each group.<br />
+- uniquecounta([group1,group2...];expr) : Analytic function. Count the number of unique expr of each group.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,uniquecounta(@4;@1) | o @4,@1 " timezone.log
    ```
@@ -1488,7 +1528,7 @@
    [22/Jul/2022:01:10:41 -0800]    192.168.1.2     3
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     3
    ```
-- Suma([group1,group2...];expr) : Analytic function. Sum the expr of each group.<br />
+- suma([group1,group2...];expr) : Analytic function. Sum the expr of each group.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,suma(@4;@7) | o @4,@1 " timezone.log
    ```
@@ -1505,7 +1545,7 @@
    [22/Jul/2022:01:10:41 -0800]    192.168.1.2     516
    [22/Jul/2022:01:10:41 -0800]    192.168.1.3     516
    ```
-- Averagea([group1,group2...];expr) : Analytic function. Caluclate average of expr of each group.<br />
+- averagea([group1,group2...];expr) : Analytic function. Caluclate average of expr of each group.<br />
    ```
    rq -q "p d/ /\"\"[]/r | s @4,@1,averagea(@4;@7) | o @4,@1 " timezone.log
    ```

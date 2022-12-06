@@ -73,6 +73,8 @@ jobs:
         sudo apt-get update
         sudo apt-get -y install gcc g++ make libboost-all-dev git libmpc-dev nasm gcc-multilib
         which g++
+        ls /usr/include/boost/regex
+        g++ --version
         echo "/usr/bin" >> $GITHUB_PATH
         ls
         pwd

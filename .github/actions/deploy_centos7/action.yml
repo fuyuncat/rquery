@@ -11,7 +11,7 @@ runs:
     run: |
       yum -y update
       yum -y install centos-release-scl-rh epel-release
-      yum -y install git boost-devel gcc-c++ libicu-dev libboost-all-dev rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool jq
+      yum -y install git boost-devel gcc-c++ libicu libicu-dev libboost-all-dev rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool jq
       yum -y remove git
       yum -y remove git-*
       yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm

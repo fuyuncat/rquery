@@ -71,7 +71,7 @@ jobs:
       shell: bash # git must be present before checkout
       run: |
         sudo apt-get update
-        sudo apt-get -y install gcc g++ make libicu-dev libboost-all-dev git libmpc-dev nasm gcc-multilib
+        sudo apt-get -y install gcc g++ make libicu libicu-dev libboost-all-dev git libmpc-dev nasm gcc-multilib
         which g++
         ls /usr/include/boost/regex
         g++ --version

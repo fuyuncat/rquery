@@ -72,10 +72,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install gcc g++ make libicu-dev libboost-all-dev git libmpc-dev nasm gcc-multilib
-        while read i; do
-          ls $i
-          dpkg --search $i
-        done <<< $(ldd /usr/lib/x86_64-linux-gnu/libboost_regex.so|grep "=>"|grep "/lib"|awk '{print $3}')
+        ldd /usr/lib/x86_64-linux-gnu/libboost_regex.so
+        #while read i; do
+        #  ls $i
+        #  dpkg --search $i
+        #done <<< $(ldd /usr/lib/x86_64-linux-gnu/libboost_regex.so|grep "=>"|grep "/lib"|awk '{print $3}')
         cuuver=$(ldd /usr/lib/x86_64-linux-gnu/libboost_regex.so|grep libicuuc|awk '{print $3}'|awk -F '.' '{print $3}')
         sudo apt-get -y install libicu${cuuver}
         which g++

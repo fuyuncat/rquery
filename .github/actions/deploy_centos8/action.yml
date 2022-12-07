@@ -15,7 +15,7 @@ runs:
       cd -
       yum -y update
       yum -y install epel-release
-      yum -y install git boost-devel gcc-c++ libicu-dev libboost-all-dev rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool jq
+      yum -y install git boost-devel gcc-c++ libicu-devel libboost-all-devel rpm-build file which wget unzip tar bzip2 gzip xz patch automake make libtool jq
       yum -y remove git
       yum -y remove git-*
       yum -y install https://packages.endpointdev.com/rhel/8/main/x86_64/endpoint-repo.noarch.rpm

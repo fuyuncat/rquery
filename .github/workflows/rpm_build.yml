@@ -73,6 +73,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -y install gcc g++ make libicu-dev libboost-all-dev git libmpc-dev nasm gcc-multilib
         ldd /usr/lib/x86_64-linux-gnu/libboost_regex.so
+        ldconfig -p|grep libboost_regex
         #while read i; do
         #  ls $i
         #  dpkg --search $i

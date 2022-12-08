@@ -87,7 +87,7 @@ jobs:
         echo "/usr/bin" >> $GITHUB_PATH
         ls
         pwd
-        osver=$(cat /etc/lsb-release|grep DISTRIB_RELEASE|awk -F '=' '{print $2}')
+        osver="ubuntu"$(cat /etc/lsb-release|grep DISTRIB_RELEASE|awk -F '=' '{print $2}')
         /usr/bin/mkdir -pv ~/rpmbuild/{BUILD,RPMS,SRPMS,SOURCES,SPECS,BUILDROOT}
         /usr/bin/cp rquery.spec /home/runner/rpmbuild/SPECS/rquery.spec
         /usr/bin/git archive --output=/home/runner/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD

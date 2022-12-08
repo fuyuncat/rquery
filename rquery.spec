@@ -11,6 +11,8 @@ Source0:        https://github.com/fuyuncat/rquery/archive/refs/tags/%{name}-%{v
 Packager:       fuyuncat
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
+%global debug_package %{nil}
+
 %description
 RQuery is a powerful tool can search string block/file/folder using regular/delimiter/wildcard/ expression parttern, and filter/group calculate/sort the matched result. One command can do what grep/xgrep/sort/uniq/awk/wc/sed/cut/tr can do and more.
 

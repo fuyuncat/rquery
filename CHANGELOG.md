@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.231] 2022-12-08
+   New feature: CentOS 8 build. <br/>
    # [1.230] 2022-12-06
    New feature: New functions: calparts(str,delimiter,operation,startidx[,endidx][,step][,quoters]), reggetpart(str,pattern,part_index), reggetparts(str,pattern,startidx[,endidx][,step]), regcountpart(str,pattern), regcalparts(str,pattern,operation,startidx[,endidx][,step]) <br/>
    # [1.230] 2022-12-02

@@ -37,8 +37,8 @@
 #include <array>
 #endif
 
-//#include <regex>
-#include <boost/regex.hpp>
+#include <regex>
+//#include <boost/regex.hpp>
 //#include <cstdlib>
 //#include <chrono>
 #include <sstream>
@@ -1171,8 +1171,8 @@ void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
 {
   try{
     //trace(DEBUG, "replacing '%s','%s','%s' ...",sRaw.c_str(),sPattern.c_str(),sNew.c_str());
-    boost::regex regexp(sPattern);
-    sRaw = boost::regex_replace(sRaw,regexp,sNew);
+    std::regex regexp(sPattern);
+    sRaw = std::regex_replace(sRaw,regexp,sNew);
     //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
   }catch (exception& e) {
     trace(ERROR, "Regular replace exception: %s\n", e.what());
@@ -1182,11 +1182,11 @@ void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
 void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr)
 {
   string sNew = "";
-  boost::smatch matches;
-  boost::regex regexp(sPattern);
+  std::smatch matches;
+  std::regex regexp(sPattern);
   try{
     //trace(DEBUG2, "'%s' matching '%s'\n", sRaw.c_str(), sPattern.c_str());
-    if (boost::regex_match(sRaw, matches, regexp)) {
+    if (std::regex_match(sRaw, matches, regexp)) {
       //trace(DEBUG2, "Regular matched: %s\n", string(matches[0]).c_str());
       size_t iStart=0;
       for (size_t i=0; i<sExpr.length(); i++){
@@ -2711,11 +2711,11 @@ bool like(const string & str1, const string & str2)
 
 bool reglike(const string & str, const string & regstr)
 {
-  boost::regex regexp(regstr);
-  boost::smatch matches;
+  std::regex regexp(regstr);
+  std::smatch matches;
   //trace(DEBUG, "Matching: '%s' => %s\n", str.c_str(), regstr.c_str());
   try{
-    return boost::regex_search(str, matches, regexp);
+    return std::regex_search(str, matches, regexp);
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());
     return false;
@@ -3996,9 +3996,9 @@ int matchQuoters(const string & listStr, const size_t & offset, const string & q
 //get the first matched regelar token from a string
 string getFirstToken(const string & str, const string & pattern){
   try{
-    boost::regex regexp(pattern);
-    boost::smatch matches;
-    if (boost::regex_search(str, matches, regexp))
+    std::regex regexp(pattern);
+    std::smatch matches;
+    if (std::regex_search(str, matches, regexp))
       return matches[0];
   }catch (exception& e) {
     trace(ERROR, "Regular search exception: %s\n", e.what());
@@ -4013,9 +4013,9 @@ void getAllTokens(vector <string> & findings, const string & str, const string &
   findings.clear();
   string::const_iterator searchStart( str.begin() );
   try{
-    boost::regex regexp(pattern);
-    boost::smatch matches;
-    while ( boost::regex_search( searchStart, str.end(), matches, regexp ) ){
+    std::regex regexp(pattern);
+    std::smatch matches;
+    while ( std::regex_search( searchStart, str.end(), matches, regexp ) ){
       findings.push_back(matches[0]);  
       searchStart = matches.suffix().first;
     }
@@ -4030,9 +4030,9 @@ void getAllTokens(vector < vector <string> > & findings, const string & str, con
   findings.clear();
   string::const_iterator searchStart( str.begin() );
   try{
-    boost::regex regexp(pattern);
-    boost::smatch matches;
-    while ( boost::regex_search( searchStart, str.end(), matches, regexp ) ){
+    std::regex regexp(pattern);
+    std::smatch matches;
+    while ( std::regex_search( searchStart, str.end(), matches, regexp ) ){
       vector<string> vmatches;
       for (int i=0; i<matches.size(); i++)
         vmatches.push_back(matches[i]);

@@ -141,6 +141,7 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
     size_t filesize = getFileSize(filename);
     // trace(DEBUG2, "File size '%d'.\n", filesize);
     total = 0;
+    int iProg=0;
 
     switch (fileMode){
       case READLINE:{
@@ -168,8 +169,10 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
           readLines++;
           processfiletime += (curtime()-processStartTime);
           thisTime = curtime();
-          if (gv.g_showprogress)
-            printf("\r'%s': %d lines(%.2f%%) read in %f seconds.", filename.c_str(), readLines, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+          if (gv.g_showprogress && ((double)total)/((double)filesize)*100>=iProg){
+            fprintf(stderr, "\r'%s': %d lines(%.2f%%) read in %f seconds.", filename.c_str(), readLines, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+            iProg++;
+          }
           readStartTime=curtime();
         }
         if (gv.g_showprogress)
@@ -209,8 +212,10 @@ void processFile(string filename, QuerierC & rq, size_t& total, short int fileMo
           memset( cachebuffer, '\0', sizeof(char)*cache_length );
           processfiletime += (curtime()-processStartTime);
           thisTime = curtime();
-          if (gv.g_showprogress)
-            printf("\r'%s': %ld bytes(%.2f%%) read in %f seconds.", filename.c_str(), total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+          if (gv.g_showprogress && ((double)total)/((double)filesize)*100>=iProg){
+            fprintf(stderr, "\r'%s': %ld bytes(%.2f%%) read in %f seconds.", filename.c_str(), total, round(((double)total)/((double)filesize)*10000.0)/100.0, (double)(thisTime-lastTime)/1000);
+            iProg++;
+          }
         }
         if (gv.g_showprogress)
           printf("\n");

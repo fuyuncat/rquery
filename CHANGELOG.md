@@ -1,5 +1,8 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.232] 2022-12-08
+   Enhancement: Reduce the progress bar resource consumption. <br/>
+   Enhancement: Removed boost dependency. <br/>
    # [1.231] 2022-12-08
    New feature: CentOS 8 build. <br/>
    # [1.230] 2022-12-06

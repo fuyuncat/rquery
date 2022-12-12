@@ -53,6 +53,7 @@ runs:
       /usr/bin/git archive --output=/github/home/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
       which scl_source
       ls /etc/scl/conf/
+      scl_source enable devtoolset-8
       . scl_source enable devtoolset-8
       g++ --version
       /usr/bin/rpmbuild -ba --define "latestversion ${{ env.RELEASE_VERSION }}" /github/home/rpmbuild/SPECS/rquery.spec

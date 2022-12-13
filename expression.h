@@ -55,7 +55,7 @@ class ExpressionC
     int getLeftHeight(); // get left tree Height
     int getRightHeight(); // get left tree Height
     void add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop); // add a NEW expression into tree
-    void dump();
+    void dump() const;
     string getEntireExpstr() const;
     bool containsColId(const int & colId); // detect if predication contains special colId
     ExpressionC* getFirstPredByColId(const int & colId, const bool & leftFirst); // detect if predication contains special colId
@@ -98,12 +98,12 @@ class ExpressionC
     //unordered_map< string,string > m_macroParaDefault; // the initial value of the user defined macro function parameters.
     ExpressionC* m_macroParaDefExpr; // if m_expType is MACROPARA, the default expression of the parameter.
 
-    void dump(const int & deep);
+    void dump(const int & deep) const;
     bool buildExpression();  // build expression class from the expression string
     void alignChildrenDataType(); // align children datatype with current datatype
     bool existLeafNode(ExpressionC* node); // check if exist leaf node
     ExpressionC* getTopParent(); // get the top parent node
-    ExpressionC* BuildTree(string expStr, ExpressionC* newNode, ExpressionC* parentNode); // build a BTree from an expression string
+    ExpressionC* BuildTree(string expStr, ExpressionC* newNode, ExpressionC* parentNode, bool isLeftChild); // build a BTree from an expression string
     bool buildLeafNode(string expStr, ExpressionC* node); // build a Leaf Node from an (atom) expression string
     bool isMacroInExpression();
 

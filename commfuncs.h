@@ -17,7 +17,6 @@
 #ifndef __COMMFUNCS_H
 #define __COMMFUNCS_H
 
-#include <regex.h>
 #include <vector>
 #include <string>
 #include <set>
@@ -30,7 +29,7 @@
 
 using namespace std;
 
-#define VERSION "v1.232"
+#define VERSION "v1.233"
 
 #define UNKNOWN 0
 

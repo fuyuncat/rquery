@@ -1167,6 +1167,34 @@ void replacestr(string & sRaw, const vector<string> & vReplace, const vector<str
   sRaw = newStr;
 }
 
+string show_regex_error(const std::regex_error& e) 
+{
+  string err_message = e.what();
+
+# define CASE(type, msg) \
+  case std::regex_constants::type: err_message += " ("+intToStr(std::regex_constants::type)+"):\n  " + string(msg); \
+      break
+  switch (e.code()) {
+  CASE(error_collate, "The expression contains an invalid collating element name");
+  CASE(error_ctype, "The expression contains an invalid character class name");
+  CASE(error_escape, "The expression contains an invalid escaped character or a trailing escape");
+  CASE(error_backref, "The expression contains an invalid back reference");
+  CASE(error_brack, "The expression contains mismatched square brackets ('[' and ']')");
+  CASE(error_paren, "The expression contains mismatched parentheses ('(' and ')')");
+  CASE(error_brace, "The expression contains mismatched curly braces ('{' and '}')");
+  CASE(error_badbrace, "The expression contains an invalid range in a {} expression");
+  CASE(error_range, "The expression contains an invalid character range (e.g. [b-a])");
+  CASE(error_space, "There was not enough memory to convert the expression into a finite state machine");
+  CASE(error_badrepeat, "one of *?+{ was not preceded by a valid regular expression");
+  CASE(error_complexity, "The complexity of an attempted match exceeded a predefined level");
+  CASE(error_stack, "There was not enough memory to perform a match");
+  }
+# undef CASE
+
+  return err_message;
+}
+
+
 void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
 {
   try{
@@ -1174,8 +1202,8 @@ void regreplacestr(string & sRaw, const string & sPattern, const string & sNew)
     std::regex regexp(sPattern);
     sRaw = std::regex_replace(sRaw,regexp,sNew);
     //trace(DEBUG, "=> '%s'\n",sRaw.c_str());
-  }catch (exception& e) {
-    trace(ERROR, "Regular replace exception: %s\n", e.what());
+  }catch (std::regex_error& e) {
+    trace(ERROR, "Regular replace exception: %s\n", show_regex_error(e).c_str());
   }
 }
 
@@ -1210,9 +1238,8 @@ void regmatchstr(const string & sRaw, const string & sPattern, string & sExpr)
         }
       }
     }
-  }catch (exception& e) {
-    trace(ERROR, "Regular match exception: %s\n", e.what());
-    return;
+  }catch (std::regex_error& e) {
+    trace(ERROR, "Regular replace exception: %s\n", show_regex_error(e).c_str());
   }
   sExpr = sNew;
 }
@@ -2716,8 +2743,8 @@ bool reglike(const string & str, const string & regstr)
   //trace(DEBUG, "Matching: '%s' => %s\n", str.c_str(), regstr.c_str());
   try{
     return std::regex_search(str, matches, regexp);
-  }catch (exception& e) {
-    trace(ERROR, "Regular search exception: %s\n", e.what());
+  }catch (std::regex_error& e) {
+    trace(ERROR, "Regular replace exception: %s\n", show_regex_error(e).c_str());
     return false;
   }
 }
@@ -4000,9 +4027,8 @@ string getFirstToken(const string & str, const string & pattern){
     std::smatch matches;
     if (std::regex_search(str, matches, regexp))
       return matches[0];
-  }catch (exception& e) {
-    trace(ERROR, "Regular search exception: %s\n", e.what());
-    return "";
+  }catch (std::regex_error& e) {
+    trace(ERROR, "Regular replace exception: %s\n", show_regex_error(e).c_str());
   }
   return "";
 }
@@ -4019,8 +4045,8 @@ void getAllTokens(vector <string> & findings, const string & str, const string &
       findings.push_back(matches[0]);  
       searchStart = matches.suffix().first;
     }
-  }catch (exception& e) {
-    trace(ERROR, "Regular search exception: %s\n", e.what());
+  }catch (std::regex_error& e) {
+    trace(ERROR, "Regular replace exception: %s\n", show_regex_error(e).c_str());
   }
 }
 
@@ -4039,8 +4065,8 @@ void getAllTokens(vector < vector <string> > & findings, const string & str, con
       findings.push_back(vmatches);  
       searchStart = matches.suffix().first;
     }
-  }catch (exception& e) {
-    trace(ERROR, "Regular search exception: %s\n", e.what());
+  }catch (std::regex_error& e) {
+    trace(ERROR, "Regular replace exception: %s\n", show_regex_error(e).c_str());
   }
 }
 

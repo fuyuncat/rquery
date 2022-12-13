@@ -1,5 +1,8 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.233] 2022-12-13
+   Fix bug: Fixed bug in getparts, calparts, regcalparts .<br/>
+   Fix bug: Expression is wrong if three or more number between brackets. <br/>
    # [1.232] 2022-12-08
    Enhancement: Reduce the progress bar resource consumption. <br/>
    Enhancement: Removed boost dependency. <br/>

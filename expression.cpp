@@ -235,7 +235,7 @@ void ExpressionC::setExpstr(const string & expString)
 {
   m_expStr = expString;
   buildExpression();
-  //dump();
+  dump();
   if (isMacroInExpression()){
     trace(FATAL, "A macro function cannot be a part of an expression '%s'\n", m_expStr.c_str());
     //return;
@@ -364,7 +364,7 @@ New method (v0.951)
   8 8   16 16
 
 **********************************************************/
-ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, ExpressionC* parentNode)
+ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, ExpressionC* parentNode, bool isLeftChild)
 {
   if (!newNode){
     trace(ERROR, "Error: node is not allocated!\n");
@@ -380,10 +380,6 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
   try{
     newNode->m_expstrAnalyzed = true;
     newNode->m_parentNode = parentNode;
-    //if (expStr.length()>1 && expStr[0]=='/' && expStr[expStr.length()-1]=='/') { // regular expression string can NOT operate with any other expression!
-    //  buildLeafNode(expStr, newNode);
-    //  return newNode->getTopParent();
-    //}
     int iPos = findFirstCharacter(expStr, m_operators, 0, "''()", '\\',{'(',')'});
     // check if is a scientific notation number, e.g.1.58e+8
     if(iPos>1 && iPos<expStr.length()-1 && (expStr[iPos-1]=='e' || expStr[iPos-1]=='E') && (expStr[iPos]=='+' || expStr[iPos] == '-')){
@@ -402,15 +398,17 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
     }
     if (iPos<0) { // didnt find any operator, reached the end
       if (expStr.length()>1 && expStr[0]=='(' && expStr[expStr.length()-1]==')') { // quoted expression
-        //newNode->clear();
-        //SafeDelete(newNode);
-        //newNode = new ExpressionC();
-        if (!BuildTree(expStr.substr(1,expStr.length()-2),newNode,NULL))
+        if (!BuildTree(expStr.substr(1,expStr.length()-2),newNode,NULL,true))
           return NULL;
         newNode=newNode->getTopParent();
         newNode->m_parentNode = parentNode;
-        if (parentNode && !parentNode->m_leftNode)
-          parentNode->m_leftNode = newNode;
+        if (parentNode && isLeftChild){
+          if (parentNode->m_rightNode!=newNode)
+            parentNode->m_leftNode = newNode;
+        }else{
+          if (parentNode->m_leftNode!=newNode)
+            parentNode->m_rightNode = newNode;
+        }
       }else{ // atom expression to be built as a leaf
         buildLeafNode(expStr, newNode);
       }
@@ -430,12 +428,12 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
           //parentNode->m_rightNode = newNode;
           ExpressionC* tmpNode = new ExpressionC();
           newNode->m_leftNode = tmpNode;
-          if (!BuildTree(expStr.substr(0,iPos), tmpNode, newNode))
+          if (!BuildTree(expStr.substr(0,iPos), tmpNode, newNode,true))
             return NULL;
         }else{
           ExpressionC* tmpNode = new ExpressionC();
           parentNode->m_rightNode = tmpNode;
-          if (!BuildTree(expStr.substr(0,iPos), tmpNode, parentNode))
+          if (!BuildTree(expStr.substr(0,iPos), tmpNode, parentNode,false))
             return NULL;
           ExpressionC* pNode = parentNode;
           while (pNode && operatorPriority(newNode->m_operate)<=operatorPriority(pNode->m_operate)){
@@ -458,7 +456,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
       }else{
         ExpressionC* tmpNode = new ExpressionC();
         newNode->m_leftNode = tmpNode;
-        if (!BuildTree(expStr.substr(0,iPos), tmpNode, newNode))
+        if (!BuildTree(expStr.substr(0,iPos), tmpNode, newNode,true))
           return NULL;
       }
       //if (!parentNode || operatorPriority(newNode->m_operate)<operatorPriority(parentNode->m_operate)){
@@ -473,7 +471,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
       //}
       ExpressionC* tmpNode = new ExpressionC();
       newNode->m_rightNode = tmpNode;
-      if (!BuildTree(expStr.substr(iPos+1), tmpNode, newNode))
+      if (!BuildTree(expStr.substr(iPos+1), tmpNode, newNode,false))
         return NULL;
       newNode->m_datatype = getCompatibleDataType(newNode->m_leftNode->m_datatype, newNode->m_rightNode->m_datatype);
       if (parentNode)
@@ -627,7 +625,7 @@ bool ExpressionC::buildLeafNode(string expStr, ExpressionC* node)
 bool ExpressionC::buildExpression()
 {
   ExpressionC* newNode = new ExpressionC();
-  if (BuildTree(m_expStr, newNode, NULL)){
+  if (BuildTree(m_expStr, newNode, NULL,true)){
     ExpressionC* root = newNode->getTopParent();
     root->copyTo(this);
     root->clear();
@@ -734,7 +732,7 @@ void ExpressionC::add(ExpressionC* node, int op, bool leafGrowth, bool addOnTop)
   }
 }
 
-void ExpressionC::dump(const int & deep)
+void ExpressionC::dump(const int & deep) const
 {
   if (m_type == BRANCH){
     trace(DUMP,"%s(%d-%s)\n",decodeOperator(m_operate).c_str(),deep,decodeDatatype(m_datatype.datatype).c_str());
@@ -749,7 +747,7 @@ void ExpressionC::dump(const int & deep)
   }
 }
 
-void ExpressionC::dump()
+void ExpressionC::dump() const
 {
   dump(0);
 }

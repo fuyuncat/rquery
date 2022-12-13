@@ -998,7 +998,7 @@ bool FunctionC::runGetparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
     }
     sResult = "";
     for (size_t i=iStart; iStart<=iEnd?i<=iEnd:(int)i>=iEnd; iStart<=iEnd?i+=iStep:i-=iStep)
-      sResult+=vWords[i]+(i!=iEnd?sDelm:"");
+      sResult+=vWords[i]+((iStart<=iEnd?i+iStep<iEnd:(int)(i-iStep)>iEnd)?sDelm:"");
     return true;
   }else{
     trace(ERROR, "(2)Failed to run getparts(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
@@ -1053,6 +1053,7 @@ bool FunctionC::runCalparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
     short int iOp = encodeFunction(upper_copy(trim_copy(sOp)));
     std::set<string> tmpSet;
     double dVal=0, dSum=0;
+    int nCount=0;
     sResult = "";
     for (size_t i=iStart; iStart<=iEnd?i<=iEnd:(int)i>=iEnd; iStart<=iEnd?i+=iStep:i-=iStep){
       if (!isDouble(vWords[i])){
@@ -1067,9 +1068,17 @@ bool FunctionC::runCalparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
         case MIN:
           dVal = i==0?dTmp:min(dTmp,dVal);
           break;
+        case AVERAGE:
+          dSum+=dTmp;
+          nCount++;
+          break;
+        case COUNT:
+          nCount++;
+          break;
         case UNIQUECOUNT:
           tmpSet.insert(trim_copy(vWords[i]));
           break;
+        case SUM:
         default:
           dSum+=dTmp;
           break;
@@ -1081,13 +1090,13 @@ bool FunctionC::runCalparts(RuntimeDataStruct & rds, string & sResult, DataTypeS
         sResult = doubleToStr(dVal);
         break;
       case AVERAGE:
-        sResult = doubleToStr(dSum/(double)vWords.size());
+        sResult = doubleToStr(dSum/(double)nCount);
         break;
       case UNIQUECOUNT:
         sResult = intToStr(tmpSet.size());
         break;
       case COUNT:
-        sResult = intToStr(vWords.size());
+        sResult = intToStr(nCount);
         break;
       default:
         sResult = doubleToStr(dSum);
@@ -1209,7 +1218,7 @@ bool FunctionC::runReggetparts(RuntimeDataStruct & rds, string & sResult, DataTy
     }
     sResult = "";
     for (size_t i=iStart; iStart<=iEnd?i<=iEnd:(int)i>=iEnd; iStart<=iEnd?i+=iStep:i-=iStep)
-      sResult+=vWords[i]+(i!=iEnd?sDelm:"");
+      sResult+=vWords[i]+((iStart<=iEnd?i+iStep<iEnd:(int)(i-iStep)>iEnd)?sDelm:"");
     return true;
   }else{
     trace(ERROR, "(2)Failed to run reggetparts(%s,%s,%s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
@@ -1262,10 +1271,11 @@ bool FunctionC::runRegcalparts(RuntimeDataStruct & rds, string & sResult, DataTy
     short int iOp = encodeFunction(upper_copy(trim_copy(sOp)));
     std::set<string> tmpSet;
     double dVal=0, dSum=0;
+    int nCount=0;
     sResult = "";
     for (size_t i=iStart; iStart<=iEnd?i<=iEnd:(int)i>=iEnd; iStart<=iEnd?i+=iStep:i-=iStep){
       if (!isDouble(vWords[i])){
-        trace(WARNING, "%s is not a number to be calculated in regcalparts()!\n", vWords[i].c_str());
+        trace(WARNING, "%s is not a number to be calculated in calparts()!\n", vWords[i].c_str());
         continue;
       }
       double dTmp = atof(trim_copy(vWords[i]).c_str());
@@ -1276,9 +1286,17 @@ bool FunctionC::runRegcalparts(RuntimeDataStruct & rds, string & sResult, DataTy
         case MIN:
           dVal = i==0?dTmp:min(dTmp,dVal);
           break;
+        case AVERAGE:
+          dSum+=dTmp;
+          nCount++;
+          break;
+        case COUNT:
+          nCount++;
+          break;
         case UNIQUECOUNT:
           tmpSet.insert(trim_copy(vWords[i]));
           break;
+        case SUM:
         default:
           dSum+=dTmp;
           break;
@@ -1290,13 +1308,13 @@ bool FunctionC::runRegcalparts(RuntimeDataStruct & rds, string & sResult, DataTy
         sResult = doubleToStr(dVal);
         break;
       case AVERAGE:
-        sResult = doubleToStr(dSum/(double)vWords.size());
+        sResult = doubleToStr(dSum/(double)nCount);
         break;
       case UNIQUECOUNT:
         sResult = intToStr(tmpSet.size());
         break;
       case COUNT:
-        sResult = intToStr(vWords.size());
+        sResult = intToStr(nCount);
         break;
       default:
         sResult = doubleToStr(dSum);

@@ -10,8 +10,10 @@ runs:
     shell: bash
     run: |
       yum -y update
+      yum -y install centos-release-scl
       yum -y install centos-release-scl-rh epel-release
       yum -y install git boost-devel gcc-c++ libicu-dev libboost-all-dev rpm-build file which wget unzip tar bzip2 gzip xz patch autoconf-archive automake make libtool jq
+      yum -y install devtoolset-8
       yum -y remove git
       yum -y remove git-*
       yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm
@@ -49,6 +51,10 @@ runs:
       /usr/bin/cp rquery.spec /github/home/rpmbuild/SPECS/rquery.spec
       #ls -ld /github/home/rpmbuild/SOURCES/
       /usr/bin/git archive --output=/github/home/rpmbuild/SOURCES/rquery-${{ env.RELEASE_VERSION }}.tar.gz --prefix=rquery-${{ env.RELEASE_VERSION }}/ HEAD
+      which scl_source
+      ls /etc/scl/conf/
+      . scl_source enable devtoolset-8 || true
+      g++ --version
       /usr/bin/rpmbuild -ba --define "latestversion ${{ env.RELEASE_VERSION }}" /github/home/rpmbuild/SPECS/rquery.spec
       echo "::set-output name=source_rpm_path::/github/home/rpmbuild/RPMS/x86_64/rquery-${{ env.RELEASE_VERSION }}-1.el7.x86_64.rpm"
       echo "::set-output name=source_rpm_name::rquery-${{ env.RELEASE_VERSION }}.el7.x86_64.rpm"

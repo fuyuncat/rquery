@@ -443,9 +443,9 @@
    ```
    3.0000000000000004
    ```
-- coypsign(x, y) : Normal function. Returns a value with the magnitude of x and the sign of y.<br/>
+- copysign(x, y) : Normal function. Returns a value with the magnitude of x and the sign of y.<br/>
    ```
-   rq -q "s copysign ( 10.0,-1.0)" " "
+   rq -q "s copysign( 10.0,-1.0)" " "
    ```
    Returns result:<br/>
    ```
@@ -1302,7 +1302,7 @@
    ```
 - rmembers(sideid,fieldid,startseq[,endseq[,delimiter]]) : Normal function. Return the member values of the specified side work, field id and sequence number range. sideid is the id the side work, fieldid is id the field in the side work, startseq is the start sequence number of the members, endseq is the end sequence number of the members. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple members, default is '|'. <br/>
    ```
-   /rq -v "r:@1" -q "s @raw, rcount(1,1,@raw), rmember(1,1,@line), rmembers(1,1,1,@line)" samples/filelink_dupids.txt
+   rq -v "r:@1" -q "s @raw, rcount(1,1,@raw), rmember(1,1,@line), rmembers(1,1,1,@line)" samples/filelink_dupids.txt
    ```
    Returns result:<br/>
    ```

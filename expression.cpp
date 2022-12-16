@@ -235,7 +235,7 @@ void ExpressionC::setExpstr(const string & expString)
 {
   m_expStr = expString;
   buildExpression();
-  dump();
+  //dump();
   if (isMacroInExpression()){
     trace(FATAL, "A macro function cannot be a part of an expression '%s'\n", m_expStr.c_str());
     //return;

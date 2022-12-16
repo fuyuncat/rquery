@@ -648,11 +648,13 @@ bool FunctionC::runFindnth(RuntimeDataStruct & rds, string & sResult, DataTypeSt
   string str, sub, sNth; 
   if (m_params[0].evalExpression(rds, str, dts, true) && m_params[1].evalExpression(rds, sub, dts, true)){
     int iNth = 1;
-    if (m_params.size() == 3 && m_params[2].evalExpression(rds, sNth, dts, true) && isInt(sNth)){
-      iNth = atoi(sNth.c_str());
-    }else{
-      trace(ERROR, "Failed to run findnth(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
-      return false;
+    if (m_params.size() >= 3){
+      if (m_params[2].evalExpression(rds, sNth, dts, true) && isInt(sNth)){
+        iNth = atoi(sNth.c_str());
+      }else{
+        trace(ERROR, "Failed to run findnth(%s, %s, %s)!\n", m_params[0].getEntireExpstr().c_str(), m_params[1].getEntireExpstr().c_str(), m_params[2].getEntireExpstr().c_str());
+        return false;
+      }
     }
     size_t pos = findNthSub(str, sub, iNth<0?str.length()-1:0, iNth<0?iNth*-1:iNth,iNth<0?false:true, "", '\0', {}, true);
     sResult = intToStr(pos==string::npos?-1:(int)pos);
@@ -702,7 +704,7 @@ bool FunctionC::runNoCaseComparestr(RuntimeDataStruct & rds, string & sResult, D
 
 bool FunctionC::runRevertstr(RuntimeDataStruct & rds, string & sResult, DataTypeStruct & dts)
 {
-  if (m_params.size() != 1){
+  if (m_params.size() < 1){
     trace(ERROR, "revertstr(str) function accepts only one parameter.\n");
     return false;
   }
@@ -1719,7 +1721,7 @@ bool FunctionC::runIsipv6(RuntimeDataStruct & rds, string & sResult, DataTypeStr
     //string IPV6ADDR = "(("+IPV6SEG+":){7,7}"+IPV6SEG+"|("+IPV6SEG+":){1,7}:|("+IPV6SEG+":){1,6}:"+IPV6SEG+"|("+IPV6SEG+":){1,5}(:"+IPV6SEG+"){1,2}|("+IPV6SEG+":){1,4}(:"+IPV6SEG+"){1,3}|("+IPV6SEG+":){1,3}(:"+IPV6SEG+"){1,4}|("+IPV6SEG+":){1,2}(:"+IPV6SEG+"){1,5}|"+IPV6SEG+":((:"+IPV6SEG+"){1,6})|:((:"+IPV6SEG+"){1,7}|:)|fe80:(:"+IPV6SEG+"){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}"+IPV4ADDR+"|("+IPV6SEG+":){1,4}:"+IPV4ADDR+")";
 
     dts.datatype = LONG;
-    sResult = intToStr(getFirstToken(str,"(?:^|(?<=\\s))(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))(?=\\s|$)").compare(str) == 0);
+    sResult = intToStr(getFirstToken(str,"(?:^|(?:\\s))(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))(?=\\s|$)").compare(str) == 0);
     return true;
   }else{
     trace(ERROR, "Failed to run isipv6(%s)\n", m_params[0].getEntireExpstr().c_str());

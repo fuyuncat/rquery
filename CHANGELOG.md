@@ -1,5 +1,9 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.300] 2022-12-16
+   Fix bug: Fixed bug in issymblink.<br/>
+   # [1.300] 2022-12-13
+   Fix bug: Fixed bug in findnth, revertstr, hextodec, bintodec, isipv6.<br/>
    # [1.233] 2022-12-13
    Fix bug: Fixed bug in getparts, calparts, regcalparts .<br/>
    Fix bug: Expression is wrong if three or more number between brackets. <br/>

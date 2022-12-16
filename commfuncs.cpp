@@ -404,7 +404,7 @@ size_t findNthCharacter(const string & str, const std::set<char> & lookfor, cons
   int iFound=0;
   size_t i = pos;
   vector<int> q;
-  while(i>=0 && i < str.length()) {
+  while((int)i>=0 && i < str.length()) {
     if (lookfor.find(str[i]) != lookfor.end() && i>0 && q.size()==0){
       iFound++;
       if (iFound>=seq)
@@ -597,7 +597,7 @@ void replaceunquotedstr(string & str, const string & sReplace, const string & sN
   vector<int> q;
   while(i < str.length()) {
     bool bReplaced = false;
-    if (str.substr(i,sReplace.length()).compare(sReplace) == 0 && i>=0 && q.size()==0) {
+    if (str.substr(i,sReplace.length()).compare(sReplace) == 0 && (int)i>=0 && q.size()==0) {
       sReturn.append(sNew);
       bReplaced = true;
       i+=(sReplace.length()-1);
@@ -1029,7 +1029,7 @@ void split(vector<string> & v, const string & str, string & delim, const string 
   size_t i = 0, j = 0, begin = 0;
   vector<int> q;
   while(i < str.length()) {
-    if (str.length()>=i+delim.length() && compareStr(str,i,delim.length(),delim,0,delim.length(),delimcasesensive)==0 && i>=0 && q.size()==0) {
+    if (str.length()>=i+delim.length() && compareStr(str,i,delim.length(),delim,0,delim.length(),delimcasesensive)==0 && (int)i>=0 && q.size()==0) {
       //trace(DEBUG, "(2)found delim, split string:%s (%d to %d)\n",str.substr(begin, i-begin).c_str(), begin, i);
       if (!skipemptyelement || i>begin)
         v.push_back(str.substr(begin, i-begin));
@@ -1314,7 +1314,7 @@ string snakestr(const string & str)
 string revertstr(const string & str)
 {
   string reverse = "";
-  for (size_t i=str.length()-1;i>=0;i--)
+  for (size_t i=str.length()-1;(int)i>=0;i--)
     reverse.push_back(str[i]);
   return reverse;
 }
@@ -1857,7 +1857,7 @@ string dectohex(const int & val)
 int hextodec(const string& str)
 {
   int val = 0;
-  for (size_t i=str.length()-1; i>=0; i--){
+  for (size_t i=str.length()-1; (int)i>=0; i--){
     if (str[i]>='0' && str[i]<='9')
       val = val+(int(str[i])-48)*int(pow(16,(str.length()-1)-i));
     else if (str[i]>='a' && str[i]<='f')
@@ -1896,7 +1896,7 @@ string dectobin(const int & val)
 int bintodec(const string& str)
 {
   int val = 0;
-  for (size_t i=str.length()-1; i>=0; i--){
+  for (size_t i=str.length()-1; (int)i>=0; i--){
     if (str[i]>='0' && str[i]<='1')
       val = val+(int(str[i])-48)*int(pow(2,(str.length()-1)-i));
     else{
@@ -4207,7 +4207,8 @@ bool issymlkloop(const string & filepath)
 bool issymblink(const string & filepath)
 {
   struct stat s;
-  return ( lstat(filepath.c_str(),&s) == 0 && s.st_mode & S_IFLNK );
+  return isSymbLink(s);
+  //return ( lstat(filepath.c_str(),&s) == 0 && s.st_mode & S_IFLNK );
 }
 
 string getsymblink(const string & filepath)

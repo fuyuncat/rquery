@@ -147,7 +147,7 @@ Functions can be used in the expression. We current provide some essential norma
    - trim(str[,char][,repeat(1|0]) : Normal function. Trim all char from the string, if char is not provided, all space (including tab) will be trimmed.<br/>
    - concat(str1,str2,[...]) : Normal function. Concatenate multiple strings. <br/>
    - pad(seed,len) : Normal function. Construct a new string from seed multiple len times.<br />
-   - randstr(len[,flags]) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower flag stands for optional choice, a upper flag stands for compulsory choice. <br />
+   - randstr(len[,flags]) : Normal function. Generate a random string. len: string length (default 8); flags (default uld) includes: u:upper alphabet;l:lower alphabet;d:digit;m:minus;n:unlderline;s:space;x:special(\`~!@#$%^&\*+/\|;:'"?/);b:Brackets([](){}<>); A lower case flag stands for optional choice, a upper case flag stands for compulsory choice. <br />
    - camelstr(str) : Normal function. Convert a string to camel string (First letter of each word is upper case).<br />
    - snakestr(str) : Normal function. Convert a string to snake string (First letter of each sentence is upper case).<br />
    - findnth(str,sub[,Nth]) : Normal function. Find the position of Nth sub in str, if Nth is positive number, search from head, if Nth is negative, search from tail.<br />
@@ -165,13 +165,7 @@ Functions can be used in the expression. We current provide some essential norma
    - ismac(str) : Normal function. Return 1 if the given str is a MAC address, otherwise, return 0.<br />
    - duplicate(expr, dupNum[, delmiter]) : Normal function. Generate a string of specific number of the expression result.<br />
 
-   - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
-   - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
-   - round(num,scale) : Normal function. Round a given float number.<br />
-   - log(num) : Normal function. Get the log result of a given float number.<br />
-   - mod(num,div) : Normal function. Get the mod of a number.<br />
    - abs(num) : Normal function. Get the abs value of a given float number.<br />
-   - random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br />
    - acos(x) : Normal function. Returns the principal value of the arc cosine of x, expressed in radians.<br />
    - acosh(x) : Normal function. Returns the nonnegative area hyperbolic cosine of x.<br />
    - asin(x) : Normal function. Returns the principal value of the arc sine of x, expressed in radians.<br />
@@ -180,26 +174,33 @@ Functions can be used in the expression. We current provide some essential norma
    - atan2(x, y) : Normal function. Returns the principal value of the arc tangent of y/x, expressed in radians.<br />
    - atanh(x) : Normal function. Returns the area hyperbolic tangent of x.<br />
    - cbrt(x) : Normal function. Returns the cubic root of x.<br />
-   - coypsign(x, y) : Normal function. Returns a value with the magnitude of x and the sign of y.<br />
+   - ceil(num) : Normal function. Get the ceil integer number of a given float number.<br />
+   - copysign(x, y) : Normal function. Returns a value with the magnitude of x and the sign of y.<br />
    - cos(x) : Normal function. Returns the cosine of an angle of x radians.<br />
    - cosh(x) : Normal function. Returns the hyperbolic cosine of x.<br />
    - erf(x) : Normal function. Returns the error function value for x.<br />
    - exp(x) : Normal function. Returns the base-e exponential function of x, which is e raised to the power x: ex.<br />
    - exp2(x) : Normal function. Returns the base-2 exponential function of x, which is 2 raised to the power x: 2x.<br />
-   - fma(x) : Normal function. Returns x*y+z.<br />
+   - floor(num) : Normal function. Get the floor integer number of a given float number.<br />
+   - fma(x,y,z) : Normal function. Returns x*y+z.<br />
    - fmod(numer, denom) : Normal function. Returns the floating-point remainder of numer/denom (rounded towards zero), fmod = numer - tquot * denom, Where tquot is the truncated (i.e., rounded towards zero) result of: numer/denom.<br />
-   - fpclassify(x,y,z) : Normal function. Returns a value of type of x. INFINITE: Positive or negative infinity (overflow), NAN: Not-A-Number, ZERO: Value of zero, SUBNORMAL: Sub-normal value (underflow), NORMAL: Normal value (none of the above), <br />
+   - fpclassify(x,y,z) : Normal function. Returns a value of type of x. INFINITE: Positive or negative infinity (overflow), NAN: Not-A-Number, ZERO: Value of zero, SUBNORMAL: Sub-normal value (underflow), NORMAL: Normal value (none of the above). <br />
    - hypot(x, y) : Normal function. Returns the hypotenuse of a right-angled triangle whose legs are x and y.<br />
    - ilogb(x) : Normal function. Returns the integral part of the logarithm of |x|, using FLT_RADIX as base for the logarithm.<br />
    - isfinite(x) : Normal function. Returns a non-zero value (true) if x is finite; and zero (false) otherwise.<br />
    - isinf(x) : Normal function. Returns a non-zero value (true) if x is an infinity; and zero (false) otherwise.<br />
    - isnormal(x) : Normal function. Returns a non-zero value (true) if x is normal; and zero (false) otherwise.<br />
    - lgamma(x) : Normal function. Returns the natural logarithm of the absolute value of the gamma function of x.<br />
+   - log(num) : Normal function. Returns the natural logarithm of x.<br />
    - log10(x) : Normal function. Returns the common (base-10) logarithm of x.<br />
    - log2(x) : Normal function. Returns the binary (base-2) logarithm of x.<br />
+   - mod(num,div) : Normal function. Get the mod of a number.<br />
+   - pi() : Normal function. Returns the value of PI.<br />
    - pow(base, exponent) : Normal function. Returns base raised to the power exponent. <br />
    - remainder(numer, denom) : Normal function. Returns the floating-point remainder of numer/denom (rounded to nearest): remainder = numer - rquot * denom, Where rquot is the result of: numer/denom, rounded toward the nearest integral value (with halfway cases rounded toward the even number).<br />
-   - scalbln(x) : Normal function. Scales x by FLT_RADIX raised to the power of n, returning the result of computing: scalbn(x,n) = x * FLT_RADIX^n<br />
+   - random([min,][max]) : Normal function. Generate a random integer. If no parameter provided, the range is from 1 to 100. Providing one parameter means rang from 1 to max.<br />
+   - round(num,scale) : Normal function. Round a given float number.<br />
+   - scalbln(x, n) : Normal function. Scales x by FLT_RADIX raised to the power of n, returning the result of computing: scalbn(x,n) = x * FLT_RADIX^n<br />
    - scalbn(x) : Normal function. Scales x by FLT_RADIX raised to the power of n, returning the same as: scalbn(x,n) = x * FLT_RADIX^n<br />
    - sin(x) : Normal function. Returns the sine of an angle of x radians.<br />
    - sinh(x) : Normal function. Returns the hyperbolic sine of x.<br />
@@ -207,10 +208,9 @@ Functions can be used in the expression. We current provide some essential norma
    - tan(x) : Normal function. Returns the tangent of an angle of x radians.<br />
    - tanh(x) : Normal function. Returns the hyperbolic tangent of x.<br />
    - tgamma(x) : Normal function. Returns the gamma function of x.<br />
-   - pi() : Normal function. Returns the value of PI.<br />
 
-   - dateformat(date) : Normal function. Convert a date data to a string with the given format.<br />
-   - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two date.<br />
+   - dateformat(date,format) : Normal function. Convert a date data to a string with the given format.<br />
+   - timediff(date1,date2) : Normal function. Get the difference (in seconds) of two datetimes.<br />
    - addtime(date, number, unit) : Normal function. Increase a datetime, unit can be s-second(default),m-minute,h-hour,d-day,n-month,y-year, number can be positive or negative interger.<br />
    - now([anything]) : Normal function. Get current date time. If no parameter govien, it will only generate one value for whole result set.<br />
    - truncdate(date,seconds) : Normal function. Truncate a date a number is multiple of the given second number.<br />
@@ -225,6 +225,23 @@ Functions can be used in the expression. We current provide some essential norma
    - longtodate(seconds) : Normal function. Conver the a number of seconds since 1970-01-01 00:00:00 to a date.<br />
    - localtime(date) : Normal function. Convert a time in another timezone (e.g. 1988-08-08 18:18:58 +800) to local time.<br />
    - gmtime(date, gmtoffset) : Normal function. Convert a local time to another timezone time (e.g. 1988-08-08 18:18:58 +800), gmtoffset's range is from -12 to 12.<br />
+
+   - appendfile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
+   - isfile(filepath) : Normal function. Return 1 if the given path is a file, otherwise, return 0.<br />
+   - isfolder(filepath) : Normal function. Return 1 if the given path is a folder, otherwise, return 0.<br />
+   - fileexist(filepath) : Normal function. Return 1 if the given filepath exists, otherwise, return 0.<br />
+   - filesize(filepath) : Normal function. Return the size of the given file, return -1 if file does not exist.<br />
+   - fileattrs(filepath) : Normal function. Get file attributes if it exists.<br />
+   - isexecutable(filepath) : Normal function. Return 1 if the file is executable, otherwise return 0.<br />
+   - issymblink(filepath) : Normal function. Return 1 if the file is an symbolic link, otherwise return 0.<br />
+   - getsymblink(filepath) : Normal function. Get the real file that the symbolic link pointing to.<br />
+   - renamefile(oldfile, newfile) : Normal function. Rename the file if it exists.<br />
+   - rmfile(filepath) : Normal function. Remove the file if it exists.<br />
+
+   - rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
+   - rmember(sideid,fieldid,seqnum) : Normal function. Return the member value of the specified side work, field id and sequence number. sideid is the id the side work, fieldid is id the field in the side work, seqnum is the member sequence number. if seqnum is a negtive number, it will start searching from the end of the array.<br/>
+   - rmembers(sideid,fieldid,startseq[,endseq[,delimiter]]) : Normal function. Return the member values of the specified side work, field id and sequence number range. sideid is the id the side work, fieldid is id the field in the side work, startseq is the start sequence number of the members, endseq is the end sequence number of the members. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple members, default is '|'. <br/>
+   - rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
 
    - comparenum(num1,num2) : Normal function. Compare two numbers, return -1 if num1 less than num2, return 0 if num1 equal to num2, return 1 if num1 greater than num2<br />
    - comparedate(date1,date2[,dateformat]) : Normal function. Compare two dates, return -1 if date1 less than date2, return 0 if date1 equal to date2, return 1 if date1 greater than date2. date1 and date2 should have the same dateformat.<br />
@@ -253,24 +270,6 @@ Functions can be used in the expression. We current provide some essential norma
    - sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
    - concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br/>
    - calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br/>
-
-   - rcount([sideid][,fieldid][,value_expr]) : Normal function. Return the size of the side work data set. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. If no parameter is provided, it will return the number of side works; if only sideid is provided, it will return the data set size of the specified side work; if only sideid and fieldid, it will return the data set size of the specified side work; if all three parameter are provided, it will return the number of specified member value in the specified field in the data work. <br/>
-   - rmember(sideid,fieldid,seqnum) : Normal function. Return the member value of the specified side work, field id and sequence number. sideid is the id the side work, fieldid is id the field in the side work, seqnum is the member sequence number. if seqnum is a negtive number, it will start searching from the end of the array.<br/>
-   - rmembers(sideid,fieldid,startseq[,endseq[,delimiter]]) : Normal function. Return the member values of the specified side work, field id and sequence number range. sideid is the id the side work, fieldid is id the field in the side work, startseq is the start sequence number of the members, endseq is the end sequence number of the members. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple members, default is '|'. <br/>
-   - rmemberid(sideid,fieldid,value_expr) : Normal function. Return the sequence number of the first matched member value of the specified side work and field id. sideid is the id the side work, fieldid is id the field in the side work, value_expr is the value of a member. <br/>
-
-   - appendFile(content, file) : Normal function. Append content to a file, return 1 if successed, 0 if failed.<br />
-   - isfile(filepath) : Normal function. Return 1 if the given path is a file, otherwise, return 0.<br />
-   - isfolder(filepath) : Normal function. Return 1 if the given path is a folder, otherwise, return 0.<br />
-   - fileexist(filepath) : Normal function. Return 1 if the given filepath exists, otherwise, return 0.<br />
-   - filesize(filepath) : Normal function. Return the size of the given file, return -1 if file does not exist.<br />
-   - rmfile(filepath) : Normal function. Remove the file if it exists.<br />
-   - renamefile(filepath) : Normal function. Rename the file if it exists.<br />
-   - fileattrs(filepath) : Normal function. Get file attributes if it exists.<br />
-   - isexecutable(filepath) : Normal function. Return 1 if the file is executable, otherwise return 0.<br />
-   - issymblink(filepath) : Normal function. Return 1 if the file is an symbolic link, otherwise return 0.<br />
-   - getsymblink(filepath) : Normal function. Get the real file that the symbolic link pointing to.<br />
-
    - myips([startseq,[,endseq[,delimiter]]]) : Normal function. Return the IPs of the local machine, startseq is the start sequence number of the IPs, endseq is the end sequence number of the IPs. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple IPs, default is '|'. <br/>
    - hostname() : Normal function. Return the hostname of the local machine.<br />
 

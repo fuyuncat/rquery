@@ -1017,7 +1017,7 @@ void QuerierC::setUserMaroFuncs(const string & macrostr)
     mfs.sFuncName = sFuncName;
     mfs.funcExpr = new ExpressionC(expStr);
     size_t pos=0;
-    while (pos>=0){ // search the parameters
+    while ((int)pos>=0){ // search the parameters
       string sParastr = trim_copy(readQuotedStr(expStr, pos, "~~", "''", '\0', {}));
       if (sParastr.empty() || pos<0)
         break;
@@ -2179,15 +2179,15 @@ int QuerierC::searchNextReg()
     }
     if (found == 0){
       // if didnt match any one, discard all until the last newline
-      size_t i = m_rawstr.size(), newlnpos = -1;
-      while (i>=0){
+      size_t i = m_rawstr.size(), newlnpos = string::npos;
+      while ((int)i>=0){
         if (m_rawstr[i] == '\n'){
           newlnpos = i;
           break;
         }
         i--;
       }
-      if (newlnpos>=0)
+      if (newlnpos!=string::npos)
         m_rawstr = m_rawstr.substr(newlnpos+1);
     }
   }catch (exception& e) {
@@ -3610,9 +3610,9 @@ void QuerierC::printFieldNames()
   if (m_colToRows.size() != m_colToRowNames.size()){
     trace(ERROR,"COLTOROW marco function size %d doesnot match filed names of COLTOROW marco function %d",m_colToRows.size(),m_colToRowNames.size());
   }else{
-    for (size_t i=m_colToRows.size()-1;i>=0;i--){
+    for (size_t i=m_colToRows.size()-1;(int)i>=0;i--){
       m_selnames.insert(m_selnames.begin()+m_colToRows[i][0],m_colToRowNames[i]);
-      for (size_t j=m_colToRows[i].size()-1;j>=0;j--)
+      for (size_t j=m_colToRows[i].size()-1;(int)j>=0;j--)
         m_selnames.erase(m_selnames.begin()+1+m_colToRows[i][j]);
     }
   }

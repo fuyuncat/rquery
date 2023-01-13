@@ -265,29 +265,29 @@ Functions can be used in the expression. We current provide some essential norma
    - when(condition1,return1[,condition2,return2...],else): Normal function. if condition1 is fulfilled, then return return1, etc.. If none matched, return "else".<br />
    - greatest(expr1[,expr2,...]) : Normal function. Return the largest one of the given expressions. The expression can be a foreach function.<br />
    - least(expr1[,expr2,...]) : Normal function. Return the smallest one of the given expressions. The expression can be a foreach function.<br />
-   - eval(expr_str) : Normal function. Eval the input string as an expression.<br />
-   - exec(expr_str) : Normal function. Run a system command and return the result.<br />
    - sumall(expr1[,expr2...]) : Normal function. Sumarize the result of the input expressions, the parameter can be a foreach function. <br/>
-   - concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br/>
-   - calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for GROUP expression when GROUP involved), # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br/>
-   - myips([startseq,[,endseq[,delimiter]]]) : Normal function. Return the IPs of the local machine, startseq is the start sequence number of the IPs, endseq is the end sequence number of the IPs. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple IPs, default is '|'. <br/>
+   - eval(expr_str) : Normal function. Eval the input string as an expression.<br />
+   - exec(oscmd) : Normal function. Run a system command and return the result.<br />
    - hostname() : Normal function. Return the hostname of the local machine.<br />
+   - myips([startseq,[,endseq[,delimiter]]]) : Normal function. Return the IPs of the local machine, startseq is the start sequence number of the IPs, endseq is the end sequence number of the IPs. if startseq/endseq is a negtive number, it will count from the end of the array. delimiter is the character used to separate multiple IPs, default is '|'. <br/>
+   - concatcol(start,end,expr[,step,delmiter]) : Normal function (Macro function implemented). Concatenate multiple field expressions. $ stands for the field value, # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression.<br/>
+   - calcol(start,end,expr[,step,operation]) : Normal function (Macro function implemented). Caluclate multiple field expressions. $ stands for the field value, # stands for field sequence, % stands for the largest field sequence ID, % can be involved in an expression. Operations can be SUM/AVERAGE/MAX/MIN/COUNT/UNIQUECOUNT.<br/>
 
-   - Count(expr) : Aggregation function. Count the number of expr.<br />
-   - Uniquecount(expr) : Aggregation function. Count the number of distinct expr.<br />
-   - Sum(expr) : Aggregation function. Sum the number of expr.<br />
-   - Max(expr) : Aggregation function. Get the maximum value of expr.<br />
-   - Min(expr) : Aggregation function. Get the minimum value of expr.<br />
-   - Average(expr) : Aggregation function. Get the average value of expr.<br />
-   - Grouplist([distinct ]expr[,delimiter][,asc|desc]) : Aggregation function. Combine the specific expr in a group to a string. distinct is a key word to indicate if the elements should be distinct, delimiter is a string to be the delimiter, asc|desc keywords indicate whether do sorting.<br />
+   - count(expr) : Aggregation function. Count the number of expr.<br />
+   - uniquecount(expr) : Aggregation function. Count the number of distinct expr.<br />
+   - sum(expr) : Aggregation function. Sum the number of expr.<br />
+   - max(expr) : Aggregation function. Get the maximum value of expr.<br />
+   - min(expr) : Aggregation function. Get the minimum value of expr.<br />
+   - average(expr) : Aggregation function. Get the average value of expr.<br />
+   - grouplist([distinct ]expr[,delimiter][,asc|desc]) : Aggregation function. Combine the specific expr in a group to a string. distinct is a key word to indicate if the elements should be distinct, delimiter is a string to be the delimiter, asc|desc keywords indicate whether do sorting.<br />
 
-   - Rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
-   - Denserank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />
-   - Nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />
-   - Counta([group1,group2...];expr) : Analytic function. Count the number of expr of each group.<br />
-   - Uniquecounta([group1,group2...];expr) : Analytic function. Count the number of unique expr of each group.<br />
-   - Suma([group1,group2...];expr) : Analytic function. Sum the expr of each group.<br />
-   - Averagea([group1,group2...];expr) : Analytic function. Caluclate average of expr of each group.<br />
+   - rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
+   - denserank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />
+   - nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />
+   - counta([group1,group2...];expr) : Analytic function. Count the number of expr of each group.<br />
+   - uniquecounta([group1,group2...];expr) : Analytic function. Count the number of unique expr of each group.<br />
+   - suma([group1,group2...];expr) : Analytic function. Sum the expr of each group.<br />
+   - averagea([group1,group2...];expr) : Analytic function. Caluclate average of expr of each group.<br />
    - maxa([group1,group2...];expr) : Analytic function. Get the maximum value of expr of each group.<br />
    - mina([group1,group2...];expr) : Analytic function. Get the minimum value of expr of each group.<br />
 

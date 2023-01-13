@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.300] 2023-01-13
+   Fix bug: Fixed bug in comparedate.<br/>
    # [1.300] 2022-12-16
    Fix bug: Fixed bug in issymblink.<br/>
    # [1.300] 2022-12-13

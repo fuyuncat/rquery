@@ -2021,11 +2021,7 @@ bool FunctionC::runComparedate(RuntimeDataStruct & rds, string & sResult, DataTy
     dts1.extrainfo = sFmt;
     dts2.extrainfo = sFmt;
   }
-  if (m_params[0].evalExpression(rds, date1, dts, true) && isDate(date1, dts1.extrainfo) && m_params[1].evalExpression(rds, date2, dts, true) && isDate(date2, dts2.extrainfo)){
-    if (dts1.extrainfo.compare(dts2.extrainfo)!=0){
-      trace(ERROR, "Date format %s of %s doesnot match date format %s of %s!\n", dts1.extrainfo.c_str(), m_params[0].getEntireExpstr().c_str(), dts2.extrainfo.c_str(), m_params[1].getEntireExpstr().c_str());
-      return false;
-    }
+  if (m_params[0].evalExpression(rds, date1, dts1, true) && isDate(date1, dts1.extrainfo) && m_params[1].evalExpression(rds, date2, dts2, true) && isDate(date2, dts2.extrainfo)){
     sResult = intToStr(anyDataCompare(date1, date2, dts1, dts2));
     dts.datatype = LONG;
     return true;

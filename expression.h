@@ -82,7 +82,7 @@ class ExpressionC
     bool getAggFuncs(unordered_map< string,GroupProp > & aggFuncs); // get the full list of aggregation functions in the expression.
     bool getAnaFuncs(unordered_map< string,vector<ExpressionC> > & anaFuncs, unordered_map< string, vector<int> > & anaGroupNums); // get the full list of analytic functions in the expression.
     bool getTreeFuncs(unordered_map< string,vector<ExpressionC> > & treeFuncs); // get the full list of hierarchy (tree) functions in the expression.
-    void setTreeFuncs(unordered_map< string,string > & treeFuncVals); // set result for the tree functions
+    void setTreeFuncs(unordered_map< string,string > * treeFuncVals); // set result for the tree functions
     FunctionC* getAnaFunc(const string & funcExpStr); // search analytic function in this expression using the function expression string.
     bool calAggFunc(const GroupProp & aggGroupProp, FunctionC* function, string & sResult); // calculate final aggregation function result
 

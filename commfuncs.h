@@ -29,7 +29,7 @@
 
 using namespace std;
 
-#define VERSION "v1.300"
+#define VERSION "v1.301"
 
 #define UNKNOWN 0
 
@@ -430,6 +430,7 @@ struct RuntimeDataStruct{
   unordered_map< string, unordered_map<string,DataTypeStruct> >* sideDatatypes = NULL;
   unordered_map< string,string >* macroFuncParas = NULL;
   unordered_map< string,MacroFuncStruct >* macroFuncExprs = NULL;
+  unordered_map< string,string >* mTreeFucnVals = NULL;
 };
 
 extern GlobalVars gv;

@@ -3397,6 +3397,7 @@ void QuerierC::SetTree(const vector< vector<string> > & tmpResults, TreeNode* tN
   rds.sideDatarow = &matchedSideDatarow;
   rds.sideDatatypes = &m_sideDatatypes;
   rds.macroFuncExprs = &m_userMacroExprs;
+  rds.mTreeFucnVals = &(tNode->mFuncVals);
 
   string sResult;
   DataTypeStruct dts;

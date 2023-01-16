@@ -1314,6 +1314,12 @@ bool ExpressionC::evalExpression(RuntimeDataStruct & rds, string & sResult, Data
             trace(ERROR, "Failed to find analytic function '%s' dataset when evaling '%s'!\n", m_Function->m_expStr.c_str(), getTopParent()->getEntireExpstr().c_str());
             bResult=false;
           }
+        }else if (m_Function->isTree()){
+          if (rds.mTreeFucnVals && rds.mTreeFucnVals->find(m_Function->m_expStr) != rds.mTreeFucnVals->end()){
+            sResult = (*rds.mTreeFucnVals)[m_Function->m_expStr];
+            dts = m_Function->m_datatype;
+            bResult=true;
+          }
         }else{
           bool gotResult = m_Function->runFunction(rds, sResult, dts);
           m_datatype = dts;
@@ -1643,12 +1649,14 @@ bool ExpressionC::getTreeFuncs(unordered_map< string,vector<ExpressionC> > & tre
   }
 }
 
-void ExpressionC::setTreeFuncs(unordered_map< string,string > & treeFuncVals)
+void ExpressionC::setTreeFuncs(unordered_map< string,string > * treeFuncVals)
 {
+  if (treeFuncVals == NULL)
+    return;
   if (m_type == LEAF && m_expType == FUNCTION && m_Function){
-    if (m_Function->isTree() && treeFuncVals.find(m_Function->m_expStr) != treeFuncVals.end()){
+    if (m_Function->isTree() && treeFuncVals->find(m_Function->m_expStr) != treeFuncVals->end()){
       m_expType = CONST;
-      m_expStr = treeFuncVals[m_Function->m_expStr];
+      m_expStr = (*treeFuncVals)[m_Function->m_expStr];
       m_Function->clear();
       SafeDelete(m_Function);
     }else { // check the paramters of normal functions

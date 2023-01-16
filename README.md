@@ -281,8 +281,8 @@ Functions can be used in the expression. We current provide some essential norma
    - average(expr) : Aggregation function. Get the average value of expr.<br />
    - grouplist([distinct ]expr[,delimiter][,asc|desc]) : Aggregation function. Combine the specific expr in a group to a string. distinct is a key word to indicate if the elements should be distinct, delimiter is a string to be the delimiter, asc|desc keywords indicate whether do sorting.<br />
 
-   - rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the rank of a sorted expression in a group.<br />
-   - denserank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. The the dense rank of a sorted expression in a group.<br />
+   - rank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. Get the rank of a sorted expression in a group.<br />
+   - denserank([group1[,group2]...];[sort1 [asc|desc][,sort2 [asc|desc]]...]) : Analytic function. Get the dense rank of a sorted expression in a group.<br />
    - nearby(expr;[sort1 [asc|desc][,sort2 [asc|desc]];distance;default...]) : Analytic function. Get the value of nearby rows, if distance is negative, it returns value of previous N row, if distance is positive, it returns value of next N row.<br />
    - counta([group1,group2...];expr) : Analytic function. Count the number of expr of each group.<br />
    - uniquecounta([group1,group2...];expr) : Analytic function. Count the number of unique expr of each group.<br />

@@ -522,6 +522,7 @@ bool QuerierC::analyzeSelString(){
       }else{
         switch(tmpSels[i].m_Function->m_funcID){
           case FOREACH:{
+            vExpandedExpr.clear();
             if (m_groups.size()>0)
               tmpSels[i].m_Function->expandForeach(vExpandedExpr, m_groups);
             else
@@ -1362,12 +1363,12 @@ bool QuerierC::appendResultSet(const vector<string> & vResult, const unordered_m
       for (size_t k=0;k<tmpResult.size();k++)
         datas.push_back(tmpResult[k][j]);
       if (bApplyExtraFilter)
-        return applyExtraFilter(datas, varValues);
+        applyExtraFilter(datas, varValues);
       else{
         m_results.push_back(datas);
-        return true;
       }
     }
+    return true;
   }else{
     if (bApplyExtraFilter)
       return applyExtraFilter(vResult, varValues);

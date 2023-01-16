@@ -2,8 +2,9 @@
 All change logs will be documented here.<br/>
    # [1.301] 2023-01-16
    Fix bug: Failed to eval hierarchy functions.<br/>
+   Fix bug: Fixed bug in coltorow().<br/>
    # [1.300] 2023-01-13
-   Fix bug: Fixed bug in comparedate.<br/>
+   Fix bug: Fixed bug in comparedate().<br/>
    Fix bug: Fixed bug of parsing query command failed.<br/>
    # [1.300] 2022-12-16
    Fix bug: Fixed bug in issymblink.<br/>

@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.301] 2023-01-17
+   Fix bug: Failed to do IN, LIKE, REGLIKE.<br/>
    # [1.301] 2023-01-16
    Fix bug: Failed to eval hierarchy functions.<br/>
    Fix bug: Fixed bug in coltorow().<br/>

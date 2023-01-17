@@ -46,7 +46,7 @@ void FilterC::init()
 
   m_inExpressions.clear();
   m_comparators.clear();
-  m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back("=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back(" OPLIKE ");m_comparators.push_back(" OPREGLIKE ");m_comparators.push_back(" OPNOLIKE ");m_comparators.push_back(" OPNOREGLIKE ");m_comparators.push_back(" OPIN ");m_comparators.push_back(" OPNOIN "); // "=", "<", ">" should be put after "<=" ">=" "!="
+  m_comparators.push_back("!=");m_comparators.push_back(">=");m_comparators.push_back("<=");m_comparators.push_back("=");m_comparators.push_back(">");m_comparators.push_back("<");m_comparators.push_back(" LIKE ");m_comparators.push_back(" REGLIKE ");m_comparators.push_back(" NOLIKE ");m_comparators.push_back(" NOREGLIKE ");m_comparators.push_back(" IN ");m_comparators.push_back(" NOIN "); // "=", "<", ">" should be put after "<=" ">=" "!="
 }
 
 FilterC::FilterC()

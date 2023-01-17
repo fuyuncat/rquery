@@ -2904,17 +2904,17 @@ string decodeComparator(const int & comparator){
   case OPSE:
     return "<=";
   case OPLIKE:
-    return "OPLIKE";
+    return "LIKE";
   case OPREGLIKE:
-    return "OPREGLIKE";
+    return "REGLIKE";
   case OPNOLIKE:
-    return "OPNOLIKE";
+    return "NOLIKE";
   case OPNOREGLIKE:
-    return "OPNOREGLIKE";
+    return "NOREGLIKE";
   case OPIN:
-    return "OPIN";
+    return "IN";
   case OPNOIN:
-    return "OPNOIN";
+    return "NOIN";
   default:
     return "UNKNOWN";
   }
@@ -2991,17 +2991,17 @@ short int encodeComparator(const string & str)
     return OPLE;
   else if (sUpper.compare("<=") == 0)
     return OPSE;
-  else if (sUpper.compare("OPLIKE") == 0)
+  else if (sUpper.compare("LIKE") == 0)
     return OPLIKE;
-  else if (sUpper.compare("OPREGLIKE") == 0)
+  else if (sUpper.compare("REGLIKE") == 0)
     return OPREGLIKE;
-  else if (sUpper.compare("OPNOLIKE") == 0)
+  else if (sUpper.compare("NOLIKE") == 0)
     return OPNOLIKE;
-  else if (sUpper.compare("OPNOREGLIKE") == 0)
+  else if (sUpper.compare("NOREGLIKE") == 0)
     return OPNOREGLIKE;
-  else if (sUpper.compare("OPIN") == 0)
+  else if (sUpper.compare("IN") == 0)
     return OPIN;
-  else if (sUpper.compare("OPNOIN") == 0)
+  else if (sUpper.compare("NOIN") == 0)
     return OPNOIN;
   else
     return UNKNOWN;

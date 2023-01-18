@@ -406,7 +406,7 @@ ExpressionC* ExpressionC::BuildTree(string expStr, ExpressionC* newNode, Express
           if (parentNode->m_rightNode!=newNode)
             parentNode->m_leftNode = newNode;
         }else{
-          if (parentNode->m_leftNode!=newNode)
+          if (parentNode && parentNode->m_leftNode!=newNode)
             parentNode->m_rightNode = newNode;
         }
       }else{ // atom expression to be built as a leaf

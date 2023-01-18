@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.302] 2023-01-18
+   Fix bug: Parsing expression failed.<br/>
    # [1.301] 2023-01-17
    Fix bug: Failed to do IN, LIKE, REGLIKE.<br/>
    # [1.301] 2023-01-16

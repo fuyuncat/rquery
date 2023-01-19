@@ -1819,9 +1819,12 @@ bool QuerierC::matchFilter(vector<string> & rowValue)
   unordered_map<string,string> fakeResult; // faked sidework dataset from variable R
   for (size_t i=0; i<m_uservarnames.size(); i++){ // make sure we calculate the dynamic and R variables in the order of input.
     if (m_uservarnames[i].compare("@R")!=0){ // eval normal dynamic variables
-      m_uservarexprs[m_uservarnames[i]].evalExpression(rds, sResult, dts, true);
-      m_uservariables[m_uservarnames[i]] = sResult;
-      varValues[m_uservarnames[i]] = sResult;
+      if (m_uservarexprs.find(m_uservarnames[i]) != m_uservarexprs.end()){
+        m_uservarexprs[m_uservarnames[i]].evalExpression(rds, sResult, dts, true);
+        m_uservariables[m_uservarnames[i]] = sResult;
+        varValues[m_uservarnames[i]] = sResult;
+      }else
+        varValues[m_uservarnames[i]] = m_uservarinitval[m_uservarnames[i]];
     }else{ // eval fake sidework data
       if (iR < m_fakeRExprs.size()){
         m_fakeRExprs[iR].evalExpression(rds, sResult, dts, true);

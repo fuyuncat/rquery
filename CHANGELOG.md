@@ -1,9 +1,11 @@
 # Change Logn
 All change logs will be documented here.<br/>
-   # [1.302] 2023-01-18
+   # [1.303] 2023-01-18
+   Fix bug: Eval user defined static variable initial value failed.<br/>
+   # [1.303] 2023-01-18
    Fix bug: Parsing expression failed.<br/>
    Fix bug: Eval user defined static variable failed.<br/>
-   # [1.301] 2023-01-17
+   # [1.302] 2023-01-17
    Fix bug: Failed to do IN, LIKE, REGLIKE.<br/>
    # [1.301] 2023-01-16
    Fix bug: Failed to eval hierarchy functions.<br/>

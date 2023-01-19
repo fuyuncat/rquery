@@ -920,6 +920,12 @@ void QuerierC::setUserVars(const string & variables)
       continue;
     }
     string sName=upper_copy(trim_copy(vNameVal[0])), sValue=trim_copy(vNameVal[1]);
+    ExpressionC eVal(sValue);
+    if (eVal.m_type != LEAF || eVal.m_expType != CONST){
+      trace(FATAL, "The initial value \"%s\" of the variable \"%s\" is not a const!\n", sValue.c_str(), sName.c_str());
+      continue;
+    }else
+      sValue = eVal.m_expStr;
     trace(DEBUG, "Setting variable '%s' value '%s'!\n", sName.c_str(), sValue.c_str());
     // name cannot be a keyword used by the predefined variables
     if (sName.compare("RAW")==0 || sName.compare("ROW")==0 || sName.compare("FILE")==0 || sName.compare("LINE")==0 || sName.compare("FILEID")==0 || sName.compare("FILELINE")==0 || sName.compare("N")==0 || sName.compare("%")==0 || sName.compare("LEVEL")==0 || sName.compare("NODEID")==0 || sName.compare("ROOT")==0 || sName.compare("PATH")==0){

@@ -70,7 +70,9 @@ using namespace std;
 #define BOOLEAN 7
 #define ANY 99
 
-#define FATAL 1
+#define SILENCE 0
+#define ECHO 1
+#define FATAL 2
 #define PERFM 6
 #define ERROR 12
 #define WARNING 13

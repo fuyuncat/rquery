@@ -252,7 +252,11 @@ void clearGroupPropMap(unordered_map< string,GroupProp > & aggProps)
 short int encodeTracelevel(const string & str)
 {
   string sUpper = upper_copy(str);
-  if (sUpper.compare("FATAL") == 0)
+  if (sUpper.compare("SILENCE") == 0)
+    return SILENCE;
+  else if (sUpper.compare("ECHO") == 0)
+    return ECHO;
+  else if (sUpper.compare("FATAL") == 0)
     return FATAL;
   else if (sUpper.compare("PERFM") == 0)
     return PERFM;
@@ -275,6 +279,10 @@ short int encodeTracelevel(const string & str)
 string decodeTracelevel(const int & level)
 {
   switch (level){
+  case SILENCE:
+    return "SILENCE";
+  case ECHO:
+    return "";
   case FATAL:
     return "FATAL";
   case PERFM:
@@ -324,13 +332,13 @@ void trace(const short & level, const char *fmt, ...)
       char buf[1024];
       int bsize = 0;
       //memset( buf, '\0', sizeof(char)*1024 );
-      bsize = sprintf(buf, "%s", string(decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
+      bsize = sprintf(buf, "%s", string(decodeTracelevel(level)+(level==DUMP||level==ECHO?"":":")).c_str());
       gv.g_logfile->write(buf, bsize);
       //memset( buf, '\0', sizeof(char)*1024 );
       bsize = vsprintf(buf, fmt, args);
       gv.g_logfile->write(buf, bsize);
     }else{
-      printf("%s",string(decodeTracelevel(level)+(level==DUMP?"":":")).c_str());
+      printf("%s",string(decodeTracelevel(level)+(level==DUMP||level==ECHO?"":":")).c_str());
       vprintf(fmt, args);
     }
     if (level == FATAL && !gv.g_consolemode)

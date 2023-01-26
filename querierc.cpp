@@ -1332,6 +1332,7 @@ void QuerierC::addResultOutputFileMap(vector<string>* fieldvalues, unordered_map
       ofs->open(sResult, m_outputmode==OVERWRITE? (std::ofstream::out | ofstream::trunc) : ofstream::app);
       m_outputfiles.insert(pair< string, ofstream* >(sResult, ofs));
       m_resultfiles.push_back(ofs);
+      trace(ECHO, "Opening file %s...\n", sResult.c_str());
     }else
       m_resultfiles.push_back(it->second);
     trace(DEBUG2, "Result ID: %d, ResultFIle ID: %d: File %s!\n", m_results.size()-1, m_resultfiles.size()-1, sResult.c_str());

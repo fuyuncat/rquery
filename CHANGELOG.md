@@ -1,5 +1,7 @@
 # Change Logn
 All change logs will be documented here.<br/>
+   # [1.303] 2023-01-28
+   Enhancement: New message levels: SILENCE, ECHO.<br/>
    # [1.303] 2023-01-18
    Fix bug: Eval user defined static variable initial value failed.<br/>
    # [1.303] 2023-01-18

@@ -10,7 +10,8 @@ runs:
     shell: bash
     run: |
       #brew uninstall --force gcc gcc@7 gcc@8 gcc@9 gcc@10 gcc@11 gcc@12 maven
-      brew install git boost ccache make autoconf-archive automake cmake libomp libtool gcc@11 rpm
+      #brew install git boost ccache make autoconf-archive automake cmake libomp libtool gcc@11 rpm
+      brew install git boost ccache make autoconf-archive automake cmake libomp libtool gcc@11
       which git
       git --version
 

@@ -152,7 +152,7 @@ jobs:
 
   MacOS:
     needs: build
-    runs-on: macos-13
+    runs-on: macos-11
     #runs-on: macos-latest
     steps:
       - uses: fuyuncat/rquery/.github/actions/deploy_macos@main
